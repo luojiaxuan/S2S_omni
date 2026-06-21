@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Generated data, model outputs, and run logs
+work/
+runs/
+logs/
+outputs/
+*.log
+*.wav
+*.mp3
+*.flac
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Local editor/OS files
+.DS_Store
+.idea/
+.vscode/

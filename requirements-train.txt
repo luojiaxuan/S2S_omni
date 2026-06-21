@@ -1,0 +1,14 @@
+transformers>=5.12.1
+datasets>=5.0.0
+peft>=0.19.1
+trl>=1.6.0
+accelerate>=1.14.0
+qwen-omni-utils>=0.0.9
+librosa>=0.11.0
+soundfile>=0.14.0
+audioread>=3.1.0
+evaluate>=0.4.6
+sacrebleu>=2.6.0
+sentencepiece>=0.2.1
+protobuf>=7.35.1
+rich>=15.0.0

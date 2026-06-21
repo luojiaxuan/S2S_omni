@@ -1,0 +1,39 @@
+[project]
+name = "s2s-omni"
+version = "0.1.0"
+description = "Infra for compression-aware streaming speech-to-speech translation."
+requires-python = ">=3.10"
+dependencies = [
+  "pyyaml>=6.0",
+  "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+train = [
+  "accelerate",
+  "audioread",
+  "datasets",
+  "evaluate",
+  "librosa",
+  "peft",
+  "qwen-omni-utils",
+  "sacrebleu",
+  "sentencepiece",
+  "soundfile",
+  "torch",
+  "transformers",
+  "trl",
+]
+audio = [
+  "audioread",
+  "qwen-omni-utils",
+  "librosa",
+  "soundfile",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
