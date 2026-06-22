@@ -75,6 +75,11 @@ default_target_unit_rate)`. This makes compression a consequence of target
 speech not fitting before the next source chunk, rather than a blanket response
 to source speed.
 
+Run the full corpus in `--summary-only` mode first and use
+`natural_rtf_distribution` as the default train/eval mixture. Artificially
+balanced pass-through/compression ratios should be treated as ablations, not as
+the main data recipe.
+
 ## Optional Classic Metrics
 
 These should be enabled depending on available artifacts:

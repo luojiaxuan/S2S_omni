@@ -25,6 +25,7 @@ GIGASPEECH_TSV = (
     "/mnt/taurus/data/siqiouyang/datasets/gigaspeech/"
     "train_xl_case_ft-qwen2.5-32b-instruct_marked_mfa_punc_asr.tsv"
 )
+RTF_BIN_EDGES = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0]
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,6 +39,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tsv", default=GIGASPEECH_TSV)
     parser.add_argument("--out-dir", default="work/gigaspeech")
     parser.add_argument("--max-rows", type=int, default=0, help="0 means scan all rows.")
+    parser.add_argument(
+        "--summary-only",
+        action="store_true",
+        help="Scan all candidate decisions and write build_summary.json only.",
+    )
     parser.add_argument("--faithful-limit", type=int, default=20000)
     parser.add_argument("--teacher-limit", type=int, default=5000)
     parser.add_argument(
@@ -327,7 +333,10 @@ def teacher_record(sample: S2SSample) -> dict[str, Any]:
 
 
 def reservoir_add(items: list[Any], item: Any, limit: int, seen: int, rng: random.Random) -> None:
-    if limit <= 0:
+    if limit < 0:
+        items.append(item)
+        return
+    if limit == 0:
         return
     if len(items) < limit:
         items.append(item)
@@ -337,7 +346,126 @@ def reservoir_add(items: list[Any], item: Any, limit: int, seen: int, rng: rando
         items[j] = item
 
 
-def empty_split_bucket() -> dict[str, Any]:
+def speed_key(speed: float) -> str:
+    return f"{speed:g}"
+
+
+def empty_rtf_stats(speed_factors: list[float]) -> dict[str, Any]:
+    return {
+        "overall": empty_decision_stats(),
+        "by_speed": {speed_key(speed): empty_decision_stats() for speed in speed_factors},
+    }
+
+
+def empty_decision_stats() -> dict[str, Any]:
+    return {
+        "total": 0,
+        "pass_through": 0,
+        "needs_compression": 0,
+        "rtf_sum": 0.0,
+        "rtf_min": None,
+        "rtf_max": None,
+        "budget_ratio_sum": 0.0,
+        "budget_ratio_min": None,
+        "budget_ratio_max": None,
+        "rtf_histogram": {rtf_bin_label(i): 0 for i in range(len(RTF_BIN_EDGES) + 1)},
+    }
+
+
+def rtf_bin_label(index: int) -> str:
+    if index == 0:
+        return f"<= {RTF_BIN_EDGES[0]:g}"
+    if index == len(RTF_BIN_EDGES):
+        return f"> {RTF_BIN_EDGES[-1]:g}"
+    return f"({RTF_BIN_EDGES[index - 1]:g}, {RTF_BIN_EDGES[index]:g}]"
+
+
+def rtf_bin_index(rtf: float) -> int:
+    for index, edge in enumerate(RTF_BIN_EDGES):
+        if rtf <= edge:
+            return index
+    return len(RTF_BIN_EDGES)
+
+
+def update_decision_stats(stats: dict[str, Any], decision: dict[str, Any], target_units: int) -> None:
+    rtf = float(decision["s2s_rtf"])
+    budget_ratio = float(decision["max_target_units"]) / max(1, target_units)
+    stats["total"] += 1
+    if decision["needs_compression"]:
+        stats["needs_compression"] += 1
+    else:
+        stats["pass_through"] += 1
+    stats["rtf_sum"] += rtf
+    stats["rtf_min"] = rtf if stats["rtf_min"] is None else min(stats["rtf_min"], rtf)
+    stats["rtf_max"] = rtf if stats["rtf_max"] is None else max(stats["rtf_max"], rtf)
+    stats["budget_ratio_sum"] += budget_ratio
+    stats["budget_ratio_min"] = (
+        budget_ratio
+        if stats["budget_ratio_min"] is None
+        else min(stats["budget_ratio_min"], budget_ratio)
+    )
+    stats["budget_ratio_max"] = (
+        budget_ratio
+        if stats["budget_ratio_max"] is None
+        else max(stats["budget_ratio_max"], budget_ratio)
+    )
+    stats["rtf_histogram"][rtf_bin_label(rtf_bin_index(rtf))] += 1
+
+
+def update_rtf_stats(
+    rtf_stats: dict[str, Any],
+    speed: float,
+    decision: dict[str, Any],
+    target_units: int,
+) -> None:
+    update_decision_stats(rtf_stats["overall"], decision, target_units)
+    update_decision_stats(rtf_stats["by_speed"][speed_key(speed)], decision, target_units)
+
+
+def finalize_decision_stats(stats: dict[str, Any]) -> dict[str, Any]:
+    total = stats["total"]
+    if not total:
+        return {
+            "total": 0,
+            "pass_through": 0,
+            "needs_compression": 0,
+            "pass_through_rate": None,
+            "compression_rate": None,
+            "rtf_mean": None,
+            "rtf_min": None,
+            "rtf_max": None,
+            "budget_ratio_mean": None,
+            "budget_ratio_min": None,
+            "budget_ratio_max": None,
+            "rtf_histogram": dict(stats["rtf_histogram"]),
+        }
+    return {
+        "total": total,
+        "pass_through": stats["pass_through"],
+        "needs_compression": stats["needs_compression"],
+        "pass_through_rate": round(stats["pass_through"] / total, 6),
+        "compression_rate": round(stats["needs_compression"] / total, 6),
+        "rtf_mean": round(stats["rtf_sum"] / total, 6),
+        "rtf_min": stats["rtf_min"],
+        "rtf_max": stats["rtf_max"],
+        "budget_ratio_mean": round(stats["budget_ratio_sum"] / total, 6),
+        "budget_ratio_min": round(stats["budget_ratio_min"], 6),
+        "budget_ratio_max": round(stats["budget_ratio_max"], 6),
+        "rtf_histogram": dict(stats["rtf_histogram"]),
+    }
+
+
+def finalize_rtf_stats(rtf_stats: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "overall": finalize_decision_stats(rtf_stats["overall"]),
+        "by_speed": {
+            speed: finalize_decision_stats(stats)
+            for speed, stats in rtf_stats["by_speed"].items()
+        },
+    }
+
+
+def empty_split_bucket(speed_factors: list[float]) -> dict[str, Any]:
     return {
         "faithful": [],
         "pass_through": [],
@@ -347,6 +475,7 @@ def empty_split_bucket() -> dict[str, Any]:
         "seen_teacher": 0,
         "usable_rows": 0,
         "base_ids": set(),
+        "rtf_stats": empty_rtf_stats(speed_factors),
     }
 
 
@@ -450,7 +579,8 @@ def main() -> None:
     speed_factors = [float(x.strip()) for x in args.speed_factors.split(",") if x.strip()]
     split_ratios = parse_split_ratios(args.split_ratios)
     split_names = [name for name, ratio in split_ratios if ratio > 0]
-    buckets = {name: empty_split_bucket() for name in split_names}
+    buckets = {name: empty_split_bucket(speed_factors) for name in split_names}
+    global_rtf_stats = empty_rtf_stats(speed_factors)
     teacher_limits = {
         "train": args.teacher_limit,
         "dev": args.dev_teacher_limit,
@@ -494,7 +624,7 @@ def main() -> None:
         bucket["usable_rows"] += 1
         bucket["base_ids"].add(base_id)
 
-        if rng.random() < args.faithful_keep_prob:
+        if not args.summary_only and rng.random() < args.faithful_keep_prob:
             bucket["seen_faithful"] += 1
             sample = make_sample_from_row(
                 row,
@@ -523,6 +653,8 @@ def main() -> None:
                 rtf_threshold=args.rtf_threshold,
                 rtf_lag_slack_s=args.rtf_lag_slack_s,
             )
+            update_rtf_stats(bucket["rtf_stats"], speed, decision, tgt_units)
+            update_rtf_stats(global_rtf_stats, speed, decision, tgt_units)
             budget_units = int(decision["max_target_units"])
             ratio = budget_units / max(1, tgt_units)
             metadata_updates = {
@@ -533,6 +665,8 @@ def main() -> None:
 
             if not decision["needs_compression"]:
                 bucket["seen_pass_through"] += 1
+                if args.summary_only:
+                    continue
                 sample = make_sample_from_row(
                     row,
                     mode="faithful",
@@ -555,6 +689,8 @@ def main() -> None:
                 continue
 
             bucket["seen_teacher"] += 1
+            if args.summary_only:
+                continue
             sample = make_sample_from_row(
                 row,
                 mode="concise" if ratio >= 0.62 else "very_concise",
@@ -576,17 +712,18 @@ def main() -> None:
 
     summary_path = out_dir / "build_summary.json"
     split_outputs: dict[str, dict[str, str]] = {}
-    for split_name in split_names:
-        split_outputs[split_name] = write_split_outputs(
-            out_dir,
-            split_name,
-            buckets[split_name]["faithful"],
-            buckets[split_name]["pass_through"],
-            buckets[split_name]["teacher"],
-        )
+    if not args.summary_only:
+        for split_name in split_names:
+            split_outputs[split_name] = write_split_outputs(
+                out_dir,
+                split_name,
+                buckets[split_name]["faithful"],
+                buckets[split_name]["pass_through"],
+                buckets[split_name]["teacher"],
+            )
 
     train_alias_outputs = {}
-    if "train" in buckets:
+    if "train" in buckets and not args.summary_only:
         train_alias_outputs = write_train_alias_outputs(
             out_dir,
             buckets["train"]["faithful"],
@@ -598,6 +735,7 @@ def main() -> None:
         "tsv": args.tsv,
         "scanned_rows": scanned,
         "usable_rows": usable,
+        "summary_only": args.summary_only,
         "split_seed": args.seed,
         "split_ratios": dict(split_ratios),
         "split_unit": "base_id",
@@ -618,9 +756,11 @@ def main() -> None:
                 "pass_through_seen_candidates": bucket["seen_pass_through"],
                 "teacher_records": len(bucket["teacher"]),
                 "teacher_seen_candidates": bucket["seen_teacher"],
+                "rtf_decision_stats": finalize_rtf_stats(bucket["rtf_stats"]),
             }
             for name, bucket in buckets.items()
         },
+        "natural_rtf_distribution": finalize_rtf_stats(global_rtf_stats),
         "base_id_overlap_check": pairwise_base_id_overlaps(buckets),
         "speed_factors": speed_factors,
         "compression_decision": {
