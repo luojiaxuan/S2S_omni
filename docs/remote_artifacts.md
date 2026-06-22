@@ -138,6 +138,22 @@ speed variants the natural pass-through/compression split was 2,574,540 /
 2,552,844, or 50.2% / 49.8%. By speed factor, compression rates were 3.1% at
 `1.0x`, 37.7% at `1.35x`, 72.3% at `1.7x`, and 86.1% at `2.0x`.
 
+The final 25k natural-policy SFT dataset is mirrored from b200 here:
+
+```text
+/mnt/data2/jiaxuanluo/S2S_omni/work/gigaspeech_policy_pool_30k_lazy_20260622
+```
+
+Mirrored final files:
+
+```text
+sft_25k.jsonl
+manifest_25k.jsonl
+tts_requests_25k.jsonl
+sft_25k_summary.json
+sft_25k_rejected.jsonl
+```
+
 Temporary split rebuild location:
 
 ```text
