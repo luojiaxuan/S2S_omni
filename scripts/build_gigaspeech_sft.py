@@ -19,6 +19,7 @@ if str(ROOT) not in sys.path:
 from s2s_omni.io import write_jsonl
 from s2s_omni.prompts import SYSTEM_COMPRESSION, build_compression_user_prompt
 from s2s_omni.schema import CompressionTarget, S2SSample, Timing
+from s2s_omni.tts import tts_metadata_for_backend
 
 WORD_RE = re.compile(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?|[\u4e00-\u9fff]")
 GIGASPEECH_TSV = (
@@ -44,6 +45,17 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Scan all candidate decisions and write build_summary.json only.",
     )
+    parser.add_argument(
+        "--policy-sample-size",
+        type=int,
+        default=0,
+        help=(
+            "Train split total reservoir sample over all RTF decisions. This keeps "
+            "the natural pass-through/compression mix instead of class-specific caps."
+        ),
+    )
+    parser.add_argument("--dev-policy-sample-size", type=int, default=0)
+    parser.add_argument("--test-policy-sample-size", type=int, default=0)
     parser.add_argument("--faithful-limit", type=int, default=20000)
     parser.add_argument("--teacher-limit", type=int, default=5000)
     parser.add_argument(
@@ -133,6 +145,17 @@ def parse_args() -> argparse.Namespace:
         default=0.2,
         help="Reservoir candidate probability for faithful warm-up examples.",
     )
+    parser.add_argument(
+        "--tts-backend",
+        default="qwen3_tts",
+        choices=["qwen3_tts", "moss_tts", "higgs_tts"],
+        help="TTS backend metadata to attach to sampled policy records.",
+    )
+    parser.add_argument(
+        "--tts-model-path",
+        default=None,
+        help="Optional TTS model override stored in sampled policy metadata.",
+    )
     return parser.parse_args()
 
 
@@ -218,6 +241,8 @@ def make_sample_from_row(
     max_target_duration_s: float | None = None,
     metadata_updates: dict[str, Any] | None = None,
     force_speed_suffix: bool = False,
+    policy_sample_kind: str | None = None,
+    tts_metadata: dict[str, Any] | None = None,
 ) -> S2SSample:
     src = clean_text(row["src_text"])
     tgt = clean_text(row["tgt_text"])
@@ -276,6 +301,8 @@ def make_sample_from_row(
             "target_units": count_units(tgt, row.get("tgt_lang", "zh")),
             "trajectory_nonempty": len(trajectory),
             "trajectory_preview": trajectory[:8],
+            **({"policy_sample_kind": policy_sample_kind} if policy_sample_kind else {}),
+            **(tts_metadata or {}),
             **(metadata_updates or {}),
         },
     )
@@ -470,9 +497,11 @@ def empty_split_bucket(speed_factors: list[float]) -> dict[str, Any]:
         "faithful": [],
         "pass_through": [],
         "teacher": [],
+        "policy": [],
         "seen_faithful": 0,
         "seen_pass_through": 0,
         "seen_teacher": 0,
+        "seen_policy": 0,
         "usable_rows": 0,
         "base_ids": set(),
         "rtf_stats": empty_rtf_stats(speed_factors),
@@ -485,6 +514,7 @@ def write_split_outputs(
     faithful: list[S2SSample],
     pass_through: list[S2SSample],
     teacher: list[S2SSample],
+    policy: list[S2SSample],
 ) -> dict[str, str]:
     split_dir = out_dir / "splits" / split_name
     split_dir.mkdir(parents=True, exist_ok=True)
@@ -492,6 +522,7 @@ def write_split_outputs(
     faithful_sft = split_dir / "faithful_sft.jsonl"
     pass_through_manifest = split_dir / "pass_through_manifest.jsonl"
     pass_through_sft = split_dir / "pass_through_sft.jsonl"
+    policy_sample_manifest = split_dir / "policy_sample_manifest.jsonl"
     rtf_decision_manifest = split_dir / "rtf_decision_manifest.jsonl"
     teacher_manifest = split_dir / "compression_teacher_manifest.jsonl"
     teacher_requests = split_dir / "compression_teacher_requests.jsonl"
@@ -500,6 +531,7 @@ def write_split_outputs(
     write_jsonl(faithful_sft, (sft_record(sample) for sample in faithful))
     write_jsonl(pass_through_manifest, (sample.to_dict() for sample in pass_through))
     write_jsonl(pass_through_sft, (sft_record(sample) for sample in pass_through))
+    write_jsonl(policy_sample_manifest, (sample.to_dict() for sample in policy))
     write_jsonl(
         rtf_decision_manifest,
         (sample.to_dict() for sample in [*pass_through, *teacher]),
@@ -511,6 +543,7 @@ def write_split_outputs(
         "faithful_sft": str(faithful_sft),
         "pass_through_manifest": str(pass_through_manifest),
         "pass_through_sft": str(pass_through_sft),
+        "policy_sample_manifest": str(policy_sample_manifest),
         "rtf_decision_manifest": str(rtf_decision_manifest),
         "teacher_manifest": str(teacher_manifest),
         "teacher_requests": str(teacher_requests),
@@ -522,11 +555,13 @@ def write_train_alias_outputs(
     faithful: list[S2SSample],
     pass_through: list[S2SSample],
     teacher: list[S2SSample],
+    policy: list[S2SSample],
 ) -> dict[str, str]:
     faithful_manifest = out_dir / "faithful_manifest.jsonl"
     faithful_sft = out_dir / "faithful_sft.jsonl"
     pass_through_manifest = out_dir / "pass_through_manifest.jsonl"
     pass_through_sft = out_dir / "pass_through_sft.jsonl"
+    policy_sample_manifest = out_dir / "policy_sample_manifest.jsonl"
     rtf_decision_manifest = out_dir / "rtf_decision_manifest.jsonl"
     teacher_manifest = out_dir / "compression_teacher_manifest.jsonl"
     teacher_requests = out_dir / "compression_teacher_requests.jsonl"
@@ -535,6 +570,7 @@ def write_train_alias_outputs(
     write_jsonl(faithful_sft, (sft_record(sample) for sample in faithful))
     write_jsonl(pass_through_manifest, (sample.to_dict() for sample in pass_through))
     write_jsonl(pass_through_sft, (sft_record(sample) for sample in pass_through))
+    write_jsonl(policy_sample_manifest, (sample.to_dict() for sample in policy))
     write_jsonl(
         rtf_decision_manifest,
         (sample.to_dict() for sample in [*pass_through, *teacher]),
@@ -546,6 +582,7 @@ def write_train_alias_outputs(
         "faithful_sft": str(faithful_sft),
         "pass_through_manifest": str(pass_through_manifest),
         "pass_through_sft": str(pass_through_sft),
+        "policy_sample_manifest": str(policy_sample_manifest),
         "rtf_decision_manifest": str(rtf_decision_manifest),
         "teacher_manifest": str(teacher_manifest),
         "teacher_requests": str(teacher_requests),
@@ -581,6 +618,7 @@ def main() -> None:
     split_names = [name for name, ratio in split_ratios if ratio > 0]
     buckets = {name: empty_split_bucket(speed_factors) for name in split_names}
     global_rtf_stats = empty_rtf_stats(speed_factors)
+    tts_metadata = tts_metadata_for_backend(args.tts_backend, args.tts_model_path)
     teacher_limits = {
         "train": args.teacher_limit,
         "dev": args.dev_teacher_limit,
@@ -595,6 +633,11 @@ def main() -> None:
         "train": args.faithful_limit,
         "dev": args.dev_faithful_limit,
         "test": args.test_faithful_limit,
+    }
+    policy_limits = {
+        "train": args.policy_sample_size,
+        "dev": args.dev_policy_sample_size,
+        "test": args.test_policy_sample_size,
     }
     scanned = 0
     usable = 0
@@ -667,6 +710,7 @@ def main() -> None:
                 bucket["seen_pass_through"] += 1
                 if args.summary_only:
                     continue
+                sample_for_policy = policy_limits.get(split_name, 0) > 0
                 sample = make_sample_from_row(
                     row,
                     mode="faithful",
@@ -678,19 +722,32 @@ def main() -> None:
                     max_target_duration_s=float(decision["allowed_speech_s"]),
                     metadata_updates=metadata_updates,
                     force_speed_suffix=True,
+                    policy_sample_kind="pass_through" if sample_for_policy else None,
+                    tts_metadata=tts_metadata if sample_for_policy else None,
                 )
-                reservoir_add(
-                    bucket["pass_through"],
-                    sample,
-                    pass_through_limits.get(split_name, 0),
-                    bucket["seen_pass_through"],
-                    rng,
-                )
+                if sample_for_policy:
+                    bucket["seen_policy"] += 1
+                    reservoir_add(
+                        bucket["policy"],
+                        sample,
+                        policy_limits.get(split_name, 0),
+                        bucket["seen_policy"],
+                        rng,
+                    )
+                else:
+                    reservoir_add(
+                        bucket["pass_through"],
+                        sample,
+                        pass_through_limits.get(split_name, 0),
+                        bucket["seen_pass_through"],
+                        rng,
+                    )
                 continue
 
             bucket["seen_teacher"] += 1
             if args.summary_only:
                 continue
+            sample_for_policy = policy_limits.get(split_name, 0) > 0
             sample = make_sample_from_row(
                 row,
                 mode="concise" if ratio >= 0.62 else "very_concise",
@@ -701,14 +758,39 @@ def main() -> None:
                 max_end_lag_s=args.max_end_lag_s,
                 max_target_duration_s=float(decision["allowed_speech_s"]),
                 metadata_updates=metadata_updates,
+                policy_sample_kind="compression" if sample_for_policy else None,
+                tts_metadata=tts_metadata if sample_for_policy else None,
             )
-            reservoir_add(
-                bucket["teacher"],
-                sample,
-                teacher_limits.get(split_name, 0),
-                bucket["seen_teacher"],
-                rng,
-            )
+            if sample_for_policy:
+                bucket["seen_policy"] += 1
+                reservoir_add(
+                    bucket["policy"],
+                    sample,
+                    policy_limits.get(split_name, 0),
+                    bucket["seen_policy"],
+                    rng,
+                )
+            else:
+                reservoir_add(
+                    bucket["teacher"],
+                    sample,
+                    teacher_limits.get(split_name, 0),
+                    bucket["seen_teacher"],
+                    rng,
+                )
+
+    for bucket in buckets.values():
+        if bucket["policy"]:
+            bucket["pass_through"] = [
+                sample
+                for sample in bucket["policy"]
+                if sample.metadata.get("policy_sample_kind") == "pass_through"
+            ]
+            bucket["teacher"] = [
+                sample
+                for sample in bucket["policy"]
+                if sample.metadata.get("policy_sample_kind") == "compression"
+            ]
 
     summary_path = out_dir / "build_summary.json"
     split_outputs: dict[str, dict[str, str]] = {}
@@ -720,6 +802,7 @@ def main() -> None:
                 buckets[split_name]["faithful"],
                 buckets[split_name]["pass_through"],
                 buckets[split_name]["teacher"],
+                buckets[split_name]["policy"],
             )
 
     train_alias_outputs = {}
@@ -729,6 +812,7 @@ def main() -> None:
             buckets["train"]["faithful"],
             buckets["train"]["pass_through"],
             buckets["train"]["teacher"],
+            buckets["train"]["policy"],
         )
 
     summary = {
@@ -745,6 +829,7 @@ def main() -> None:
                 name: pass_through_limits.get(name, 0) for name in split_names
             },
             "faithful": {name: faithful_limits.get(name, 0) for name in split_names},
+            "policy_sample": {name: policy_limits.get(name, 0) for name in split_names},
         },
         "split_stats": {
             name: {
@@ -756,6 +841,18 @@ def main() -> None:
                 "pass_through_seen_candidates": bucket["seen_pass_through"],
                 "teacher_records": len(bucket["teacher"]),
                 "teacher_seen_candidates": bucket["seen_teacher"],
+                "policy_records": len(bucket["policy"]),
+                "policy_seen_candidates": bucket["seen_policy"],
+                "policy_pass_through_records": sum(
+                    1
+                    for sample in bucket["policy"]
+                    if sample.metadata.get("policy_sample_kind") == "pass_through"
+                ),
+                "policy_compression_records": sum(
+                    1
+                    for sample in bucket["policy"]
+                    if sample.metadata.get("policy_sample_kind") == "compression"
+                ),
                 "rtf_decision_stats": finalize_rtf_stats(bucket["rtf_stats"]),
             }
             for name, bucket in buckets.items()
@@ -771,6 +868,7 @@ def main() -> None:
             "word_per_sec": args.word_per_sec,
             "legacy_stress_ratio_threshold_unused": args.stress_ratio_threshold,
         },
+        "tts_backend": tts_metadata,
         "outputs": split_outputs,
         "train_alias_outputs": train_alias_outputs,
     }

@@ -1,0 +1,17 @@
+default_backend: qwen3_tts
+backends:
+  qwen3_tts:
+    config_cls: Qwen3TTSPipelineConfig
+    model_path: Qwen/Qwen3-TTS-12Hz-1.7B-Base
+    relay_backend: shm
+    sglang_omni_example: examples/configs/qwen3_tts_1_7b.yaml
+  moss_tts:
+    config_cls: MossTTSPipelineConfig
+    model_path: OpenMOSS-Team/MOSS-TTS-v1.5
+    relay_backend: shm
+    sglang_omni_example: examples/configs/moss_tts.yaml
+  higgs_tts:
+    config_cls: GenericTTSPipelineConfig
+    model_path: null
+    relay_backend: shm
+    model_path_required: true
