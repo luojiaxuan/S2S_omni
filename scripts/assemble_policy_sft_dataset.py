@@ -18,6 +18,7 @@ from s2s_omni.io import read_jsonl, write_jsonl
 from s2s_omni.prompts import SYSTEM_COMPRESSION, build_compression_user_prompt
 from s2s_omni.schema import S2SSample
 from s2s_omni.style import style_violations
+from s2s_omni.tts import tts_metadata_for_backend
 
 WORD_RE = re.compile(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?|[\u4e00-\u9fff]")
 
@@ -94,6 +95,15 @@ def final_reject_reasons(
 
 def tts_request(sample: S2SSample, answer: str) -> dict[str, Any]:
     metadata = sample.metadata
+    backend = metadata.get("tts_backend", "qwen3_tts")
+    default_tts_metadata = tts_metadata_for_backend(
+        str(backend),
+        metadata.get("tts_model_path"),
+    )
+    tts_metadata = {
+        **default_tts_metadata,
+        **{key: value for key, value in metadata.items() if key.startswith("tts_")},
+    }
     unit_rate = metadata.get("default_target_unit_rate")
     output_units = count_units(answer, sample.tgt_lang)
     estimated_duration_s = None
@@ -101,10 +111,11 @@ def tts_request(sample: S2SSample, answer: str) -> dict[str, Any]:
         estimated_duration_s = round(output_units / float(unit_rate), 3)
     return {
         "id": sample.id,
-        "backend": metadata.get("tts_backend", "qwen3_tts"),
-        "config_cls": metadata.get("tts_config_cls"),
-        "model_path": metadata.get("tts_model_path"),
-        "relay_backend": metadata.get("tts_relay_backend", "shm"),
+        "backend": tts_metadata.get("tts_backend", "qwen3_tts"),
+        "config_cls": tts_metadata.get("tts_config_cls"),
+        "model_path": tts_metadata.get("tts_model_path"),
+        "relay_backend": tts_metadata.get("tts_relay_backend", "shm"),
+        "sglang_omni_example": tts_metadata.get("tts_sglang_omni_example"),
         "source_audio": sample.audio_path,
         "source_text": sample.source_text,
         "target_text": answer,
@@ -116,7 +127,7 @@ def tts_request(sample: S2SSample, answer: str) -> dict[str, Any]:
         "estimated_target_speech_s": estimated_duration_s,
         "target_text_units": output_units,
         "target_unit_rate": unit_rate,
-        "duration_policy": metadata.get(
+        "duration_policy": tts_metadata.get(
             "tts_duration_policy",
             "match_target_text_default_speech_duration",
         ),

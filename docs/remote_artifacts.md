@@ -52,8 +52,10 @@ violations. The speed-factor distribution is 6,878 at `1.0x`, 6,770 at
 
 `tts_requests_25k.jsonl` is a TTS sidecar for the thinker outputs. The default
 backend is `qwen3_tts` with
-`Qwen/Qwen3-TTS-12Hz-1.7B-Base`; it records source speech spans, target text,
-target-unit counts, duration budgets, and estimated default-speech durations.
+`Qwen/Qwen3-TTS-12Hz-1.7B-Base` and SGLang-Omni example config
+`examples/configs/qwen3_tts_1_7b.yaml`; it records source speech spans, target
+text, target-unit counts, duration budgets, and estimated default-speech
+durations.
 
 Current RTF-aware split pilot data:
 
