@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-duration-ratio", type=float, default=0.35)
     parser.add_argument("--max-duration-ratio", type=float, default=1.1)
     parser.add_argument("--eos-boost", type=float, default=4.0)
-    parser.add_argument("--talker-do-sample", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--talker-do-sample", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--talker-temperature", type=float, default=0.9)
     parser.add_argument("--talker-top-k", type=int, default=50)
     parser.add_argument("--talker-top-p", type=float, default=1.0)
@@ -62,9 +62,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--code-predictor-do-sample",
         action=argparse.BooleanOptionalAction,
-        default=False,
-        help="Sample residual codec groups inside the Omni talker. Greedy is safer for labels.",
+        default=True,
+        help="Sample residual codec groups inside the Omni talker, matching official inference.",
     )
+    parser.add_argument("--min-unique-code-values", type=int, default=32)
     parser.add_argument("--decode-audio", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--save-rejected", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
@@ -236,19 +237,18 @@ class ConstrainedTalkerCodeGenerator:
         self.model.eval()
         if not getattr(self.model, "has_talker", False):
             self.model.enable_talker()
-        if not args.code_predictor_do_sample:
-            self._patch_code_predictor_greedy_decode()
+        self._patch_code_predictor_decode()
 
-    def _patch_code_predictor_greedy_decode(self) -> None:
+    def _patch_code_predictor_decode(self) -> None:
         original_generate = self.model.talker.code_predictor.generate
 
-        def generate_without_sampling(*call_args: Any, **kwargs: Any) -> Any:
-            kwargs["do_sample"] = False
+        def generate_with_stable_logits(*call_args: Any, **kwargs: Any) -> Any:
+            kwargs["do_sample"] = bool(self.args.code_predictor_do_sample)
             kwargs["remove_invalid_values"] = True
             kwargs["renormalize_logits"] = True
             return original_generate(*call_args, **kwargs)
 
-        self.model.talker.code_predictor.generate = generate_without_sampling
+        self.model.talker.code_predictor.generate = generate_with_stable_logits
 
     def generate_one(self, sample: S2SSample, target_text: str) -> dict[str, Any]:
         torch = self.torch
@@ -293,8 +293,16 @@ class ConstrainedTalkerCodeGenerator:
                 max_new_tokens=max_new_tokens,
             )
             codes = self._extract_codes(talker_result)
+            code_min = int(codes.min().item())
+            code_max = int(codes.max().item())
+            code_unique_values = int(torch.unique(codes).numel())
+            code_reject_reasons = []
+            if code_min < 0 or code_max >= self.model.config.code2wav_config.codebook_size:
+                code_reject_reasons.append("codec_value_out_of_range")
+            if code_unique_values < self.args.min_unique_code_values:
+                code_reject_reasons.append("low_codec_diversity")
             wav = None
-            if self.args.decode_audio:
+            if self.args.decode_audio and not code_reject_reasons:
                 wav = self.model.code2wav.chunked_decode(
                     codes,
                     chunk_size=300,
@@ -304,10 +312,16 @@ class ConstrainedTalkerCodeGenerator:
         frames = int(codes.shape[-1])
         duration_s = frames / float(self.args.codec_frame_rate)
         accepted = duration_s <= float(budget_s) * self.args.max_duration_ratio
-        reject_reasons = [] if accepted else ["over_duration_budget"]
+        reject_reasons = list(code_reject_reasons)
+        if not accepted:
+            reject_reasons.append("over_duration_budget")
+        accepted = not reject_reasons
         return {
             "codes": codes.detach().cpu().to(torch.int16).numpy(),
             "wav": None if wav is None else wav.reshape(-1).detach().cpu().float().numpy(),
+            "code_min": code_min,
+            "code_max": code_max,
+            "code_unique_values": code_unique_values,
             "codec_frames": frames,
             "codec_duration_s": round(duration_s, 3),
             "budget_duration_s": round(float(budget_s), 3),
