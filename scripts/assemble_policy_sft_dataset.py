@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reject-output")
     parser.add_argument("--target-size", type=int, default=25000)
     parser.add_argument("--seed", type=int, default=1234)
-    parser.add_argument("--max-over-budget-ratio", type=float, default=1.12)
+    parser.add_argument("--max-over-budget-ratio", type=float, default=1.0)
     parser.add_argument("--allow-incomplete", action="store_true")
     return parser.parse_args()
 

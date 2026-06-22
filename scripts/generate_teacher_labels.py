@@ -46,7 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--shard-index", type=int, default=0)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--keep-rejected", action="store_true")
-    parser.add_argument("--max-over-budget-ratio", type=float, default=1.12)
+    parser.add_argument("--max-over-budget-ratio", type=float, default=1.0)
     parser.add_argument("--log-every", type=int, default=10)
     return parser.parse_args()
 
