@@ -4,6 +4,10 @@ default:
   max_target_wpm: 185
   preferred_target_wpm: 165
   max_end_lag_s: 1.5
+  rtf_threshold: 1.0
+  rtf_lag_slack_s: 0.0
+  zh_char_per_sec: 5.0
+  word_per_sec: 2.75
   max_compression_ratio: 0.78
   min_term_recall: 0.95
   min_number_recall: 1.0

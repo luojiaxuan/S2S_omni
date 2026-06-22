@@ -6,11 +6,12 @@ from .schema import S2SSample
 
 
 SYSTEM_COMPRESSION = """You are a professional simultaneous interpreter.
-Your task is meaning-preserving compression for streaming speech translation.
+Your task is budget-aware streaming speech translation.
 Preserve all core claims, entities, numbers, terminology, negation, modality,
 speaker intent, and causal or contrastive relations. Compress or omit only
 repetitions, fillers, self-repairs, redundant modifiers, and non-critical
-examples. Do not add information.
+examples. If the faithful translation fits the timing/length budget, keep it
+faithful and do not shorten unnecessarily. Do not add information.
 Use natural modern spoken language that a TTS system can read aloud smoothly.
 For Chinese, avoid classical/literary shorthand such as 其, 之, 乃, 遂, 皆,
 足证, or telegraphic noun piles. Prefer clear contemporary wording even if it
@@ -28,6 +29,12 @@ def build_compression_user_prompt(sample: S2SSample, include_reference: bool = F
         "max_target_duration_s": target.max_target_duration_s,
         "max_target_wpm": target.max_target_wpm,
         "max_end_lag_s": target.max_end_lag_s,
+        "streaming_decision_policy": sample.metadata.get("streaming_decision_policy"),
+        "s2s_rtf": sample.metadata.get("s2s_rtf"),
+        "rtf_threshold": sample.metadata.get("rtf_threshold"),
+        "playback_budget_s": sample.metadata.get("playback_budget_s"),
+        "reference_tts_duration_s": sample.metadata.get("reference_tts_duration_s"),
+        "needs_compression": sample.metadata.get("needs_compression"),
         "must_keep_terms": sample.must_keep_terms,
         "core_meanings": sample.core_meanings,
     }
@@ -64,9 +71,15 @@ def build_compression_user_prompt(sample: S2SSample, include_reference: bool = F
                 "speech output. Do not use archaic/classical compression or "
                 "telegram-like fragments."
             ),
+            "Budget policy:",
+            (
+                "If a faithful translation can fit the hard length/timing budget, "
+                "keep the meaning complete and do not compress just to be shorter. "
+                "Only compact when the budget would otherwise be exceeded."
+            ),
             "Compression constraints as JSON:",
             json.dumps(constraints, ensure_ascii=False),
-            "Return only the compressed target-language translation.",
+            "Return only the target-language translation.",
         ]
     )
     return "\n".join(parts)

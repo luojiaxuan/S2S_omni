@@ -97,6 +97,33 @@ def units_per_minute(text: str, lang: str, duration_s: float | None) -> float | 
     return unit_count(text, lang) / (duration_s / 60.0)
 
 
+def estimated_speech_duration_s(
+    text: str,
+    lang: str,
+    target_unit_rate: float | None,
+) -> float | None:
+    if target_unit_rate is None or target_unit_rate <= 0:
+        return None
+    return unit_count(text, lang) / target_unit_rate
+
+
+def s2s_real_time_factor(
+    text: str,
+    sample: S2SSample,
+) -> float | None:
+    rate = sample.metadata.get("default_target_unit_rate")
+    budget_s = sample.metadata.get("playback_budget_s")
+    try:
+        rate_f = float(rate)
+        budget_f = float(budget_s)
+    except (TypeError, ValueError):
+        return None
+    speech_s = estimated_speech_duration_s(text, sample.tgt_lang, rate_f)
+    if speech_s is None or budget_f <= 0:
+        return None
+    return speech_s / budget_f
+
+
 def end_lag_s(sample: S2SSample) -> float | None:
     if sample.timing.src_end_s is None or sample.timing.tgt_end_s is None:
         return None
@@ -180,6 +207,13 @@ def heuristic_score_sample(sample: S2SSample, candidate: str | None = None) -> d
     duration_budget = sample.target.max_target_duration_s or sample.timing.tgt_duration_s
     wpm = words_per_minute(candidate, duration_budget)
     upm = units_per_minute(candidate, sample.tgt_lang, duration_budget)
+    estimated_speech_s = estimated_speech_duration_s(
+        candidate,
+        sample.tgt_lang,
+        _metadata_float(sample, "default_target_unit_rate"),
+    )
+    rtf = s2s_real_time_factor(candidate, sample)
+    rtf_threshold = _metadata_float(sample, "rtf_threshold")
     lag = end_lag_s(sample)
 
     speed_pen = listenability_penalty(wpm, sample.target.max_target_wpm)
@@ -218,12 +252,28 @@ def heuristic_score_sample(sample: S2SSample, candidate: str | None = None) -> d
         "number_recall": num_recall,
         "estimated_target_wpm": wpm,
         "estimated_target_units_per_minute": upm,
+        "estimated_target_speech_s": estimated_speech_s,
+        "s2s_rtf": rtf,
+        "s2s_rtf_threshold": rtf_threshold,
+        "s2s_rtf_violation": (
+            rtf is not None and rtf_threshold is not None and rtf > rtf_threshold
+        ),
         "end_lag_s": lag,
         "budget_penalty": budget_pen,
         "listenability_penalty": speed_pen,
         "lag_penalty": late_pen,
         "heuristic_aggregate": round(float(aggregate), 6),
     }
+
+
+def _metadata_float(sample: S2SSample, key: str) -> float | None:
+    value = sample.metadata.get(key)
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def summarize_metric_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:

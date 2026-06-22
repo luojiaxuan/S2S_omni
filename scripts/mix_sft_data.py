@@ -18,7 +18,12 @@ from s2s_omni.io import read_jsonl, write_jsonl
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Mix primary and auxiliary SFT JSONL files.")
     parser.add_argument("--primary", required=True, help="Primary SFT JSONL, e.g. compression labels.")
-    parser.add_argument("--aux", required=True, help="Auxiliary SFT JSONL, e.g. faithful warm-up.")
+    parser.add_argument(
+        "--aux",
+        nargs="+",
+        required=True,
+        help="One or more auxiliary SFT JSONL files, e.g. pass-through and faithful warm-up.",
+    )
     parser.add_argument("--output", required=True)
     parser.add_argument("--aux-limit", type=int, default=0, help="0 means use all auxiliary records.")
     parser.add_argument("--primary-repeat", type=int, default=1)
@@ -38,7 +43,13 @@ def main() -> None:
     args = parse_args()
     rng = random.Random(args.seed)
     primary = [tag(record, "primary") for record in read_jsonl(args.primary)]
-    aux = [tag(record, "aux") for record in read_jsonl(args.aux)]
+    aux = []
+    aux_counts: dict[str, int] = {}
+    for aux_path in args.aux:
+        source = f"aux:{Path(aux_path).stem}"
+        records = [tag(record, source) for record in read_jsonl(aux_path)]
+        aux_counts[aux_path] = len(records)
+        aux.extend(records)
     if args.aux_limit > 0 and len(aux) > args.aux_limit:
         aux = rng.sample(aux, args.aux_limit)
     mixed = primary * max(1, args.primary_repeat) + aux
@@ -50,6 +61,7 @@ def main() -> None:
                 "primary": len(primary),
                 "primary_repeat": max(1, args.primary_repeat),
                 "aux": len(aux),
+                "aux_inputs": aux_counts,
                 "mixed": len(mixed),
                 "output": args.output,
             },

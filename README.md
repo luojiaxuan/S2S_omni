@@ -149,10 +149,12 @@ The first data source is the existing GigaSpeech S2TT table on taurus:
 /mnt/taurus/data/siqiouyang/datasets/gigaspeech/train_xl_case_ft-qwen2.5-32b-instruct_marked_mfa_punc_asr.tsv
 ```
 
-The builder first splits by original GigaSpeech `base_id`, then emits two kinds
-of records inside each split:
+The builder first splits by original GigaSpeech `base_id`, then emits three
+kinds of records inside each split:
 
 - `faithful_sft.jsonl`: phase-0 warm-up, source transcript to full translation
+- `pass_through_sft.jsonl`: speed-stressed chunks whose faithful translation
+  still fits the default speech real-time budget, so the target stays unchanged
 - `compression_teacher_requests.jsonl`: speed-stressed requests for a teacher
   model to create compressed translations
 
@@ -166,7 +168,10 @@ Pilot split command:
 python3 scripts/build_gigaspeech_sft.py \
   --max-rows 100000 \
   --faithful-limit 4000 \
+  --pass-through-limit 2000 \
   --teacher-limit 2000 \
+  --dev-pass-through-limit 300 \
+  --test-pass-through-limit 300 \
   --dev-teacher-limit 300 \
   --test-teacher-limit 300 \
   --split-ratios train=0.9,dev=0.05,test=0.05 \
@@ -174,9 +179,21 @@ python3 scripts/build_gigaspeech_sft.py \
 ```
 
 The split pilot scanned 100,000 rows and found 98,990 usable rows. It wrote
-2,000 train teacher requests, 300 dev teacher requests, 300 test teacher
-requests, and 4,000 train faithful SFT records. The split unit is `base_id`, so
-different speed variants of the same utterance cannot cross train/dev/test.
+train/dev/test files under `splits/`. The split unit is `base_id`, so different
+speed variants of the same utterance cannot cross train/dev/test.
+
+Compression is decided with a speech real-time factor, not source speed alone:
+
+```text
+s2s_rtf = faithful_target_speech_duration_at_default_rate / source_chunk_wall_duration
+```
+
+If `s2s_rtf <= 1.0`, the record goes to `pass_through_sft.jsonl` and the full
+translation is the supervised target. If `s2s_rtf > 1.0`, the record goes to
+`compression_teacher_requests.jsonl` with a hard maximum target length derived
+from the default speech rate and source chunk duration. This teaches the model
+to compact only when the target speech would otherwise miss the next source
+chunk.
 
 Verify split isolation before reporting held-out numbers:
 

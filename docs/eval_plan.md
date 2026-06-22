@@ -32,6 +32,10 @@ These are cheap enough to run before every SFT/RL iteration:
   success criterion.
 - `estimated_target_units_per_minute` and `estimated_target_wpm`: listenability
   pressure proxies until audio is generated.
+- `s2s_rtf`: estimated target speech duration at the default target speech rate
+  divided by the source chunk wall-clock duration. A value above 1 means the
+  target audio would still be playing when the next source chunk is ready.
+- `s2s_rtf_violation`: true when `s2s_rtf` exceeds the configured threshold.
 - `end_lag_s` and `lag_penalty`: segment-level timing pressure when timestamps
   are available.
 - p50/p90/p95/max summaries and violation rates, not only means.
@@ -52,6 +56,24 @@ variant id. All speed variants such as `AUD...__speed_1.7` and
   numbers.
 - Run `scripts/verify_split_integrity.py` before reporting any held-out result
   and store the JSON summary next to the eval output.
+
+## Compression Decision
+
+Training data should not compact merely because the source audio is fast. The
+decision is:
+
+```text
+faithful_target_speech_s = target_units / default_target_unit_rate
+source_chunk_wall_s = source_duration_s / source_speed_factor
+s2s_rtf = faithful_target_speech_s / source_chunk_wall_s
+```
+
+If `s2s_rtf <= 1.0`, the faithful translation is used as the supervised target
+under a pass-through budget. If `s2s_rtf > 1.0`, the example is sent to teacher
+label generation with `max_target_units = floor(source_chunk_wall_s *
+default_target_unit_rate)`. This makes compression a consequence of target
+speech not fitting before the next source chunk, rather than a blanket response
+to source speed.
 
 ## Optional Classic Metrics
 

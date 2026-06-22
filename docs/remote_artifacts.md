@@ -19,7 +19,29 @@ Project mirror:
 /home/sglang-omni/S2S_omni
 ```
 
-Current split-aware pilot data:
+Current RTF-aware split pilot data:
+
+```text
+/home/sglang-omni/S2S_omni/work/gigaspeech_pilot_rtf
+```
+
+Important files:
+
+```text
+work/gigaspeech_pilot_rtf/splits/train/pass_through_sft.jsonl
+work/gigaspeech_pilot_rtf/splits/train/compression_teacher_requests.jsonl
+work/gigaspeech_pilot_rtf/splits/train/faithful_sft.jsonl
+work/gigaspeech_pilot_rtf/splits/dev/rtf_decision_manifest.jsonl
+work/gigaspeech_pilot_rtf/splits/test/rtf_decision_manifest.jsonl
+work/gigaspeech_pilot_rtf/split_integrity_rtf_decision_b200.json
+```
+
+The compression decision is based on default-speech S2S real-time factor:
+examples go to `pass_through_sft.jsonl` when the faithful target speech fits
+before the next source chunk, otherwise they go to
+`compression_teacher_requests.jsonl`.
+
+Previous split-aware pilot data:
 
 ```text
 /home/sglang-omni/S2S_omni/work/gigaspeech_pilot_split

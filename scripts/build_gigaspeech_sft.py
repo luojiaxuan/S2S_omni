@@ -77,6 +77,36 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--speed-factors", default="1.0,1.35,1.7,2.0")
     parser.add_argument("--max-end-lag-s", type=float, default=1.5)
     parser.add_argument(
+        "--rtf-threshold",
+        type=float,
+        default=1.0,
+        help=(
+            "Compress only when default-speed target speech would exceed this "
+            "source-chunk real-time factor."
+        ),
+    )
+    parser.add_argument(
+        "--rtf-lag-slack-s",
+        type=float,
+        default=0.0,
+        help=(
+            "Optional slack added to the source chunk duration for RTF budget "
+            "calculation. Default 0 means target speech must finish before the "
+            "next source chunk is processed."
+        ),
+    )
+    parser.add_argument(
+        "--pass-through-limit",
+        type=int,
+        default=2000,
+        help=(
+            "Train split limit for speed-stressed examples whose faithful "
+            "translation already fits the S2S RTF budget."
+        ),
+    )
+    parser.add_argument("--dev-pass-through-limit", type=int, default=300)
+    parser.add_argument("--test-pass-through-limit", type=int, default=300)
+    parser.add_argument(
         "--zh-char-per-sec",
         type=float,
         default=5.0,
@@ -156,6 +186,10 @@ def target_unit_rate(lang: str, zh_char_per_sec: float, word_per_sec: float) -> 
     return zh_char_per_sec if lang.startswith("zh") else word_per_sec
 
 
+def target_unit_rate_name(lang: str) -> str:
+    return "zh_char_per_sec" if lang.startswith("zh") else "word_per_sec"
+
+
 def parse_trajectory(raw: str) -> list[str]:
     try:
         value = ast.literal_eval(raw)
@@ -175,12 +209,19 @@ def make_sample_from_row(
     duration_s: float,
     max_end_lag_s: float,
     max_target_wpm: float | None = None,
+    max_target_duration_s: float | None = None,
+    metadata_updates: dict[str, Any] | None = None,
+    force_speed_suffix: bool = False,
 ) -> S2SSample:
     src = clean_text(row["src_text"])
     tgt = clean_text(row["tgt_text"])
     tgt_lang = row.get("tgt_lang", "zh")
     scaled_duration = duration_s / speed_factor
-    sample_id = row["id"] if mode == "faithful" else f"{row['id']}__speed_{speed_factor:g}"
+    sample_id = (
+        row["id"]
+        if mode == "faithful" and speed_factor == 1.0 and not force_speed_suffix
+        else f"{row['id']}__speed_{speed_factor:g}"
+    )
     trajectory = parse_trajectory(row.get("trajectory", ""))
     max_target_chars = max_target_units if tgt_lang.startswith("zh") else None
     max_target_words = None if tgt_lang.startswith("zh") else max_target_units
@@ -189,7 +230,10 @@ def make_sample_from_row(
         target_ratio=target_ratio,
         max_target_chars=max_target_chars,
         max_target_words=max_target_words,
-        max_target_duration_s=round(scaled_duration + max_end_lag_s, 3),
+        max_target_duration_s=round(
+            max_target_duration_s if max_target_duration_s is not None else scaled_duration + max_end_lag_s,
+            3,
+        ),
         max_target_wpm=max_target_wpm,
         max_end_lag_s=max_end_lag_s,
         preserve=[
@@ -226,8 +270,38 @@ def make_sample_from_row(
             "target_units": count_units(tgt, row.get("tgt_lang", "zh")),
             "trajectory_nonempty": len(trajectory),
             "trajectory_preview": trajectory[:8],
+            **(metadata_updates or {}),
         },
     )
+
+
+def s2s_rtf_decision(
+    *,
+    duration_s: float,
+    speed_factor: float,
+    target_units: int,
+    target_unit_rate_value: float,
+    rtf_threshold: float,
+    rtf_lag_slack_s: float,
+) -> dict[str, Any]:
+    source_wall_duration_s = duration_s / speed_factor
+    playback_budget_s = max(1e-6, source_wall_duration_s + rtf_lag_slack_s)
+    allowed_speech_s = max(1e-6, playback_budget_s * rtf_threshold)
+    max_target_units = max(1, int(allowed_speech_s * target_unit_rate_value))
+    reference_tts_duration_s = target_units / target_unit_rate_value
+    s2s_rtf = reference_tts_duration_s / playback_budget_s
+    return {
+        "source_wall_duration_s": round(source_wall_duration_s, 3),
+        "playback_budget_s": round(playback_budget_s, 3),
+        "allowed_speech_s": round(allowed_speech_s, 3),
+        "reference_tts_duration_s": round(reference_tts_duration_s, 3),
+        "default_target_unit_rate": target_unit_rate_value,
+        "rtf_threshold": rtf_threshold,
+        "rtf_lag_slack_s": rtf_lag_slack_s,
+        "max_target_units": max_target_units,
+        "s2s_rtf": round(s2s_rtf, 6),
+        "needs_compression": target_units > max_target_units,
+    }
 
 
 def sft_record(sample: S2SSample) -> dict[str, Any]:
@@ -266,8 +340,10 @@ def reservoir_add(items: list[Any], item: Any, limit: int, seen: int, rng: rando
 def empty_split_bucket() -> dict[str, Any]:
     return {
         "faithful": [],
+        "pass_through": [],
         "teacher": [],
         "seen_faithful": 0,
+        "seen_pass_through": 0,
         "seen_teacher": 0,
         "usable_rows": 0,
         "base_ids": set(),
@@ -278,22 +354,35 @@ def write_split_outputs(
     out_dir: Path,
     split_name: str,
     faithful: list[S2SSample],
+    pass_through: list[S2SSample],
     teacher: list[S2SSample],
 ) -> dict[str, str]:
     split_dir = out_dir / "splits" / split_name
     split_dir.mkdir(parents=True, exist_ok=True)
     faithful_manifest = split_dir / "faithful_manifest.jsonl"
     faithful_sft = split_dir / "faithful_sft.jsonl"
+    pass_through_manifest = split_dir / "pass_through_manifest.jsonl"
+    pass_through_sft = split_dir / "pass_through_sft.jsonl"
+    rtf_decision_manifest = split_dir / "rtf_decision_manifest.jsonl"
     teacher_manifest = split_dir / "compression_teacher_manifest.jsonl"
     teacher_requests = split_dir / "compression_teacher_requests.jsonl"
 
     write_jsonl(faithful_manifest, (sample.to_dict() for sample in faithful))
     write_jsonl(faithful_sft, (sft_record(sample) for sample in faithful))
+    write_jsonl(pass_through_manifest, (sample.to_dict() for sample in pass_through))
+    write_jsonl(pass_through_sft, (sft_record(sample) for sample in pass_through))
+    write_jsonl(
+        rtf_decision_manifest,
+        (sample.to_dict() for sample in [*pass_through, *teacher]),
+    )
     write_jsonl(teacher_manifest, (sample.to_dict() for sample in teacher))
     write_jsonl(teacher_requests, (teacher_record(sample) for sample in teacher))
     return {
         "faithful_manifest": str(faithful_manifest),
         "faithful_sft": str(faithful_sft),
+        "pass_through_manifest": str(pass_through_manifest),
+        "pass_through_sft": str(pass_through_sft),
+        "rtf_decision_manifest": str(rtf_decision_manifest),
         "teacher_manifest": str(teacher_manifest),
         "teacher_requests": str(teacher_requests),
     }
@@ -302,20 +391,33 @@ def write_split_outputs(
 def write_train_alias_outputs(
     out_dir: Path,
     faithful: list[S2SSample],
+    pass_through: list[S2SSample],
     teacher: list[S2SSample],
 ) -> dict[str, str]:
     faithful_manifest = out_dir / "faithful_manifest.jsonl"
     faithful_sft = out_dir / "faithful_sft.jsonl"
+    pass_through_manifest = out_dir / "pass_through_manifest.jsonl"
+    pass_through_sft = out_dir / "pass_through_sft.jsonl"
+    rtf_decision_manifest = out_dir / "rtf_decision_manifest.jsonl"
     teacher_manifest = out_dir / "compression_teacher_manifest.jsonl"
     teacher_requests = out_dir / "compression_teacher_requests.jsonl"
 
     write_jsonl(faithful_manifest, (sample.to_dict() for sample in faithful))
     write_jsonl(faithful_sft, (sft_record(sample) for sample in faithful))
+    write_jsonl(pass_through_manifest, (sample.to_dict() for sample in pass_through))
+    write_jsonl(pass_through_sft, (sft_record(sample) for sample in pass_through))
+    write_jsonl(
+        rtf_decision_manifest,
+        (sample.to_dict() for sample in [*pass_through, *teacher]),
+    )
     write_jsonl(teacher_manifest, (sample.to_dict() for sample in teacher))
     write_jsonl(teacher_requests, (teacher_record(sample) for sample in teacher))
     return {
         "faithful_manifest": str(faithful_manifest),
         "faithful_sft": str(faithful_sft),
+        "pass_through_manifest": str(pass_through_manifest),
+        "pass_through_sft": str(pass_through_sft),
+        "rtf_decision_manifest": str(rtf_decision_manifest),
         "teacher_manifest": str(teacher_manifest),
         "teacher_requests": str(teacher_requests),
     }
@@ -353,6 +455,11 @@ def main() -> None:
         "train": args.teacher_limit,
         "dev": args.dev_teacher_limit,
         "test": args.test_teacher_limit,
+    }
+    pass_through_limits = {
+        "train": args.pass_through_limit,
+        "dev": args.dev_pass_through_limit,
+        "test": args.test_pass_through_limit,
     }
     faithful_limits = {
         "train": args.faithful_limit,
@@ -408,11 +515,45 @@ def main() -> None:
 
         rate = target_unit_rate(tgt_lang, args.zh_char_per_sec, args.word_per_sec)
         for speed in speed_factors:
-            scaled_duration = duration_s / speed
-            budget_units = int((scaled_duration + args.max_end_lag_s) * rate)
+            decision = s2s_rtf_decision(
+                duration_s=duration_s,
+                speed_factor=speed,
+                target_units=tgt_units,
+                target_unit_rate_value=rate,
+                rtf_threshold=args.rtf_threshold,
+                rtf_lag_slack_s=args.rtf_lag_slack_s,
+            )
+            budget_units = int(decision["max_target_units"])
             ratio = budget_units / max(1, tgt_units)
-            if ratio >= args.stress_ratio_threshold:
+            metadata_updates = {
+                "streaming_decision_policy": "default_speech_s2s_rtf",
+                "target_unit_rate_name": target_unit_rate_name(tgt_lang),
+                **decision,
+            }
+
+            if not decision["needs_compression"]:
+                bucket["seen_pass_through"] += 1
+                sample = make_sample_from_row(
+                    row,
+                    mode="faithful",
+                    target_ratio=1.0,
+                    max_target_units=budget_units,
+                    speed_factor=speed,
+                    duration_s=duration_s,
+                    max_end_lag_s=args.max_end_lag_s,
+                    max_target_duration_s=float(decision["allowed_speech_s"]),
+                    metadata_updates=metadata_updates,
+                    force_speed_suffix=True,
+                )
+                reservoir_add(
+                    bucket["pass_through"],
+                    sample,
+                    pass_through_limits.get(split_name, 0),
+                    bucket["seen_pass_through"],
+                    rng,
+                )
                 continue
+
             bucket["seen_teacher"] += 1
             sample = make_sample_from_row(
                 row,
@@ -422,6 +563,8 @@ def main() -> None:
                 speed_factor=speed,
                 duration_s=duration_s,
                 max_end_lag_s=args.max_end_lag_s,
+                max_target_duration_s=float(decision["allowed_speech_s"]),
+                metadata_updates=metadata_updates,
             )
             reservoir_add(
                 bucket["teacher"],
@@ -438,6 +581,7 @@ def main() -> None:
             out_dir,
             split_name,
             buckets[split_name]["faithful"],
+            buckets[split_name]["pass_through"],
             buckets[split_name]["teacher"],
         )
 
@@ -446,6 +590,7 @@ def main() -> None:
         train_alias_outputs = write_train_alias_outputs(
             out_dir,
             buckets["train"]["faithful"],
+            buckets["train"]["pass_through"],
             buckets["train"]["teacher"],
         )
 
@@ -458,6 +603,9 @@ def main() -> None:
         "split_unit": "base_id",
         "split_limits": {
             "teacher": {name: teacher_limits.get(name, 0) for name in split_names},
+            "pass_through": {
+                name: pass_through_limits.get(name, 0) for name in split_names
+            },
             "faithful": {name: faithful_limits.get(name, 0) for name in split_names},
         },
         "split_stats": {
@@ -466,6 +614,8 @@ def main() -> None:
                 "usable_rows": bucket["usable_rows"],
                 "faithful_records": len(bucket["faithful"]),
                 "faithful_seen_candidates": bucket["seen_faithful"],
+                "pass_through_records": len(bucket["pass_through"]),
+                "pass_through_seen_candidates": bucket["seen_pass_through"],
                 "teacher_records": len(bucket["teacher"]),
                 "teacher_seen_candidates": bucket["seen_teacher"],
             }
@@ -473,7 +623,14 @@ def main() -> None:
         },
         "base_id_overlap_check": pairwise_base_id_overlaps(buckets),
         "speed_factors": speed_factors,
-        "stress_ratio_threshold": args.stress_ratio_threshold,
+        "compression_decision": {
+            "policy": "default_speech_s2s_rtf",
+            "rtf_threshold": args.rtf_threshold,
+            "rtf_lag_slack_s": args.rtf_lag_slack_s,
+            "zh_char_per_sec": args.zh_char_per_sec,
+            "word_per_sec": args.word_per_sec,
+            "legacy_stress_ratio_threshold_unused": args.stress_ratio_threshold,
+        },
         "outputs": split_outputs,
         "train_alias_outputs": train_alias_outputs,
     }
