@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-duration-ratio", type=float, default=0.35)
     parser.add_argument("--max-duration-ratio", type=float, default=1.1)
     parser.add_argument("--eos-boost", type=float, default=4.0)
-    parser.add_argument("--talker-do-sample", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--talker-do-sample", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--talker-temperature", type=float, default=0.9)
     parser.add_argument("--talker-top-k", type=int, default=50)
     parser.add_argument("--talker-top-p", type=float, default=1.0)
@@ -138,6 +138,10 @@ def rewrite_audio_uri(uri: str, prefix_maps: list[str]) -> str:
     return uri
 
 
+def module_device(module: Any) -> Any:
+    return next(module.parameters()).device
+
+
 def messages_for_forced_target(sample: S2SSample, target_text: str) -> list[dict[str, Any]]:
     user_text = build_compression_user_prompt(sample, include_reference=False)
     if sample.audio_path:
@@ -170,7 +174,7 @@ class EosBudgetLogitsProcessor:
 
     def __call__(self, input_ids: Any, scores: Any) -> Any:
         if self.step < self.min_new_tokens:
-            scores[:, self.eos_token_id] = -float("inf")
+            scores[:, self.eos_token_id] = scores[:, self.eos_token_id] - 1.0e4
         elif self.step >= self.budget_new_tokens and self.eos_boost:
             scores[:, self.eos_token_id] = scores[:, self.eos_token_id] + self.eos_boost
         self.step += 1
@@ -294,10 +298,10 @@ class ConstrainedTalkerCodeGenerator:
         thinker_kwargs["return_dict"] = True
         thinker_kwargs["use_cache"] = False
         thinker_outputs = model.thinker(**thinker_kwargs)
-        thinker_embed = thinker_outputs.hidden_states[0].to(input_ids.device)
+        thinker_embed = thinker_outputs.hidden_states[0]
         thinker_hidden = thinker_outputs.hidden_states[
             model.config.talker_config.accept_hidden_layer
-        ].to(input_ids.device)
+        ]
 
         im_starts = torch.nonzero(input_ids[0] == model.config.im_start_token_id).flatten()
         im_start_indexes = torch.cat(
@@ -316,14 +320,24 @@ class ConstrainedTalkerCodeGenerator:
         speaker_id = model.config.talker_config.speaker_id.get(self.args.speaker.lower())
         if speaker_id is None:
             raise NotImplementedError(f"Speaker {self.args.speaker} not implemented")
+        text_projection_device = module_device(model.talker.text_projection)
+        thinker_embedding = model.thinker.get_input_embeddings()
+        thinker_embedding_device = module_device(thinker_embedding)
         talker_special_tokens = torch.tensor(
-            [[model.config.tts_bos_token_id, model.config.tts_eos_token_id, model.config.tts_pad_token_id]],
-            device=model.thinker.device,
+            [
+                [
+                    model.config.tts_bos_token_id,
+                    model.config.tts_eos_token_id,
+                    model.config.tts_pad_token_id,
+                ]
+            ],
+            device=thinker_embedding_device,
             dtype=input_ids.dtype,
         )
         tts_bos_embed, tts_eos_embed, tts_pad_embed = (
-            model.talker.text_projection(model.thinker.get_input_embeddings()(talker_special_tokens))
-            .to(input_ids.device)
+            model.talker.text_projection(
+                thinker_embedding(talker_special_tokens).to(text_projection_device)
+            )
             .chunk(3, dim=1)
         )
 
@@ -331,13 +345,13 @@ class ConstrainedTalkerCodeGenerator:
         talker_input_ids = []
         trailing_text_hidden = None
         for idx in range(len(im_start_indexes) - 1):
-            im_start_index = im_start_indexes[idx]
-            segment_end_index = im_start_indexes[idx + 1]
+            im_start_index = int(im_start_indexes[idx].item())
+            segment_end_index = int(im_start_indexes[idx + 1].item())
             role_token = input_ids[0][im_start_index + 1]
             if role_token == model.config.system_token_id:
                 continue
             if role_token == model.config.user_token_id:
-                user_part = model._get_talker_user_parts(
+                user_part = self._get_talker_user_parts(
                     im_start_index,
                     segment_end_index,
                     multimodal_mask,
@@ -348,7 +362,7 @@ class ConstrainedTalkerCodeGenerator:
                 talker_input_ids.append(input_ids[:, im_start_index:segment_end_index])
                 continue
             if role_token == model.config.assistant_token_id:
-                assistant_embeds, assistant_ids, trailing_text_hidden = model._get_talker_assistant_parts(
+                assistant_embeds, assistant_ids, trailing_text_hidden = self._get_talker_assistant_parts(
                     im_start_index,
                     segment_end_index,
                     speaker_id,
@@ -364,12 +378,112 @@ class ConstrainedTalkerCodeGenerator:
 
         if trailing_text_hidden is None:
             raise RuntimeError("failed to locate assistant segment for talker conditioning")
+        talker_input_id = torch.cat(
+            [ids.to(text_projection_device) for ids in talker_input_ids],
+            dim=1,
+        )
         return {
-            "inputs_embeds": torch.cat([embed.to(input_ids.device) for embed in talker_input_embeds], dim=1),
+            "inputs_embeds": torch.cat(
+                [embed.to(text_projection_device) for embed in talker_input_embeds],
+                dim=1,
+            ),
             "trailing_text_hidden": trailing_text_hidden,
             "tts_pad_embed": tts_pad_embed,
-            "talker_input_ids": torch.cat([ids.to(input_ids.device) for ids in talker_input_ids], dim=1),
+            "talker_input_ids": talker_input_id,
+            "attention_mask": torch.ones_like(talker_input_id, dtype=torch.long),
         }
+
+    def _get_talker_user_parts(
+        self,
+        im_start_index: int,
+        segment_end_index: int,
+        multimodal_mask: Any,
+        thinker_hidden: Any,
+        thinker_embed: Any,
+    ) -> Any:
+        torch = self.torch
+        model = self.model
+        text_projection_device = module_device(model.talker.text_projection)
+        user_talker_part = torch.empty(
+            (
+                1,
+                segment_end_index - im_start_index,
+                model.config.talker_config.text_config.hidden_size,
+            ),
+            device=text_projection_device,
+            dtype=model.talker.dtype,
+        )
+        user_mm_mask = multimodal_mask[:, im_start_index:segment_end_index].to(text_projection_device)
+        if user_mm_mask.any():
+            hidden_mm = thinker_hidden[:, im_start_index:segment_end_index].to(text_projection_device)
+            user_talker_part[user_mm_mask] = model.talker.hidden_projection(
+                hidden_mm[user_mm_mask]
+            )
+        text_embed = thinker_embed[:, im_start_index:segment_end_index].to(text_projection_device)
+        user_talker_part[~user_mm_mask] = model.talker.text_projection(text_embed[~user_mm_mask])
+        return user_talker_part
+
+    def _get_talker_assistant_parts(
+        self,
+        im_start_index: int,
+        segment_end_index: int,
+        speaker_id: int,
+        thinker_embed: Any,
+        tts_pad_embed: Any,
+        tts_bos_embed: Any,
+        tts_eos_embed: Any,
+    ) -> tuple[Any, Any, Any]:
+        torch = self.torch
+        model = self.model
+        text_projection_device = module_device(model.talker.text_projection)
+        codec_embedding = model.talker.get_input_embeddings()
+        codec_embedding_device = module_device(codec_embedding)
+
+        assistant_hidden = model.talker.text_projection(
+            thinker_embed[:, im_start_index:segment_end_index].to(text_projection_device)
+        )
+        assistant_text_hidden = torch.cat(
+            (
+                assistant_hidden[:, :3],
+                tts_pad_embed.expand(-1, 4, -1),
+                tts_bos_embed,
+                assistant_hidden[:, 3:4],
+            ),
+            dim=1,
+        )
+        codec_special_tokens = torch.tensor(
+            [
+                [
+                    model.config.talker_config.codec_nothink_id,
+                    model.config.talker_config.codec_think_bos_id,
+                    model.config.talker_config.codec_think_eos_id,
+                    speaker_id,
+                    model.config.talker_config.codec_pad_id,
+                    model.config.talker_config.codec_bos_id,
+                ]
+            ],
+            device=codec_embedding_device,
+            dtype=torch.long,
+        )
+        assistant_codec_hidden = torch.cat(
+            (
+                torch.zeros(
+                    (1, 3, model.config.talker_config.text_config.hidden_size),
+                    device=codec_embedding_device,
+                    dtype=model.talker.dtype,
+                ),
+                codec_embedding(codec_special_tokens),
+            ),
+            dim=1,
+        ).to(text_projection_device)
+        trailing_text_hidden = torch.cat((assistant_hidden[:, 4:], tts_eos_embed), dim=1)
+        input_ids = torch.full(
+            (1, assistant_text_hidden.shape[1]),
+            fill_value=model.config.tts_pad_token_id,
+            dtype=torch.long,
+            device=text_projection_device,
+        )
+        return assistant_text_hidden + assistant_codec_hidden, input_ids, trailing_text_hidden
 
     def _generate_talker(
         self,
