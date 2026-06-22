@@ -57,6 +57,33 @@ backend is `qwen3_tts` with
 text, target-unit counts, duration budgets, and estimated default-speech
 durations.
 
+Held-out dev/test policy eval data, generated on 2026-06-22 after excluding all
+25k train `base_id`s:
+
+```text
+/data/repo/S2S_omni/work/gigaspeech_heldout_eval_20260622
+```
+
+The held-out split has 300 dev and 300 test policy samples, with no dev/test
+`base_id` overlap and no train `base_id` overlap. Each split is roughly half
+pass-through and half compression under the default-speech S2S RTF policy.
+
+TTS duration spot-check output:
+
+```text
+/data/outputs/s2s_tts_duration_audit_4_20260622
+```
+
+The 4-sample check synthesized faithful reference text and compressed target
+text with Qwen3-Omni talker. All 4 compressed outputs were shorter than their
+faithful-reference counterparts; observed compressed/reference duration ratios
+were 0.51, 0.58, 0.61, and 0.67.
+
+Current trainability note: `sft_25k.jsonl` provides thinker/text supervision.
+Talker LoRA requires audio codec supervision (`labels`/`residual_codes` style
+inputs in the HF talker forward path), so it needs a separate TTS-to-code-label
+pipeline before it can be trained as a genuine supervised talker adapter.
+
 Current RTF-aware split pilot data:
 
 ```text

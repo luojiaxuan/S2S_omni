@@ -41,6 +41,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out-dir", default="work/gigaspeech")
     parser.add_argument("--max-rows", type=int, default=0, help="0 means scan all rows.")
     parser.add_argument(
+        "--exclude-base-ids-file",
+        help="Optional JSONL or text file of original GigaSpeech ids to exclude.",
+    )
+    parser.add_argument(
         "--summary-only",
         action="store_true",
         help="Scan all candidate decisions and write build_summary.json only.",
@@ -621,6 +625,26 @@ def iter_rows(path: str, max_rows: int) -> Iterable[dict[str, str]]:
             yield row
 
 
+def load_excluded_base_ids(path: str | None) -> set[str]:
+    if not path:
+        return set()
+    excluded: set[str] = set()
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith("{"):
+                record = json.loads(line)
+                metadata = record.get("metadata") or {}
+                base_id = record.get("base_id") or metadata.get("base_id") or record.get("id")
+            else:
+                base_id = line
+            if base_id:
+                excluded.add(str(base_id))
+    return excluded
+
+
 def main() -> None:
     args = parse_args()
     rng = random.Random(args.seed)
@@ -632,6 +656,7 @@ def main() -> None:
     buckets = {name: empty_split_bucket(speed_factors) for name in split_names}
     global_rtf_stats = empty_rtf_stats(speed_factors)
     tts_metadata = tts_metadata_for_backend(args.tts_backend, args.tts_model_path)
+    excluded_base_ids = load_excluded_base_ids(args.exclude_base_ids_file)
     teacher_limits = {
         "train": args.teacher_limit,
         "dev": args.dev_teacher_limit,
@@ -675,6 +700,8 @@ def main() -> None:
             continue
         usable += 1
         base_id = row["id"]
+        if base_id in excluded_base_ids:
+            continue
         split_name = assign_split(base_id, split_ratios, args.seed)
         bucket = buckets[split_name]
         bucket["usable_rows"] += 1
@@ -828,6 +855,7 @@ def main() -> None:
         "split_seed": args.seed,
         "split_ratios": dict(split_ratios),
         "split_unit": "base_id",
+        "excluded_base_ids": len(excluded_base_ids),
         "split_limits": {
             "teacher": {name: teacher_limits.get(name, 0) for name in split_names},
             "pass_through": {
