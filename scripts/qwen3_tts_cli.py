@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--language", default="Chinese")
     parser.add_argument("--device-map", default="cuda:0")
     parser.add_argument("--dtype", default="bfloat16", choices=["bfloat16", "float16", "float32"])
-    parser.add_argument("--attn-implementation", default="flash_attention_2")
+    parser.add_argument("--attn-implementation", default="sdpa")
     parser.add_argument("--ref-audio", default=None)
     parser.add_argument("--ref-text", default=None)
     parser.add_argument(
@@ -54,6 +54,8 @@ def main() -> None:
 
     import soundfile as sf
     import torch
+
+    sys.modules.setdefault("kernels", None)
     from qwen_tts import Qwen3TTSModel
 
     started = time.perf_counter()

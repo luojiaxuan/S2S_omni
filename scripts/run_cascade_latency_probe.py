@@ -51,7 +51,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tts-language", default="Chinese")
     parser.add_argument("--tts-device-map", default="cuda:0")
     parser.add_argument("--tts-dtype", default="bfloat16", choices=["bfloat16", "float16", "float32"])
-    parser.add_argument("--tts-attn-implementation", default="flash_attention_2")
+    parser.add_argument("--tts-attn-implementation", default="sdpa")
     parser.add_argument("--tts-ref-audio", default="")
     parser.add_argument("--tts-ref-text", default="")
     parser.add_argument("--tts-x-vector-only-mode", action=argparse.BooleanOptionalAction, default=False)
@@ -321,6 +321,8 @@ class CommandTTSRunner(TTSRunner):
 class Qwen3TTSRunner(TTSRunner):
     def __init__(self, args: argparse.Namespace) -> None:
         import torch
+
+        sys.modules.setdefault("kernels", None)
         from qwen_tts import Qwen3TTSModel
 
         started = time.perf_counter()
