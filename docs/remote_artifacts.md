@@ -84,6 +84,51 @@ Talker LoRA requires audio codec supervision (`labels`/`residual_codes` style
 inputs in the HF talker forward path), so it needs a separate TTS-to-code-label
 pipeline before it can be trained as a genuine supervised talker adapter.
 
+Final 25k thinker-LoRA SFT run, completed on 2026-06-22:
+
+```text
+/data/checkpoints/s2s_omni/qwen3_omni_25k_thinker_lora_20260622_full
+```
+
+The run trained for 1 epoch over 25k policy samples and finished 1,563 optimizer
+steps with final reported `train_loss=10.66`. The final adapter files are
+`adapter_model.safetensors` and `adapter_config.json`.
+
+Held-out eval output for the final adapter:
+
+```text
+/data/outputs/s2s_eval_qwen3_omni_25k_thinker_lora_20260622_full
+```
+
+Local synced copy:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/s2s_eval_qwen3_omni_25k_thinker_lora_20260622_full
+```
+
+Key held-out metrics:
+
+| Split | System | chrF | BLEU | Bag-F1 | Target/ref | Budget ratio | S2S RTF | RTF violation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| dev | base | 23.50 | 0.021 | 0.594 | 0.705 | 0.694 | 0.691 | 10.67% |
+| dev | evo | 34.22 | 0.577 | 0.674 | 0.821 | 0.772 | 0.768 | 7.33% |
+| test | base | 22.17 | 0.041 | 0.580 | 0.720 | 0.702 | 0.699 | 13.33% |
+| test | evo | 33.65 | 0.702 | 0.673 | 0.815 | 0.767 | 0.763 | 6.67% |
+
+Audio sample page:
+
+```text
+/data/outputs/s2s_eval_qwen3_omni_25k_thinker_lora_20260622_full/audio_samples_dev/index.html
+```
+
+The generated-audio sample audit covers 8 dev examples with base/evo paired
+Qwen3-Omni audio. Evo improved text coverage on average while keeping estimated
+S2S RTF near the base level, but the true generated wav durations did not
+reliably shrink relative to base: base mean wav duration was 12.87s and evo mean
+wav duration was 15.81s. This confirms that thinker-only LoRA plus frozen talker
+does not guarantee audio duration control, even when the text policy satisfies
+the estimated duration budget.
+
 Current RTF-aware split pilot data:
 
 ```text
