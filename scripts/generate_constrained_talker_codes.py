@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from s2s_omni.audio import load_audio_span
-from s2s_omni.io import read_jsonl, write_jsonl
+from s2s_omni.io import read_jsonl
 from s2s_omni.prompts import SYSTEM_COMPRESSION, build_compression_user_prompt
 from s2s_omni.schema import S2SSample
 
@@ -67,6 +67,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--decode-audio", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--save-rejected", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--log-every", type=int, default=10)
     return parser.parse_args()
 
@@ -146,6 +147,32 @@ def rewrite_audio_uri(uri: str, prefix_maps: list[str]) -> str:
 
 def module_device(module: Any) -> Any:
     return next(module.parameters()).device
+
+
+def append_jsonl(path: Path, record: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False, sort_keys=False) + "\n")
+        handle.flush()
+
+
+def read_existing_ids(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+    ids: set[str] = set()
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            sample_id = str(record.get("id") or "")
+            if sample_id:
+                ids.add(sample_id)
+    return ids
 
 
 def messages_for_forced_target(sample: S2SSample, target_text: str) -> list[dict[str, Any]]:
@@ -577,6 +604,16 @@ def main() -> None:
     output_dir = Path(args.output_dir)
     codes_dir = output_dir / "codes"
     wav_dir = output_dir / "wav"
+    accepted_path = output_dir / "talker_code_labels.jsonl"
+    rejected_path = output_dir / "talker_code_labels_rejected.jsonl"
+    if not args.resume:
+        for path in [accepted_path, rejected_path]:
+            if path.exists():
+                path.unlink()
+    existing_accepted = read_existing_ids(accepted_path) if args.resume else set()
+    existing_rejected = read_existing_ids(rejected_path) if args.resume else set()
+    done_ids = existing_accepted | existing_rejected
+
     sample_manifest = load_sample_manifest(args.sample_manifest)
     wanted = set(args.ids or [])
     selected = []
@@ -587,16 +624,17 @@ def main() -> None:
         if not target_text.strip():
             continue
         if eligible_index % args.num_shards == args.shard_index:
-            selected.append((sample, target_text, source_record))
-            if args.max_records > 0 and len(selected) >= args.max_records:
-                break
+            if sample.id not in done_ids:
+                selected.append((sample, target_text, source_record))
+                if args.max_records > 0 and len(selected) >= args.max_records:
+                    break
         eligible_index += 1
-    if not selected:
+    if not selected and not done_ids:
         raise SystemExit("no records selected")
 
-    generator = ConstrainedTalkerCodeGenerator(args)
-    accepted_rows: list[dict[str, Any]] = []
-    rejected_rows: list[dict[str, Any]] = []
+    accepted_count = 0
+    rejected_count = 0
+    generator = ConstrainedTalkerCodeGenerator(args) if selected else None
     for index, (sample, target_text, source_record) in enumerate(selected, start=1):
         row: dict[str, Any] = {
             "id": sample.id,
@@ -636,16 +674,21 @@ def main() -> None:
                 }
             )
         if row.get("accepted"):
-            accepted_rows.append(row)
+            append_jsonl(accepted_path, row)
+            accepted_count += 1
         else:
-            rejected_rows.append(row)
+            if args.save_rejected:
+                append_jsonl(rejected_path, row)
+            rejected_count += 1
         if args.log_every > 0 and index % args.log_every == 0:
             print(
                 json.dumps(
                     {
                         "processed": index,
-                        "accepted": len(accepted_rows),
-                        "rejected": len(rejected_rows),
+                        "accepted": accepted_count,
+                        "rejected": rejected_count,
+                        "existing_accepted": len(existing_accepted),
+                        "existing_rejected": len(existing_rejected),
                         "last_id": sample.id,
                         "last_duration_s": row.get("codec_duration_s"),
                         "last_budget_s": row.get("budget_duration_s"),
@@ -656,19 +699,20 @@ def main() -> None:
                 flush=True,
             )
 
-    write_jsonl(output_dir / "talker_code_labels.jsonl", accepted_rows)
-    if args.save_rejected:
-        write_jsonl(output_dir / "talker_code_labels_rejected.jsonl", rejected_rows)
     summary = {
         "input": args.input,
         "sample_manifest": args.sample_manifest,
         "model": args.model,
         "speaker": args.speaker,
-        "selected": len(selected),
-        "accepted": len(accepted_rows),
-        "rejected": len(rejected_rows),
-        "output": str(output_dir / "talker_code_labels.jsonl"),
-        "rejected_output": str(output_dir / "talker_code_labels_rejected.jsonl"),
+        "selected_this_run": len(selected),
+        "accepted_this_run": accepted_count,
+        "rejected_this_run": rejected_count,
+        "existing_accepted": len(existing_accepted),
+        "existing_rejected": len(existing_rejected),
+        "accepted_total": len(existing_accepted) + accepted_count,
+        "rejected_total": len(existing_rejected) + rejected_count,
+        "output": str(accepted_path),
+        "rejected_output": str(rejected_path),
         "codec_frame_rate": args.codec_frame_rate,
         "budget_margin_frames": args.budget_margin_frames,
         "min_duration_ratio": args.min_duration_ratio,
