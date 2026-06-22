@@ -47,12 +47,72 @@ def metric(row: dict[str, Any], prefix: str, key: str) -> Any:
     return row.get(f"{prefix}_{key}")
 
 
+def first_metric(row: dict[str, Any], prefix: str, keys: list[str]) -> Any:
+    for key in keys:
+        value = metric(row, prefix, key)
+        if value is not None:
+            return value
+    return None
+
+
 def fmt(value: Any, digits: int = 3) -> str:
     if value is None:
         return "-"
     if isinstance(value, float):
         return f"{value:.{digits}f}"
     return str(value)
+
+
+def fmt_bool(value: Any) -> str:
+    if value is True:
+        return "PASS"
+    if value is False:
+        return "FAIL"
+    return "-"
+
+
+def fmt_list(value: Any) -> str:
+    if value is None:
+        return "-"
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value) or "-"
+    return str(value)
+
+
+def render_signal_table(row: dict[str, Any], prefix: str) -> str:
+    signal_items = [
+        (
+            "gate",
+            fmt_bool(first_metric(row, prefix, ["speech_label_gate_pass", "gate_pass"])),
+        ),
+        (
+            "reasons",
+            fmt_list(first_metric(row, prefix, ["speech_label_gate_reasons", "gate_reasons"])),
+        ),
+        (
+            "budget ratio",
+            fmt(first_metric(row, prefix, ["duration_budget_ratio", "target_budget_ratio"])),
+        ),
+        ("coverage", fmt(metric(row, prefix, "target_coverage_recall"))),
+        ("last matched", fmt(metric(row, prefix, "last_matched_target_unit_ratio"))),
+        ("suffix miss", fmt(metric(row, prefix, "unmatched_target_suffix_units"), digits=0)),
+        ("chars/s", fmt(metric(row, prefix, "target_units_per_s"))),
+        ("rate pressure", fmt(metric(row, prefix, "rate_pressure_ratio"))),
+    ]
+    rows = "\n".join(
+        f"<tr><th>{html.escape(label)}</th><td>{html.escape(value)}</td></tr>"
+        for label, value in signal_items
+        if value != "-"
+    )
+    if not rows:
+        return ""
+    asr_text = metric(row, prefix, "asr_text")
+    asr_block = (
+        f'<div class="asr"><strong>ASR:</strong> {html.escape(str(asr_text))}</div>'
+        if asr_text
+        else ""
+    )
+    return f'<table class="signals">{rows}</table>{asr_block}'
 
 
 def render_panel(row: dict[str, Any], prefix: str, base_dir: Path) -> str:
@@ -68,10 +128,12 @@ def render_panel(row: dict[str, Any], prefix: str, base_dir: Path) -> str:
         if audio
         else '<div class="missing">No audio.</div>'
     )
+    signals = render_signal_table(row, prefix)
     return f"""
       <div class="panel">
         <div class="label">{label}</div>
         <div class="meta">{text_len(text)} chars, {fmt(duration)}s, budget {fmt(budget_ratio)}, RTF {fmt(rtf)}, bag-F1 {fmt(bag_f1)}</div>
+        {signals}
         {audio_tag}
         <p>{html.escape(text)}</p>
       </div>"""
@@ -122,6 +184,10 @@ def render(manifest: dict[str, Any], rows: list[dict[str, Any]], output: Path, t
     .panel {{ background: #f6f8fa; border-radius: 8px; padding: 12px; }}
     .label {{ font-weight: 650; margin-bottom: 6px; }}
     .meta {{ color: #57606a; font-size: 13px; margin-bottom: 8px; }}
+    .signals {{ width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }}
+    .signals th {{ width: 112px; text-align: left; color: #57606a; font-weight: 600; padding: 2px 8px 2px 0; vertical-align: top; }}
+    .signals td {{ color: #24292f; padding: 2px 0; overflow-wrap: anywhere; }}
+    .asr {{ font-size: 12px; color: #424a53; margin: 8px 0; overflow-wrap: anywhere; }}
     .missing {{ color: #8c2f0b; font-size: 13px; margin: 8px 0; }}
     audio {{ width: 100%; margin: 6px 0 10px; }}
     p {{ margin: 0; overflow-wrap: anywhere; }}
