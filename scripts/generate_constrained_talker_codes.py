@@ -59,6 +59,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--talker-top-k", type=int, default=50)
     parser.add_argument("--talker-top-p", type=float, default=1.0)
     parser.add_argument("--talker-repetition-penalty", type=float, default=1.05)
+    parser.add_argument(
+        "--code-predictor-do-sample",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Sample residual codec groups inside the Omni talker. Greedy is safer for labels.",
+    )
     parser.add_argument("--decode-audio", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--save-rejected", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--log-every", type=int, default=10)
@@ -203,6 +209,19 @@ class ConstrainedTalkerCodeGenerator:
         self.model.eval()
         if not getattr(self.model, "has_talker", False):
             self.model.enable_talker()
+        if not args.code_predictor_do_sample:
+            self._patch_code_predictor_greedy_decode()
+
+    def _patch_code_predictor_greedy_decode(self) -> None:
+        original_generate = self.model.talker.code_predictor.generate
+
+        def generate_without_sampling(*call_args: Any, **kwargs: Any) -> Any:
+            kwargs["do_sample"] = False
+            kwargs["remove_invalid_values"] = True
+            kwargs["renormalize_logits"] = True
+            return original_generate(*call_args, **kwargs)
+
+        self.model.talker.code_predictor.generate = generate_without_sampling
 
     def generate_one(self, sample: S2SSample, target_text: str) -> dict[str, Any]:
         torch = self.torch
@@ -525,6 +544,8 @@ class ConstrainedTalkerCodeGenerator:
             repetition_penalty=self.args.talker_repetition_penalty,
             suppress_tokens=suppressed_tokens,
             logits_processor=logits_processor,
+            remove_invalid_values=True,
+            renormalize_logits=True,
             output_hidden_states=True,
             return_dict_in_generate=True,
         )
