@@ -16,8 +16,44 @@ Project root:
 Project mirror:
 
 ```text
-/home/sglang-omni/S2S_omni
+/data/repo/S2S_omni
 ```
+
+Host-side persistent mirror:
+
+```text
+/data/sglang-omni/s2s_omni_data/repo/S2S_omni
+```
+
+Current 25k natural-policy SFT dataset, generated on 2026-06-22:
+
+```text
+/data/repo/S2S_omni/work/gigaspeech_policy_pool_30k_lazy_20260622
+```
+
+Important files:
+
+```text
+work/gigaspeech_policy_pool_30k_lazy_20260622/policy_sample_manifest.jsonl
+work/gigaspeech_policy_pool_30k_lazy_20260622/sft_25k.jsonl
+work/gigaspeech_policy_pool_30k_lazy_20260622/manifest_25k.jsonl
+work/gigaspeech_policy_pool_30k_lazy_20260622/tts_requests_25k.jsonl
+work/gigaspeech_policy_pool_30k_lazy_20260622/sft_25k_summary.json
+work/gigaspeech_policy_pool_30k_lazy_20260622/sft_25k_rejected.jsonl
+```
+
+The final dataset uses the natural RTF policy over a 30k GigaSpeech policy
+candidate pool, without manually fixing the pass-through/compression ratio.
+The assembled 25k records contain 14,031 pass-through examples and 10,969
+compression examples. The strict final audit found 0 target-character-budget
+violations, 0 estimated-duration-budget violations, and 0 style-guard
+violations. The speed-factor distribution is 6,878 at `1.0x`, 6,770 at
+`1.35x`, 6,146 at `1.7x`, and 5,206 at `2.0x`.
+
+`tts_requests_25k.jsonl` is a TTS sidecar for the thinker outputs. The default
+backend is `qwen3_tts` with
+`Qwen/Qwen3-TTS-12Hz-1.7B-Base`; it records source speech spans, target text,
+target-unit counts, duration budgets, and estimated default-speech durations.
 
 Current RTF-aware split pilot data:
 
