@@ -360,17 +360,30 @@ def teacher_record(sample: S2SSample) -> dict[str, Any]:
 
 
 def reservoir_add(items: list[Any], item: Any, limit: int, seen: int, rng: random.Random) -> None:
+    slot = reservoir_slot(items, limit, seen, rng)
+    if slot is None:
+        return
+    reservoir_put(items, item, slot)
+
+
+def reservoir_slot(items: list[Any], limit: int, seen: int, rng: random.Random) -> int | None:
     if limit < 0:
-        items.append(item)
-        return
+        return len(items)
     if limit == 0:
-        return
+        return None
     if len(items) < limit:
-        items.append(item)
-        return
+        return len(items)
     j = rng.randint(0, seen - 1)
     if j < limit:
-        items[j] = item
+        return j
+    return None
+
+
+def reservoir_put(items: list[Any], item: Any, slot: int) -> None:
+    if slot == len(items):
+        items.append(item)
+    else:
+        items[slot] = item
 
 
 def speed_key(speed: float) -> str:
@@ -711,6 +724,18 @@ def main() -> None:
                 if args.summary_only:
                     continue
                 sample_for_policy = policy_limits.get(split_name, 0) > 0
+                if sample_for_policy:
+                    bucket["seen_policy"] += 1
+                    output_items = bucket["policy"]
+                    output_limit = policy_limits.get(split_name, 0)
+                    output_seen = bucket["seen_policy"]
+                else:
+                    output_items = bucket["pass_through"]
+                    output_limit = pass_through_limits.get(split_name, 0)
+                    output_seen = bucket["seen_pass_through"]
+                output_slot = reservoir_slot(output_items, output_limit, output_seen, rng)
+                if output_slot is None:
+                    continue
                 sample = make_sample_from_row(
                     row,
                     mode="faithful",
@@ -725,29 +750,25 @@ def main() -> None:
                     policy_sample_kind="pass_through" if sample_for_policy else None,
                     tts_metadata=tts_metadata if sample_for_policy else None,
                 )
-                if sample_for_policy:
-                    bucket["seen_policy"] += 1
-                    reservoir_add(
-                        bucket["policy"],
-                        sample,
-                        policy_limits.get(split_name, 0),
-                        bucket["seen_policy"],
-                        rng,
-                    )
-                else:
-                    reservoir_add(
-                        bucket["pass_through"],
-                        sample,
-                        pass_through_limits.get(split_name, 0),
-                        bucket["seen_pass_through"],
-                        rng,
-                    )
+                reservoir_put(output_items, sample, output_slot)
                 continue
 
             bucket["seen_teacher"] += 1
             if args.summary_only:
                 continue
             sample_for_policy = policy_limits.get(split_name, 0) > 0
+            if sample_for_policy:
+                bucket["seen_policy"] += 1
+                output_items = bucket["policy"]
+                output_limit = policy_limits.get(split_name, 0)
+                output_seen = bucket["seen_policy"]
+            else:
+                output_items = bucket["teacher"]
+                output_limit = teacher_limits.get(split_name, 0)
+                output_seen = bucket["seen_teacher"]
+            output_slot = reservoir_slot(output_items, output_limit, output_seen, rng)
+            if output_slot is None:
+                continue
             sample = make_sample_from_row(
                 row,
                 mode="concise" if ratio >= 0.62 else "very_concise",
@@ -761,23 +782,7 @@ def main() -> None:
                 policy_sample_kind="compression" if sample_for_policy else None,
                 tts_metadata=tts_metadata if sample_for_policy else None,
             )
-            if sample_for_policy:
-                bucket["seen_policy"] += 1
-                reservoir_add(
-                    bucket["policy"],
-                    sample,
-                    policy_limits.get(split_name, 0),
-                    bucket["seen_policy"],
-                    rng,
-                )
-            else:
-                reservoir_add(
-                    bucket["teacher"],
-                    sample,
-                    teacher_limits.get(split_name, 0),
-                    bucket["seen_teacher"],
-                    rng,
-                )
+            reservoir_put(output_items, sample, output_slot)
 
     for bucket in buckets.values():
         if bucket["policy"]:
