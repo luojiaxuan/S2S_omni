@@ -69,6 +69,12 @@ Previous thinker-only LoRA run:
 
 ## taurus
 
+Persistent project mirror:
+
+```text
+/mnt/data2/jiaxuanluo/S2S_omni
+```
+
 Original GigaSpeech S2TT TSV:
 
 ```text
@@ -81,6 +87,18 @@ MFA resources:
 /mnt/taurus/data/siqiouyang/datasets/gigaspeech/textgrids
 /mnt/gemini/data1/jiaxuanluo/gigaspeech_mfa_index/gigaspeech_mfa_index.sqlite
 ```
+
+Full-corpus RTF distribution summary, generated on 2026-06-22:
+
+```text
+/mnt/data2/jiaxuanluo/S2S_omni/work/gigaspeech_full_rtf_summary_20260622/build_summary.json
+```
+
+The run scanned 1,365,025 TSV records, kept 1,281,846 usable rows after text and
+duration filters, and evaluated speed factors `1.0,1.35,1.7,2.0`. Across all
+speed variants the natural pass-through/compression split was 2,574,540 /
+2,552,844, or 50.2% / 49.8%. By speed factor, compression rates were 3.1% at
+`1.0x`, 37.7% at `1.35x`, 72.3% at `1.7x`, and 86.1% at `2.0x`.
 
 Temporary split rebuild location:
 
