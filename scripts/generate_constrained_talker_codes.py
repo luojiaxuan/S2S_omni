@@ -221,6 +221,11 @@ class ConstrainedTalkerCodeGenerator:
         )
         device = getattr(self.model, "device", next(self.model.parameters()).device)
         inputs = inputs.to(device)
+        float_dtype = getattr(self.model, "dtype", None)
+        if float_dtype is not None:
+            for key in ["input_features", "pixel_values", "pixel_values_videos"]:
+                if key in inputs:
+                    inputs[key] = inputs[key].to(dtype=float_dtype)
 
         budget_s = sample.target.max_target_duration_s or sample.timing.src_duration_s
         if budget_s is None:
