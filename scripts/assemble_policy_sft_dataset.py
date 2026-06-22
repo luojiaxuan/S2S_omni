@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
         description="Assemble final pass-through/compression policy SFT data."
     )
     parser.add_argument("--policy-manifest", required=True)
-    parser.add_argument("--compression-labels", required=True)
+    parser.add_argument("--compression-labels", nargs="+", required=True)
     parser.add_argument("--output-sft", required=True)
     parser.add_argument("--output-manifest", required=True)
     parser.add_argument("--tts-requests-output", required=True)
@@ -62,16 +62,17 @@ def sft_record(sample: S2SSample, answer: str) -> dict[str, Any]:
     }
 
 
-def load_accepted_labels(path: str | Path) -> dict[str, dict[str, Any]]:
+def load_accepted_labels(paths: list[str] | list[Path]) -> dict[str, dict[str, Any]]:
     labels: dict[str, dict[str, Any]] = {}
-    for record in read_jsonl(path):
-        sample_id = str(record.get("id") or "")
-        if not sample_id:
-            continue
-        validation = record.get("validation") or {}
-        if not validation.get("accepted"):
-            continue
-        labels[sample_id] = record
+    for path in paths:
+        for record in read_jsonl(path):
+            sample_id = str(record.get("id") or "")
+            if not sample_id:
+                continue
+            validation = record.get("validation") or {}
+            if not validation.get("accepted"):
+                continue
+            labels[sample_id] = record
     return labels
 
 
