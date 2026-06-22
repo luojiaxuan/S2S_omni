@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import math
 import random
 import re
 import subprocess
@@ -59,6 +60,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout-s", type=float, default=600.0)
     parser.add_argument("--source-duration-key", default="")
     parser.add_argument("--target-sample-rate", type=int, default=24000)
+    parser.add_argument("--tts-frame-rate", type=float, default=25.0)
+    parser.add_argument("--tts-token-budget-margin", type=int, default=0)
     parser.add_argument("--log-every", type=int, default=1)
     return parser.parse_args()
 
@@ -272,19 +275,43 @@ def make_thinker(args: argparse.Namespace) -> Thinker:
 
 
 class TTSRunner:
-    def synthesize(self, sample: S2SSample, text: str, output_wav: Path) -> dict[str, Any]:
+    def synthesize(
+        self,
+        sample: S2SSample,
+        text: str,
+        output_wav: Path,
+        budget_s: float,
+    ) -> dict[str, Any]:
         raise NotImplementedError
 
 
 class CommandTTSRunner(TTSRunner):
-    def __init__(self, command: str, timeout_s: float) -> None:
+    def __init__(
+        self,
+        command: str,
+        timeout_s: float,
+        tts_frame_rate: float,
+        tts_token_budget_margin: int,
+    ) -> None:
         if not command:
             raise ValueError("--tts-backend command requires --tts-command")
         self.command = command
         self.timeout_s = timeout_s
+        self.tts_frame_rate = tts_frame_rate
+        self.tts_token_budget_margin = tts_token_budget_margin
 
-    def synthesize(self, sample: S2SSample, text: str, output_wav: Path) -> dict[str, Any]:
+    def synthesize(
+        self,
+        sample: S2SSample,
+        text: str,
+        output_wav: Path,
+        budget_s: float,
+    ) -> dict[str, Any]:
         output_wav.parent.mkdir(parents=True, exist_ok=True)
+        token_budget = max(
+            1,
+            int(math.ceil(budget_s * self.tts_frame_rate)) + self.tts_token_budget_margin,
+        )
         env = os.environ.copy()
         env.update(
             {
@@ -295,6 +322,9 @@ class CommandTTSRunner(TTSRunner):
                 "S2S_SOURCE_TEXT": sample.source_text or "",
                 "S2S_REFERENCE_TEXT": sample.reference_translation or "",
                 "S2S_TGT_LANG": sample.tgt_lang,
+                "S2S_TTS_DURATION_BUDGET_S": f"{budget_s:.6f}",
+                "S2S_TTS_MAX_NEW_TOKENS": str(token_budget),
+                "S2S_TTS_TOKEN_COUNT": str(token_budget),
             }
         )
         started = time.perf_counter()
@@ -340,7 +370,13 @@ class Qwen3TTSRunner(TTSRunner):
         self.x_vector_only_mode = args.tts_x_vector_only_mode
         self.max_new_tokens = args.tts_max_new_tokens
 
-    def synthesize(self, sample: S2SSample, text: str, output_wav: Path) -> dict[str, Any]:
+    def synthesize(
+        self,
+        sample: S2SSample,
+        text: str,
+        output_wav: Path,
+        budget_s: float,
+    ) -> dict[str, Any]:
         import soundfile as sf
 
         ref_audio, ref_text = self._reference(sample)
@@ -392,7 +428,12 @@ class Qwen3TTSRunner(TTSRunner):
 def make_tts_runner(args: argparse.Namespace) -> TTSRunner:
     if args.tts_backend == "qwen3_tts":
         return Qwen3TTSRunner(args)
-    return CommandTTSRunner(args.tts_command, args.timeout_s)
+    return CommandTTSRunner(
+        args.tts_command,
+        args.timeout_s,
+        args.tts_frame_rate,
+        args.tts_token_budget_margin,
+    )
 
 
 def safe_name(value: str) -> str:
@@ -463,7 +504,7 @@ def main() -> None:
         target_text = clean_completion(target_text)
 
         output_wav = audio_dir / f"{idx:04d}_{safe_name(sample.id)}.wav"
-        tts = tts_runner.synthesize(sample, target_text, output_wav)
+        tts = tts_runner.synthesize(sample, target_text, output_wav, budget_s)
         playback_s = wav_duration_s(output_wav)
         serial_total = thinker_wall_s + tts["tts_wall_s"] + (playback_s or 0.0)
         streaming_total = thinker_wall_s + max(tts["tts_wall_s"], playback_s or 0.0)

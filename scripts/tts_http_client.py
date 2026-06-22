@@ -31,6 +31,13 @@ def maybe_set(payload: dict[str, Any], key: str, value: Any) -> None:
         payload[key] = value
 
 
+def env_int(name: str) -> int | None:
+    value = os.environ.get(name)
+    if value is None or value == "":
+        return None
+    return int(value)
+
+
 def main() -> None:
     args = parse_args()
     text = args.text if args.text is not None else os.environ.get("S2S_TEXT", "")
@@ -45,8 +52,8 @@ def main() -> None:
     maybe_set(payload, "temperature", args.temperature)
     maybe_set(payload, "top_k", args.top_k)
     maybe_set(payload, "top_p", args.top_p)
-    maybe_set(payload, "max_new_tokens", args.max_new_tokens)
-    maybe_set(payload, "token_count", args.token_count)
+    maybe_set(payload, "max_new_tokens", args.max_new_tokens or env_int("S2S_TTS_MAX_NEW_TOKENS"))
+    maybe_set(payload, "token_count", args.token_count or env_int("S2S_TTS_TOKEN_COUNT"))
     if ref_audio:
         payload["references"] = [{"audio_path": ref_audio, "text": ref_text or ""}]
 
