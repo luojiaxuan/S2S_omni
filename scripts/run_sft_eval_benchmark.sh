@@ -57,3 +57,8 @@ python3 scripts/generate_talker_audio_samples.py \
   --model "${MODEL}" \
   --num-samples "${AUDIO_NUM_SAMPLES}" \
   --device-map "${DEVICE_MAP}"
+
+python3 scripts/render_audio_eval_index.py \
+  --manifest "${OUTPUT_DIR}/audio_samples_dev/manifest.json" \
+  --output "${OUTPUT_DIR}/audio_samples_dev/index.html" \
+  --title "S2S Omni Dev Audio Eval"
