@@ -36,7 +36,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--adapter", required=True, help="Thinker PEFT adapter directory.")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--model", default="Qwen/Qwen3-Omni-30B-A3B-Instruct")
-    parser.add_argument("--ids", nargs="*", default=DEFAULT_IDS)
+    parser.add_argument(
+        "--ids",
+        nargs="*",
+        default=None,
+        help="Optional sample ids. If omitted with --num-samples, use the first N input rows.",
+    )
     parser.add_argument("--num-samples", type=int, default=0)
     parser.add_argument("--device-map", default="auto")
     parser.add_argument("--speaker", default="Ethan")
@@ -252,7 +257,10 @@ def write_audio(path: Path, audio: np.ndarray, sample_rate: int) -> float:
 def main() -> None:
     args = parse_args()
     output_dir = Path(args.output_dir)
-    samples = load_samples(args.input, args.ids, args.num_samples)
+    ids = args.ids
+    if ids is None:
+        ids = [] if args.num_samples > 0 else DEFAULT_IDS
+    samples = load_samples(args.input, ids, args.num_samples)
     generator = OmniSpeechGenerator(args)
 
     rows: list[dict[str, Any]] = []
