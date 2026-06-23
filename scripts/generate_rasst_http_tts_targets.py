@@ -26,6 +26,10 @@ from s2s_omni.rasst import (
 from s2s_omni.textgrid import transcript_for_mfa
 
 
+class TransientTTSError(RuntimeError):
+    pass
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate full-sentence target wavs through an OpenAI-compatible TTS HTTP server."
@@ -41,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--shard-index", type=int, default=0)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--timeout-s", type=float, default=300.0)
+    parser.add_argument("--max-transient-errors", type=int, default=8)
     parser.add_argument("--max-new-tokens", type=int, default=2048)
     parser.add_argument("--ref-text", default="")
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
@@ -121,8 +126,13 @@ def generate_one(row: Any, args: argparse.Namespace, output_dir: Path, url: str)
             "references": [{"audio_path": ref_audio, "text": args.ref_text}],
         }
         started = time.perf_counter()
-        response = requests.post(url, json=payload, timeout=args.timeout_s)
+        try:
+            response = requests.post(url, json=payload, timeout=args.timeout_s)
+        except (requests.ConnectionError, requests.Timeout) as exc:
+            raise TransientTTSError(str(exc)) from exc
         synth_s = round(time.perf_counter() - started, 6)
+        if response.status_code >= 500:
+            raise TransientTTSError(f"http_{response.status_code}:{response.text[:500]}")
         if response.status_code >= 400:
             raise RuntimeError(f"http_{response.status_code}:{response.text[:500]}")
         wav_path.parent.mkdir(parents=True, exist_ok=True)
@@ -146,6 +156,18 @@ def generate_one(row: Any, args: argparse.Namespace, output_dir: Path, url: str)
             mfa_txt.write_text(transcript_for_mfa(row.full_target_text), encoding="utf-8")
             out_record["mfa_wav_path"] = str(mfa_wav)
             out_record["mfa_txt_path"] = str(mfa_txt)
+        return out_record
+    except TransientTTSError as exc:
+        out_record.update(
+            {
+                "accepted": False,
+                "transient": True,
+                "tts_url": url,
+                "reject_reasons": [f"transient:{type(exc).__name__}"],
+                "error": str(exc),
+                "traceback": traceback.format_exc(),
+            }
+        )
         return out_record
     except Exception as exc:
         out_record.update(
@@ -171,8 +193,9 @@ def main() -> None:
         urls = [args.url]
     accepted_path = output_dir / "target_manifest.jsonl"
     rejected_path = output_dir / "target_rejected.jsonl"
+    transient_path = output_dir / "target_transient.jsonl"
     if not args.resume:
-        for path in [accepted_path, rejected_path]:
+        for path in [accepted_path, rejected_path, transient_path]:
             if path.exists():
                 path.unlink()
     done = existing_ids(accepted_path) | existing_ids(rejected_path)
@@ -203,45 +226,81 @@ def main() -> None:
 
     accepted = 0
     rejected = 0
+    transient = 0
+    processed = 0
+    next_selected_index = 0
+
+    def submit_next(
+        executor: concurrent.futures.ThreadPoolExecutor,
+        pending: dict[concurrent.futures.Future[dict[str, Any]], tuple[Any, int]],
+    ) -> None:
+        nonlocal next_selected_index
+        row = selected[next_selected_index]
+        task_index = next_selected_index + 1
+        url = urls[(task_index - 1) % len(urls)]
+        pending[executor.submit(generate_one, row, args, output_dir, url)] = (row, task_index)
+        next_selected_index += 1
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.workers)) as executor:
-        future_to_row = {
-            executor.submit(generate_one, row, args, output_dir, urls[(index - 1) % len(urls)]): row
-            for index, row in enumerate(selected, start=1)
-        }
-        for index, future in enumerate(concurrent.futures.as_completed(future_to_row), start=1):
-            row = future_to_row[future]
-            try:
-                record = future.result()
-            except Exception as exc:
-                record = row_record_template(row, args)
-                record.update(
-                    {
-                        "accepted": False,
-                        "reject_reasons": [f"future_exception:{type(exc).__name__}"],
-                        "error": str(exc),
-                        "traceback": traceback.format_exc(),
-                    }
-                )
-            if record.get("accepted"):
-                append_jsonl(accepted_path, record)
-                accepted += 1
-            else:
-                rejected += 1
-                if args.save_rejected:
-                    append_jsonl(rejected_path, record)
-            if args.log_every > 0 and index % args.log_every == 0:
-                print(
-                    json.dumps(
+        pending: dict[concurrent.futures.Future[dict[str, Any]], tuple[Any, int]] = {}
+        for _ in range(min(len(selected), max(1, args.workers) * 2)):
+            submit_next(executor, pending)
+        while pending:
+            done, _ = concurrent.futures.wait(
+                pending,
+                return_when=concurrent.futures.FIRST_COMPLETED,
+            )
+            stop = False
+            for future in done:
+                row, task_index = pending.pop(future)
+                processed += 1
+                index = processed
+
+                try:
+                    record = future.result()
+                except Exception as exc:
+                    record = row_record_template(row, args)
+                    record.update(
                         {
-                            "processed": index,
-                            "accepted": accepted,
-                            "rejected": rejected,
-                            "last_row_id": row.row_id,
-                        },
-                        ensure_ascii=False,
-                    ),
-                    flush=True,
-                )
+                            "accepted": False,
+                            "reject_reasons": [f"future_exception:{type(exc).__name__}"],
+                            "error": str(exc),
+                            "traceback": traceback.format_exc(),
+                        }
+                    )
+                if record.get("accepted"):
+                    append_jsonl(accepted_path, record)
+                    accepted += 1
+                elif record.get("transient"):
+                    append_jsonl(transient_path, record)
+                    transient += 1
+                else:
+                    rejected += 1
+                    if args.save_rejected:
+                        append_jsonl(rejected_path, record)
+                if args.log_every > 0 and index % args.log_every == 0:
+                    print(
+                        json.dumps(
+                            {
+                                "processed": index,
+                                "accepted": accepted,
+                                "rejected": rejected,
+                                "transient": transient,
+                                "last_row_id": row.row_id,
+                            },
+                            ensure_ascii=False,
+                        ),
+                        flush=True,
+                    )
+                if transient >= args.max_transient_errors:
+                    stop = True
+                elif next_selected_index < len(selected):
+                    submit_next(executor, pending)
+            if stop:
+                for pending_future in pending:
+                    pending_future.cancel()
+                pending.clear()
+                break
 
     summary = {
         "input": args.input,
@@ -251,8 +310,10 @@ def main() -> None:
         "selected_this_run": len(selected),
         "accepted_this_run": accepted,
         "rejected_this_run": rejected,
+        "transient_this_run": transient,
         "accepted_total": len(existing_ids(accepted_path)),
         "rejected_total": len(existing_ids(rejected_path)),
+        "transient_total": len(existing_ids(transient_path)),
         "backend": args.backend,
         "workers": args.workers,
         "num_shards": args.num_shards,
@@ -263,6 +324,8 @@ def main() -> None:
         encoding="utf-8",
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2), flush=True)
+    if transient:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

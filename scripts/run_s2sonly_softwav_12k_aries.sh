@@ -18,6 +18,8 @@ MODEL="${MODEL:-Qwen/Qwen3-Omni-30B-A3B-Instruct}"
 TEXT_CE_WEIGHT="${TEXT_CE_WEIGHT:-0.05}"
 LEARNING_RATE="${LEARNING_RATE:-2e-6}"
 MAX_CODEC_FRAMES="${MAX_CODEC_FRAMES:-32}"
+HOST_UID="${HOST_UID:-$(id -u)}"
+HOST_GID="${HOST_GID:-$(id -g)}"
 
 mkdir -p "${RUN_ROOT}/logs"
 
@@ -48,6 +50,13 @@ docker exec \
       --timeout-s 900 \
       --log-every 25
   ' 2>&1 | tee -a "${RUN_ROOT}/logs/01_generate_http_targets.log"
+
+docker exec \
+  -e C_RUN_ROOT="${C_RUN_ROOT}" \
+  -e HOST_UID="${HOST_UID}" \
+  -e HOST_GID="${HOST_GID}" \
+  "${CONTAINER_NAME}" \
+  bash -lc 'chown -R "${HOST_UID}:${HOST_GID}" "${C_RUN_ROOT}/targets"'
 
 echo "[2/4] MFA align target wavs"
 MFA_JOBS="${MFA_JOBS}" bash "${ROOT_HOST}/scripts/run_mfa_align_rasst_targets.sh" \
