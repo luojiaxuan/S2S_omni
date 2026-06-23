@@ -65,6 +65,16 @@ def torch_dtype(name: str) -> Any:
     }[name]
 
 
+def apply_optional_qwen_tts_compat() -> None:
+    try:
+        from sglang_omni.models.qwen3_tts.compat import (
+            apply_qwen_tts_transformers_compatibility_patches,
+        )
+    except Exception:
+        return
+    apply_qwen_tts_transformers_compatibility_patches()
+
+
 def append_jsonl(path: Path, record: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
@@ -124,6 +134,7 @@ class Qwen3TtsTargetGenerator:
         import torch
 
         sys.modules.setdefault("kernels", None)
+        apply_optional_qwen_tts_compat()
         from qwen_tts import Qwen3TTSModel
 
         self.args = args
