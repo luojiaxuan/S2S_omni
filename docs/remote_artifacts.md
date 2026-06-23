@@ -231,3 +231,25 @@ Temporary split rebuild location:
 ```text
 /home/jiaxuanluo/S2S_omni/work/gigaspeech_pilot_split
 ```
+
+Planned Omni-compatible wav2codec self-domain pair data:
+
+```text
+/mnt/data2/jiaxuanluo/S2S_omni/work/omni_s2s_codec_pairs_25k_YYYYMMDD
+```
+
+Planned wav2codec checkpoints:
+
+```text
+/mnt/data2/jiaxuanluo/S2S_omni/checkpoints/wav2omni_codec_25k_YYYYMMDD
+```
+
+Default execution env:
+
+```text
+/home/jiaxuanluo/miniconda3/envs/infinisst/bin/python
+```
+
+Use `scripts/run_wav2codec_pipeline_slurm.sh` with `PARTITION=aries` or
+`PARTITION=taurus`. The first version targets Omni self-domain reconstruction,
+not external TTS wav generalization.

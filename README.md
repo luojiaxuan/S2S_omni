@@ -141,6 +141,63 @@ For audio output, omit `--text-only` and make sure the server is in speech mode.
 
 vLLM is intentionally not part of this repo's inference path.
 
+## Omni-Compatible wav2codec
+
+This path trains an inverter for the Qwen3-Omni self-domain codec:
+
+```text
+Omni-generated target wav -> Omni talker codes -> frozen Omni code2wav
+```
+
+The pair generator freezes `Qwen/Qwen3-Omni-30B-A3B-Instruct`, runs normal
+speech-to-speech translation on GigaSpeech English source audio, and monkeypatches
+`code2wav.chunked_decode` to capture the exact `talker_codes` used for the
+returned wav.
+
+Build split-isolated candidate manifests:
+
+```bash
+python scripts/build_omni_codec_pair_manifest.py \
+  --tsv /mnt/taurus/data/siqiouyang/datasets/gigaspeech/train_xl_case_ft-qwen2.5-32b-instruct_marked_mfa_punc_asr.tsv \
+  --output-dir /mnt/data2/jiaxuanluo/S2S_omni/work/omni_s2s_codec_pairs_25k_$(date +%Y%m%d)/manifests \
+  --target-counts train=25000,dev=500,test=500
+```
+
+Generate wav/code pairs on aries or taurus:
+
+```bash
+MODE=generate SPLIT=train NUM_SHARDS=8 SHARD_INDEX=0 \
+  bash scripts/run_wav2codec_pipeline_slurm.sh
+```
+
+Audit 8 generated pairs by decoding captured gold codes back through frozen
+Omni code2wav:
+
+```bash
+MODE=audit SPLIT=train bash scripts/run_wav2codec_pipeline_slurm.sh
+```
+
+Training gates:
+
+```bash
+MODE=train_overfit bash scripts/run_wav2codec_pipeline_slurm.sh
+MODE=train_smoke bash scripts/run_wav2codec_pipeline_slurm.sh
+MODE=train_full bash scripts/run_wav2codec_pipeline_slurm.sh
+```
+
+Evaluate a checkpoint and render a listening page:
+
+```bash
+MODE=eval SPLIT=test bash scripts/run_wav2codec_pipeline_slurm.sh
+```
+
+The default remote paths are:
+
+```text
+/mnt/data2/jiaxuanluo/S2S_omni/work/omni_s2s_codec_pairs_25k_YYYYMMDD
+/mnt/data2/jiaxuanluo/S2S_omni/checkpoints/wav2omni_codec_25k_YYYYMMDD
+```
+
 ## GigaSpeech Data
 
 The first data source is the existing GigaSpeech S2TT table on taurus:
