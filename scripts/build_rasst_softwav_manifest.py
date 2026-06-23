@@ -26,6 +26,13 @@ from s2s_omni.rasst import (
 from s2s_omni.textgrid import chunk_time_spans_from_textgrid
 
 
+S2ST_SOFTWAV_SYSTEM = (
+    "You are a professional simultaneous speech-to-speech interpreter. "
+    "For each incoming English audio chunk, produce natural spoken Mandarin audio. "
+    "Keep the Mandarin transcript concise, modern, and aligned to the current streaming chunk."
+)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build turn-level soft-wav SFT manifest from plain RASST baseline data."
@@ -50,6 +57,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-turns-per-row", type=int, default=0)
     parser.add_argument("--overwrite-audio", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--allow-missing-targets", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument(
+        "--system-prompt",
+        default=S2ST_SOFTWAV_SYSTEM,
+        help="System prompt written into S2ST soft-wav training messages.",
+    )
+    parser.add_argument(
+        "--preserve-source-system-prompt",
+        action="store_true",
+        help="Use the original RASST system prompt instead of the S2ST soft-wav prompt.",
+    )
     parser.add_argument("--dev", action="store_true", help=f"Shortcut for --rasst-jsonl {DEFAULT_RASST_DEV}")
     parser.add_argument("--log-every", type=int, default=100)
     return parser.parse_args()
@@ -155,8 +172,8 @@ def source_speed_path(output_dir: Path, row_id: str, chunk_index: int, speed: fl
     )
 
 
-def messages_for_turn(row: Any, upto_turn: int) -> list[dict[str, str]]:
-    messages = [{"role": "system", "content": row.system}]
+def messages_for_turn(row: Any, upto_turn: int, system_prompt: str) -> list[dict[str, str]]:
+    messages = [{"role": "system", "content": system_prompt}]
     for turn in row.turns[: upto_turn + 1]:
         messages.append({"role": "user", "content": "<audio>"})
         messages.append({"role": "assistant", "content": turn.assistant_text})
@@ -243,16 +260,21 @@ def main() -> None:
                 if args.max_turns_per_row > 0 and turn.index >= args.max_turns_per_row:
                     break
                 span = time_spans[turn.index]
+                system_prompt = row.system if args.preserve_source_system_prompt else args.system_prompt
                 record: dict[str, Any] = {
                     "id": f"{sanitize_id(row.row_id)}__speed_{speed:g}__chunk_{turn.index:04d}",
+                    "task_type": "s2st_softwav",
                     "row_id": row.row_id,
                     "chunk_index": turn.index,
                     "speed_factor": speed,
-                    "messages": messages_for_turn(row, turn.index),
+                    "messages": messages_for_turn(row, turn.index, system_prompt),
                     "audios": speed_audio_paths[: turn.index + 1],
                     "current_source_audio": speed_audio_paths[turn.index],
                     "current_source_duration_s": round(audio_duration_s(speed_audio_paths[turn.index]), 6),
                     "target_text": turn.assistant_text,
+                    "assistant_text_target": turn.assistant_text,
+                    "assistant_text_role": "transcript_for_speech_generation",
+                    "assistant_output_modality": "speech",
                     "target_char_span": list(row.target_char_spans[turn.index]),
                     "target_full_text": row.full_target_text,
                     "target_full_wav_path": target_row.get("target_wav_path"),
@@ -264,6 +286,13 @@ def main() -> None:
                     "target_sample_rate": args.target_sample_rate,
                     "source_sample_rate": args.source_sample_rate,
                     "hop_length": args.hop_length,
+                    "supervision": {
+                        "text_ce": True,
+                        "codec_ce": bool(target_row.get("target_codes_path")),
+                        "soft_code2wav_wav_loss": bool(turn.assistant_text),
+                        "eos_loss": not bool(turn.assistant_text),
+                        "speech_target_field": "target_wav_path" if turn.assistant_text else "",
+                    },
                 }
                 if span is not None and turn.assistant_text:
                     wav_path, codes_path, duration_s, frame_start, frame_end = slice_target_assets(
@@ -277,7 +306,9 @@ def main() -> None:
                     )
                     update = {
                         "target_wav_path": wav_path,
+                        "target_audio_path": wav_path,
                         "target_duration_s": duration_s,
+                        "target_audio_duration_s": duration_s,
                         "target_time_span": {
                             "start_s": round(span.start_s, 6),
                             "end_s": round(span.end_s, 6),
@@ -297,6 +328,7 @@ def main() -> None:
                             }
                         )
                     record.update(update)
+                    record["supervision"]["codec_ce"] = bool(codes_path)
                 append_jsonl(output_path, record)
                 emitted += 1
         if args.log_every > 0 and source_rows % args.log_every == 0:
@@ -318,6 +350,8 @@ def main() -> None:
         "rejected": rejected,
         "speed_factors": speed_factors,
         "speed_assignment": args.speed_assignment,
+        "system_prompt": args.system_prompt,
+        "preserve_source_system_prompt": args.preserve_source_system_prompt,
     }
     (output_dir / "manifest_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2),
