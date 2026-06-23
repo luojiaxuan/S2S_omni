@@ -82,7 +82,11 @@ def aggregate_metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
         out[key] = round(sum(values) / len(values), 6) if values else None
     out["valid_codes"] = sum(int(row.get("valid_codes") or 0) for row in rows)
     out["valid_frames"] = sum(int(row.get("valid_frames") or 0) for row in rows)
-    per_q: list[list[float]] = [[] for _ in range(16)]
+    num_quantizers = max(
+        (len(row.get("per_quantizer_accuracy") or []) for row in rows),
+        default=0,
+    )
+    per_q: list[list[float]] = [[] for _ in range(num_quantizers)]
     for row in rows:
         for index, value in enumerate(row.get("per_quantizer_accuracy") or []):
             if value is not None and index < len(per_q):
