@@ -47,5 +47,6 @@ def resolve_manifest_path(raw_path: str | Path, manifest_path: str | Path) -> Pa
     path = Path(raw_path)
     if path.is_absolute():
         return path
+    if path.exists():
+        return path
     return Path(manifest_path).resolve().parent / path
-
