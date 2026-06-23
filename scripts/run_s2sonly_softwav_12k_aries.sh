@@ -8,6 +8,7 @@ RUN_NAME="$(basename "${RUN_ROOT}")"
 C_RUN_ROOT="${C_RUN_ROOT:-/data/runs/${RUN_NAME}}"
 TRAIN_JSONL="${TRAIN_JSONL:-/mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline.jsonl}"
 TTS_URL="${TTS_URL:-http://127.0.0.1:18112/v1/audio/speech}"
+TTS_URLS="${TTS_URLS:-}"
 TTS_MODELS_URL="${TTS_MODELS_URL:-http://127.0.0.1:18112/v1/models}"
 MAX_RECORDS="${MAX_RECORDS:-12500}"
 TTS_WORKERS="${TTS_WORKERS:-8}"
@@ -20,7 +21,7 @@ MAX_CODEC_FRAMES="${MAX_CODEC_FRAMES:-32}"
 
 mkdir -p "${RUN_ROOT}/logs"
 
-echo "{\"run_root\":\"${RUN_ROOT}\",\"container_run_root\":\"${C_RUN_ROOT}\",\"max_records\":${MAX_RECORDS},\"tts_workers\":${TTS_WORKERS},\"text_ce_weight\":${TEXT_CE_WEIGHT},\"learning_rate\":\"${LEARNING_RATE}\",\"max_codec_frames\":${MAX_CODEC_FRAMES}}"
+echo "{\"run_root\":\"${RUN_ROOT}\",\"container_run_root\":\"${C_RUN_ROOT}\",\"max_records\":${MAX_RECORDS},\"tts_workers\":${TTS_WORKERS},\"tts_urls\":\"${TTS_URLS:-${TTS_URL}}\",\"text_ce_weight\":${TEXT_CE_WEIGHT},\"learning_rate\":\"${LEARNING_RATE}\",\"max_codec_frames\":${MAX_CODEC_FRAMES}}"
 
 docker exec "${CONTAINER_NAME}" bash -lc "curl -fsS '${TTS_MODELS_URL}' >/dev/null"
 
@@ -29,6 +30,7 @@ docker exec \
   -e C_RUN_ROOT="${C_RUN_ROOT}" \
   -e TRAIN_JSONL="${TRAIN_JSONL}" \
   -e TTS_URL="${TTS_URL}" \
+  -e TTS_URLS="${TTS_URLS}" \
   -e MAX_RECORDS="${MAX_RECORDS}" \
   -e TTS_WORKERS="${TTS_WORKERS}" \
   "${CONTAINER_NAME}" \
@@ -40,6 +42,7 @@ docker exec \
       --input "${TRAIN_JSONL}" \
       --output-dir "${C_RUN_ROOT}/targets" \
       --url "${TTS_URL}" \
+      --urls "${TTS_URLS}" \
       --max-records "${MAX_RECORDS}" \
       --workers "${TTS_WORKERS}" \
       --timeout-s 900 \

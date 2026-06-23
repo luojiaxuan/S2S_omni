@@ -33,6 +33,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", default=DEFAULT_RASST_TRAIN)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--url", default="http://127.0.0.1:18112/v1/audio/speech")
+    parser.add_argument("--urls", default="", help="Comma-separated TTS endpoint list. Overrides --url when set.")
     parser.add_argument("--backend", default="qwen3_tts_http")
     parser.add_argument("--language", default="Chinese")
     parser.add_argument("--max-records", type=int, default=0)
@@ -103,7 +104,7 @@ def row_record_template(row: Any, args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
-def generate_one(row: Any, args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
+def generate_one(row: Any, args: argparse.Namespace, output_dir: Path, url: str) -> dict[str, Any]:
     safe_id = sanitize_id(row.row_id)
     out_record = row_record_template(row, args)
     wav_path = output_dir / "target_wav" / f"{safe_id}.wav"
@@ -120,7 +121,7 @@ def generate_one(row: Any, args: argparse.Namespace, output_dir: Path) -> dict[s
             "references": [{"audio_path": ref_audio, "text": args.ref_text}],
         }
         started = time.perf_counter()
-        response = requests.post(args.url, json=payload, timeout=args.timeout_s)
+        response = requests.post(url, json=payload, timeout=args.timeout_s)
         synth_s = round(time.perf_counter() - started, 6)
         if response.status_code >= 400:
             raise RuntimeError(f"http_{response.status_code}:{response.text[:500]}")
@@ -135,6 +136,7 @@ def generate_one(row: Any, args: argparse.Namespace, output_dir: Path) -> dict[s
                 "reference_audio": ref_audio,
                 "synth_s": synth_s,
                 "bytes": len(response.content),
+                "tts_url": url,
                 "reject_reasons": [],
             }
         )
@@ -164,6 +166,9 @@ def main() -> None:
     if args.num_shards <= 0 or not 0 <= args.shard_index < args.num_shards:
         raise SystemExit("--shard-index must be in [0, --num-shards)")
     output_dir = Path(args.output_dir)
+    urls = [part.strip() for part in args.urls.split(",") if part.strip()]
+    if not urls:
+        urls = [args.url]
     accepted_path = output_dir / "target_manifest.jsonl"
     rejected_path = output_dir / "target_rejected.jsonl"
     if not args.resume:
@@ -200,7 +205,8 @@ def main() -> None:
     rejected = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.workers)) as executor:
         future_to_row = {
-            executor.submit(generate_one, row, args, output_dir): row for row in selected
+            executor.submit(generate_one, row, args, output_dir, urls[(index - 1) % len(urls)]): row
+            for index, row in enumerate(selected, start=1)
         }
         for index, future in enumerate(concurrent.futures.as_completed(future_to_row), start=1):
             row = future_to_row[future]
@@ -241,6 +247,7 @@ def main() -> None:
         "input": args.input,
         "output_dir": str(output_dir),
         "url": args.url,
+        "urls": urls,
         "selected_this_run": len(selected),
         "accepted_this_run": accepted,
         "rejected_this_run": rejected,
