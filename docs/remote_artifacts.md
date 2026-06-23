@@ -232,6 +232,53 @@ Temporary split rebuild location:
 /home/jiaxuanluo/S2S_omni/work/gigaspeech_pilot_split
 ```
 
+## aries
+
+Recommended workspace for the current RASST soft-wav E2E SFT route:
+
+```text
+/mnt/data/jiaxuanluo/S2S_omni
+```
+
+Recommended run root:
+
+```text
+/mnt/data/jiaxuanluo/S2S_omni_runs
+```
+
+Soft-wav Python user base:
+
+```text
+/mnt/data/jiaxuanluo/python_userbase/s2s_omni_softwav
+```
+
+MFA is installed as a separate micromamba environment, because the pip package
+does not include the required Kaldi/kalpy backend:
+
+```text
+/mnt/data/jiaxuanluo/micromamba/envs/mfa/bin/mfa
+```
+
+Use the larger local cache path for Qwen3-Omni weights:
+
+```text
+/mnt/data3/jiaxuanluo/.cache/huggingface
+```
+
+Plain RASST baseline zh data used by the soft-wav route:
+
+```text
+/mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline.jsonl
+/mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline_dev.jsonl
+```
+
+These are 12,500 train rows and 355 dev rows, with ordinary assistant Chinese
+chunk targets. They are not the term-map/tagged files used by the
+`model_infinisst_baseline` checkpoint args. The soft-wav route generates target
+speech with original `Qwen/Qwen3-Omni-30B-A3B-Instruct`, captures Omni-compatible
+codes, aligns full target wav/text with MFA, and trains thinker+talker LoRA while
+freezing `code2wav`.
+
 Planned Omni-compatible wav2codec self-domain pair data:
 
 ```text

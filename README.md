@@ -141,6 +141,66 @@ For audio output, omit `--text-only` and make sure the server is in speech mode.
 
 vLLM is intentionally not part of this repo's inference path.
 
+## RASST Soft-Wav E2E SFT
+
+This is the current end-to-end speech-output route. It uses plain RASST zh
+baseline data, not the term-map/tagged RASST variants:
+
+```text
+train: /mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline.jsonl
+dev:   /mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline_dev.jsonl
+```
+
+The teacher target audio is generated with the original
+`Qwen/Qwen3-Omni-30B-A3B-Instruct` audio-output path. It does not use Qwen3-TTS.
+For each RASST row, the non-empty assistant chunks are concatenated, spoken by
+Qwen3-Omni, and the generated Omni-compatible codec codes are captured before
+`code2wav`. MFA aligns the generated full target wav to the concatenated
+Mandarin target text; the aligned time spans are then cut back into per-chunk
+target wav/code labels.
+
+On Aries, from a fresh clone of this repo:
+
+```bash
+USE_USER_SITE=1 \
+USER_BASE=/mnt/data/jiaxuanluo/python_userbase/s2s_omni_softwav \
+PIP_CACHE_DIR=/mnt/data/jiaxuanluo/.cache/pip \
+TMPDIR=/mnt/data/jiaxuanluo/tmp \
+  bash scripts/setup_aries_softwav_env.sh
+
+bash scripts/setup_aries_mfa_env.sh
+
+export PYTHONUSERBASE=/mnt/data/jiaxuanluo/python_userbase/s2s_omni_softwav
+export PATH=/mnt/data/jiaxuanluo/python_userbase/s2s_omni_softwav/bin:$PATH
+export HF_HOME=/mnt/data3/jiaxuanluo/.cache/huggingface
+export HF_HUB_CACHE=$HF_HOME/hub
+export XDG_CACHE_HOME=/mnt/data/jiaxuanluo/.cache
+export TMPDIR=/mnt/data/jiaxuanluo/tmp
+export MFA_BIN=$(/mnt/data/jiaxuanluo/micromamba/bin/micromamba run -n mfa \
+  python -c 'import shutil; print(shutil.which("mfa"))')
+
+bash scripts/run_rasst_softwav_smoke_aries.sh
+```
+
+The smoke run does:
+
+1. Generate 20 full-target Qwen3-Omni wav/code labels.
+2. Run MFA Mandarin alignment.
+3. Build a turn-level soft-wav manifest with real source speed-up.
+4. Run a processor/tokenization smoke.
+5. Run one optimizer step of thinker+talker LoRA SFT.
+
+Full run:
+
+```bash
+nohup bash scripts/run_rasst_softwav_full_aries.sh \
+  > /mnt/data/jiaxuanluo/S2S_omni_runs/rasst_softwav_full.log 2>&1 &
+```
+
+The trainer initializes from the original Qwen3-Omni, freezes base weights and
+`code2wav`, and trains thinker+talker LoRA with text CE, codec CE, soft-code2wav
+wav/STFT loss, and an EOS loss for empty target chunks.
+
 ## Omni-Compatible wav2codec
 
 This path trains an inverter for the Qwen3-Omni self-domain codec:

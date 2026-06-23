@@ -1,0 +1,59 @@
+# syntax=docker/dockerfile:1.7
+
+ARG BASE_IMAGE=hongccc/sglang-omni:dev
+FROM ${BASE_IMAGE}
+
+SHELL ["/bin/bash", "-lc"]
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/root/.cache/huggingface \
+    HF_HUB_CACHE=/root/.cache/huggingface/hub \
+    XDG_CACHE_HOME=/data/.cache \
+    PIP_CACHE_DIR=/data/.cache/pip \
+    WANDB_DIR=/data/wandb \
+    TMPDIR=/data/tmp \
+    S2S_RUN_ROOT=/data/S2S_omni_runs \
+    MAMBA_ROOT_PREFIX=/opt/micromamba \
+    MFA_HOME=/data \
+    MFA_BIN=/opt/micromamba/envs/mfa/bin/mfa
+
+RUN mkdir -p /data/tmp /data/.cache/pip /data/wandb /root/.cache/huggingface
+
+RUN if command -v apt-get >/dev/null 2>&1; then \
+      apt-get update && \
+      apt-get install -y --no-install-recommends \
+        bzip2 ca-certificates curl ffmpeg git libsndfile1 sox && \
+      rm -rf /var/lib/apt/lists/*; \
+    fi
+
+WORKDIR /opt/S2S_omni
+
+COPY requirements-train.txt pyproject.toml README.md ./
+COPY configs ./configs
+COPY data ./data
+COPY docs ./docs
+COPY s2s_omni ./s2s_omni
+COPY scripts ./scripts
+COPY docker/entrypoint.sh /usr/local/bin/s2s-omni-entrypoint
+
+RUN chmod +x /usr/local/bin/s2s-omni-entrypoint && \
+    python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip install --no-cache-dir -r requirements-train.txt && \
+    python3 -m pip install --no-cache-dir --no-deps -e .
+
+RUN mkdir -p /opt/micromamba && \
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
+      | tar -xvj -C /opt/micromamba --strip-components=1 bin/micromamba && \
+    /opt/micromamba/bin/micromamba create -y -n mfa -c conda-forge \
+      python=3.10 pip montreal-forced-aligner 'kalpy<0.10' && \
+    /opt/micromamba/envs/mfa/bin/python -m pip install --no-cache-dir \
+      spacy-pkuseg dragonmapper hanziconv && \
+    /opt/micromamba/bin/micromamba clean -a -y
+
+ENV PATH=/opt/micromamba/envs/mfa/bin:/opt/micromamba/bin:${PATH} \
+    PYTHONPATH=/opt/S2S_omni
+
+ENTRYPOINT ["/usr/local/bin/s2s-omni-entrypoint"]
+CMD ["/bin/bash"]
+
