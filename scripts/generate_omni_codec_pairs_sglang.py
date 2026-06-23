@@ -30,7 +30,7 @@ from generate_omni_codec_pairs import (  # noqa: E402
     write_wav,
 )
 from s2s_omni.audio import load_audio_span  # noqa: E402
-from s2s_omni.codec_data import base_id_from_id  # noqa: E402
+from s2s_omni.codec_data import align_wav_to_num_frames, base_id_from_id  # noqa: E402
 
 CAPTURING_CODE2WAV_FACTORY = (
     "s2s_omni.sglang_code2wav_capture.create_capturing_code2wav_scheduler"
@@ -387,6 +387,8 @@ class SglangOmniPairGenerator:
         if not sidecar_path.exists():
             raise RuntimeError(f"missing captured code sidecar: {sidecar_path}")
         codes = np.load(sidecar_path).astype(np.int16, copy=False)
+        if codes.ndim == 2:
+            wav = align_wav_to_num_frames(wav, int(codes.shape[1]), self.args.hop_length)
         return {
             "generated_text": generated_text,
             "wav": wav,
