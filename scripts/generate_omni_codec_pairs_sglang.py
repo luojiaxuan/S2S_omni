@@ -184,6 +184,18 @@ def _audio_payload_to_float32(data: dict[str, Any]) -> np.ndarray:
     return np.clip(audio, -1.0, 1.0).astype(np.float32, copy=False)
 
 
+def _write_source_wav(path: Path, audio: np.ndarray, sample_rate: int) -> None:
+    import soundfile as sf
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    sf.write(
+        path,
+        np.asarray(audio, dtype=np.float32).reshape(-1),
+        sample_rate,
+        subtype="PCM_16",
+    )
+
+
 def _stage_data(result: Any, stage_name: str) -> dict[str, Any]:
     if not isinstance(result, dict) or stage_name not in result:
         raise RuntimeError(f"pipeline result missing stage {stage_name!r}")
@@ -318,7 +330,12 @@ class SglangOmniPairGenerator:
             await self.runner.stop()
             self.runner = None
 
-    async def generate_one(self, record: dict[str, Any], codes_path: Path) -> dict[str, Any]:
+    async def generate_one(
+        self,
+        record: dict[str, Any],
+        codes_path: Path,
+        source_wav_path: Path,
+    ) -> dict[str, Any]:
         if self.runner is None:
             raise RuntimeError("generator is not started")
         from sglang_omni.proto import OmniRequest  # noqa: PLC0415
@@ -331,6 +348,7 @@ class SglangOmniPairGenerator:
             resolved_audio_uri,
             target_sample_rate=self.args.audio_sample_rate,
         )
+        _write_source_wav(source_wav_path, source_audio, self.args.audio_sample_rate)
         sample_id = str(record["id"])
         request_id = f"codec-pair-{sanitize_name(sample_id)}-{time.time_ns()}"
         request = OmniRequest(
@@ -339,7 +357,7 @@ class SglangOmniPairGenerator:
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": USER_PROMPT},
                 ],
-                "audios": [source_audio],
+                "audios": [str(source_wav_path)],
                 "audio_target_sr": self.args.audio_sample_rate,
             },
             params={
@@ -374,6 +392,7 @@ class SglangOmniPairGenerator:
             "wav": wav,
             "codes": codes,
             "resolved_source_audio": resolved_audio_uri,
+            "sglang_source_wav_path": str(source_wav_path),
             "sglang_request_id": request_id,
         }
 
@@ -409,6 +428,7 @@ async def main_async(args: argparse.Namespace) -> None:
     output_dir = Path(args.output_dir)
     wav_dir = output_dir / "wav"
     codes_dir = output_dir / "codes"
+    source_wav_dir = output_dir / "source_wav"
     accepted_path = output_dir / "pairs.jsonl"
     rejected_path = output_dir / "pairs_rejected.jsonl"
     if not args.resume:
@@ -431,6 +451,7 @@ async def main_async(args: argparse.Namespace) -> None:
             safe_id = sanitize_name(sample_id)
             wav_path = wav_dir / f"{safe_id}.wav"
             codes_path = codes_dir / f"{safe_id}.npy"
+            source_wav_path = source_wav_dir / f"{safe_id}.wav"
             row: dict[str, Any] = {
                 "id": sample_id,
                 "base_id": record.get("base_id") or base_id_from_id(sample_id),
@@ -460,7 +481,11 @@ async def main_async(args: argparse.Namespace) -> None:
                 "source_record": record,
             }
             try:
-                result = await generator.generate_one(record, codes_path)
+                result = await generator.generate_one(
+                    record,
+                    codes_path,
+                    source_wav_path,
+                )
                 reject_reasons = validate_pair(result, args)
                 codes = result.pop("codes")
                 wav = result.pop("wav")
