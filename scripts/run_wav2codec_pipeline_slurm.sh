@@ -34,6 +34,24 @@ case "${MODE}" in
       --num-shards "${NUM_SHARDS}" \
       --shard-index "${SHARD_INDEX}"
     ;;
+  generate_shard)
+    SPLIT="${SPLIT:-train}"
+    SHARD_INDEX="${SHARD_INDEX:-0}"
+    NUM_SHARDS="${NUM_SHARDS:-1}"
+    run_gpu "${PY}" scripts/generate_omni_codec_pairs.py \
+      --input "${PAIR_ROOT}/manifests/${SPLIT}_manifest.jsonl" \
+      --output-dir "${PAIR_ROOT}/${SPLIT}_shards/shard_$(printf '%04d' "${SHARD_INDEX}")" \
+      --num-shards "${NUM_SHARDS}" \
+      --shard-index "${SHARD_INDEX}"
+    ;;
+  merge)
+    SPLIT="${SPLIT:-train}"
+    NUM_SHARDS="${NUM_SHARDS:-1}"
+    "${PY}" scripts/merge_omni_codec_pair_shards.py \
+      --shard-root "${PAIR_ROOT}/${SPLIT}_shards" \
+      --output-dir "${PAIR_ROOT}/${SPLIT}" \
+      --num-shards "${NUM_SHARDS}"
+    ;;
   audit)
     SPLIT="${SPLIT:-train}"
     run_gpu "${PY}" scripts/audit_omni_codec_pairs.py \
@@ -88,6 +106,8 @@ case "${MODE}" in
 Usage:
   MODE=prepare bash scripts/run_wav2codec_pipeline_slurm.sh
   MODE=generate SPLIT=train NUM_SHARDS=8 SHARD_INDEX=0 bash scripts/run_wav2codec_pipeline_slurm.sh
+  MODE=generate_shard SPLIT=train NUM_SHARDS=8 SHARD_INDEX=0 bash scripts/run_wav2codec_pipeline_slurm.sh
+  MODE=merge SPLIT=train NUM_SHARDS=8 bash scripts/run_wav2codec_pipeline_slurm.sh
   MODE=audit SPLIT=train bash scripts/run_wav2codec_pipeline_slurm.sh
   MODE=train_overfit bash scripts/run_wav2codec_pipeline_slurm.sh
   MODE=train_smoke bash scripts/run_wav2codec_pipeline_slurm.sh
