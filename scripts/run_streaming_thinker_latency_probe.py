@@ -41,6 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--context-mode", choices=["chunk", "prefix"], default="chunk")
     parser.add_argument("--max-new-tokens", type=int, default=64)
     parser.add_argument("--default-target-unit-rate", type=float, default=5.0)
+    parser.add_argument("--warmup", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--log-every", type=int, default=1)
     return parser.parse_args()
 
@@ -301,6 +302,22 @@ def stats(values: list[float]) -> dict[str, float] | None:
 def main() -> None:
     args = parse_args()
     runner = ThinkerRunner(args)
+    if args.warmup:
+        warmup_sample = S2SSample(
+            id="warmup",
+            src_lang="en",
+            tgt_lang="zh",
+            source_text="warm up",
+            target=CompressionTarget(mode="concise", max_target_chars=5, max_target_duration_s=1.0),
+            timing=Timing(src_start_s=0.0, src_end_s=1.0),
+            metadata={
+                "source_wall_duration_s": 1.0,
+                "playback_budget_s": 1.0,
+                "default_target_unit_rate": args.default_target_unit_rate,
+                "rtf_threshold": 1.0,
+            },
+        )
+        runner.generate(warmup_sample)
     rows: list[dict[str, Any]] = []
     for record in load_records(args.input, args.num_samples, args.seed):
         sample = sample_from_record(record)
