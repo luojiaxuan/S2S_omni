@@ -5,6 +5,10 @@ ROOT="${ROOT:-/mnt/data2/jiaxuanluo/S2S_omni}"
 PY="${PY:-/home/jiaxuanluo/miniconda3/envs/infinisst/bin/python}"
 PARTITION="${PARTITION:-aries}"
 GPU_GRES="${GPU_GRES:-gpu:a6000:1}"
+GENERATE_GPU_GRES="${GENERATE_GPU_GRES:-gpu:a6000:4}"
+GENERATE_SCRIPT="${GENERATE_SCRIPT:-scripts/generate_omni_codec_pairs_sglang.py}"
+GENERATE_EXTRA_ARGS="${GENERATE_EXTRA_ARGS:---thinker-tp-size 2 --gpu-thinker-tp 0,1 --gpu-talker 2 --gpu-code2wav 3 --gpu-image-encoder 3 --gpu-audio-encoder 3}"
+SGLANG_OMNI_ROOT="${SGLANG_OMNI_ROOT:-/home/jiaxuanluo/sglang-omni}"
 DATE_TAG="${DATE_TAG:-$(date +%Y%m%d)}"
 TSV="${TSV:-/mnt/taurus/data/siqiouyang/datasets/gigaspeech/train_xl_case_ft-qwen2.5-32b-instruct_marked_mfa_punc_asr.tsv}"
 PAIR_ROOT="${PAIR_ROOT:-${ROOT}/work/omni_s2s_codec_pairs_25k_${DATE_TAG}}"
@@ -15,6 +19,10 @@ cd "${ROOT}"
 
 run_gpu() {
   srun --partition="${PARTITION}" --gres="${GPU_GRES}" "$@"
+}
+
+run_generate_gpu() {
+  srun --partition="${PARTITION}" --gres="${GENERATE_GPU_GRES}" "$@"
 }
 
 case "${MODE}" in
@@ -28,21 +36,25 @@ case "${MODE}" in
     SPLIT="${SPLIT:-train}"
     SHARD_INDEX="${SHARD_INDEX:-0}"
     NUM_SHARDS="${NUM_SHARDS:-1}"
-    run_gpu "${PY}" scripts/generate_omni_codec_pairs.py \
+    run_generate_gpu "${PY}" "${GENERATE_SCRIPT}" \
       --input "${PAIR_ROOT}/manifests/${SPLIT}_manifest.jsonl" \
       --output-dir "${PAIR_ROOT}/${SPLIT}" \
+      --sglang-omni-root "${SGLANG_OMNI_ROOT}" \
       --num-shards "${NUM_SHARDS}" \
-      --shard-index "${SHARD_INDEX}"
+      --shard-index "${SHARD_INDEX}" \
+      ${GENERATE_EXTRA_ARGS}
     ;;
   generate_shard)
     SPLIT="${SPLIT:-train}"
     SHARD_INDEX="${SHARD_INDEX:-0}"
     NUM_SHARDS="${NUM_SHARDS:-1}"
-    run_gpu "${PY}" scripts/generate_omni_codec_pairs.py \
+    run_generate_gpu "${PY}" "${GENERATE_SCRIPT}" \
       --input "${PAIR_ROOT}/manifests/${SPLIT}_manifest.jsonl" \
       --output-dir "${PAIR_ROOT}/${SPLIT}_shards/shard_$(printf '%04d' "${SHARD_INDEX}")" \
+      --sglang-omni-root "${SGLANG_OMNI_ROOT}" \
       --num-shards "${NUM_SHARDS}" \
-      --shard-index "${SHARD_INDEX}"
+      --shard-index "${SHARD_INDEX}" \
+      ${GENERATE_EXTRA_ARGS}
     ;;
   merge)
     SPLIT="${SPLIT:-train}"
