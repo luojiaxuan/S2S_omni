@@ -256,7 +256,11 @@ def main() -> None:
     )
     steps_per_epoch = math.ceil(per_process_batches / max(1, args.gradient_accumulation_steps))
     total_steps = args.max_steps or max(1, int(math.ceil(args.epochs * steps_per_epoch)))
-    scheduler = make_scheduler(optimizer, args.warmup_steps, total_steps)
+    scheduler = make_scheduler(
+        optimizer,
+        args.warmup_steps * max(1, accelerator.num_processes),
+        total_steps * max(1, accelerator.num_processes),
+    )
     model, optimizer, train_loader, dev_loader, scheduler = accelerator.prepare(
         model,
         optimizer,
