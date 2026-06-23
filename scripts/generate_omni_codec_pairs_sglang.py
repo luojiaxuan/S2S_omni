@@ -69,6 +69,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--thinker-tp-size", type=int, default=1)
     parser.add_argument("--gpu-thinker-tp", default=None)
     parser.add_argument("--colocated", action="store_true")
+    parser.add_argument("--colocated-memory-profile", default="h200", choices=["h200", "h20", "none"])
     parser.add_argument("--enable-partial-start", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--partial-start-min-chunks", type=int, default=5)
     parser.add_argument("--mem-fraction-static", type=float, default=None)
@@ -132,6 +133,14 @@ def _set_stage_factory(config: Any, stage_name: str, factory: str) -> None:
     for stage in config.stages:
         if stage.name == stage_name:
             stage.factory = factory
+            return
+    raise ValueError(f"stage {stage_name!r} not found")
+
+
+def _set_stage_total_gpu_fraction(config: Any, stage_name: str, fraction: float) -> None:
+    for stage in config.stages:
+        if stage.name == stage_name:
+            stage.runtime.resources.total_gpu_memory_fraction = float(fraction)
             return
     raise ValueError(f"stage {stage_name!r} not found")
 
@@ -236,6 +245,25 @@ def build_sglang_config(args: argparse.Namespace) -> Any:
     _set_stage_gpu(config, "talker_ar", gpu_talker)
     _set_stage_gpu(config, "code2wav", gpu_code2wav)
     _set_stage_factory(config, "code2wav", CAPTURING_CODE2WAV_FACTORY)
+    if args.colocated and args.colocated_memory_profile != "none":
+        profiles = {
+            "h200": {
+                "image_encoder": 0.017,
+                "audio_encoder": 0.017,
+                "thinker": 0.769,
+                "talker_ar": 0.123,
+                "code2wav": 0.014,
+            },
+            "h20": {
+                "image_encoder": 0.025,
+                "audio_encoder": 0.025,
+                "thinker": 0.75,
+                "talker_ar": 0.12,
+                "code2wav": 0.02,
+            },
+        }
+        for stage_name, fraction in profiles[args.colocated_memory_profile].items():
+            _set_stage_total_gpu_fraction(config, stage_name, fraction)
 
     thinker_mem_fraction = (
         args.thinker_mem_fraction_static
