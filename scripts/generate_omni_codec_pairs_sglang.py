@@ -77,6 +77,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--talker-mem-fraction-static", type=float, default=None)
     parser.add_argument("--thinker-max-seq-len", type=int, default=8192)
     parser.add_argument("--max-records", type=int, default=0)
+    parser.add_argument("--concurrency", type=int, default=1)
     parser.add_argument("--num-shards", type=int, default=1)
     parser.add_argument("--shard-index", type=int, default=0)
     parser.add_argument("--ids", nargs="*", default=None)
@@ -423,9 +424,96 @@ def select_records(args: argparse.Namespace, accepted_path: Path, rejected_path:
     return selected
 
 
+async def process_record(
+    generator: SglangOmniPairGenerator,
+    args: argparse.Namespace,
+    record: dict[str, Any],
+    wav_dir: Path,
+    codes_dir: Path,
+    source_wav_dir: Path,
+) -> dict[str, Any]:
+    sample_id = str(record["id"])
+    safe_id = sanitize_name(sample_id)
+    wav_path = wav_dir / f"{safe_id}.wav"
+    codes_path = codes_dir / f"{safe_id}.npy"
+    source_wav_path = source_wav_dir / f"{safe_id}.wav"
+    row: dict[str, Any] = {
+        "id": sample_id,
+        "base_id": record.get("base_id") or base_id_from_id(sample_id),
+        "source_audio": record.get("audio_path") or record.get("source_audio"),
+        "source_text": record.get("source_text"),
+        "reference_translation": record.get("reference_translation"),
+        "src_lang": record.get("src_lang", "en"),
+        "tgt_lang": record.get("tgt_lang", "zh"),
+        "model": args.model,
+        "speaker": args.speaker,
+        "serving_framework": "sglang-omni",
+        "sample_rate": args.sample_rate,
+        "hop_length": args.hop_length,
+        "codec_frame_rate": args.codec_frame_rate,
+        "generation_params": {
+            "stream": False,
+            "max_new_tokens": args.max_new_tokens,
+            "temperature": args.temperature,
+            "top_p": args.top_p,
+            "top_k": args.top_k,
+            "repetition_penalty": args.repetition_penalty,
+            "seed": args.seed,
+            "relay_backend": args.relay_backend,
+            "colocated": args.colocated,
+            "thinker_tp_size": args.thinker_tp_size,
+            "concurrency": args.concurrency,
+        },
+        "source_record": record,
+    }
+    try:
+        result = await generator.generate_one(
+            record,
+            codes_path,
+            source_wav_path,
+        )
+        reject_reasons = validate_pair(result, args)
+        codes = result.pop("codes")
+        wav = result.pop("wav")
+        row.update(result)
+        row["codec_num_quantizers"] = int(codes.shape[0]) if codes.ndim == 2 else None
+        row["codec_frames"] = int(codes.shape[1]) if codes.ndim == 2 else None
+        row["code_shape"] = [int(v) for v in codes.shape]
+        row["code_min"] = int(codes.min()) if codes.size else None
+        row["code_max"] = int(codes.max()) if codes.size else None
+        row["duration_s"] = round(float(wav.shape[0]) / float(args.sample_rate), 6)
+        row["expected_duration_s"] = (
+            round(float(codes.shape[1] * args.hop_length) / float(args.sample_rate), 6)
+            if codes.ndim == 2
+            else None
+        )
+        if not reject_reasons:
+            write_wav(wav_path, wav, args.sample_rate)
+            codes_path.parent.mkdir(parents=True, exist_ok=True)
+            np.save(codes_path, codes)
+            row["wav_path"] = str(wav_path)
+            row["codes_path"] = str(codes_path)
+            row["accepted"] = True
+            row["reject_reasons"] = []
+        else:
+            row["accepted"] = False
+            row["reject_reasons"] = reject_reasons
+            if not args.keep_rejected_artifacts and codes_path.exists():
+                codes_path.unlink()
+    except Exception as exc:
+        row["accepted"] = False
+        row["reject_reasons"] = [f"exception:{type(exc).__name__}"]
+        row["error"] = str(exc)
+        if not args.keep_rejected_artifacts and codes_path.exists():
+            codes_path.unlink()
+    return row
+
+
 async def main_async(args: argparse.Namespace) -> None:
     if args.num_shards <= 0 or not 0 <= args.shard_index < args.num_shards:
         raise SystemExit("--shard-index must be in [0, --num-shards)")
+    if args.concurrency <= 0:
+        raise SystemExit("--concurrency must be positive")
 
     output_dir = Path(args.output_dir)
     wav_dir = output_dir / "wav"
@@ -448,81 +536,25 @@ async def main_async(args: argparse.Namespace) -> None:
     accepted = 0
     rejected = 0
     try:
-        for index, record in enumerate(selected, start=1):
-            sample_id = str(record["id"])
-            safe_id = sanitize_name(sample_id)
-            wav_path = wav_dir / f"{safe_id}.wav"
-            codes_path = codes_dir / f"{safe_id}.npy"
-            source_wav_path = source_wav_dir / f"{safe_id}.wav"
-            row: dict[str, Any] = {
-                "id": sample_id,
-                "base_id": record.get("base_id") or base_id_from_id(sample_id),
-                "source_audio": record.get("audio_path") or record.get("source_audio"),
-                "source_text": record.get("source_text"),
-                "reference_translation": record.get("reference_translation"),
-                "src_lang": record.get("src_lang", "en"),
-                "tgt_lang": record.get("tgt_lang", "zh"),
-                "model": args.model,
-                "speaker": args.speaker,
-                "serving_framework": "sglang-omni",
-                "sample_rate": args.sample_rate,
-                "hop_length": args.hop_length,
-                "codec_frame_rate": args.codec_frame_rate,
-                "generation_params": {
-                    "stream": False,
-                    "max_new_tokens": args.max_new_tokens,
-                    "temperature": args.temperature,
-                    "top_p": args.top_p,
-                    "top_k": args.top_k,
-                    "repetition_penalty": args.repetition_penalty,
-                    "seed": args.seed,
-                    "relay_backend": args.relay_backend,
-                    "colocated": args.colocated,
-                    "thinker_tp_size": args.thinker_tp_size,
-                },
-                "source_record": record,
-            }
-            try:
-                result = await generator.generate_one(
-                    record,
-                    codes_path,
-                    source_wav_path,
-                )
-                reject_reasons = validate_pair(result, args)
-                codes = result.pop("codes")
-                wav = result.pop("wav")
-                row.update(result)
-                row["codec_num_quantizers"] = int(codes.shape[0]) if codes.ndim == 2 else None
-                row["codec_frames"] = int(codes.shape[1]) if codes.ndim == 2 else None
-                row["code_shape"] = [int(v) for v in codes.shape]
-                row["code_min"] = int(codes.min()) if codes.size else None
-                row["code_max"] = int(codes.max()) if codes.size else None
-                row["duration_s"] = round(float(wav.shape[0]) / float(args.sample_rate), 6)
-                row["expected_duration_s"] = (
-                    round(float(codes.shape[1] * args.hop_length) / float(args.sample_rate), 6)
-                    if codes.ndim == 2
-                    else None
-                )
-                if not reject_reasons:
-                    write_wav(wav_path, wav, args.sample_rate)
-                    codes_path.parent.mkdir(parents=True, exist_ok=True)
-                    np.save(codes_path, codes)
-                    row["wav_path"] = str(wav_path)
-                    row["codes_path"] = str(codes_path)
-                    row["accepted"] = True
-                    row["reject_reasons"] = []
-                else:
-                    row["accepted"] = False
-                    row["reject_reasons"] = reject_reasons
-                    if not args.keep_rejected_artifacts and codes_path.exists():
-                        codes_path.unlink()
-            except Exception as exc:
-                row["accepted"] = False
-                row["reject_reasons"] = [f"exception:{type(exc).__name__}"]
-                row["error"] = str(exc)
-                if not args.keep_rejected_artifacts and codes_path.exists():
-                    codes_path.unlink()
+        semaphore = asyncio.Semaphore(args.concurrency)
 
+        async def run_with_limit(record: dict[str, Any]) -> dict[str, Any]:
+            async with semaphore:
+                return await process_record(
+                    generator,
+                    args,
+                    record,
+                    wav_dir,
+                    codes_dir,
+                    source_wav_dir,
+                )
+
+        tasks = [asyncio.create_task(run_with_limit(record)) for record in selected]
+        processed = 0
+        for task in asyncio.as_completed(tasks):
+            row = await task
+            processed += 1
+            sample_id = str(row.get("id") or "")
             if row.get("accepted"):
                 append_jsonl(accepted_path, row)
                 accepted += 1
@@ -530,11 +562,11 @@ async def main_async(args: argparse.Namespace) -> None:
                 rejected += 1
                 if args.save_rejected:
                     append_jsonl(rejected_path, row)
-            if args.log_every > 0 and index % args.log_every == 0:
+            if args.log_every > 0 and processed % args.log_every == 0:
                 print(
                     json.dumps(
                         {
-                            "processed": index,
+                            "processed": processed,
                             "accepted": accepted,
                             "rejected": rejected,
                             "last_id": sample_id,
