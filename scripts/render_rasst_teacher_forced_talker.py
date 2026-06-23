@@ -49,7 +49,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--talker-top-p", type=float, default=1.0)
     parser.add_argument("--talker-repetition-penalty", type=float, default=1.0)
     parser.add_argument("--suppress-primary-special", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--primary-from-sequences", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--primary-from-sequences", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--log-every", type=int, default=10)
     return parser.parse_args()
 
@@ -72,6 +72,54 @@ def append_jsonl(path: Path, row: dict[str, Any]) -> None:
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(row, ensure_ascii=False, sort_keys=False) + "\n")
         handle.flush()
+
+
+def codebook_stats(model: Any, codes: Any) -> dict[str, Any]:
+    import torch
+
+    codebook_size = int(model.config.code2wav_config.codebook_size)
+    if codes.ndim == 3 and codes.shape[0] == 1:
+        flat_codes = codes[0]
+    else:
+        flat_codes = codes
+    qstats = []
+    for q in range(int(flat_codes.shape[0])):
+        q_codes = flat_codes[q]
+        bad = (q_codes < 0) | (q_codes >= codebook_size)
+        bad_values = torch.unique(q_codes[bad].detach().cpu())[:8].tolist()
+        qstats.append(
+            {
+                "q": q,
+                "min": int(q_codes.min().detach().cpu()),
+                "max": int(q_codes.max().detach().cpu()),
+                "bad": int(bad.sum().detach().cpu()),
+                "bad_values": bad_values,
+            }
+        )
+    return {
+        "codes_shape": list(codes.shape),
+        "bad_total": sum(item["bad"] for item in qstats),
+        "qstats": qstats,
+    }
+
+
+def validate_codes_for_code2wav(model: Any, codes: Any) -> dict[str, Any]:
+    import torch
+
+    stats = codebook_stats(model, codes)
+    codebook_size = int(model.config.code2wav_config.codebook_size)
+    if codes.ndim == 3 and codes.shape[0] == 1:
+        flat_codes = codes[0]
+    else:
+        flat_codes = codes
+    bad = (flat_codes < 0) | (flat_codes >= codebook_size)
+    if bool(bad.any().detach().cpu()):
+        bad_values = torch.unique(flat_codes[bad].detach().cpu())[:16].tolist()
+        raise RuntimeError(
+            "generated codes outside code2wav codebook: "
+            f"{bad_values}; stats={json.dumps(stats, ensure_ascii=False)}"
+        )
+    return stats
 
 
 class TeacherForcedTalkerRenderer:
@@ -107,7 +155,7 @@ class TeacherForcedTalkerRenderer:
         max_tokens = max(min_tokens + 1, min(self.args.max_new_tokens, frames + self.args.token_margin))
         return min_tokens, max_tokens
 
-    def render_one(self, record: dict[str, Any]) -> tuple[np.ndarray, int]:
+    def render_one(self, record: dict[str, Any]) -> tuple[np.ndarray, int, dict[str, Any]]:
         model = self.model
         with self.torch.inference_mode():
             inputs, _prompt_len, _target_token_len = load_processor_inputs(
@@ -142,7 +190,12 @@ class TeacherForcedTalkerRenderer:
                 if hasattr(wav, "detach") and not bool(self.torch.isfinite(wav).all().detach().cpu()):
                     raise RuntimeError("manual-st-argmax produced non-finite wav")
                 wav_np = audio_to_numpy(wav)
-                return wav_np, frames
+                return wav_np, frames, {
+                    "render_mode": self.args.render_mode,
+                    "min_new_tokens": frames,
+                    "max_new_tokens": frames,
+                    "primary_from_sequences": False,
+                }
             min_new_tokens, max_new_tokens = self.token_budget(record)
             codes = generate_talker_codes(
                 model,
@@ -157,8 +210,16 @@ class TeacherForcedTalkerRenderer:
                 suppress_primary_special=self.args.suppress_primary_special,
                 primary_from_sequences=self.args.primary_from_sequences,
             )
+            stats = validate_codes_for_code2wav(model, codes)
             wav = model.code2wav.chunked_decode(codes, chunk_size=300, left_context_size=25)
-        return audio_to_numpy(wav), int(codes.shape[-1])
+        return audio_to_numpy(wav), int(codes.shape[-1]), {
+            "render_mode": self.args.render_mode,
+            "min_new_tokens": min_new_tokens,
+            "max_new_tokens": max_new_tokens,
+            "primary_from_sequences": self.args.primary_from_sequences,
+            "code_bad_total": stats["bad_total"],
+            "codes_shape": stats["codes_shape"],
+        }
 
 
 def write_silence(path: Path, sample_rate: int) -> None:
@@ -196,7 +257,7 @@ def main() -> None:
             )
         else:
             try:
-                wav, frames = renderer.render_one(record)
+                wav, frames, debug = renderer.render_one(record)
                 write_mono_wav(wav_path, wav, args.sample_rate)
                 row.update(
                     {
@@ -204,6 +265,7 @@ def main() -> None:
                         "generated_wav_path": str(wav_path),
                         "generated_duration_s": round(float(wav.size) / float(args.sample_rate), 6),
                         "generated_codec_frames": frames,
+                        **debug,
                     }
                 )
             except Exception as exc:

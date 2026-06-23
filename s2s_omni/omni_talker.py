@@ -319,13 +319,15 @@ def generate_talker_codes(
             scores.index_fill_(1, tokens, -float("inf"))
             return scores
 
-    prompt_len = int(condition.talker_input_ids.shape[-1])
     min_new_tokens_value = int(min_new_tokens or 0)
 
     class _SuppressEosUntilMinNewTokens(LogitsProcessor):
+        def __init__(self) -> None:
+            self.calls = 0
+
         def __call__(self, input_ids: Any, scores: Any) -> Any:
-            generated = int(input_ids.shape[-1]) - prompt_len
-            if min_new_tokens_value <= 0 or generated >= min_new_tokens_value:
+            self.calls += 1
+            if min_new_tokens_value <= 0 or self.calls > min_new_tokens_value:
                 return scores
             scores = scores.clone()
             scores[:, model.config.talker_config.codec_eos_token_id] = -float("inf")
@@ -345,29 +347,38 @@ def generate_talker_codes(
     if min_new_tokens_value > 0:
         logits_processor.append(_SuppressEosUntilMinNewTokens())
     model.talker.code_predictor.generate = code_predictor_generate_greedy
+    if hasattr(model.talker, "rope_deltas"):
+        model.talker.rope_deltas = None
     try:
-        result = model.talker.generate(
-            inputs_embeds=condition.inputs_embeds,
-            trailing_text_hidden=condition.trailing_text_hidden,
-            tts_pad_embed=condition.tts_pad_embed,
-            talker_input_ids=condition.talker_input_ids,
-            attention_mask=condition.attention_mask,
-            max_new_tokens=max_new_tokens,
-            do_sample=do_sample,
-            top_k=top_k,
-            top_p=top_p,
-            temperature=temperature,
-            eos_token_id=model.config.talker_config.codec_eos_token_id,
-            repetition_penalty=repetition_penalty,
-            suppress_tokens=suppressed_tokens,
-            logits_processor=logits_processor,
-            output_hidden_states=True,
-            return_dict_in_generate=True,
-            remove_invalid_values=True,
-            renormalize_logits=True,
-        )
+        generate_kwargs = {
+            "inputs_embeds": condition.inputs_embeds,
+            "trailing_text_hidden": condition.trailing_text_hidden,
+            "tts_pad_embed": condition.tts_pad_embed,
+            "talker_input_ids": condition.talker_input_ids,
+            "max_new_tokens": max_new_tokens,
+            "do_sample": do_sample,
+            "eos_token_id": model.config.talker_config.codec_eos_token_id,
+            "repetition_penalty": repetition_penalty,
+            "suppress_tokens": suppressed_tokens,
+            "logits_processor": logits_processor,
+            "output_hidden_states": True,
+            "return_dict_in_generate": True,
+            "remove_invalid_values": True,
+            "renormalize_logits": True,
+        }
+        if do_sample:
+            generate_kwargs.update(
+                {
+                    "top_k": top_k,
+                    "top_p": top_p,
+                    "temperature": temperature,
+                }
+            )
+        result = model.talker.generate(**generate_kwargs)
     finally:
         model.talker.code_predictor.generate = original_code_predictor_generate
+        if hasattr(model.talker, "rope_deltas"):
+            model.talker.rope_deltas = None
     hidden_codes = [hid[-1] for hid in result.hidden_states if hid[-1] is not None]
     if not hidden_codes:
         raise RuntimeError("talker did not return hidden-state codec labels")
