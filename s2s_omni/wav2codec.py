@@ -30,6 +30,7 @@ class Wav2OmniCodecConfig:
     transformer_heads: int = 8
     transformer_ffn_mult: int = 4
     dropout: float = 0.1
+    max_position_frames: int = 2048
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Wav2OmniCodecConfig":
@@ -191,6 +192,10 @@ class Wav2OmniCodecModel(nn.Module):
             ]
         )
         self.frame_encoder = nn.Sequential(*conv_layers)
+        self.position_embedding = nn.Embedding(
+            self.config.max_position_frames,
+            self.config.hidden_size,
+        )
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=self.config.hidden_size,
             nhead=self.config.transformer_heads,
@@ -223,6 +228,13 @@ class Wav2OmniCodecModel(nn.Module):
         frames = wav.reshape(batch_size, num_frames, self.config.hop_length)
         encoded = self.frame_encoder(frames.reshape(-1, 1, self.config.hop_length)).squeeze(-1)
         encoded = encoded.reshape(batch_size, num_frames, self.config.hidden_size)
+        if num_frames > self.config.max_position_frames:
+            raise ValueError(
+                f"num_frames={num_frames} exceeds max_position_frames="
+                f"{self.config.max_position_frames}"
+            )
+        positions = torch.arange(num_frames, device=wav.device)
+        encoded = encoded + self.position_embedding(positions).unsqueeze(0)
         key_padding_mask = None
         if frame_mask is not None:
             key_padding_mask = ~frame_mask[:, :num_frames].bool()

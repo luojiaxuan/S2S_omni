@@ -34,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--transformer-layers", type=int, default=6)
     parser.add_argument("--transformer-heads", type=int, default=8)
     parser.add_argument("--dropout", type=float, default=0.1)
+    parser.add_argument("--max-position-frames", type=int, default=2048)
     parser.add_argument("--max-frames", type=int, default=512)
     parser.add_argument("--max-train-records", type=int, default=0)
     parser.add_argument("--max-dev-records", type=int, default=0)
@@ -207,6 +208,7 @@ def main() -> None:
         transformer_layers=args.transformer_layers,
         transformer_heads=args.transformer_heads,
         dropout=args.dropout,
+        max_position_frames=args.max_position_frames,
     )
     model = Wav2OmniCodecModel(cfg)
     train_dataset = OmniCodecPairDataset(
@@ -215,7 +217,7 @@ def main() -> None:
         hop_length=args.hop_length,
         num_quantizers=args.num_quantizers,
         max_frames=args.max_frames,
-        random_crop=True,
+        random_crop=not args.overfit,
         max_records=args.max_train_records,
         seed=args.seed,
     )
@@ -234,7 +236,7 @@ def main() -> None:
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.per_device_batch_size,
-        shuffle=True,
+        shuffle=not args.overfit,
         num_workers=args.num_workers,
         pin_memory=True,
         collate_fn=collator,
@@ -248,7 +250,11 @@ def main() -> None:
         collate_fn=collator,
     )
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    steps_per_epoch = math.ceil(len(train_loader) / max(1, args.gradient_accumulation_steps))
+    per_process_batches = math.ceil(
+        len(train_dataset)
+        / max(1, args.per_device_batch_size * max(1, accelerator.num_processes))
+    )
+    steps_per_epoch = math.ceil(per_process_batches / max(1, args.gradient_accumulation_steps))
     total_steps = args.max_steps or max(1, int(math.ceil(args.epochs * steps_per_epoch)))
     scheduler = make_scheduler(optimizer, args.warmup_steps, total_steps)
     model, optimizer, train_loader, dev_loader, scheduler = accelerator.prepare(
