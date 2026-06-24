@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 import traceback
@@ -23,9 +24,16 @@ from s2s_omni.io import read_jsonl
 from s2s_omni.llm_client import ChatClient, extract_json_object
 
 
+FORBIDDEN_ABBREVIATION_RE = re.compile(r"\bDNF(?:'d)?\b", re.IGNORECASE)
+
+
 SYSTEM_PROMPT = """You are a simultaneous speech-to-speech translation data teacher.
 Translate the source speech into concise, natural spoken English for streaming playback.
-Shorten only when needed to fit each chunk duration budget. Preserve names, numbers, entities, negation, and decisions. Remove filler and non-critical repetition.
+Shorten only when needed to fit each chunk duration budget and max spoken words. Preserve names, numbers, entities, negation, and decisions. Remove filler and non-critical repetition.
+If source or reference text exceeds max_spoken_words, you must rewrite it shorter instead of copying it.
+All digit numbers in source or reference text are mandatory and must appear unchanged.
+Avoid unexplained abbreviations or jargon; write the meaning in plain spoken English.
+Prefer one compact spoken sentence per chunk.
 Return JSON only with this schema:
 {"full_text":"...","chunks":[{"chunk_index":0,"text":"..."},{"chunk_index":1,"text":"..."}]}"""
 
@@ -49,6 +57,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--omni-use-audio", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--max-new-tokens", type=int, default=768)
     parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--teacher-words-per-second", type=float, default=2.6)
+    parser.add_argument("--max-estimated-rtf", type=float, default=1.0)
+    parser.add_argument("--require-number-coverage", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--repair-attempts", type=int, default=2)
     parser.add_argument("--include-reference", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--max-records", type=int, default=0)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
@@ -67,24 +79,61 @@ def existing_ids(path: str | Path) -> set[str]:
     return out
 
 
-def prompt_for_sample(sample: HibikiSample, include_reference: bool) -> str:
+def max_spoken_words(duration_s: float | None, words_per_second: float) -> int | None:
+    if duration_s is None or duration_s <= 0 or words_per_second <= 0:
+        return None
+    return max(1, int(math.floor(duration_s * words_per_second)))
+
+
+def number_tokens(text: str) -> list[str]:
+    return re.findall(r"\d+(?:[.,]\d+)?", text or "")
+
+
+def reason_chunk_indices(reasons: list[str], chunk_count: int) -> list[int]:
+    indices: set[int] = set()
+    for reason in reasons:
+        match = re.match(r"chunk_(\d+)_", reason)
+        if match:
+            idx = int(match.group(1))
+            if 0 <= idx < chunk_count:
+                indices.add(idx)
+    return sorted(indices)
+
+
+def prompt_for_sample(
+    sample: HibikiSample,
+    include_reference: bool,
+    teacher_words_per_second: float,
+) -> str:
     lines = [
         f"Source language: {sample.src_lang}",
         "Target language: English",
         "Chunk budgets are seconds of target speech allowed before the next source chunk.",
+        "Each chunk also gives max_spoken_words. Keep the English text at or below it unless dropping a critical name, number, negation, or decision would change the meaning.",
         "Write one English chunk per source chunk. A chunk may be empty only when speaking would be premature.",
         "",
         "Chunks:",
     ]
     for chunk in sample.source_audio_chunks:
-        budget = ""
+        parts = [f"chunk_index={chunk.index}"]
         if chunk.source_duration_s is not None:
-            budget = f", duration_budget_s={chunk.source_duration_s:.3f}"
-        lines.append(f"- chunk_index={chunk.index}{budget}")
+            parts.append(f"duration_budget_s={chunk.source_duration_s:.3f}")
+            max_words = max_spoken_words(chunk.source_duration_s, teacher_words_per_second)
+            if max_words is not None:
+                parts.append(f"max_spoken_words={max_words}")
+        lines.append(f"- {', '.join(parts)}")
         if chunk.source_text:
             lines.append(f"  source_text: {chunk.source_text}")
         if include_reference and chunk.reference_en_text:
-            lines.append(f"  reference_en_text: {chunk.reference_en_text}")
+            ref_words = len(english_words(chunk.reference_en_text))
+            ref_numbers = number_tokens(chunk.reference_en_text)
+            suffix = ""
+            if ref_numbers:
+                suffix = f"; mandatory_numbers={','.join(ref_numbers)}"
+            lines.append(
+                f"  reference_en_text ({ref_words} words; rewrite if over max_spoken_words{suffix}): "
+                f"{chunk.reference_en_text}"
+            )
     if sample.source_text:
         lines.extend(["", f"Full source transcript: {sample.source_text}"])
     if include_reference and sample.reference_en_text:
@@ -94,18 +143,34 @@ def prompt_for_sample(sample: HibikiSample, include_reference: bool) -> str:
     return "\n".join(lines)
 
 
-def text_messages(sample: HibikiSample, include_reference: bool) -> list[dict[str, str]]:
+def text_messages(
+    sample: HibikiSample,
+    include_reference: bool,
+    teacher_words_per_second: float,
+) -> list[dict[str, str]]:
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": prompt_for_sample(sample, include_reference)},
+        {
+            "role": "user",
+            "content": prompt_for_sample(sample, include_reference, teacher_words_per_second),
+        },
     ]
 
 
-def omni_messages(sample: HibikiSample, include_reference: bool) -> list[dict[str, Any]]:
+def omni_messages(
+    sample: HibikiSample,
+    include_reference: bool,
+    teacher_words_per_second: float,
+) -> list[dict[str, Any]]:
     content: list[dict[str, str]] = []
     for chunk in sample.source_audio_chunks:
         content.append({"type": "audio", "audio": chunk.source_audio})
-    content.append({"type": "text", "text": prompt_for_sample(sample, include_reference)})
+    content.append(
+        {
+            "type": "text",
+            "text": prompt_for_sample(sample, include_reference, teacher_words_per_second),
+        }
+    )
     return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": content}]
 
 
@@ -139,7 +204,15 @@ def parse_teacher_output(raw_text: str, chunk_count: int) -> tuple[str, list[str
     return full_text, chunk_texts, data
 
 
-def validate_teacher(sample: HibikiSample, full_text: str, chunk_texts: list[str]) -> list[str]:
+def validate_teacher(
+    sample: HibikiSample,
+    full_text: str,
+    chunk_texts: list[str],
+    *,
+    teacher_words_per_second: float,
+    max_estimated_rtf: float,
+    require_number_coverage: bool,
+) -> list[str]:
     reasons: list[str] = []
     if not english_words(full_text):
         reasons.append("empty_full_text")
@@ -150,9 +223,20 @@ def validate_teacher(sample: HibikiSample, full_text: str, chunk_texts: list[str
         words = len(english_words(text))
         source_s = source_durations[idx] if idx < len(source_durations) else None
         if source_s and source_s > 0 and words:
-            estimated_s = words / 2.8
-            if estimated_s / source_s > 1.25:
+            estimated_s = words / teacher_words_per_second
+            if estimated_s / source_s > max_estimated_rtf:
                 reasons.append(f"chunk_{idx}_estimated_over_budget")
+        if require_number_coverage and idx < len(sample.source_audio_chunks):
+            chunk = sample.source_audio_chunks[idx]
+            expected_numbers = set(number_tokens(chunk.source_text)) | set(
+                number_tokens(chunk.reference_en_text)
+            )
+            missing_numbers = sorted(expected_numbers - set(number_tokens(text)))
+            if missing_numbers:
+                reasons.append(f"chunk_{idx}_missing_numbers:{','.join(missing_numbers[:8])}")
+        forbidden = sorted({match.group(0) for match in FORBIDDEN_ABBREVIATION_RE.finditer(text)})
+        if forbidden:
+            reasons.append(f"chunk_{idx}_forbidden_abbreviation:{','.join(forbidden)}")
     return reasons
 
 
@@ -166,14 +250,72 @@ class OpenAITeacher:
         )
         self.max_new_tokens = args.max_new_tokens
         self.temperature = args.temperature
+        self.teacher_words_per_second = args.teacher_words_per_second
 
     def generate(self, sample: HibikiSample, include_reference: bool) -> str:
         return self.client.chat(
-            text_messages(sample, include_reference),
+            text_messages(sample, include_reference, self.teacher_words_per_second),
             temperature=self.temperature,
             max_tokens=self.max_new_tokens,
             response_format={"type": "json_object"},
         )
+
+    def repair(
+        self,
+        sample: HibikiSample,
+        chunk_texts: list[str],
+        chunk_indices: list[int],
+        include_reference: bool,
+    ) -> tuple[str, list[str], dict[str, Any]]:
+        repaired = list(chunk_texts)
+        repair_rows: list[dict[str, Any]] = []
+        for idx in chunk_indices:
+            chunk = sample.source_audio_chunks[idx]
+            max_words = max_spoken_words(chunk.source_duration_s, self.teacher_words_per_second)
+            expected_numbers = sorted(
+                set(number_tokens(chunk.source_text)) | set(number_tokens(chunk.reference_en_text))
+            )
+            prompt_lines = [
+                "Rewrite this English translation for spoken simultaneous interpretation.",
+                'Output JSON only: {"text":"..."}',
+                f"At most {max_words} English words. Count words strictly.",
+                "Preserve meaning, names, numbers, negation, and decisions.",
+                "Do not use unexplained abbreviations or jargon such as DNF; write did not finish instead.",
+                "Prefer a short natural spoken sentence.",
+                f"Mandatory digit numbers: {', '.join(expected_numbers) if expected_numbers else 'none'}",
+                "",
+                f"Current English text: {repaired[idx]}",
+            ]
+            if chunk.source_text:
+                prompt_lines.append(f"Source text: {chunk.source_text}")
+            if include_reference and chunk.reference_en_text:
+                prompt_lines.append(f"Reference English: {chunk.reference_en_text}")
+            raw = self.client.chat(
+                [
+                    {
+                        "role": "system",
+                        "content": "You are a strict compression editor for speech translation.",
+                    },
+                    {"role": "user", "content": "\n".join(prompt_lines)},
+                ],
+                temperature=self.temperature,
+                max_tokens=min(self.max_new_tokens, 256),
+                response_format={"type": "json_object"},
+            )
+            data = extract_json_object(clean_teacher_text(raw))
+            text = compact_whitespace(str(data.get("text") or ""))
+            if text:
+                repaired[idx] = text
+            repair_rows.append(
+                {
+                    "chunk_index": idx,
+                    "raw": data,
+                    "text": repaired[idx],
+                    "max_spoken_words": max_words,
+                    "mandatory_numbers": expected_numbers,
+                }
+            )
+        return join_chunk_texts(repaired), repaired, {"chunks": repair_rows}
 
 
 class ReferenceTeacher:
@@ -204,12 +346,13 @@ class TransformersOmniTeacher:
         self.max_new_tokens = args.max_new_tokens
         self.temperature = args.temperature
         self.use_audio = args.omni_use_audio
+        self.teacher_words_per_second = args.teacher_words_per_second
 
     def generate(self, sample: HibikiSample, include_reference: bool) -> str:
         messages = (
-            omni_messages(sample, include_reference)
+            omni_messages(sample, include_reference, self.teacher_words_per_second)
             if self.use_audio
-            else text_messages(sample, include_reference)
+            else text_messages(sample, include_reference, self.teacher_words_per_second)
         )
         text = self.processor.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
         audios, images, videos = self.process_mm_info(messages, use_audio_in_video=False)
@@ -292,7 +435,56 @@ def main() -> None:
                 continue
             raw = teacher.generate(sample, args.include_reference)
             full_text, chunk_texts, teacher_json = parse_teacher_output(raw, sample.chunk_count)
-            reasons = validate_teacher(sample, full_text, chunk_texts)
+            reasons = validate_teacher(
+                sample,
+                full_text,
+                chunk_texts,
+                teacher_words_per_second=args.teacher_words_per_second,
+                max_estimated_rtf=args.max_estimated_rtf,
+                require_number_coverage=args.require_number_coverage,
+            )
+            repair_history = []
+            for attempt in range(max(0, args.repair_attempts)):
+                if not reasons or not hasattr(teacher, "repair"):
+                    break
+                repair_indices = reason_chunk_indices(reasons, sample.chunk_count)
+                if not repair_indices:
+                    break
+                repair_before = list(reasons)
+                full_text, chunk_texts, repair_json = teacher.repair(
+                    sample,
+                    chunk_texts,
+                    repair_indices,
+                    args.include_reference,
+                )
+                reasons = validate_teacher(
+                    sample,
+                    full_text,
+                    chunk_texts,
+                    teacher_words_per_second=args.teacher_words_per_second,
+                    max_estimated_rtf=args.max_estimated_rtf,
+                    require_number_coverage=args.require_number_coverage,
+                )
+                repair_history.append(
+                    {
+                        "attempt": attempt + 1,
+                        "input_reasons": repair_before,
+                        "output_reasons": list(reasons),
+                        "repair": repair_json,
+                    }
+                )
+            if repair_history:
+                teacher_json = {
+                    "initial": teacher_json,
+                    "repair_history": repair_history,
+                    "final": {
+                        "full_text": full_text,
+                        "chunks": [
+                            {"chunk_index": i, "text": text}
+                            for i, text in enumerate(chunk_texts)
+                        ],
+                    },
+                }
             out = sample.to_dict()
             out.update(
                 {
