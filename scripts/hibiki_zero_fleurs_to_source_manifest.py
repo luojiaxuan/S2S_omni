@@ -6,6 +6,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Any, Iterable
+from io import BytesIO
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -39,9 +40,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_split(dataset_name: str, config: str, split: str, streaming: bool) -> Iterable[dict[str, Any]]:
-    from datasets import load_dataset
+    from datasets import Audio, load_dataset
 
-    return load_dataset(dataset_name, config, split=split, streaming=streaming)
+    dataset = load_dataset(dataset_name, config, split=split, streaming=streaming)
+    if hasattr(dataset, "cast_column") and "audio" in getattr(dataset, "column_names", []):
+        dataset = dataset.cast_column("audio", Audio(decode=False))
+    return dataset
 
 
 def row_id(row: dict[str, Any]) -> str:
@@ -58,10 +62,20 @@ def transcription(row: dict[str, Any]) -> str:
 
 
 def audio_array(row: dict[str, Any]) -> tuple[Any, int]:
+    import soundfile as sf
+
     audio = row.get("audio")
-    if not isinstance(audio, dict) or audio.get("array") is None:
-        raise ValueError("FLEURS row has no decoded audio array")
-    return audio["array"], int(audio.get("sampling_rate") or 16000)
+    if not isinstance(audio, dict):
+        raise ValueError("FLEURS row has no audio field")
+    if audio.get("array") is not None:
+        return audio["array"], int(audio.get("sampling_rate") or 16000)
+    if audio.get("path"):
+        wav, sr = sf.read(str(audio["path"]), dtype="float32", always_2d=False)
+        return wav, int(sr)
+    if audio.get("bytes"):
+        wav, sr = sf.read(BytesIO(audio["bytes"]), dtype="float32", always_2d=False)
+        return wav, int(sr)
+    raise ValueError("FLEURS row has neither decoded audio, path, nor bytes")
 
 
 def build_english_refs(args: argparse.Namespace) -> tuple[dict[str, str], list[str]]:
