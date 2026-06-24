@@ -66,6 +66,17 @@ python scripts/hibiki_zero_tsv_to_source_manifest.py \
   --max-per-lang 100
 ```
 
+For smoke tests without CoVoST access, export parallel FLEURS source speech and
+English reference text:
+
+```bash
+python scripts/hibiki_zero_fleurs_to_source_manifest.py \
+  --output /data/runs/hz/fleurs_source.jsonl \
+  --audio-dir /data/runs/hz/fleurs_audio \
+  --split validation \
+  --max-per-lang 5
+```
+
 Generate compressed English teacher text:
 
 ```bash

@@ -95,7 +95,7 @@ docker exec "${CONTAINER_NAME}" bash -lc '
     uv venv --python 3.13 /data/.venvs/hibiki-zero
   fi
   source /data/.venvs/hibiki-zero/bin/activate
-  uv pip install hibiki-zero soundfile numpy scipy sacrebleu requests
+  uv pip install hibiki-zero soundfile numpy scipy sacrebleu requests datasets
   hibiki-zero --help >/data/log_hibiki_zero_help.txt 2>&1 || true
   python - <<'"'"'PY'"'"'
 import importlib.util
