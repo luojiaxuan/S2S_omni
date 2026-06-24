@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import re
+import wave
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
-from .rasst import audio_duration_s, sanitize_id
 from .textgrid import choose_word_tier, nonsilence_intervals, parse_textgrid
 
 
@@ -92,7 +92,7 @@ class HibikiSample:
             chunks_data = infer_chunks_from_flat_record(data)
         chunks = [HibikiChunk.from_dict(chunk, idx) for idx, chunk in enumerate(chunks_data)]
         return cls(
-            sample_id=sanitize_id(sample_id),
+            sample_id=safe_id(sample_id),
             src_lang=src_lang,
             source_audio_chunks=chunks,
             source_text=str(data.get("source_text") or ""),
@@ -172,6 +172,21 @@ def normalize_src_lang(lang: str) -> str:
         choices = ", ".join(sorted(SUPPORTED_SRC_LANGS))
         raise ValueError(f"unsupported Hibiki-Zero src_lang {lang!r}; expected one of: {choices}")
     return value
+
+
+def safe_id(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", str(value))[:180] or "sample"
+
+
+def audio_duration_s(path: str | Path) -> float:
+    try:
+        import soundfile as sf
+
+        info = sf.info(str(path))
+        return float(info.frames) / float(info.samplerate)
+    except Exception:
+        with wave.open(str(path), "rb") as handle:
+            return float(handle.getnframes()) / float(handle.getframerate())
 
 
 def infer_chunks_from_flat_record(data: dict[str, Any]) -> list[dict[str, Any]]:

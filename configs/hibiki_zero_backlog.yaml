@@ -1,0 +1,46 @@
+languages:
+  source: [fr, es, pt, de]
+  target: en
+
+paths:
+  aries_primary_root: /mnt/data3/jiaxuanluo/s2s_omni_hibiki_zero
+  aries_fallback_root: /mnt/data6/jiaxuanluo/s2s_omni_hibiki_zero
+  min_free_gb: 300
+
+dataset:
+  smoke_per_language: 100
+  sft_total: 12500
+  sft_per_language: 3000
+  overflow: 500
+  split_by: sample_id
+  train_ratio: 0.9
+  dev_ratio: 0.05
+  test_ratio: 0.05
+  speed_factors: [1.0, 1.35, 1.7, 2.0]
+  speed_assignment: cycle
+
+teacher:
+  primary_model: Qwen/Qwen3-Omni-30B-A3B-Instruct
+  backend: transformers_omni
+  fallback_backends: [qwen3_5_omni, asr_text_llm]
+  target_language: English
+  estimated_english_words_per_second: 2.8
+  max_estimated_chunk_rtf: 1.25
+
+tts:
+  default_backend: moss_tts
+  fallback_backends: [higgs_tts, qwen3_tts]
+  language: English
+  voice_clone: true
+  http_endpoint_env: HIBIKI_TTS_URLS
+
+alignment:
+  mfa_language: english
+  min_target_chunk_s: 0.08
+  max_word_mismatch_ratio: 0.1
+
+quality_gates:
+  dataset_smoke_min_accept_rate: 0.7
+  max_missing_or_corrupt_wav_rate: 0.01
+  speech_s2s_rtf_threshold: 1.0
+  max_relative_asr_bleu_chrf_drop: 0.05
