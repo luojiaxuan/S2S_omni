@@ -79,6 +79,7 @@ else
     -e WANDB_DIR=/data/wandb \
     -e TMPDIR=/data/tmp \
     --ipc=host \
+    --network host \
     --ulimit nofile=65536:65536 \
     --ulimit memlock=-1 \
     --ulimit stack=67108864 \
