@@ -46,6 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default="http://127.0.0.1:30000/v1")
     parser.add_argument("--api-key", default="EMPTY")
     parser.add_argument("--device-map", default="auto")
+    parser.add_argument("--omni-use-audio", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--max-new-tokens", type=int, default=768)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--include-reference", action=argparse.BooleanOptionalAction, default=True)
@@ -202,9 +203,14 @@ class TransformersOmniTeacher:
         self.model.eval()
         self.max_new_tokens = args.max_new_tokens
         self.temperature = args.temperature
+        self.use_audio = args.omni_use_audio
 
     def generate(self, sample: HibikiSample, include_reference: bool) -> str:
-        messages = omni_messages(sample, include_reference)
+        messages = (
+            omni_messages(sample, include_reference)
+            if self.use_audio
+            else text_messages(sample, include_reference)
+        )
         text = self.processor.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
         audios, images, videos = self.process_mm_info(messages, use_audio_in_video=False)
         inputs = self.processor(
