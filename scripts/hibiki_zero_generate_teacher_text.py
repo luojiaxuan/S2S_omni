@@ -486,6 +486,9 @@ def main() -> None:
                     },
                 }
             out = sample.to_dict()
+            for key in ["base_sample_id", "speed_factor"]:
+                if key in record:
+                    out[key] = record[key]
             out.update(
                 {
                     "compressed_en_text": full_text,
@@ -499,7 +502,15 @@ def main() -> None:
                 }
             )
             out["source_audio_chunks"] = [
-                {**chunk.to_dict(), "compressed_en_text": chunk_texts[i]}
+                {
+                    **chunk.to_dict(),
+                    "compressed_en_text": chunk_texts[i],
+                    **(
+                        {"duration_budget_s": sample.duration_budget_s[i]}
+                        if i < len(sample.duration_budget_s)
+                        else {}
+                    ),
+                }
                 for i, chunk in enumerate(sample.source_audio_chunks)
             ]
             if reasons:

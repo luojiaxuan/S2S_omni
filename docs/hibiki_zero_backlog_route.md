@@ -77,11 +77,22 @@ python scripts/hibiki_zero_fleurs_to_source_manifest.py \
   --max-per-lang 5
 ```
 
+Expand source rows with backlog speed stress before teacher generation:
+
+```bash
+python scripts/hibiki_zero_speed_stress_sources.py \
+  --input /data/runs/hz/data/source_manifest.jsonl \
+  --output /data/runs/hz/data/source_manifest_speed.jsonl \
+  --audio-dir /data/runs/hz/data/source_speed_wav \
+  --speed-factors 1.0,1.35,1.7,2.0 \
+  --speed-assignment cycle
+```
+
 Generate compressed English teacher text:
 
 ```bash
 python scripts/hibiki_zero_generate_teacher_text.py \
-  --input /data/runs/hz/data/source_manifest.jsonl \
+  --input /data/runs/hz/data/source_manifest_speed.jsonl \
   --output /data/runs/hz/teacher/teacher_manifest.jsonl \
   --backend transformers_omni \
   --model Qwen/Qwen3-Omni-30B-A3B-Instruct
@@ -91,7 +102,7 @@ For an OpenAI-compatible Qwen3-Omni or text fallback endpoint:
 
 ```bash
 python scripts/hibiki_zero_generate_teacher_text.py \
-  --input /data/runs/hz/data/source_manifest.jsonl \
+  --input /data/runs/hz/data/source_manifest_speed.jsonl \
   --output /data/runs/hz/teacher/teacher_manifest.jsonl \
   --backend openai \
   --base-url http://127.0.0.1:30000/v1 \
