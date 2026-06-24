@@ -55,6 +55,17 @@ python scripts/hibiki_zero_prepare_sources.py \
   --split
 ```
 
+If the source is a TSV with `audio/src_text/tgt_text/src_lang/tgt_lang` columns,
+convert it first:
+
+```bash
+python scripts/hibiki_zero_tsv_to_source_manifest.py \
+  --input /path/to/covost_or_st.tsv \
+  --audio-root /path/to/dataset/root \
+  --output /data/runs/hz/raw_source.jsonl \
+  --max-per-lang 100
+```
+
 Generate compressed English teacher text:
 
 ```bash

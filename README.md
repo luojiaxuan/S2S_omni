@@ -58,6 +58,7 @@ scripts/
   watch_and_merge_teacher.sh     # wait for shards, merge labels, summarize
   verify_split_integrity.py      # verify held-out base_id split isolation
   hibiki_zero_prepare_sources.py # normalize fr/es/pt/de -> en source manifests
+  hibiki_zero_tsv_to_source_manifest.py # convert ST TSV rows to source schema
   hibiki_zero_generate_teacher_text.py # Qwen3-Omni compressed English teacher
   hibiki_zero_generate_tts_targets.py # MOSS/Higgs/Qwen3-TTS target speech HTTP
   hibiki_zero_slice_mfa_chunks.py # English MFA word-boundary target chunking
