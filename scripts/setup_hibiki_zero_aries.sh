@@ -8,6 +8,7 @@ PRIMARY_ROOT="${PRIMARY_ROOT:-/mnt/data3/jiaxuanluo/s2s_omni_hibiki_zero}"
 FALLBACK_ROOT="${FALLBACK_ROOT:-/mnt/data6/jiaxuanluo/s2s_omni_hibiki_zero}"
 HOST_REPO="${HOST_REPO:-/mnt/data3/jiaxuanluo/S2S_omni}"
 HOST_HF_CACHE_DIR="${HOST_HF_CACHE_DIR:-/mnt/data2/jiaxuanluo/.cache/huggingface}"
+RECREATE_CONTAINER="${RECREATE_CONTAINER:-0}"
 
 hostname
 nvidia-smi || true
@@ -52,6 +53,15 @@ else
 fi
 
 docker pull "${IMAGE}"
+DATA_MOUNTS=()
+for path in /mnt/data /mnt/data1 /mnt/data2 /mnt/data3 /mnt/data4 /mnt/data6 /mnt/taurus/data /mnt/taurus/data1 /mnt/taurus/data2; do
+  if [[ -d "${path}" ]]; then
+    DATA_MOUNTS+=(-v "${path}:${path}:ro")
+  fi
+done
+if [[ "${RECREATE_CONTAINER}" == "1" ]] && docker ps -a --format '{{.Names}}' | grep -qx "${CONTAINER_NAME}"; then
+  docker rm -f "${CONTAINER_NAME}" >/dev/null
+fi
 if docker ps -a --format '{{.Names}}' | grep -qx "${CONTAINER_NAME}"; then
   docker start "${CONTAINER_NAME}" >/dev/null
 else
@@ -61,6 +71,7 @@ else
     -v "${HOST_HF_CACHE_DIR}:/root/.cache/huggingface" \
     -v "${HOST_DATA_DIR}:/data" \
     -v "${HOST_REPO}:/data/repo/S2S_omni" \
+    "${DATA_MOUNTS[@]}" \
     -e HF_HOME=/root/.cache/huggingface \
     -e HF_HUB_CACHE=/root/.cache/huggingface/hub \
     -e XDG_CACHE_HOME=/data/.cache \
