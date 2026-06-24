@@ -32,6 +32,7 @@ data/examples/
   seed_segments.jsonl           # tiny smoke-test corpus
 docs/
   eval_plan.md                  # literature-backed metric plan
+  hibiki_zero_backlog_route.md  # Hibiki-Zero cascade data and baseline route
   remote_artifacts.md           # remote data/checkpoint path index
 s2s_omni/
   schema.py                     # dataclasses for samples, timing, budgets
@@ -42,6 +43,7 @@ s2s_omni/
   llm_client.py                 # minimal OpenAI-compatible chat client
   sft.py                        # chat-format and JSONL SFT export
   streaming.py                  # speed-up and lag-budget manifest transforms
+  hibiki_zero.py                # Hibiki-Zero X->English S2S manifest helpers
 scripts/
   make_stress_manifest.py       # expand samples into speed/budget conditions
   build_gigaspeech_sft.py       # build GigaSpeech warm-up and teacher-request data
@@ -55,6 +57,11 @@ scripts/
   train_text_lora_sft.py        # dependency-checked LoRA SFT entrypoint
   watch_and_merge_teacher.sh     # wait for shards, merge labels, summarize
   verify_split_integrity.py      # verify held-out base_id split isolation
+  hibiki_zero_prepare_sources.py # normalize fr/es/pt/de -> en source manifests
+  hibiki_zero_generate_teacher_text.py # Qwen3-Omni compressed English teacher
+  hibiki_zero_generate_tts_targets.py # MOSS/Higgs/Qwen3-TTS target speech HTTP
+  hibiki_zero_slice_mfa_chunks.py # English MFA word-boundary target chunking
+  hibiki_zero_run_baseline.py    # run official hibiki-zero generate baseline
   run_smoke.sh                  # quick local/remote smoke test
 ```
 
@@ -140,6 +147,49 @@ python3 scripts/run_qwen3_omni_baseline.py \
 For audio output, omit `--text-only` and make sure the server is in speech mode.
 
 vLLM is intentionally not part of this repo's inference path.
+
+## Hibiki-Zero Backlog-Aware Baseline
+
+The current non-Omni-codec route uses Hibiki-Zero as the S2S baseline for
+`fr/es/pt/de -> en`. It builds cascade teacher data:
+
+```text
+source speech -> Qwen3-Omni thinker-only compressed English text
+              -> MOSS/Higgs/Qwen3-TTS English speech
+              -> English MFA chunk slicing
+              -> Hibiki-style S2S SFT manifests
+```
+
+Primary scripts:
+
+```bash
+python scripts/hibiki_zero_prepare_sources.py --help
+python scripts/hibiki_zero_generate_teacher_text.py --help
+python scripts/hibiki_zero_generate_tts_targets.py --help
+python scripts/hibiki_zero_slice_mfa_chunks.py --help
+python scripts/hibiki_zero_run_baseline.py --help
+```
+
+On Aries, use:
+
+```bash
+CONTAINER_NAME=sglang-omni-jiaxuan-aries-hibiki-zero \
+  bash scripts/setup_hibiki_zero_aries.sh
+```
+
+Then run the smoke chain with a real `SOURCE_MANIFEST`:
+
+```bash
+CONTAINER_NAME=sglang-omni-jiaxuan-aries-hibiki-zero \
+SOURCE_MANIFEST=/path/to/fr_es_pt_de_to_en.jsonl \
+TTS_URLS=http://127.0.0.1:18112/v1/audio/speech \
+  bash scripts/run_hibiki_zero_smoke_aries.sh
+```
+
+See `docs/hibiki_zero_backlog_route.md` for the full data/eval plan. The
+Hibiki-Zero SFT adapter itself is the next step after verifying baseline and
+teacher-data smoke, because the public Hibiki-Zero package is primarily
+inference-oriented.
 
 ## RASST Soft-Wav E2E SFT
 
