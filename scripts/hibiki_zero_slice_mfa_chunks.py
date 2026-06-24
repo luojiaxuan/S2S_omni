@@ -6,6 +6,7 @@ import json
 import shutil
 import sys
 import traceback
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,7 @@ if str(ROOT) not in sys.path:
 
 from s2s_omni.hibiki_zero import (
     HibikiSample,
+    WordBoundary,
     boundaries_from_textgrid,
     duration_budgets_from_source,
     gate_duration_rtf,
@@ -48,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-target-chunk-s", type=float, default=0.08)
     parser.add_argument("--max-records", type=int, default=0)
     parser.add_argument("--overwrite-audio", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--include-edge-silence", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--log-every", type=int, default=50)
     return parser.parse_args()
 
@@ -76,6 +79,23 @@ def find_textgrid(textgrid_dir: str | Path, sample_id: str) -> Path | None:
 
 def chunk_texts(sample: HibikiSample) -> list[str]:
     return [chunk.compressed_en_text for chunk in sample.source_audio_chunks]
+
+
+def include_edge_silence(
+    boundaries: list[WordBoundary | None],
+    full_duration_s: float,
+) -> list[WordBoundary | None]:
+    nonempty = [(idx, boundary) for idx, boundary in enumerate(boundaries) if boundary is not None]
+    if not nonempty:
+        return boundaries
+    out = list(boundaries)
+    first_idx, first = nonempty[0]
+    last_idx, _ = nonempty[-1]
+    out[first_idx] = replace(first, start_s=0.0)
+    last = out[last_idx]
+    if last is not None:
+        out[last_idx] = replace(last, end_s=max(float(last.end_s), full_duration_s))
+    return out
 
 
 def slice_target_wavs(
@@ -190,6 +210,8 @@ def process_sample(
             texts,
             min_duration_s=args.min_target_chunk_s,
         )
+        if args.include_edge_silence:
+            boundaries = include_edge_silence(boundaries, audio_duration_s(sample.target_en_wav))
         for idx, (text, boundary) in enumerate(zip(texts, boundaries, strict=False)):
             if text and boundary is None:
                 raise ValueError(f"nonempty chunk {idx} has no valid MFA boundary")
