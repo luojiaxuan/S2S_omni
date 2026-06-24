@@ -91,7 +91,9 @@ fi
 docker exec "${CONTAINER_NAME}" bash -lc '
   set -euo pipefail
   python3 -m pip install --upgrade pip uv
-  uv venv --python 3.13 /data/.venvs/hibiki-zero
+  if [[ ! -x /data/.venvs/hibiki-zero/bin/python ]]; then
+    uv venv --python 3.13 /data/.venvs/hibiki-zero
+  fi
   source /data/.venvs/hibiki-zero/bin/activate
   uv pip install hibiki-zero soundfile numpy scipy sacrebleu requests
   hibiki-zero --help >/data/log_hibiki_zero_help.txt 2>&1 || true
