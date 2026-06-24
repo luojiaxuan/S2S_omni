@@ -36,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--backend", default="moss_tts_http")
     parser.add_argument("--language", default="English")
     parser.add_argument("--voice-clone", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--fixed-ref-audio", default="")
     parser.add_argument("--ref-text", default="")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--timeout-s", type=float, default=600.0)
@@ -78,7 +79,7 @@ def generate_one(sample: HibikiSample, args: argparse.Namespace, output_dir: Pat
             "input": sample.compressed_en_text,
             "language": args.language,
         }
-        ref_audio = first_reference_audio(sample)
+        ref_audio = args.fixed_ref_audio or first_reference_audio(sample)
         if args.voice_clone and ref_audio:
             payload["references"] = [{"audio_path": ref_audio, "text": args.ref_text}]
         started = time.perf_counter()
