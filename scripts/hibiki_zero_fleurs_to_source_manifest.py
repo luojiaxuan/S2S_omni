@@ -69,8 +69,9 @@ def audio_array(row: dict[str, Any]) -> tuple[Any, int]:
         raise ValueError("FLEURS row has no audio field")
     if audio.get("array") is not None:
         return audio["array"], int(audio.get("sampling_rate") or 16000)
-    if audio.get("path"):
-        wav, sr = sf.read(str(audio["path"]), dtype="float32", always_2d=False)
+    path_value = audio.get("path") or row.get("path")
+    if path_value and Path(str(path_value)).exists():
+        wav, sr = sf.read(str(path_value), dtype="float32", always_2d=False)
         return wav, int(sr)
     if audio.get("bytes"):
         wav, sr = sf.read(BytesIO(audio["bytes"]), dtype="float32", always_2d=False)
