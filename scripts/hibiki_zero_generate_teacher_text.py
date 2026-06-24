@@ -39,7 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--rejected-output", default="")
     parser.add_argument(
         "--backend",
-        choices=["openai", "transformers_omni"],
+        choices=["openai", "transformers_omni", "reference"],
         default="openai",
     )
     parser.add_argument("--model", default="Qwen/Qwen3-Omni-30B-A3B-Instruct")
@@ -175,6 +175,15 @@ class OpenAITeacher:
         )
 
 
+class ReferenceTeacher:
+    def generate(self, sample: HibikiSample, include_reference: bool) -> str:
+        chunks = []
+        for chunk in sample.source_audio_chunks:
+            chunks.append({"chunk_index": chunk.index, "text": chunk.reference_en_text})
+        full_text = join_chunk_texts([chunk["text"] for chunk in chunks]) or sample.reference_en_text
+        return json.dumps({"full_text": full_text, "chunks": chunks}, ensure_ascii=False)
+
+
 class TransformersOmniTeacher:
     def __init__(self, args: argparse.Namespace) -> None:
         import torch
@@ -238,7 +247,9 @@ class TransformersOmniTeacher:
         )[0]
 
 
-def make_teacher(args: argparse.Namespace) -> OpenAITeacher | TransformersOmniTeacher:
+def make_teacher(args: argparse.Namespace) -> OpenAITeacher | TransformersOmniTeacher | ReferenceTeacher:
+    if args.backend == "reference":
+        return ReferenceTeacher()
     if args.backend == "transformers_omni":
         return TransformersOmniTeacher(args)
     return OpenAITeacher(args)
