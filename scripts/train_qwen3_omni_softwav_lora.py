@@ -60,6 +60,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--wav-l1-weight", type=float, default=0.2)
     parser.add_argument("--stft-weight", type=float, default=0.5)
     parser.add_argument("--eos-ce-weight", type=float, default=0.1)
+    parser.add_argument("--nonempty-eos-ce-weight", type=float, default=0.0)
     parser.add_argument("--nonempty-eos-avoid-weight", type=float, default=0.0)
     parser.add_argument("--code2wav-grad-mode", choices=["st_argmax", "soft"], default="st_argmax")
     parser.add_argument("--detach-wav-only-frame-feedback", action=argparse.BooleanOptionalAction, default=True)
@@ -652,6 +653,63 @@ def eos_avoid_loss_for_nonempty(model: Any, primary_logits: Any) -> Any:
     return -torch.log1p(-probs).mean()
 
 
+def eos_loss_after_logits_frames(
+    model: Any,
+    condition: Any,
+    logits_by_q: list[Any],
+    *,
+    temperature: float,
+    mode: str,
+    detach_frame_feedback: bool,
+) -> Any:
+    torch = _torch()
+    eos_id = int(model.config.talker_config.codec_eos_token_id)
+    if not logits_by_q or logits_by_q[0].shape[1] <= 0:
+        return eos_loss_for_empty(model, condition)
+    if eos_id < 0 or eos_id >= logits_by_q[0].shape[-1]:
+        return logits_by_q[0].new_zeros(())
+    frame_embeds = []
+    frames = int(logits_by_q[0].shape[1])
+    for frame in range(frames):
+        primary_logits = logits_by_q[0][:, frame : frame + 1, :]
+        residual_logits = [q_logits[:, frame, :] for q_logits in logits_by_q[1:]]
+        frame_embed = frame_embed_from_logits(
+            model,
+            condition,
+            primary_logits,
+            residual_logits,
+            frame,
+            temperature=temperature,
+            mode=mode,
+        )
+        if detach_frame_feedback:
+            frame_embed = frame_embed.detach()
+        frame_embeds.append(frame_embed)
+    inputs_embeds = torch.cat((condition.inputs_embeds, torch.cat(frame_embeds, dim=1)), dim=1)
+    pad_ids = torch.full(
+        (condition.talker_input_ids.shape[0], frames),
+        fill_value=model.config.tts_pad_token_id,
+        dtype=condition.talker_input_ids.dtype,
+        device=condition.talker_input_ids.device,
+    )
+    talker_input_ids = torch.cat((condition.talker_input_ids, pad_ids), dim=1)
+    out = model.talker(
+        inputs_embeds=inputs_embeds,
+        attention_mask=torch.ones_like(talker_input_ids, dtype=torch.long),
+        talker_input_ids=talker_input_ids,
+        trailing_text_hidden=condition.trailing_text_hidden,
+        tts_pad_embed=condition.tts_pad_embed,
+        use_cache=False,
+        output_hidden_states=False,
+        return_dict=True,
+    )
+    logits = out.logits[:, -1, :]
+    if not bool(torch.isfinite(logits).all().detach().cpu()):
+        return logits.new_zeros(())
+    label = torch.full((logits.shape[0],), eos_id, dtype=torch.long, device=logits.device)
+    return torch.nn.functional.cross_entropy(logits.float(), label)
+
+
 def load_codes(path: str | Path, device: Any | None = None) -> Any:
     torch = _torch()
     codes = np.load(path)
@@ -770,6 +828,19 @@ def compute_record_loss(
         total = add_loss_term(total, eos_avoid_component)
         metrics["eos_avoid_loss"] = float(eos_avoid.detach().float().cpu())
         metrics["eos_avoid_component"] = float(eos_avoid_component.detach().float().cpu())
+    if args.nonempty_eos_ce_weight > 0:
+        nonempty_eos_loss = eos_loss_after_logits_frames(
+            model,
+            condition,
+            logits_by_q,
+            temperature=temperature,
+            mode=args.code2wav_grad_mode,
+            detach_frame_feedback=args.detach_wav_only_frame_feedback,
+        )
+        nonempty_eos_component = args.nonempty_eos_ce_weight * nonempty_eos_loss
+        total = add_loss_term(total, nonempty_eos_component)
+        metrics["nonempty_eos_loss"] = float(nonempty_eos_loss.detach().float().cpu())
+        metrics["nonempty_eos_component"] = float(nonempty_eos_component.detach().float().cpu())
     target_wav = target_wav.to(pred_wav.device)
     wav_l1 = waveform_l1_loss(pred_wav, target_wav)
     stft = multi_resolution_stft_loss(pred_wav, target_wav)
