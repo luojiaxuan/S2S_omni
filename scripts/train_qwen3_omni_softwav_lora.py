@@ -197,6 +197,12 @@ def thinker_text_loss(model: Any, inputs: Any, prompt_len: int, target_token_len
     kwargs["return_dict"] = True
     outputs = model.thinker(**kwargs)
     shift_logits = outputs.logits[:, :-1].contiguous()
+    shift_logits = torch.nan_to_num(
+        shift_logits.float(),
+        nan=0.0,
+        posinf=1.0e4,
+        neginf=-1.0e4,
+    )
     labels = torch.full(
         inputs["input_ids"].shape,
         fill_value=-100,
@@ -210,11 +216,14 @@ def thinker_text_loss(model: Any, inputs: Any, prompt_len: int, target_token_len
     if not bool(valid.any()):
         return shift_logits.new_zeros(())
     safe_labels = shift_labels.masked_fill(~valid, -100)
-    return torch.nn.functional.cross_entropy(
+    loss = torch.nn.functional.cross_entropy(
         shift_logits.view(-1, shift_logits.shape[-1]),
         safe_labels.view(-1),
         ignore_index=-100,
     )
+    if not bool(torch.isfinite(loss).detach().cpu()):
+        return shift_logits.new_zeros(())
+    return loss
 
 
 def teacher_frame_embeds(model: Any, condition: Any, codes: Any) -> Any:
