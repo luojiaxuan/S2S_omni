@@ -39,6 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-records", type=int, default=0)
     parser.add_argument("--max-dev-records", type=int, default=100)
     parser.add_argument("--max-steps", type=int, default=0)
+    parser.add_argument("--max-history-chunks", type=int, default=0)
     parser.add_argument("--epochs", type=float, default=1.0)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=16)
     parser.add_argument("--learning-rate", type=float, default=5e-5)
@@ -92,6 +93,39 @@ def make_scheduler(optimizer: Any, warmup_steps: int, total_steps: int):
     return LambdaLR(optimizer, lr_lambda)
 
 
+def trim_streaming_history(record: dict[str, Any], max_history_chunks: int) -> dict[str, Any]:
+    if max_history_chunks <= 0:
+        return record
+    messages = list(record.get("messages") or [])
+    audios = list(record.get("audios") or [])
+    if not messages or messages[-1].get("role") != "assistant":
+        return record
+    system_messages = []
+    rest = messages
+    if messages[0].get("role") == "system":
+        system_messages = [messages[0]]
+        rest = messages[1:]
+    pairs = []
+    for index in range(0, len(rest), 2):
+        if index + 1 >= len(rest):
+            return record
+        user_msg = rest[index]
+        assistant_msg = rest[index + 1]
+        if user_msg.get("role") != "user" or assistant_msg.get("role") != "assistant":
+            return record
+        pairs.append((user_msg, assistant_msg))
+    if len(pairs) <= max_history_chunks:
+        return record
+    keep_pairs = pairs[-max_history_chunks:]
+    trimmed = dict(record)
+    trimmed_messages = list(system_messages)
+    for user_msg, assistant_msg in keep_pairs:
+        trimmed_messages.extend([user_msg, assistant_msg])
+    trimmed["messages"] = trimmed_messages
+    trimmed["audios"] = audios[-max_history_chunks:]
+    return trimmed
+
+
 def messages_with_audio_content(record: dict[str, Any]) -> list[dict[str, Any]]:
     audios = list(record.get("audios") or [])
     audio_index = 0
@@ -124,6 +158,7 @@ def split_prompt_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]
 def load_processor_inputs(processor: Any, record: dict[str, Any], model: Any) -> tuple[Any, Any, int]:
     from qwen_omni_utils import process_mm_info
 
+    record = trim_streaming_history(record, getattr(load_processor_inputs, "max_history_chunks", 0))
     messages = messages_with_audio_content(record)
     prompt_messages = split_prompt_messages(messages)
     full_text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
@@ -774,6 +809,7 @@ def main() -> None:
         records = records[: args.max_records]
     if not records:
         raise SystemExit("train manifest is empty")
+    load_processor_inputs.max_history_chunks = args.max_history_chunks
 
     processor = Qwen3OmniMoeProcessor.from_pretrained(args.model, trust_remote_code=True)
     kwargs: dict[str, Any] = {"trust_remote_code": True, "dtype": "auto"}
