@@ -31,6 +31,7 @@ class HibikiChunk:
     index: int
     source_audio: str
     source_duration_s: float | None = None
+    duration_budget_s: float | None = None
     source_text: str = ""
     reference_en_text: str = ""
     compressed_en_text: str = ""
@@ -49,6 +50,7 @@ class HibikiChunk:
             index=int(data.get("chunk_index", data.get("index", index))),
             source_audio=str(source_audio),
             source_duration_s=optional_float(data.get("source_duration_s")),
+            duration_budget_s=optional_float(data.get("duration_budget_s")),
             source_text=str(data.get("source_text") or ""),
             reference_en_text=str(data.get("reference_en_text") or data.get("target_text") or ""),
             compressed_en_text=str(data.get("compressed_en_text") or ""),
@@ -59,6 +61,7 @@ class HibikiChunk:
             "chunk_index": self.index,
             "source_audio": self.source_audio,
             "source_duration_s": self.source_duration_s,
+            "duration_budget_s": self.duration_budget_s,
             "source_text": self.source_text,
             "reference_en_text": self.reference_en_text,
             "compressed_en_text": self.compressed_en_text,
@@ -80,6 +83,8 @@ class HibikiSample:
     speech_s2s_rtf: list[float | None] = field(default_factory=list)
     quality_gates: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    base_sample_id: str = ""
+    speed_factor: float | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "HibikiSample":
@@ -107,10 +112,12 @@ class HibikiSample:
             ],
             quality_gates=dict(data.get("quality_gates") or {}),
             metadata=dict(data.get("metadata") or {}),
+            base_sample_id=str(data.get("base_sample_id") or ""),
+            speed_factor=optional_float(data.get("speed_factor")),
         )
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "sample_id": self.sample_id,
             "src_lang": self.src_lang,
             "source_audio_chunks": [chunk.to_dict() for chunk in self.source_audio_chunks],
@@ -125,6 +132,11 @@ class HibikiSample:
             "quality_gates": self.quality_gates,
             "metadata": self.metadata,
         }
+        if self.base_sample_id:
+            out["base_sample_id"] = self.base_sample_id
+        if self.speed_factor is not None:
+            out["speed_factor"] = self.speed_factor
+        return out
 
     @property
     def chunk_count(self) -> int:

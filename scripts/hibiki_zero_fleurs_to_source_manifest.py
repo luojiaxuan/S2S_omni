@@ -123,7 +123,7 @@ def main() -> None:
 
                         wav = resample_audio(wav, sr, args.sample_rate)
                         sr = args.sample_rate
-                    sample_id = sanitize_id(f"fleurs_{lang}_{args.split}_{rid}")
+                    sample_id = sanitize_id(f"fleurs_{lang}_{args.split}_{row_index:05d}_{rid}")
                     wav_path = audio_dir / lang / f"{sample_id}.wav"
                     write_mono_wav(wav_path, wav, sr)
                     record = {
@@ -145,6 +145,7 @@ def main() -> None:
                             "fleurs_config": config,
                             "english_config": args.english_config,
                             "fleurs_id": rid,
+                            "fleurs_row_index": row_index,
                         },
                     }
                     handle.write(json.dumps(record, ensure_ascii=False, sort_keys=False) + "\n")

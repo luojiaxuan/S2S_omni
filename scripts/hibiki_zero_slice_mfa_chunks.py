@@ -50,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-target-chunk-s", type=float, default=0.08)
     parser.add_argument("--max-records", type=int, default=0)
     parser.add_argument("--overwrite-audio", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--use-existing-source-speed", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--include-edge-silence", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--log-every", type=int, default=50)
     return parser.parse_args()
@@ -157,6 +158,21 @@ def speed_source_chunks(
     return paths, durations
 
 
+def existing_source_chunks(sample: HibikiSample) -> tuple[list[str], list[float | None]]:
+    paths: list[str] = []
+    durations: list[float | None] = []
+    for chunk in sample.source_audio_chunks:
+        paths.append(chunk.source_audio)
+        if chunk.source_duration_s is not None:
+            durations.append(chunk.source_duration_s)
+            continue
+        try:
+            durations.append(round(audio_duration_s(chunk.source_audio), 6))
+        except Exception:
+            durations.append(None)
+    return paths, durations
+
+
 def build_turn_rows(
     sample_row: dict[str, Any],
     source_paths: list[str],
@@ -171,6 +187,8 @@ def build_turn_rows(
             {
                 "id": f"{sample_row['sample_id']}__chunk_{idx:04d}",
                 "sample_id": sample_row["sample_id"],
+                "base_sample_id": sample_row.get("base_sample_id"),
+                "speed_factor": sample_row.get("speed_factor"),
                 "src_lang": sample_row["src_lang"],
                 "tgt_lang": "en",
                 "chunk_index": idx,
@@ -221,13 +239,16 @@ def process_sample(
             output_dir,
             args.target_sample_rate,
         )
-        source_paths, source_durations = speed_source_chunks(
-            sample,
-            speed,
-            output_dir,
-            args.source_sample_rate,
-            args.overwrite_audio,
-        )
+        if args.use_existing_source_speed:
+            source_paths, source_durations = existing_source_chunks(sample)
+        else:
+            source_paths, source_durations = speed_source_chunks(
+                sample,
+                speed,
+                output_dir,
+                args.source_sample_rate,
+                args.overwrite_audio,
+            )
         budgets = duration_budgets_from_source(
             source_durations,
             rtf_threshold=args.rtf_threshold,
@@ -237,11 +258,14 @@ def process_sample(
         gates = dict(sample.quality_gates)
         gates["duration_gate"] = gate_duration_rtf(rtf_values, threshold=args.rtf_threshold)
         out = sample.to_dict()
+        sample_id = sample.sample_id if args.use_existing_source_speed else f"{sample.sample_id}__speed_{speed:g}"
+        base_sample_id = sample.base_sample_id or sample.sample_id
+        speed_factor = sample.speed_factor if args.use_existing_source_speed else speed
         out.update(
             {
-                "sample_id": f"{sample.sample_id}__speed_{speed:g}",
-                "base_sample_id": sample.sample_id,
-                "speed_factor": speed,
+                "sample_id": sample_id,
+                "base_sample_id": base_sample_id,
+                "speed_factor": speed_factor,
                 "source_audio_chunks": [
                     {
                         **chunk.to_dict(),
@@ -269,7 +293,7 @@ def process_sample(
             [],
             {
                 "sample_id": sample.sample_id,
-                "speed_factor": speed,
+                "speed_factor": sample.speed_factor if args.use_existing_source_speed else speed,
                 "reject_reasons": [f"exception:{type(exc).__name__}"],
                 "error": str(exc),
                 "traceback": traceback.format_exc(),
@@ -297,7 +321,10 @@ def main() -> None:
         if not record.get("accepted", True):
             continue
         sample = HibikiSample.from_dict(record)
-        sample_speeds = speeds if args.speed_assignment == "all" else [speeds[idx % len(speeds)]]
+        if args.use_existing_source_speed:
+            sample_speeds = [sample.speed_factor if sample.speed_factor is not None else 1.0]
+        else:
+            sample_speeds = speeds if args.speed_assignment == "all" else [speeds[idx % len(speeds)]]
         for speed in sample_speeds:
             sample_row, turn_rows, reject_row = process_sample(
                 sample,
