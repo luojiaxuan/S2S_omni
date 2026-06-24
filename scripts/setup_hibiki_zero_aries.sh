@@ -91,6 +91,9 @@ fi
 docker exec "${CONTAINER_NAME}" bash -lc '
   set -euo pipefail
   python3 -m pip install --upgrade pip uv
+  if [[ -d /data/.venvs/hibiki-zero && ! -x /data/.venvs/hibiki-zero/bin/python ]]; then
+    rm -rf /data/.venvs/hibiki-zero
+  fi
   if [[ ! -x /data/.venvs/hibiki-zero/bin/python ]]; then
     uv venv --python 3.13 /data/.venvs/hibiki-zero
   fi
