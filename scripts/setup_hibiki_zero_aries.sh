@@ -43,7 +43,9 @@ mkdir -p \
   "${HOST_HF_CACHE_DIR}" \
   "$(dirname "${HOST_REPO}")"
 
-if [[ ! -d "${HOST_REPO}/.git" ]]; then
+if [[ -f "${HOST_REPO}/pyproject.toml" && ! -d "${HOST_REPO}/.git" ]]; then
+  echo "Using existing non-git repo snapshot at ${HOST_REPO}"
+elif [[ ! -d "${HOST_REPO}/.git" ]]; then
   git clone https://github.com/luojiaxuan/S2S_omni.git "${HOST_REPO}"
 else
   git -C "${HOST_REPO}" pull --ff-only
