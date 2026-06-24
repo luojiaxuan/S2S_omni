@@ -68,10 +68,18 @@ def snapshot_wavs(root: Path) -> set[Path]:
     return {path.resolve() for path in root.rglob("*.wav")}
 
 
-def newest_new_wav(before: set[Path], root: Path) -> Path | None:
+def select_generated_wav(before: set[Path], root: Path) -> Path | None:
     after = snapshot_wavs(root)
     new_paths = sorted(after - before, key=lambda path: path.stat().st_mtime, reverse=True)
-    return new_paths[0] if new_paths else None
+    if not new_paths:
+        return None
+    mono_paths = [path for path in new_paths if path.name.endswith("_mono.wav")]
+    if mono_paths:
+        return mono_paths[0]
+    non_stereo_paths = [path for path in new_paths if not path.name.endswith("_stereo.wav")]
+    if non_stereo_paths:
+        return non_stereo_paths[0]
+    return new_paths[0]
 
 
 def run_one(row: dict[str, Any], args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
@@ -100,7 +108,7 @@ def run_one(row: dict[str, Any], args: argparse.Namespace, output_dir: Path) -> 
         check=False,
     )
     elapsed = round(time.perf_counter() - started, 6)
-    wav_path = newest_new_wav(before, sample_dir)
+    wav_path = select_generated_wav(before, sample_dir)
     stable_wav_path = ""
     if wav_path:
         stable = output_dir / "baseline_wav" / f"{sample_id}.wav"
