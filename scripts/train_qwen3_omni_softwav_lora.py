@@ -75,6 +75,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=260623)
     parser.add_argument("--resume-from")
     parser.add_argument("--tokenize-smoke", action="store_true")
+    parser.add_argument("--allow-nonfinite-forward", action=argparse.BooleanOptionalAction, default=False)
     return parser.parse_args()
 
 
@@ -204,7 +205,31 @@ def load_processor_inputs(processor: Any, record: dict[str, Any], model: Any) ->
     return inputs, prompt_inputs["input_ids"].shape[1], target_token_len
 
 
-def thinker_text_loss(model: Any, inputs: Any, prompt_len: int, target_token_len: int) -> Any:
+def nonfinite_summary(tensor: Any) -> dict[str, float | int | list[int]]:
+    torch = _torch()
+    finite = torch.isfinite(tensor)
+    return {
+        "shape": list(tensor.shape),
+        "finite_frac": float(finite.float().mean().detach().cpu()),
+        "nan": int(torch.isnan(tensor).sum().detach().cpu()),
+        "posinf": int(torch.isposinf(tensor).sum().detach().cpu()),
+        "neginf": int(torch.isneginf(tensor).sum().detach().cpu()),
+    }
+
+
+def require_finite(name: str, tensor: Any) -> None:
+    torch = _torch()
+    if not bool(torch.isfinite(tensor).all().detach().cpu()):
+        raise RuntimeError(f"{name} contains non-finite values: {json.dumps(nonfinite_summary(tensor))}")
+
+
+def thinker_text_loss(
+    model: Any,
+    inputs: Any,
+    prompt_len: int,
+    target_token_len: int,
+    allow_nonfinite: bool = False,
+) -> Any:
     torch = _torch()
     input_len = inputs["input_ids"].shape[1]
     target_start = min(prompt_len, input_len)
@@ -232,12 +257,9 @@ def thinker_text_loss(model: Any, inputs: Any, prompt_len: int, target_token_len
     kwargs["return_dict"] = True
     outputs = model.thinker(**kwargs)
     shift_logits = outputs.logits[:, :-1].contiguous()
-    shift_logits = torch.nan_to_num(
-        shift_logits.float(),
-        nan=0.0,
-        posinf=1.0e4,
-        neginf=-1.0e4,
-    )
+    if not allow_nonfinite:
+        require_finite("thinker shift_logits", shift_logits)
+    shift_logits = torch.nan_to_num(shift_logits.float(), nan=0.0, posinf=1.0e4, neginf=-1.0e4)
     labels = torch.full(
         inputs["input_ids"].shape,
         fill_value=-100,
@@ -664,9 +686,21 @@ def compute_record_loss(
     if args.text_ce_weight > 0:
         if args.train_scope == "talker":
             with torch.no_grad():
-                text_loss = thinker_text_loss(model, inputs, prompt_len, target_token_len)
+                text_loss = thinker_text_loss(
+                    model,
+                    inputs,
+                    prompt_len,
+                    target_token_len,
+                    allow_nonfinite=args.allow_nonfinite_forward,
+                )
         else:
-            text_loss = thinker_text_loss(model, inputs, prompt_len, target_token_len)
+            text_loss = thinker_text_loss(
+                model,
+                inputs,
+                prompt_len,
+                target_token_len,
+                allow_nonfinite=args.allow_nonfinite_forward,
+            )
     else:
         text_loss = torch.zeros((), dtype=torch.float32, device=inputs["input_ids"].device)
     condition = prepare_talker_condition(
@@ -675,6 +709,9 @@ def compute_record_loss(
         speaker=args.speaker,
         detach_thinker=args.detach_talker_condition_thinker,
     )
+    if not args.allow_nonfinite_forward:
+        require_finite("talker condition inputs_embeds", condition.inputs_embeds)
+        require_finite("talker condition trailing_text_hidden", condition.trailing_text_hidden)
     text_ce_weight_for_total = 0.0 if args.train_scope == "talker" else args.text_ce_weight
     total = None
     if text_ce_weight_for_total:
