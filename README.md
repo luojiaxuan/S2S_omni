@@ -571,3 +571,20 @@ python scripts/evaluate_floras_live_s2s.py \
   --output-dir outputs/floras_live_pilot/eval \
   --coverage-judge none
 ```
+
+For ASR-based scoring of generated target speech, transcribe the generated wavs
+first and pass the resulting JSONL into evaluation:
+
+```bash
+export OPENAI_API_KEY=...
+python scripts/openai_transcribe_live_outputs.py \
+  --run-output-dir outputs/floras_live_pilot/live_runs \
+  --output outputs/floras_live_pilot/asr.jsonl
+
+python scripts/evaluate_floras_live_s2s.py \
+  --manifest outputs/floras_live_pilot/live_runs.jsonl \
+  --run-output-dir outputs/floras_live_pilot/live_runs \
+  --output-dir outputs/floras_live_pilot/eval_asr \
+  --asr-jsonl outputs/floras_live_pilot/asr.jsonl \
+  --coverage-judge none
+```
