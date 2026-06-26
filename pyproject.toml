@@ -31,7 +31,17 @@ audio = [
   "audioread",
   "qwen-omni-utils",
   "librosa",
+  "numpy",
+  "pyarrow",
   "soundfile",
+  "websockets",
+]
+floras-live = [
+  "numpy",
+  "pyarrow",
+  "sacrebleu",
+  "soundfile",
+  "websockets",
 ]
 
 [tool.ruff]

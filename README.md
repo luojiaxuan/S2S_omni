@@ -508,3 +508,62 @@ CUDA_VISIBLE_DEVICES=6 python scripts/train_text_lora_sft.py \
 
 This completed and saved a PEFT adapter at
 `runs/qwen3_omni_gigaspeech_faithful_warmup_pilot_20step`.
+
+## FLORAS Live S2S Benchmark
+
+The FLORAS live benchmark scripts build a small long-form ZH<->EN closed-model
+S2S eval. API keys are read only from environment variables and are never stored
+in manifests or logs.
+
+Prepare one long sample per direction and expand speeds `1.0,1.5,2.0`:
+
+```bash
+export OPENAI_API_KEY=...
+export S2S_REFERENCE_MODEL=gpt-5-mini
+python scripts/prepare_floras_live_manifest.py \
+  --output-dir outputs/floras_live_pilot \
+  --samples-per-direction 1 \
+  --min-duration-s 600 \
+  --speeds 1.0,1.5,2.0
+```
+
+By default the prepare script scans until it has a 32-sample candidate pool per
+direction, then keeps the lowest-score samples. Set
+`--stop-after-candidates-per-direction 0` to scan all reachable shards.
+
+Run a 10-second dry-run smoke without calling the live API:
+
+```bash
+python scripts/run_floras_openai_realtime.py \
+  --manifest outputs/floras_live_pilot/live_runs.jsonl \
+  --output-dir outputs/floras_live_pilot/live_smoke \
+  --max-runs 1 \
+  --smoke-seconds 10 \
+  --dry-run
+
+python scripts/evaluate_floras_live_s2s.py \
+  --manifest outputs/floras_live_pilot/live_runs.jsonl \
+  --run-output-dir outputs/floras_live_pilot/live_smoke \
+  --output-dir outputs/floras_live_pilot/eval_smoke \
+  --max-windows 1
+```
+
+Run the real OpenAI Realtime Translation pass with 960 ms paced input chunks:
+
+```bash
+export OPENAI_API_KEY=...
+python scripts/run_floras_openai_realtime.py \
+  --manifest outputs/floras_live_pilot/live_runs.jsonl \
+  --output-dir outputs/floras_live_pilot/live_runs \
+  --chunk-ms 960
+```
+
+Then evaluate and render the UI:
+
+```bash
+python scripts/evaluate_floras_live_s2s.py \
+  --manifest outputs/floras_live_pilot/live_runs.jsonl \
+  --run-output-dir outputs/floras_live_pilot/live_runs \
+  --output-dir outputs/floras_live_pilot/eval \
+  --coverage-judge none
+```
