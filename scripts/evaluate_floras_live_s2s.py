@@ -227,8 +227,12 @@ def build_sentence_coverage(
     judge_client: ChatClient | None,
 ) -> list[dict[str, Any]]:
     rows = []
+    eval_duration = float(run.get("source_eval_duration_s") or run.get("source_duration_s") or 0.0)
     for sent in run.get("target_sentences") or []:
         row = dict(sent)
+        start_s = float(row.get("source_start_s") or 0.0)
+        if eval_duration > 0 and start_s >= eval_duration:
+            continue
         target_sentence = str(row.get("target_sentence") or "")
         row.update(coverage_status(target_sentence, candidate_text))
         if judge_client is not None and target_sentence:
@@ -237,11 +241,18 @@ def build_sentence_coverage(
                 row["status"] = row.get("llm_status") or row["status"]
             except Exception as exc:
                 row["llm_error"] = f"{type(exc).__name__}: {exc}"
-        start_s = float(row.get("source_start_s") or 0.0)
         row["run_id"] = run["run_id"]
         row["window_index"] = int(start_s // window_s)
         rows.append(row)
     return rows
+
+
+def reference_for_eval(run: dict[str, Any], sentence_rows: list[dict[str, Any]]) -> str:
+    source_eval_duration = float(run.get("source_eval_duration_s") or 0.0)
+    source_duration = float(run.get("source_duration_s") or 0.0)
+    if source_eval_duration > 0 and source_duration > source_eval_duration + 1e-3:
+        return " ".join(str(row.get("target_sentence") or "") for row in sentence_rows).strip()
+    return str(run.get("target_reference_text") or "")
 
 
 def run_metric_row(
@@ -252,7 +263,7 @@ def run_metric_row(
     run_page: Path,
     eval_dir: Path,
 ) -> dict[str, Any]:
-    reference = str(run.get("target_reference_text") or "")
+    reference = reference_for_eval(run, sentence_rows)
     target_lang = str(run.get("target_lang") or run.get("target_language") or "")
     metrics = corpus_metrics(candidate_text, reference, target_lang)
     generated_duration = float(run.get("generated_duration_s") or audio_duration_s(run["generated_wav_path"]))

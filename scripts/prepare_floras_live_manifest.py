@@ -194,42 +194,74 @@ def translate_reference(
 ) -> Any:
     if sentence_mode:
         source_sentences = split_sentences(source_text, source_language)
-        user = {
-            "source_language": language_name(source_language),
-            "target_language": target_language,
-            "sentences": source_sentences,
-            "instruction": "Translate each sentence naturally and faithfully. Return JSON only.",
-        }
-        schema = '{"translations":["..."]}'
-    else:
-        user = {
-            "source_language": language_name(source_language),
-            "target_language": target_language,
-            "text": source_text,
-            "instruction": "Translate the full transcript naturally and faithfully for speech evaluation. Return JSON only.",
-        }
-        schema = '{"translation":"..."}'
-    content = json.dumps(user, ensure_ascii=False)
+        translations: list[str] = []
+        batch_size = 16
+        for start in range(0, len(source_sentences), batch_size):
+            batch = source_sentences[start : start + batch_size]
+            user = {
+                "source_language": language_name(source_language),
+                "target_language": target_language,
+                "start_index": start,
+                "sentences": batch,
+                "instruction": "Translate each sentence naturally and faithfully. Return JSON only.",
+            }
+            data = chat_json(
+                client,
+                user,
+                '{"translations":["..."]}',
+                max_tokens=16384,
+            )
+            values = data.get("translations")
+            if not isinstance(values, list):
+                raise ValueError("sentence translation response missing translations list")
+            if len(values) != len(batch):
+                raise ValueError(
+                    f"sentence translation count mismatch: expected {len(batch)}, got {len(values)}"
+                )
+            translations.extend(str(item).strip() for item in values)
+        return translations
+    user = {
+        "source_language": language_name(source_language),
+        "target_language": target_language,
+        "text": source_text,
+        "instruction": "Translate the full transcript naturally and faithfully for speech evaluation. Return JSON only.",
+    }
+    data = chat_json(
+        client,
+        user,
+        '{"translation":"..."}',
+        max_tokens=32768,
+    )
+    return str(data.get("translation") or "").strip()
+
+
+def chat_json(
+    client: ChatClient,
+    user: dict[str, Any],
+    schema: str,
+    *,
+    max_tokens: int,
+) -> dict[str, Any]:
     messages = [
         {
             "role": "system",
             "content": f"You are a professional translation engine. Return JSON only with schema {schema}",
         },
-        {"role": "user", "content": content},
+        {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
     ]
-    raw = client.chat(messages, temperature=0.0, max_tokens=8192, response_format={"type": "json_object"})
-    data = extract_json_object(raw)
-    if sentence_mode:
-        values = data.get("translations")
-        if not isinstance(values, list):
-            raise ValueError("sentence translation response missing translations list")
-        return [str(item).strip() for item in values]
-    return str(data.get("translation") or "").strip()
+    raw = client.chat(
+        messages,
+        temperature=0.0,
+        max_tokens=max_tokens,
+        response_format={"type": "json_object"},
+    )
+    return extract_json_object(raw)
 
 
 def language_name(language: str) -> str:
     mapping = {
         "en": "English",
+        "eng": "English",
         "zh": "Chinese",
         "ja": "Japanese",
         "de": "German",

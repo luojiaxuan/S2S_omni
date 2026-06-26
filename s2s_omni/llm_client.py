@@ -34,9 +34,12 @@ class ChatClient:
         payload: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
         }
+        if uses_max_completion_tokens(self.model):
+            payload["max_completion_tokens"] = max_tokens
+        else:
+            payload["temperature"] = temperature
+            payload["max_tokens"] = max_tokens
         if response_format is not None:
             payload["response_format"] = response_format
         url = f"{self.base_url}/chat/completions"
@@ -58,6 +61,11 @@ class ChatClient:
         except urllib.error.URLError as exc:
             raise RuntimeError(f"chat request failed: {exc}") from exc
         return data["choices"][0]["message"]["content"]
+
+
+def uses_max_completion_tokens(model: str) -> bool:
+    name = model.lower()
+    return name.startswith(("gpt-5", "o1", "o3", "o4"))
 
 
 def extract_json_object(text: str) -> dict[str, Any]:

@@ -50,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-session-update", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--session-config-json", default="")
     parser.add_argument("--receive-timeout-s", type=float, default=30.0)
+    parser.add_argument("--progress-interval-s", type=float, default=30.0)
     parser.add_argument("--pace", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--dry-run", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
@@ -240,7 +241,9 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
     pcm = wav_to_pcm16(run["source_stream_wav_path"], REALTIME_SAMPLE_RATE)
     samples_per_chunk = int(round(REALTIME_SAMPLE_RATE * args.chunk_ms / 1000.0))
     bytes_per_chunk = samples_per_chunk * 2
+    total_stream_s = pcm16_duration_s(pcm)
     send_index = 0
+    next_progress_s = args.progress_interval_s
     for start in range(0, len(pcm), bytes_per_chunk):
         payload = pcm[start : start + bytes_per_chunk]
         await ws.send(
@@ -261,15 +264,50 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
             },
         )
         send_index += 1
+        elapsed_s = time.monotonic() - start_time
+        if args.progress_interval_s > 0 and elapsed_s >= next_progress_s:
+            print(
+                json.dumps(
+                    {
+                        "run_id": run["run_id"],
+                        "phase": "sending",
+                        "elapsed_s": round(elapsed_s, 3),
+                        "sent_stream_s": round(min(total_stream_s, pcm16_duration_s(pcm[: start + len(payload)])), 3),
+                        "total_stream_s": round(total_stream_s, 3),
+                        "output_audio_s": round(cumulative_audio_s, 3),
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
+            next_progress_s += args.progress_interval_s
         if args.pace:
             await asyncio.sleep(args.chunk_ms / 1000.0)
 
     await ws.send(json.dumps({"type": "session.close"}))
     append_jsonl(send_events, {"type": "session.close", "sent_at_s": round(time.monotonic() - start_time, 6)})
-    try:
-        await asyncio.wait_for(closed.wait(), timeout=args.receive_timeout_s)
-    except asyncio.TimeoutError:
-        append_jsonl(raw_events, {"receive_timeout_s": args.receive_timeout_s})
+    receive_deadline = time.monotonic() + args.receive_timeout_s
+    while not closed.is_set():
+        remaining_s = receive_deadline - time.monotonic()
+        if remaining_s <= 0:
+            append_jsonl(raw_events, {"receive_timeout_s": args.receive_timeout_s})
+            break
+        wait_s = min(max(0.1, args.progress_interval_s), remaining_s)
+        try:
+            await asyncio.wait_for(closed.wait(), timeout=wait_s)
+        except asyncio.TimeoutError:
+            print(
+                json.dumps(
+                    {
+                        "run_id": run["run_id"],
+                        "phase": "receiving",
+                        "elapsed_s": round(time.monotonic() - start_time, 3),
+                        "output_audio_s": round(cumulative_audio_s, 3),
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
     await ws.close()
     receiver_task.cancel()
 
