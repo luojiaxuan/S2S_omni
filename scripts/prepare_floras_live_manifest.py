@@ -143,7 +143,7 @@ def collect_candidates(
         shard = ensure_shard(spec)
         rows = load_parquet_rows(shard)
         for row in rows:
-            if str(row.get("language") or "") != language:
+            if not language_matches(str(row.get("language") or ""), language):
                 continue
             candidate = candidate_from_row(
                 row,
@@ -174,17 +174,28 @@ def collect_candidates(
     return candidates
 
 
+def language_matches(row_language: str, requested_language: str) -> bool:
+    aliases = {
+        "en": {"en", "eng"},
+        "eng": {"en", "eng"},
+        "zh": {"zh", "zho", "cmn"},
+    }
+    allowed = aliases.get(requested_language, {requested_language})
+    return row_language in allowed
+
+
 def translate_reference(
     client: ChatClient,
     source_text: str,
+    source_language: str,
     target_language: str,
     *,
     sentence_mode: bool = False,
 ) -> Any:
     if sentence_mode:
-        source_sentences = split_sentences(source_text, "en")
+        source_sentences = split_sentences(source_text, source_language)
         user = {
-            "source_language": "English",
+            "source_language": language_name(source_language),
             "target_language": target_language,
             "sentences": source_sentences,
             "instruction": "Translate each sentence naturally and faithfully. Return JSON only.",
@@ -192,7 +203,7 @@ def translate_reference(
         schema = '{"translations":["..."]}'
     else:
         user = {
-            "source_language": "English",
+            "source_language": language_name(source_language),
             "target_language": target_language,
             "text": source_text,
             "instruction": "Translate the full transcript naturally and faithfully for speech evaluation. Return JSON only.",
@@ -214,6 +225,16 @@ def translate_reference(
             raise ValueError("sentence translation response missing translations list")
         return [str(item).strip() for item in values]
     return str(data.get("translation") or "").strip()
+
+
+def language_name(language: str) -> str:
+    mapping = {
+        "en": "English",
+        "zh": "Chinese",
+        "ja": "Japanese",
+        "de": "German",
+    }
+    return mapping.get(language, language)
 
 
 def build_selection(
@@ -308,7 +329,7 @@ def main() -> None:
         language="zh",
         output_dir=output_dir,
         min_duration_s=args.min_duration_s,
-        require_translation=True,
+        require_translation=False,
         log_every=args.log_every_shard,
         stop_after=args.stop_after_candidates_per_direction,
     )
@@ -323,7 +344,7 @@ def main() -> None:
         stop_after=args.stop_after_candidates_per_direction,
     )
     if len(zh_candidates) < args.samples_per_direction:
-        raise SystemExit(f"not enough zh->en candidates with translation: {len(zh_candidates)}")
+        raise SystemExit(f"not enough zh->en candidates: {len(zh_candidates)}")
     if len(en_candidates) < args.samples_per_direction:
         raise SystemExit(f"not enough en->zh candidates: {len(en_candidates)}")
 
@@ -339,19 +360,37 @@ def main() -> None:
     selections = []
     for candidate in zh_candidates[: args.samples_per_direction]:
         translated_sentences = None
+        reference_kind = "floras_x_en_translation"
         if client is not None:
+            if not candidate.get("target_reference_text"):
+                candidate["target_reference_text"] = translate_reference(
+                    client,
+                    candidate["source_transcript"],
+                    "zh",
+                    "English",
+                    sentence_mode=False,
+                )
+                reference_kind = f"llm_generated_missing_floras_translation:{args.reference_model}"
             translated_sentences = translate_reference(
                 client,
                 candidate["source_transcript"],
+                "zh",
                 "English",
                 sentence_mode=True,
+            )
+        elif not candidate.get("target_reference_text"):
+            reference_kind = "missing"
+        if not candidate.get("target_reference_text") and not args.allow_missing_reference:
+            raise SystemExit(
+                "zh->en reference is empty for selected FLORAS rows; set OPENAI_API_KEY "
+                "or use --allow-missing-reference for data-only smoke."
             )
         selections.append(
             build_selection(
                 candidate,
                 direction="zh-en",
                 target_lang="en",
-                reference_kind="floras_x_en_translation",
+                reference_kind=reference_kind,
                 translated_sentences=translated_sentences,
             )
         )
@@ -363,12 +402,14 @@ def main() -> None:
             candidate["target_reference_text"] = translate_reference(
                 client,
                 candidate["source_transcript"],
+                "en",
                 "Chinese",
                 sentence_mode=False,
             )
             translated_sentences = translate_reference(
                 client,
                 candidate["source_transcript"],
+                "en",
                 "Chinese",
                 sentence_mode=True,
             )

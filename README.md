@@ -530,6 +530,10 @@ python scripts/prepare_floras_live_manifest.py \
 By default the prepare script scans until it has a 32-sample candidate pool per
 direction, then keeps the lowest-score samples. Set
 `--stop-after-candidates-per-direction 0` to scan all reachable shards.
+For `zh->en`, the script uses the FLORAS `translation` field when it is present.
+If selected test rows have an empty `translation`, it generates the English
+reference from the Chinese transcript with the configured text LLM. `en->zh`
+always uses an LLM-generated Chinese reference because FLORAS is X-to-English.
 
 Run a 10-second dry-run smoke without calling the live API:
 
