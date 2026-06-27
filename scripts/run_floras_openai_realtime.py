@@ -162,9 +162,19 @@ async def connect_ws(url: str, headers: list[tuple[str, str]]):
     import websockets
 
     try:
-        return await websockets.connect(url, additional_headers=headers, max_size=None)
+        return await websockets.connect(
+            url,
+            additional_headers=headers,
+            max_size=None,
+            ping_interval=None,
+        )
     except TypeError:
-        return await websockets.connect(url, extra_headers=headers, max_size=None)
+        return await websockets.connect(
+            url,
+            extra_headers=headers,
+            max_size=None,
+            ping_interval=None,
+        )
 
 
 async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace) -> dict[str, Any]:
