@@ -591,7 +591,9 @@ python scripts/evaluate_floras_live_s2s.py \
 
 The per-window HTML rows need per-window ASR if the transcript must match the
 audio slice shown in that row. Generate it from an initial eval directory and
-rerender:
+rerender. The page also shows a full-target-ASR context around each target
+window; this is a wider approximate text context for manual omission checks,
+not a narrow time-aligned transcript.
 
 ```bash
 export OPENAI_API_KEY=...
@@ -605,5 +607,6 @@ python scripts/evaluate_floras_live_s2s.py \
   --output-dir outputs/floras_live_pilot/eval_window_asr \
   --asr-jsonl outputs/floras_live_pilot/asr.jsonl \
   --window-asr-jsonl outputs/floras_live_pilot/window_asr.jsonl \
+  --target-context-s 20 \
   --coverage-judge none
 ```

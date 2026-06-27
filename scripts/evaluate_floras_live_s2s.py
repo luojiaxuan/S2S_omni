@@ -46,6 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--openai-base-url", default="https://api.openai.com/v1")
     parser.add_argument("--window-s", type=float, default=SOURCE_WINDOW_S)
     parser.add_argument("--backlog-threshold-s", type=float, default=0.5)
+    parser.add_argument("--target-context-s", type=float, default=20.0)
     parser.add_argument("--max-windows", type=int, default=0)
     return parser.parse_args()
 
@@ -103,6 +104,25 @@ def text_span_by_ratio(text: str, lang: str, start_ratio: float, end_ratio: floa
     return "".join(chunks[start:end]) if lang.startswith(("zh", "ja", "ko")) else " ".join(chunks[start:end])
 
 
+def text_context_by_audio_time(
+    text: str,
+    lang: str,
+    start_s: float,
+    end_s: float,
+    total_s: float,
+    context_s: float,
+) -> tuple[str, float, float]:
+    if total_s <= 0:
+        return text, 0.0, 0.0
+    context_start_s = max(0.0, start_s - context_s)
+    context_end_s = min(total_s, end_s + context_s)
+    return (
+        text_span_by_ratio(text, lang, context_start_s / total_s, context_end_s / total_s),
+        context_start_s,
+        context_end_s,
+    )
+
+
 def load_candidate_texts(args: argparse.Namespace, results: list[dict[str, Any]]) -> dict[str, str]:
     out: dict[str, str] = {}
     if args.asr_jsonl:
@@ -149,6 +169,7 @@ def build_timeline(
     window_texts: dict[tuple[str, int], str],
     window_s: float,
     backlog_threshold_s: float,
+    target_context_s: float,
     max_windows: int,
 ) -> list[dict[str, Any]]:
     source_duration_s = float(run.get("source_eval_duration_s") or audio_duration_s(run["source_eval_wav_path"]))
@@ -180,8 +201,14 @@ def build_timeline(
         slice_wav(source_wav, source_window, source_start, source_end)
         slice_wav(source_stream_wav, source_stream_window, wall_start, wall_end)
         slice_wav(generated_wav, target_window, emitted_start, emitted_end)
-        asr_start_ratio = emitted_start / generated_duration_s if generated_duration_s > 0 else 0.0
-        asr_end_ratio = emitted_end / generated_duration_s if generated_duration_s > 0 else 0.0
+        context_text, context_start_s, context_end_s = text_context_by_audio_time(
+            candidate_text,
+            target_lang,
+            emitted_start,
+            emitted_end,
+            generated_duration_s,
+            target_context_s,
+        )
         rows.append(
             {
                 "run_id": run["run_id"],
@@ -203,12 +230,9 @@ def build_timeline(
                 "source_stream_window_audio_rel": rel(source_stream_window, run_eval_dir),
                 "target_window_audio_rel": rel(target_window, run_eval_dir),
                 "target_asr_window_text": window_texts.get((str(run["run_id"]), idx), ""),
-                "target_transcript_estimated_span": text_span_by_ratio(
-                    candidate_text,
-                    target_lang,
-                    asr_start_ratio,
-                    asr_end_ratio,
-                ),
+                "target_full_asr_context_text": context_text,
+                "target_full_asr_context_start_s": round(context_start_s, 3),
+                "target_full_asr_context_end_s": round(context_end_s, 3),
             }
         )
     return rows
@@ -373,6 +397,7 @@ def main() -> None:
             window_texts=window_texts,
             window_s=args.window_s,
             backlog_threshold_s=args.backlog_threshold_s,
+            target_context_s=args.target_context_s,
             max_windows=args.max_windows,
         )
         sentence_rows = build_sentence_coverage(
