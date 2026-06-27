@@ -588,3 +588,22 @@ python scripts/evaluate_floras_live_s2s.py \
   --asr-jsonl outputs/floras_live_pilot/asr.jsonl \
   --coverage-judge none
 ```
+
+The per-window HTML rows need per-window ASR if the transcript must match the
+audio slice shown in that row. Generate it from an initial eval directory and
+rerender:
+
+```bash
+export OPENAI_API_KEY=...
+python scripts/openai_transcribe_eval_windows.py \
+  --eval-dir outputs/floras_live_pilot/eval_asr \
+  --output outputs/floras_live_pilot/window_asr.jsonl
+
+python scripts/evaluate_floras_live_s2s.py \
+  --manifest outputs/floras_live_pilot/live_runs.jsonl \
+  --run-output-dir outputs/floras_live_pilot/live_runs \
+  --output-dir outputs/floras_live_pilot/eval_window_asr \
+  --asr-jsonl outputs/floras_live_pilot/asr.jsonl \
+  --window-asr-jsonl outputs/floras_live_pilot/window_asr.jsonl \
+  --coverage-judge none
+```

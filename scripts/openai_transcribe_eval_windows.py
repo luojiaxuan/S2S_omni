@@ -19,8 +19,8 @@ from s2s_omni.openai_asr import transcode_for_upload, transcribe_openai
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Transcribe live S2S generated wavs with OpenAI ASR.")
-    parser.add_argument("--run-output-dir", required=True)
+    parser = argparse.ArgumentParser(description="Transcribe per-window target wavs from FLORAS eval output.")
+    parser.add_argument("--eval-dir", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--model", default=os.environ.get("OPENAI_ASR_MODEL", "gpt-4o-mini-transcribe"))
     parser.add_argument("--base-url", default=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
@@ -29,16 +29,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_results(run_output_dir: Path) -> list[dict[str, Any]]:
-    rows = []
-    for path in sorted(run_output_dir.glob("*/result.json")):
-        row = json.loads(path.read_text(encoding="utf-8"))
-        row["result_path"] = str(path)
-        rows.append(row)
-    return rows
-
-
-def existing_rows(path: Path) -> dict[str, dict[str, Any]]:
+def existing_rows(path: Path) -> dict[tuple[str, int], dict[str, Any]]:
     if not path.exists():
         return {}
     out = {}
@@ -46,9 +37,26 @@ def existing_rows(path: Path) -> dict[str, dict[str, Any]]:
         if not line.strip():
             continue
         row = json.loads(line)
-        if row.get("run_id"):
-            out[str(row["run_id"])] = row
+        if row.get("run_id") is not None and row.get("window_index") is not None:
+            out[(str(row["run_id"]), int(row["window_index"]))] = row
     return out
+
+
+def load_windows(eval_dir: Path) -> list[dict[str, Any]]:
+    windows = []
+    for path in sorted(eval_dir.glob("*/timeline.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            audio_path = Path(str(row.get("target_window_audio_path") or ""))
+            if not audio_path.exists():
+                audio_path = path.parent / str(row.get("target_window_audio_rel") or "")
+            if not audio_path.exists():
+                continue
+            row["target_window_audio_path"] = str(audio_path)
+            windows.append(row)
+    return windows
 
 
 def main() -> None:
@@ -58,27 +66,40 @@ def main() -> None:
     rows = []
     api_key = env_api_key()
     max_upload_bytes = int(args.max_upload_mb * 1024 * 1024)
-    with tempfile.TemporaryDirectory(prefix="s2s_omni_asr_") as tmp:
+    with tempfile.TemporaryDirectory(prefix="s2s_omni_window_asr_") as tmp:
         tmp_dir = Path(tmp)
-        for result in load_results(Path(args.run_output_dir)):
-            run_id = str(result["run_id"])
-            if run_id in done:
-                rows.append(done[run_id])
+        for window in load_windows(Path(args.eval_dir)):
+            run_id = str(window["run_id"])
+            window_index = int(window["window_index"])
+            key = (run_id, window_index)
+            if key in done:
+                rows.append(done[key])
                 continue
-            wav_path = Path(str(result["generated_wav_path"]))
+            wav_path = Path(str(window["target_window_audio_path"]))
             upload_path = transcode_for_upload(wav_path, tmp_dir, max_upload_bytes)
             text = transcribe_openai(api_key, args.base_url, args.model, upload_path)
             row = {
                 "run_id": run_id,
+                "window_index": window_index,
                 "asr_text": text,
                 "asr_model": args.model,
-                "source_audio_path": str(wav_path),
-                "uploaded_audio_path": str(upload_path if upload_path == wav_path else upload_path.name),
+                "target_window_audio_path": str(wav_path),
+                "target_window_duration_s": window.get("target_window_duration_s"),
                 "uploaded_audio_size_bytes": upload_path.stat().st_size,
             }
             rows.append(row)
             write_jsonl(output_path, rows)
-            print(json.dumps({"run_id": run_id, "asr_chars": len(text)}, ensure_ascii=False), flush=True)
+            print(
+                json.dumps(
+                    {
+                        "run_id": run_id,
+                        "window_index": window_index,
+                        "asr_chars": len(text),
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
     write_jsonl(output_path, rows)
     print(json.dumps({"rows": len(rows), "output": str(output_path)}, ensure_ascii=False, indent=2))
 
