@@ -24,6 +24,12 @@ from .rasst import audio_duration_s, atempo_filters, load_mono_audio, write_mono
 FLORES_REPO = "espnet/floras"
 OPENAI_TRANSLATION_MODEL = "gpt-realtime-translate"
 OPENAI_TRANSLATION_WS = "wss://api.openai.com/v1/realtime/translations"
+GEMINI_TRANSLATION_MODEL = "gemini-3.5-live-translate-preview"
+GEMINI_TRANSLATION_WS = (
+    "wss://generativelanguage.googleapis.com/ws/"
+    "google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
+)
+GEMINI_INPUT_SAMPLE_RATE = 16000
 SOURCE_WINDOW_S = 10.0
 REALTIME_SAMPLE_RATE = 24000
 REALTIME_CHUNK_MS = 960

@@ -562,6 +562,18 @@ python scripts/run_floras_openai_realtime.py \
   --chunk-ms 960
 ```
 
+Run the same benchmark through Gemini Live Translate. Gemini takes 16 kHz PCM
+input and returns 24 kHz PCM output; the runner keeps the same result schema as
+the OpenAI runner, so the ASR and HTML evaluation commands below can be reused.
+
+```bash
+export GEMINI_API_KEY=...
+python scripts/run_floras_gemini_live.py \
+  --manifest outputs/floras_live_pilot/live_runs.jsonl \
+  --output-dir outputs/floras_live_pilot/gemini_live_runs \
+  --chunk-ms 960
+```
+
 Then evaluate and render the UI:
 
 ```bash
