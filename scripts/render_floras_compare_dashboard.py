@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from s2s_omni.floras_live import esc, rel
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Render a cross-backend FLORAS live dashboard.")
+    parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--title", default="FLORAS Live S2S Compare")
+    parser.add_argument(
+        "--eval",
+        action="append",
+        required=True,
+        help="Repeated label=eval_dir entries, e.g. openai_960=/path/to/eval.",
+    )
+    parser.add_argument("--run-id-prefix", default="")
+    parser.add_argument("--run-id-regex", default="")
+    return parser.parse_args()
+
+
+def parse_eval_arg(raw: str) -> tuple[str, Path]:
+    if "=" not in raw:
+        raise SystemExit(f"--eval must be label=path, got: {raw}")
+    label, path = raw.split("=", 1)
+    label = label.strip()
+    if not label:
+        raise SystemExit(f"--eval label cannot be empty: {raw}")
+    return label, Path(path).expanduser()
+
+
+def infer_backend(label: str, row: dict[str, Any]) -> str:
+    text = label.lower()
+    if "gemini" in text:
+        return "gemini"
+    if "openai" in text or "chatgpt" in text or "gpt" in text:
+        return "chatgpt"
+    backend = str(row.get("backend") or "").lower()
+    if "gemini" in backend:
+        return "gemini"
+    if "openai" in backend:
+        return "chatgpt"
+    return label
+
+
+def infer_chunk_ms(label: str, row: dict[str, Any]) -> int | None:
+    if row.get("chunk_ms") is not None:
+        try:
+            return int(row["chunk_ms"])
+        except (TypeError, ValueError):
+            pass
+    match = re.search(r"(?:chunk)?(\d{3,5})", label)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def load_metrics(eval_label: str, eval_dir: Path) -> list[dict[str, Any]]:
+    metrics_path = eval_dir / "metrics.jsonl"
+    rows: list[dict[str, Any]] = []
+    if metrics_path.exists():
+        for line in metrics_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                rows.append(json.loads(line))
+    else:
+        for path in sorted(eval_dir.glob("*/metrics.json")):
+            rows.append(json.loads(path.read_text(encoding="utf-8")))
+    for row in rows:
+        run_id = str(row.get("run_id") or "")
+        run_dir = eval_dir / run_id
+        row["eval_label"] = eval_label
+        row["eval_dir"] = str(eval_dir)
+        row["compare_backend"] = infer_backend(eval_label, row)
+        row["compare_chunk_ms"] = infer_chunk_ms(eval_label, row)
+        row["run_dir"] = str(run_dir)
+        row["source_audio_path"] = str(run_dir / "source_eval.wav")
+        row["source_stream_audio_path"] = str(run_dir / "source_stream_24k.wav")
+        row["generated_audio_path"] = str(run_dir / "generated_target.wav")
+        row["run_page_path"] = str(run_dir / "index.html")
+    return rows
+
+
+def keep_row(row: dict[str, Any], prefix: str, pattern: re.Pattern[str] | None) -> bool:
+    run_id = str(row.get("run_id") or "")
+    if prefix and not run_id.startswith(prefix):
+        return False
+    if pattern and not pattern.search(run_id):
+        return False
+    return True
+
+
+def num(value: Any, digits: int = 3) -> str:
+    if value is None:
+        return ""
+    try:
+        return f"{float(value):.{digits}f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def link(path: str | Path, base: Path, label: str) -> str:
+    path = Path(path)
+    if not path.exists():
+        return ""
+    return f'<a href="{esc(rel(path, base))}">{esc(label)}</a>'
+
+
+def audio(path: str | Path, base: Path) -> str:
+    path = Path(path)
+    if not path.exists():
+        return ""
+    return f'<audio controls src="{esc(rel(path, base))}"></audio>'
+
+
+def sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        str(row.get("run_id") or ""),
+        float(row.get("speed_factor") or 0.0),
+        int(row.get("compare_chunk_ms") or 0),
+        str(row.get("compare_backend") or ""),
+    )
+
+
+def render_rows(rows: list[dict[str, Any]], out_dir: Path) -> str:
+    pieces = []
+    for row in sorted(rows, key=sort_key):
+        chunk_ms = row.get("compare_chunk_ms")
+        chunk_s = "" if chunk_ms is None else f"{chunk_ms / 1000.0:.2f}s"
+        pieces.append(
+            "<tr>"
+            f"<td>{esc(row.get('run_id'))}</td>"
+            f"<td>{esc(row.get('compare_backend'))}</td>"
+            f"<td>{esc(chunk_s)}</td>"
+            f"<td>{num(row.get('speed_factor'), 2)}</td>"
+            f"<td>{num(row.get('source_stream_duration_s'), 2)}</td>"
+            f"<td>{num(row.get('generated_duration_s'), 2)}</td>"
+            f"<td>{num(row.get('full_s2s_rtf'), 3)}</td>"
+            f"<td>{num(row.get('end_lag_s'), 2)}</td>"
+            f"<td>{num(row.get('max_backlog_s'), 2)}</td>"
+            f"<td>{num(row.get('chrf'), 2)}</td>"
+            f"<td>{num(row.get('cer'), 3)}</td>"
+            f"<td>{link(row.get('run_page_path') or '', out_dir, 'open')}</td>"
+            f"<td>{audio(row.get('source_audio_path') or '', out_dir)}</td>"
+            f"<td>{audio(row.get('generated_audio_path') or '', out_dir)}</td>"
+            "</tr>"
+        )
+    return "\n".join(pieces)
+
+
+def main() -> None:
+    args = parse_args()
+    out_dir = Path(args.output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    pattern = re.compile(args.run_id_regex) if args.run_id_regex else None
+    rows: list[dict[str, Any]] = []
+    for raw in args.eval:
+        label, eval_dir = parse_eval_arg(raw)
+        rows.extend(
+            row
+            for row in load_metrics(label, eval_dir)
+            if keep_row(row, args.run_id_prefix, pattern)
+        )
+
+    (out_dir / "compare_metrics.jsonl").write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False) for row in sorted(rows, key=sort_key)) + "\n",
+        encoding="utf-8",
+    )
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<title>{esc(args.title)}</title>
+<style>
+body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:24px;color:#202428}}
+h1{{font-size:22px}}table{{border-collapse:collapse;width:100%}}
+td,th{{border-top:1px solid #d6d9de;padding:8px;text-align:left;font-size:13px;vertical-align:top}}
+audio{{width:220px}}.meta{{color:#667085;margin:8px 0 16px}}
+</style>
+<h1>{esc(args.title)}</h1>
+<div class="meta">
+{len(rows)} runs · source audio is original 60s clip · target audio is backend output
+</div>
+<table>
+<thead>
+<tr>
+<th>run</th><th>backend</th><th>chunk</th><th>speed</th><th>stream s</th>
+<th>target s</th><th>RTF</th><th>end lag</th><th>max backlog</th>
+<th>chrF</th><th>CER</th><th>detail</th><th>source</th><th>target</th>
+</tr>
+</thead>
+<tbody>
+{render_rows(rows, out_dir)}
+</tbody>
+</table>
+"""
+    (out_dir / "index.html").write_text(html, encoding="utf-8")
+    print(json.dumps({"runs": len(rows), "output": str(out_dir)}, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()

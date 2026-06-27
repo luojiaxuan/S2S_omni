@@ -391,6 +391,7 @@ async def run_one(run: dict[str, Any], output_dir: Path, args: argparse.Namespac
             "source_eval_duration_s": run["source_eval_duration_s"],
             "source_stream_duration_s": run["source_stream_duration_s"],
             "target_reference_text": run.get("target_reference_text", ""),
+            "chunk_ms": args.chunk_ms,
         }
     )
     result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
