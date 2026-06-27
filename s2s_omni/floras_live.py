@@ -295,14 +295,15 @@ def coverage_status(reference_sentence: str, candidate_text: str) -> dict[str, A
     recall = 0.0
     if ref_tokens:
         recall = sum(1 for token in ref_tokens if token in cand_tokens) / len(ref_tokens)
-    if recall >= 0.8 or score >= 0.55:
+    if recall >= 0.75 or score >= 0.5:
         status = "covered"
-    elif recall >= 0.4 or score >= 0.25:
+    elif recall >= 0.35 or score >= 0.2:
         status = "partial"
     else:
         status = "missed"
     return {
         "status": status,
+        "coverage_method": "heuristic_lexical",
         "heuristic_bag_f1": round(float(score), 6),
         "heuristic_recall": round(float(recall), 6),
     }
@@ -425,6 +426,10 @@ def write_run_dashboard(
         idx = int(window["window_index"])
         sent_html = "\n".join(
             f"<li class='{esc(sent.get('status'))}'><b>{esc(sent.get('status'))}</b> "
+            f"<span class='score'>"
+            f"{esc(sent.get('coverage_method'))} · recall {esc(sent.get('heuristic_recall'))} · "
+            f"F1 {esc(sent.get('heuristic_bag_f1'))}"
+            f"</span>"
             f"<span class='source-sentence'>{esc(sent.get('source_sentence'))}</span>"
             f"<span>{esc(sent.get('target_sentence'))}</span></li>"
             for sent in sentence_by_window.get(idx, [])
@@ -453,7 +458,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:
 h1{{font-size:22px;margin:0 0 8px}}h2{{font-size:15px;margin:0 0 8px}}
 .meta,.label{{color:#5d6570;font-size:13px}}section{{border-top:1px solid #d6d9de;padding:16px 0}}
 .grid{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}}audio{{width:100%}}
-.source-sentence{{display:block;color:#5d6570;font-size:12px}}
+.source-sentence,.score{{display:block;color:#5d6570;font-size:12px}}
 li.covered{{color:#116329}}li.partial{{color:#9a6700}}li.missed{{color:#b42318}}
 p{{white-space:pre-wrap;overflow-wrap:anywhere}}@media(max-width:900px){{.grid{{grid-template-columns:1fr}}}}
 </style>
