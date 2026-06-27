@@ -11,6 +11,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -57,6 +59,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--setup-timeout-s", type=float, default=30.0)
     parser.add_argument("--progress-interval-s", type=float, default=30.0)
     parser.add_argument("--pace", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--audio-stream-end", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--trim-output-silence",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    parser.add_argument("--trim-silence-rms-threshold", type=float, default=200.0)
     parser.add_argument("--dry-run", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
@@ -125,10 +134,10 @@ def setup_payload(args: argparse.Namespace, target_language_code: str) -> dict[s
     return {
         "setup": {
             "model": model_name(args.model),
+            "inputAudioTranscription": {},
+            "outputAudioTranscription": {},
             "generationConfig": {
                 "responseModalities": ["AUDIO"],
-                "inputAudioTranscription": {},
-                "outputAudioTranscription": {},
                 "translationConfig": {
                     "targetLanguageCode": target_language_code,
                     "echoTargetLanguage": bool(args.echo_target_language),
@@ -147,6 +156,10 @@ def audio_input_payload(payload: bytes) -> dict[str, Any]:
             }
         }
     }
+
+
+def audio_stream_end_payload() -> dict[str, Any]:
+    return {"realtimeInput": {"audioStreamEnd": True}}
 
 
 def sanitize_event(value: Any) -> Any:
@@ -204,6 +217,33 @@ def transcription_text(event: dict[str, Any], key: str) -> str:
     return text if isinstance(text, str) else ""
 
 
+def pcm16_rms(payload: bytes) -> float:
+    if not payload:
+        return 0.0
+    audio = np.frombuffer(payload, dtype="<i2").astype(np.float32)
+    if audio.size == 0:
+        return 0.0
+    return float(np.sqrt(np.mean(audio * audio)))
+
+
+def trim_trailing_silent_chunks(
+    payloads: list[bytes],
+    records: list[dict[str, Any]],
+    rms_threshold: float,
+) -> tuple[list[bytes], list[dict[str, Any]], int]:
+    keep_until = len(payloads)
+    while keep_until > 0 and pcm16_rms(payloads[keep_until - 1]) <= rms_threshold:
+        keep_until -= 1
+    trimmed_records: list[dict[str, Any]] = []
+    cumulative_s = 0.0
+    for record in records[:keep_until]:
+        item = dict(record)
+        cumulative_s += float(item.get("audio_duration_s") or 0.0)
+        item["cumulative_audio_duration_s"] = round(cumulative_s, 6)
+        trimmed_records.append(item)
+    return payloads[:keep_until], trimmed_records, len(payloads) - keep_until
+
+
 async def connect_ws(url: str):
     import websockets
 
@@ -216,8 +256,9 @@ async def connect_ws(url: str):
 async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace) -> dict[str, Any]:
     raw_events = out_dir / "raw_events.jsonl"
     audio_chunks = out_dir / "audio_chunks.jsonl"
+    raw_audio_chunks = out_dir / "audio_chunks_raw.jsonl"
     send_events = out_dir / "send_events.jsonl"
-    for path in [raw_events, audio_chunks, send_events]:
+    for path in [raw_events, audio_chunks, raw_audio_chunks, send_events]:
         if path.exists():
             path.unlink()
 
@@ -238,6 +279,8 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
     last_event_time = start_time
     cumulative_audio_s = 0.0
     chunk_index = 0
+    audio_payloads: list[bytes] = []
+    audio_chunk_records: list[dict[str, Any]] = []
 
     async def receiver() -> None:
         nonlocal chunk_index, cumulative_audio_s, last_event_time
@@ -271,17 +314,18 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
                     duration_s = pcm16_duration_s(payload, REALTIME_SAMPLE_RATE)
                     cumulative_audio_s += duration_s
                     output_audio.extend(payload)
-                    append_jsonl(
-                        audio_chunks,
-                        {
-                            "chunk_index": chunk_index,
-                            "arrival_s": round(now_s, 6),
-                            "audio_duration_s": round(duration_s, 6),
-                            "cumulative_audio_duration_s": round(cumulative_audio_s, 6),
-                            "bytes": len(payload),
-                            "event_type": "serverContent.modelTurn.inlineData",
-                        },
-                    )
+                    audio_payloads.append(payload)
+                    record = {
+                        "chunk_index": chunk_index,
+                        "arrival_s": round(now_s, 6),
+                        "audio_duration_s": round(duration_s, 6),
+                        "cumulative_audio_duration_s": round(cumulative_audio_s, 6),
+                        "bytes": len(payload),
+                        "rms": round(pcm16_rms(payload), 6),
+                        "event_type": "serverContent.modelTurn.inlineData",
+                    }
+                    audio_chunk_records.append(record)
+                    append_jsonl(audio_chunks, record)
                     chunk_index += 1
                 output_delta = transcription_text(event, "outputTranscription")
                 if output_delta:
@@ -362,6 +406,15 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
             await asyncio.sleep(args.chunk_ms / 1000.0)
 
     send_finished_at = time.monotonic()
+    if args.audio_stream_end:
+        await ws.send(json.dumps(audio_stream_end_payload()))
+        append_jsonl(
+            send_events,
+            {
+                "type": "realtime_input.audio_stream_end",
+                "sent_at_s": round(send_finished_at - start_time, 6),
+            },
+        )
     append_jsonl(
         send_events,
         {
@@ -382,8 +435,28 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
     finally:
         receiver_task.cancel()
 
+    raw_generated_wav = out_dir / "generated_target_raw.wav"
+    raw_generated_duration_s = pcm16_to_wav(
+        raw_generated_wav,
+        bytes(output_audio),
+        REALTIME_SAMPLE_RATE,
+    )
+    trimmed_silence_chunks = 0
+    final_payloads = audio_payloads
+    if args.trim_output_silence:
+        final_payloads, final_records, trimmed_silence_chunks = trim_trailing_silent_chunks(
+            audio_payloads,
+            audio_chunk_records,
+            args.trim_silence_rms_threshold,
+        )
+        raw_audio_chunks.write_text(audio_chunks.read_text(encoding="utf-8"), encoding="utf-8")
+        write_jsonl(audio_chunks, final_records)
     generated_wav = out_dir / "generated_target.wav"
-    generated_duration_s = pcm16_to_wav(generated_wav, bytes(output_audio), REALTIME_SAMPLE_RATE)
+    generated_duration_s = pcm16_to_wav(
+        generated_wav,
+        b"".join(final_payloads),
+        REALTIME_SAMPLE_RATE,
+    )
     return {
         "run_id": run["run_id"],
         "backend": "gemini_live_translate",
@@ -391,6 +464,12 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
         "target_language": target_language_code,
         "generated_wav_path": str(generated_wav),
         "generated_duration_s": round(generated_duration_s, 6),
+        "raw_generated_wav_path": str(raw_generated_wav),
+        "raw_generated_duration_s": round(raw_generated_duration_s, 6),
+        "raw_audio_chunks_path": str(raw_audio_chunks),
+        "trim_output_silence": bool(args.trim_output_silence),
+        "trimmed_silence_chunks": trimmed_silence_chunks,
+        "trim_silence_rms_threshold": args.trim_silence_rms_threshold,
         "output_transcript": "".join(output_transcript_parts).strip(),
         "input_transcript": "".join(input_transcript_parts).strip(),
         "raw_events_path": str(raw_events),

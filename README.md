@@ -565,6 +565,11 @@ python scripts/run_floras_openai_realtime.py \
 Run the same benchmark through Gemini Live Translate. Gemini takes 16 kHz PCM
 input and returns 24 kHz PCM output; the runner keeps the same result schema as
 the OpenAI runner, so the ASR and HTML evaluation commands below can be reused.
+The runner sends Gemini's audio-stream-end signal after the paced input and
+keeps `generated_target_raw.wav` plus `audio_chunks_raw.jsonl` for the raw
+server output. The default `generated_target.wav` and `audio_chunks.jsonl` trim
+trailing silent PCM chunks so duration metrics track spoken target audio rather
+than Gemini's silent tail frames.
 
 ```bash
 export GEMINI_API_KEY=...
