@@ -56,6 +56,7 @@ for chunk in "${CHUNKS[@]}"; do
         --run-id "${run_id}" \
         --chunk-ms "${chunk}" \
         --pace \
+        --max-session-input-s 480 \
         --receive-timeout-s 240 \
         --post-send-idle-s 8
   done

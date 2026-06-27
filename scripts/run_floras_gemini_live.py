@@ -57,6 +57,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--receive-timeout-s", type=float, default=60.0)
     parser.add_argument("--post-send-idle-s", type=float, default=8.0)
     parser.add_argument("--setup-timeout-s", type=float, default=30.0)
+    parser.add_argument("--max-session-input-s", type=float, default=0.0)
     parser.add_argument("--progress-interval-s", type=float, default=30.0)
     parser.add_argument("--pace", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--audio-stream-end", action=argparse.BooleanOptionalAction, default=True)
@@ -253,6 +254,20 @@ async def connect_ws(url: str):
         return await websockets.connect(url, ping_interval=None)
 
 
+def pcm_segment_ranges(
+    pcm: bytes,
+    sample_rate: int,
+    max_session_input_s: float,
+) -> list[tuple[int, int]]:
+    if max_session_input_s <= 0:
+        return [(0, len(pcm))]
+    max_bytes = max(2, int(round(max_session_input_s * sample_rate)) * 2)
+    ranges = []
+    for start in range(0, len(pcm), max_bytes):
+        ranges.append((start, min(len(pcm), start + max_bytes)))
+    return ranges
+
+
 async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace) -> dict[str, Any]:
     raw_events = out_dir / "raw_events.jsonl"
     audio_chunks = out_dir / "audio_chunks.jsonl"
@@ -268,189 +283,231 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
     api_key = env_api_key("GEMINI_API_KEY")
     url = f"{args.ws_url}?key={api_key}"
 
-    ws = await connect_ws(url)
-    output_audio = bytearray()
+    raw_output_audio = bytearray()
     output_transcript_parts: list[str] = []
     input_transcript_parts: list[str] = []
     errors: list[dict[str, Any]] = []
-    setup_done = asyncio.Event()
-    receiver_done = asyncio.Event()
     start_time = time.monotonic()
-    last_event_time = start_time
-    cumulative_audio_s = 0.0
-    chunk_index = 0
-    audio_payloads: list[bytes] = []
-    audio_chunk_records: list[dict[str, Any]] = []
-
-    async def receiver() -> None:
-        nonlocal chunk_index, cumulative_audio_s, last_event_time
-        try:
-            async for message in ws:
-                now = time.monotonic()
-                last_event_time = now
-                now_s = now - start_time
-                if isinstance(message, bytes):
-                    try:
-                        message = message.decode("utf-8")
-                    except UnicodeDecodeError:
-                        append_jsonl(
-                            raw_events,
-                            {
-                                "received_at_s": round(now_s, 6),
-                                "binary_message_bytes": len(message),
-                            },
-                        )
-                        continue
-                event = json.loads(message)
-                safe = sanitize_event(event)
-                if isinstance(safe, dict):
-                    safe["received_at_s"] = round(now_s, 6)
-                    append_jsonl(raw_events, safe)
-                if event.get("setupComplete") is not None:
-                    setup_done.set()
-                if event.get("error"):
-                    errors.append(safe if isinstance(safe, dict) else {"error": safe})
-                for payload in inline_audio_payloads(event):
-                    duration_s = pcm16_duration_s(payload, REALTIME_SAMPLE_RATE)
-                    cumulative_audio_s += duration_s
-                    output_audio.extend(payload)
-                    audio_payloads.append(payload)
-                    record = {
-                        "chunk_index": chunk_index,
-                        "arrival_s": round(now_s, 6),
-                        "audio_duration_s": round(duration_s, 6),
-                        "cumulative_audio_duration_s": round(cumulative_audio_s, 6),
-                        "bytes": len(payload),
-                        "rms": round(pcm16_rms(payload), 6),
-                        "event_type": "serverContent.modelTurn.inlineData",
-                    }
-                    audio_chunk_records.append(record)
-                    append_jsonl(audio_chunks, record)
-                    chunk_index += 1
-                output_delta = transcription_text(event, "outputTranscription")
-                if output_delta:
-                    output_transcript_parts.append(output_delta)
-                input_delta = transcription_text(event, "inputTranscription")
-                if input_delta:
-                    input_transcript_parts.append(input_delta)
-        except Exception as exc:
-            append_jsonl(raw_events, {"receiver_error": f"{type(exc).__name__}: {exc}"})
-        finally:
-            receiver_done.set()
-
-    receiver_task = asyncio.create_task(receiver())
-    await ws.send(json.dumps(setup_payload(args, target_language_code)))
-    append_jsonl(
-        send_events,
-        {
-            "type": "setup",
-            "sent_at_s": 0.0,
-            "model": args.model,
-            "target_language_code": target_language_code,
-        },
-    )
-
-    try:
-        await asyncio.wait_for(setup_done.wait(), timeout=args.setup_timeout_s)
-    except asyncio.TimeoutError:
-        append_jsonl(raw_events, {"setup_timeout_s": args.setup_timeout_s})
-
     pcm = wav_to_pcm16(run["source_stream_wav_path"], GEMINI_INPUT_SAMPLE_RATE)
     samples_per_chunk = int(round(GEMINI_INPUT_SAMPLE_RATE * args.chunk_ms / 1000.0))
     bytes_per_chunk = samples_per_chunk * 2
     total_stream_s = pcm16_duration_s(pcm, GEMINI_INPUT_SAMPLE_RATE)
     send_index = 0
     next_progress_s = args.progress_interval_s
-    for start in range(0, len(pcm), bytes_per_chunk):
-        payload = pcm[start : start + bytes_per_chunk]
-        await ws.send(json.dumps(audio_input_payload(payload)))
-        sent_at_s = time.monotonic() - start_time
-        append_jsonl(
-            send_events,
-            {
-                "type": "realtime_input.audio",
-                "send_index": send_index,
-                "sent_at_s": round(sent_at_s, 6),
-                "audio_duration_s": round(pcm16_duration_s(payload, GEMINI_INPUT_SAMPLE_RATE), 6),
-                "bytes": len(payload),
-            },
-        )
-        send_index += 1
-        elapsed_s = time.monotonic() - start_time
-        if args.progress_interval_s > 0 and elapsed_s >= next_progress_s:
-            print(
-                json.dumps(
+    raw_cumulative_audio_s = 0.0
+    raw_audio_payloads: list[bytes] = []
+    raw_audio_records: list[dict[str, Any]] = []
+    final_payloads: list[bytes] = []
+    final_records: list[dict[str, Any]] = []
+    final_cumulative_audio_s = 0.0
+    trimmed_silence_chunks = 0
+    ranges = pcm_segment_ranges(pcm, GEMINI_INPUT_SAMPLE_RATE, args.max_session_input_s)
+
+    for segment_index, (segment_start, segment_end) in enumerate(ranges):
+        ws = await connect_ws(url)
+        setup_done = asyncio.Event()
+        receiver_done = asyncio.Event()
+        last_event_time = time.monotonic()
+        segment_payloads: list[bytes] = []
+        segment_records: list[dict[str, Any]] = []
+
+        async def receiver() -> None:
+            nonlocal raw_cumulative_audio_s, last_event_time
+            try:
+                async for message in ws:
+                    now = time.monotonic()
+                    last_event_time = now
+                    now_s = now - start_time
+                    if isinstance(message, bytes):
+                        try:
+                            message = message.decode("utf-8")
+                        except UnicodeDecodeError:
+                            append_jsonl(
+                                raw_events,
+                                {
+                                    "received_at_s": round(now_s, 6),
+                                    "segment_index": segment_index,
+                                    "binary_message_bytes": len(message),
+                                },
+                            )
+                            continue
+                    event = json.loads(message)
+                    safe = sanitize_event(event)
+                    if isinstance(safe, dict):
+                        safe["received_at_s"] = round(now_s, 6)
+                        safe["segment_index"] = segment_index
+                        append_jsonl(raw_events, safe)
+                    if event.get("setupComplete") is not None:
+                        setup_done.set()
+                    if event.get("error"):
+                        errors.append(safe if isinstance(safe, dict) else {"error": safe})
+                    for payload in inline_audio_payloads(event):
+                        duration_s = pcm16_duration_s(payload, REALTIME_SAMPLE_RATE)
+                        raw_cumulative_audio_s += duration_s
+                        raw_output_audio.extend(payload)
+                        raw_audio_payloads.append(payload)
+                        record = {
+                            "raw_chunk_index": len(raw_audio_records),
+                            "segment_index": segment_index,
+                            "arrival_s": round(now_s, 6),
+                            "audio_duration_s": round(duration_s, 6),
+                            "raw_cumulative_audio_duration_s": round(raw_cumulative_audio_s, 6),
+                            "bytes": len(payload),
+                            "rms": round(pcm16_rms(payload), 6),
+                            "event_type": "serverContent.modelTurn.inlineData",
+                        }
+                        raw_audio_records.append(record)
+                        segment_payloads.append(payload)
+                        segment_records.append(record)
+                    output_delta = transcription_text(event, "outputTranscription")
+                    if output_delta:
+                        output_transcript_parts.append(output_delta)
+                    input_delta = transcription_text(event, "inputTranscription")
+                    if input_delta:
+                        input_transcript_parts.append(input_delta)
+            except Exception as exc:
+                append_jsonl(
+                    raw_events,
                     {
-                        "run_id": run["run_id"],
-                        "phase": "sending",
-                        "elapsed_s": round(elapsed_s, 3),
-                        "sent_stream_s": round(
-                            min(
-                                total_stream_s,
-                                pcm16_duration_s(
-                                    pcm[: start + len(payload)],
-                                    GEMINI_INPUT_SAMPLE_RATE,
-                                ),
-                            ),
-                            3,
-                        ),
-                        "total_stream_s": round(total_stream_s, 3),
-                        "output_audio_s": round(cumulative_audio_s, 3),
+                        "receiver_error": f"{type(exc).__name__}: {exc}",
+                        "segment_index": segment_index,
                     },
-                    ensure_ascii=False,
-                ),
-                flush=True,
-            )
-            next_progress_s += args.progress_interval_s
-        if args.pace:
-            await asyncio.sleep(args.chunk_ms / 1000.0)
+                )
+            finally:
+                receiver_done.set()
 
-    send_finished_at = time.monotonic()
-    if args.audio_stream_end:
-        await ws.send(json.dumps(audio_stream_end_payload()))
+        receiver_task = asyncio.create_task(receiver())
+        await ws.send(json.dumps(setup_payload(args, target_language_code)))
         append_jsonl(
             send_events,
             {
-                "type": "realtime_input.audio_stream_end",
-                "sent_at_s": round(send_finished_at - start_time, 6),
+                "type": "setup",
+                "sent_at_s": round(time.monotonic() - start_time, 6),
+                "segment_index": segment_index,
+                "model": args.model,
+                "target_language_code": target_language_code,
             },
         )
-    append_jsonl(
-        send_events,
-        {
-            "type": "input_finished",
-            "sent_at_s": round(send_finished_at - start_time, 6),
-        },
-    )
-    deadline = send_finished_at + args.receive_timeout_s
-    while time.monotonic() < deadline and not receiver_done.is_set():
-        idle_base = max(last_event_time, send_finished_at)
-        idle_s = time.monotonic() - idle_base
-        if idle_s >= args.post_send_idle_s:
-            break
-        await asyncio.sleep(min(0.5, max(0.05, args.post_send_idle_s - idle_s)))
 
-    try:
-        await ws.close()
-    finally:
-        receiver_task.cancel()
+        try:
+            await asyncio.wait_for(setup_done.wait(), timeout=args.setup_timeout_s)
+        except asyncio.TimeoutError:
+            append_jsonl(
+                raw_events,
+                {
+                    "setup_timeout_s": args.setup_timeout_s,
+                    "segment_index": segment_index,
+                },
+            )
+
+        for start in range(segment_start, segment_end, bytes_per_chunk):
+            payload = pcm[start : min(segment_end, start + bytes_per_chunk)]
+            await ws.send(json.dumps(audio_input_payload(payload)))
+            sent_at_s = time.monotonic() - start_time
+            append_jsonl(
+                send_events,
+                {
+                    "type": "realtime_input.audio",
+                    "send_index": send_index,
+                    "segment_index": segment_index,
+                    "sent_at_s": round(sent_at_s, 6),
+                    "audio_duration_s": round(
+                        pcm16_duration_s(payload, GEMINI_INPUT_SAMPLE_RATE),
+                        6,
+                    ),
+                    "bytes": len(payload),
+                },
+            )
+            send_index += 1
+            elapsed_s = time.monotonic() - start_time
+            if args.progress_interval_s > 0 and elapsed_s >= next_progress_s:
+                print(
+                    json.dumps(
+                        {
+                            "run_id": run["run_id"],
+                            "phase": "sending",
+                            "segment_index": segment_index,
+                            "elapsed_s": round(elapsed_s, 3),
+                            "sent_stream_s": round(
+                                min(
+                                    total_stream_s,
+                                    pcm16_duration_s(
+                                        pcm[: start + len(payload)],
+                                        GEMINI_INPUT_SAMPLE_RATE,
+                                    ),
+                                ),
+                                3,
+                            ),
+                            "total_stream_s": round(total_stream_s, 3),
+                            "output_audio_s": round(raw_cumulative_audio_s, 3),
+                        },
+                        ensure_ascii=False,
+                    ),
+                    flush=True,
+                )
+                next_progress_s += args.progress_interval_s
+            if args.pace:
+                await asyncio.sleep(args.chunk_ms / 1000.0)
+
+        send_finished_at = time.monotonic()
+        if args.audio_stream_end:
+            await ws.send(json.dumps(audio_stream_end_payload()))
+            append_jsonl(
+                send_events,
+                {
+                    "type": "realtime_input.audio_stream_end",
+                    "sent_at_s": round(send_finished_at - start_time, 6),
+                    "segment_index": segment_index,
+                },
+            )
+        append_jsonl(
+            send_events,
+            {
+                "type": "input_finished",
+                "sent_at_s": round(send_finished_at - start_time, 6),
+                "segment_index": segment_index,
+            },
+        )
+        deadline = send_finished_at + args.receive_timeout_s
+        while time.monotonic() < deadline and not receiver_done.is_set():
+            idle_base = max(last_event_time, send_finished_at)
+            idle_s = time.monotonic() - idle_base
+            if idle_s >= args.post_send_idle_s:
+                break
+            await asyncio.sleep(min(0.5, max(0.05, args.post_send_idle_s - idle_s)))
+
+        try:
+            await ws.close()
+        finally:
+            receiver_task.cancel()
+
+        if args.trim_output_silence:
+            kept_payloads, kept_records, trimmed = trim_trailing_silent_chunks(
+                segment_payloads,
+                segment_records,
+                args.trim_silence_rms_threshold,
+            )
+            trimmed_silence_chunks += trimmed
+        else:
+            kept_payloads = segment_payloads
+            kept_records = segment_records
+        for payload, record in zip(kept_payloads, kept_records, strict=False):
+            duration_s = pcm16_duration_s(payload, REALTIME_SAMPLE_RATE)
+            final_cumulative_audio_s += duration_s
+            item = dict(record)
+            item["chunk_index"] = len(final_records)
+            item["cumulative_audio_duration_s"] = round(final_cumulative_audio_s, 6)
+            final_payloads.append(payload)
+            final_records.append(item)
 
     raw_generated_wav = out_dir / "generated_target_raw.wav"
     raw_generated_duration_s = pcm16_to_wav(
         raw_generated_wav,
-        bytes(output_audio),
+        bytes(raw_output_audio),
         REALTIME_SAMPLE_RATE,
     )
-    trimmed_silence_chunks = 0
-    final_payloads = audio_payloads
-    if args.trim_output_silence:
-        final_payloads, final_records, trimmed_silence_chunks = trim_trailing_silent_chunks(
-            audio_payloads,
-            audio_chunk_records,
-            args.trim_silence_rms_threshold,
-        )
-        raw_audio_chunks.write_text(audio_chunks.read_text(encoding="utf-8"), encoding="utf-8")
-        write_jsonl(audio_chunks, final_records)
+    write_jsonl(raw_audio_chunks, raw_audio_records)
+    write_jsonl(audio_chunks, final_records)
     generated_wav = out_dir / "generated_target.wav"
     generated_duration_s = pcm16_to_wav(
         generated_wav,
@@ -470,6 +527,8 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace)
         "trim_output_silence": bool(args.trim_output_silence),
         "trimmed_silence_chunks": trimmed_silence_chunks,
         "trim_silence_rms_threshold": args.trim_silence_rms_threshold,
+        "max_session_input_s": args.max_session_input_s,
+        "session_count": len(ranges),
         "output_transcript": "".join(output_transcript_parts).strip(),
         "input_transcript": "".join(input_transcript_parts).strip(),
         "raw_events_path": str(raw_events),
