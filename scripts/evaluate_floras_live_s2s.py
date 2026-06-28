@@ -327,8 +327,20 @@ def run_metric_row(
             )
             if timeline
             else 0.0,
+            "max_deficit_s": round(max((row["target_audio_deficit_s"] for row in timeline), default=0.0), 6),
+            "mean_deficit_s": round(
+                sum(row["target_audio_deficit_s"] for row in timeline) / len(timeline), 6
+            )
+            if timeline
+            else 0.0,
             "backlog_violation_rate": round(
                 sum(1 for row in timeline if row.get("backlog_violation")) / len(timeline), 6
+            )
+            if timeline
+            else 0.0,
+            "deficit_violation_rate": round(
+                sum(1 for row in timeline if row.get("target_audio_deficit_s", 0.0) > 0.5) / len(timeline),
+                6,
             )
             if timeline
             else 0.0,

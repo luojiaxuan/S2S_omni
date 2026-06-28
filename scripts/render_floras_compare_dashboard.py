@@ -148,6 +148,7 @@ def render_rows(rows: list[dict[str, Any]], out_dir: Path) -> str:
             f"<td>{num(row.get('full_s2s_rtf'), 3)}</td>"
             f"<td>{num(row.get('end_lag_s'), 2)}</td>"
             f"<td>{num(row.get('max_backlog_s'), 2)}</td>"
+            f"<td>{num(row.get('max_deficit_s'), 2)}</td>"
             f"<td>{num(row.get('chrf'), 2)}</td>"
             f"<td>{num(row.get('cer'), 3)}</td>"
             f"<td>{link(row.get('run_page_path') or '', out_dir, 'open')}</td>"
@@ -187,13 +188,13 @@ audio{{width:220px}}.meta{{color:#667085;margin:8px 0 16px}}
 </style>
 <h1>{esc(args.title)}</h1>
 <div class="meta">
-{len(rows)} runs · source audio is original 60s clip · target audio is backend output
+{len(rows)} runs · source audio is the selected source clip · target audio is backend output
 </div>
 <table>
 <thead>
 <tr>
 <th>run</th><th>backend</th><th>chunk</th><th>speed</th><th>stream s</th>
-<th>target s</th><th>RTF</th><th>end lag</th><th>max backlog</th>
+<th>target s</th><th>RTF</th><th>end lag</th><th>max backlog</th><th>max deficit</th>
 <th>chrF</th><th>CER</th><th>detail</th><th>source</th><th>target</th>
 </tr>
 </thead>
