@@ -152,6 +152,24 @@ def load_window_texts(path: str | Path) -> dict[tuple[str, int], str]:
     return out
 
 
+def joined_window_text(
+    run_id: str,
+    window_texts: dict[tuple[str, int], str],
+    target_lang: str,
+) -> str:
+    rows = [
+        (window_index, text.strip())
+        for (row_run_id, window_index), text in window_texts.items()
+        if row_run_id == run_id and text.strip()
+    ]
+    if not rows:
+        return ""
+    rows.sort(key=lambda item: item[0])
+    if str(target_lang or "").lower().startswith(("zh", "ja", "ko")):
+        return "".join(text for _, text in rows)
+    return " ".join(text for _, text in rows)
+
+
 def load_target_mfa_texts(path: str | Path) -> dict[tuple[str, int], dict[str, Any]]:
     out: dict[tuple[str, int], dict[str, Any]] = {}
     if not path:
@@ -317,6 +335,7 @@ def reference_for_eval(run: dict[str, Any], sentence_rows: list[dict[str, Any]])
 def run_metric_row(
     run: dict[str, Any],
     candidate_text: str,
+    candidate_text_source: str,
     timeline: list[dict[str, Any]],
     sentence_rows: list[dict[str, Any]],
     run_page: Path,
@@ -374,6 +393,7 @@ def run_metric_row(
             "partial_sentence_rate": round(len(partial) / len(sentence_rows), 6) if sentence_rows else None,
             "sentence_count": len(sentence_rows),
             "candidate_text": candidate_text,
+            "candidate_text_source": candidate_text_source,
             "generated_wav_path": str(run["generated_wav_path"]),
             "source_audio_path": str(run.get("source_eval_wav_path") or ""),
             "source_stream_audio_path": str(run.get("source_stream_wav_path") or run.get("source_eval_wav_path") or ""),
@@ -430,7 +450,14 @@ def main() -> None:
         run_eval_dir = eval_dir / sanitize_id(run_id)
         run_eval_dir.mkdir(parents=True, exist_ok=True)
         copy_full_audio(run, run_eval_dir)
-        candidate_text = candidate_by_id.get(run_id) or str(run.get("output_transcript") or "")
+        target_lang = str(run.get("target_lang") or run.get("target_language") or "")
+        window_candidate_text = joined_window_text(run_id, window_texts, target_lang)
+        if window_candidate_text:
+            candidate_text = window_candidate_text
+            candidate_text_source = "window_asr_concat"
+        else:
+            candidate_text = candidate_by_id.get(run_id) or str(run.get("output_transcript") or "")
+            candidate_text_source = "full_target_asr"
         timeline = build_timeline(
             run,
             run_eval_dir,
@@ -453,7 +480,15 @@ def main() -> None:
         write_jsonl(timeline_path, timeline)
         write_jsonl(sentence_path, sentence_rows)
         run_page = run_eval_dir / "index.html"
-        metrics = run_metric_row(run, candidate_text, timeline, sentence_rows, run_page, eval_dir)
+        metrics = run_metric_row(
+            run,
+            candidate_text,
+            candidate_text_source,
+            timeline,
+            sentence_rows,
+            run_page,
+            eval_dir,
+        )
         (run_eval_dir / "metrics.json").write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
         write_run_dashboard(run_page, run, metrics, timeline, sentence_rows)
         metric_rows.append(metrics)

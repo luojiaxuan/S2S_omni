@@ -496,7 +496,7 @@ p{{white-space:pre-wrap;overflow-wrap:anywhere}}@media(max-width:900px){{.grid{{
     <div><div class="label">generated target</div><audio id="full-target-audio" controls preload="metadata" src="{esc(rel(metrics.get('generated_wav_path') or '', run_dir))}"></audio></div>
   </div>
   <h2>Reference</h2><p>{esc(run.get('target_reference_text'))}</p>
-  <h2>ASR / Output Transcript</h2><p>{esc(metrics.get('candidate_text'))}</p>
+  <h2>ASR / Output Transcript ({esc(metrics.get('candidate_text_source') or 'unknown')})</h2><p>{esc(metrics.get('candidate_text'))}</p>
 </section>
 {''.join(sections)}
 <script>
