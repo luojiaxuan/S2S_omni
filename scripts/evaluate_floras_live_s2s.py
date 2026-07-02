@@ -194,7 +194,7 @@ def build_timeline(
         emitted_start = cumulative_at(chunks, wall_start, inclusive=False)
         emitted_end = cumulative_at(chunks, wall_end, inclusive=True)
         queue_s = max(0.0, emitted_end - wall_end)
-        deficit_s = max(0.0, wall_end - emitted_end)
+        backlog_s = max(0.0, wall_end - emitted_end)
         source_window = wav_dir / f"window_{idx:04d}_source.wav"
         source_stream_window = wav_dir / f"window_{idx:04d}_source_stream.wav"
         target_window = wav_dir / f"window_{idx:04d}_target.wav"
@@ -221,8 +221,9 @@ def build_timeline(
                 "target_audio_emitted_until_boundary_s": round(emitted_end, 6),
                 "target_window_duration_s": round(max(0.0, emitted_end - emitted_start), 6),
                 "playback_queue_s": round(queue_s, 6),
-                "target_audio_deficit_s": round(deficit_s, 6),
-                "backlog_violation": queue_s > backlog_threshold_s,
+                "translation_backlog_s": round(backlog_s, 6),
+                "target_audio_deficit_s": round(backlog_s, 6),
+                "backlog_violation": backlog_s > backlog_threshold_s,
                 "source_window_audio_path": str(source_window),
                 "source_stream_window_audio_path": str(source_stream_window),
                 "target_window_audio_path": str(target_window),
@@ -321,8 +322,14 @@ def run_metric_row(
             if source_stream_duration > 0
             else None,
             "end_lag_s": round(generated_duration - source_stream_duration, 6),
-            "max_backlog_s": round(max((row["playback_queue_s"] for row in timeline), default=0.0), 6),
+            "max_backlog_s": round(max((row["translation_backlog_s"] for row in timeline), default=0.0), 6),
             "mean_backlog_s": round(
+                sum(row["translation_backlog_s"] for row in timeline) / len(timeline), 6
+            )
+            if timeline
+            else 0.0,
+            "max_playback_queue_s": round(max((row["playback_queue_s"] for row in timeline), default=0.0), 6),
+            "mean_playback_queue_s": round(
                 sum(row["playback_queue_s"] for row in timeline) / len(timeline), 6
             )
             if timeline
@@ -349,6 +356,8 @@ def run_metric_row(
             "sentence_count": len(sentence_rows),
             "candidate_text": candidate_text,
             "generated_wav_path": str(run["generated_wav_path"]),
+            "source_audio_path": str(run.get("source_eval_wav_path") or ""),
+            "source_stream_audio_path": str(run.get("source_stream_wav_path") or run.get("source_eval_wav_path") or ""),
             "run_page": str(run_page),
             "run_page_rel": rel(run_page, eval_dir),
         }

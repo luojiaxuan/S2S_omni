@@ -120,7 +120,7 @@ def audio(path: str | Path, base: Path) -> str:
     path = Path(path)
     if not path.exists():
         return ""
-    return f'<audio controls src="{esc(rel(path, base))}"></audio>'
+    return f'<audio controls preload="metadata" src="{esc(rel(path, base))}"></audio>'
 
 
 def sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
@@ -148,11 +148,12 @@ def render_rows(rows: list[dict[str, Any]], out_dir: Path) -> str:
             f"<td>{num(row.get('full_s2s_rtf'), 3)}</td>"
             f"<td>{num(row.get('end_lag_s'), 2)}</td>"
             f"<td>{num(row.get('max_backlog_s'), 2)}</td>"
-            f"<td>{num(row.get('max_deficit_s'), 2)}</td>"
+            f"<td>{num(row.get('max_playback_queue_s'), 2)}</td>"
+            f"<td>{num(row.get('bleu'), 2)}</td>"
             f"<td>{num(row.get('chrf'), 2)}</td>"
             f"<td>{num(row.get('cer'), 3)}</td>"
             f"<td>{link(row.get('run_page_path') or '', out_dir, 'open')}</td>"
-            f"<td>{audio(row.get('source_audio_path') or '', out_dir)}</td>"
+            f"<td>{audio(row.get('source_stream_audio_path') or row.get('source_audio_path') or '', out_dir)}</td>"
             f"<td>{audio(row.get('generated_audio_path') or '', out_dir)}</td>"
             "</tr>"
         )
@@ -185,6 +186,8 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:
 h1{{font-size:22px}}table{{border-collapse:collapse;width:100%}}
 td,th{{border-top:1px solid #d6d9de;padding:8px;text-align:left;font-size:13px;vertical-align:top}}
 audio{{width:220px}}.meta{{color:#667085;margin:8px 0 16px}}
+.audio-tools{{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-top:4px;color:#667085;font-size:12px}}
+.audio-tools input{{width:100%}}
 </style>
 <h1>{esc(args.title)}</h1>
 <div class="meta">
@@ -194,14 +197,49 @@ audio{{width:220px}}.meta{{color:#667085;margin:8px 0 16px}}
 <thead>
 <tr>
 <th>run</th><th>backend</th><th>chunk</th><th>speed</th><th>stream s</th>
-<th>target s</th><th>RTF</th><th>end lag</th><th>max backlog</th><th>max deficit</th>
-<th>chrF</th><th>CER</th><th>detail</th><th>source</th><th>target</th>
+<th>target s</th><th>RTF</th><th>end lag</th><th>max backlog</th><th>max queue</th>
+<th>BLEU</th><th>chrF</th><th>CER</th><th>detail</th><th>streamed source</th><th>target</th>
 </tr>
 </thead>
 <tbody>
 {render_rows(rows, out_dir)}
 </tbody>
 </table>
+<script>
+function fmtTime(s) {{
+  if (!Number.isFinite(s)) return "0:00";
+  const m = Math.floor(s / 60);
+  const r = Math.floor(s % 60).toString().padStart(2, "0");
+  return `${{m}}:${{r}}`;
+}}
+document.querySelectorAll("audio").forEach((audio) => {{
+  const tools = document.createElement("div");
+  tools.className = "audio-tools";
+  const range = document.createElement("input");
+  range.type = "range";
+  range.min = "0";
+  range.max = "1";
+  range.step = "0.001";
+  range.value = "0";
+  const time = document.createElement("span");
+  time.textContent = "0:00 / 0:00";
+  tools.append(range, time);
+  audio.insertAdjacentElement("afterend", tools);
+  function update() {{
+    const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
+    range.value = duration ? String(audio.currentTime / duration) : "0";
+    time.textContent = `${{fmtTime(audio.currentTime)}} / ${{fmtTime(duration)}}`;
+  }}
+  range.addEventListener("input", () => {{
+    if (Number.isFinite(audio.duration) && audio.duration > 0) {{
+      audio.currentTime = Number(range.value) * audio.duration;
+    }}
+  }});
+  audio.addEventListener("loadedmetadata", update);
+  audio.addEventListener("timeupdate", update);
+  update();
+}});
+</script>
 """
     (out_dir / "index.html").write_text(html, encoding="utf-8")
     print(json.dumps({"runs": len(rows), "output": str(out_dir)}, ensure_ascii=False, indent=2))

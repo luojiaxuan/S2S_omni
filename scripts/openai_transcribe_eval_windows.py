@@ -25,6 +25,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default=os.environ.get("OPENAI_ASR_MODEL", "gpt-4o-mini-transcribe"))
     parser.add_argument("--base-url", default=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
     parser.add_argument("--max-upload-mb", type=float, default=24.0)
+    parser.add_argument("--run-id", action="append", default=[])
+    parser.add_argument("--window-index", type=int, action="append", default=[])
+    parser.add_argument("--max-windows", type=int, default=0)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
     return parser.parse_args()
 
@@ -42,13 +45,25 @@ def existing_rows(path: Path) -> dict[tuple[str, int], dict[str, Any]]:
     return out
 
 
-def load_windows(eval_dir: Path) -> list[dict[str, Any]]:
+def load_windows(
+    eval_dir: Path,
+    *,
+    run_ids: set[str],
+    window_indexes: set[int],
+    max_windows: int,
+) -> list[dict[str, Any]]:
     windows = []
     for path in sorted(eval_dir.glob("*/timeline.jsonl")):
         for line in path.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
             row = json.loads(line)
+            run_id = str(row.get("run_id") or "")
+            window_index = int(row.get("window_index", -1))
+            if run_ids and run_id not in run_ids:
+                continue
+            if window_indexes and window_index not in window_indexes:
+                continue
             audio_path = Path(str(row.get("target_window_audio_path") or ""))
             if not audio_path.exists():
                 audio_path = path.parent / str(row.get("target_window_audio_rel") or "")
@@ -56,6 +71,8 @@ def load_windows(eval_dir: Path) -> list[dict[str, Any]]:
                 continue
             row["target_window_audio_path"] = str(audio_path)
             windows.append(row)
+            if max_windows > 0 and len(windows) >= max_windows:
+                return windows
     return windows
 
 
@@ -68,7 +85,12 @@ def main() -> None:
     max_upload_bytes = int(args.max_upload_mb * 1024 * 1024)
     with tempfile.TemporaryDirectory(prefix="s2s_omni_window_asr_") as tmp:
         tmp_dir = Path(tmp)
-        for window in load_windows(Path(args.eval_dir)):
+        for window in load_windows(
+            Path(args.eval_dir),
+            run_ids=set(args.run_id),
+            window_indexes=set(args.window_index),
+            max_windows=args.max_windows,
+        ):
             run_id = str(window["run_id"])
             window_index = int(window["window_index"])
             key = (run_id, window_index)
