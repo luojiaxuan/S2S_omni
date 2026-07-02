@@ -434,7 +434,9 @@ def write_run_dashboard(
     run_dir = output_path.parent
     sentence_by_window: dict[int, list[dict[str, Any]]] = {}
     for row in sentence_rows:
-        sentence_by_window.setdefault(int(row.get("window_index", 0)), []).append(row)
+        indexes = row.get("window_indexes") or [row.get("window_index", 0)]
+        for index in indexes:
+            sentence_by_window.setdefault(int(index), []).append(row)
     sections = []
     for window in timeline:
         idx = int(window["window_index"])
@@ -452,7 +454,7 @@ def write_run_dashboard(
             f"""
 <section>
   <h2>Window {idx:03d}: {window['source_window_start_s']:.1f}s-{window['source_window_end_s']:.1f}s</h2>
-  <div class="meta">translation backlog {window['translation_backlog_s']:.3f}s · playback queue {window['playback_queue_s']:.3f}s · target audio {window['target_audio_emitted_at_window_start_s']:.3f}s-{window['target_audio_emitted_until_boundary_s']:.3f}s · violation {esc(window['backlog_violation'])}</div>
+  <div class="meta">translation backlog {window['translation_backlog_s']:.3f}s · playback queue {window['playback_queue_s']:.3f}s · arrived target audio span {window['target_audio_emitted_at_window_start_s']:.3f}s-{window['target_audio_emitted_until_boundary_s']:.3f}s · violation {esc(window['backlog_violation'])}</div>
   <div class="actions">
     <button type="button" data-seek-audio="full-source-stream" data-seek-s="{window['speed_adjusted_input_start_s']:.3f}">jump streamed source</button>
     <button type="button" data-seek-audio="full-target-audio" data-seek-s="{window['target_audio_emitted_at_window_start_s']:.3f}">jump full target</button>
@@ -465,7 +467,7 @@ def write_run_dashboard(
   <div class="label">target MFA-aligned ASR ({esc(window.get('target_mfa_start_s'))}s-{esc(window.get('target_mfa_end_s'))}s)</div><p>{esc(window.get('target_mfa_asr_text') or 'No MFA-aligned ASR available.')}</p>
   <div class="label">target arrival-window ASR</div><p>{esc(window.get('target_asr_window_text') or 'No per-window ASR available.')}</p>
   <div class="label">rough full-target ASR context ({esc(window.get('target_full_asr_context_start_s'))}s-{esc(window.get('target_full_asr_context_end_s'))}s; text-only estimate)</div><p>{esc(window.get('target_full_asr_context_text'))}</p>
-  <div class="label">gold target sentence(s) assigned to this source window</div>
+  <div class="label">gold target sentence(s) overlapping this source window</div>
   <ul>{sent_html or '<li>No sentence assigned.</li>'}</ul>
 </section>"""
         )

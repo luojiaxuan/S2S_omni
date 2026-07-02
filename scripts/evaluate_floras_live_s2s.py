@@ -308,6 +308,7 @@ def build_sentence_coverage(
     for sent in run.get("target_sentences") or []:
         row = dict(sent)
         start_s = float(row.get("source_start_s") or 0.0)
+        end_s = float(row.get("source_end_s") or start_s)
         if eval_duration > 0 and start_s >= eval_duration:
             continue
         target_sentence = str(row.get("target_sentence") or "")
@@ -320,6 +321,9 @@ def build_sentence_coverage(
                 row["llm_error"] = f"{type(exc).__name__}: {exc}"
         row["run_id"] = run["run_id"]
         row["window_index"] = int(start_s // window_s)
+        end_for_window = max(start_s, min(end_s, eval_duration) if eval_duration > 0 else end_s)
+        last_window = int(max(start_s, end_for_window - 1e-6) // window_s)
+        row["window_indexes"] = list(range(int(start_s // window_s), last_window + 1))
         rows.append(row)
     return rows
 
