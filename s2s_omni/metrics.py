@@ -163,7 +163,12 @@ def bag_f1(reference: str | None, candidate: str) -> float | None:
     return 2 * precision * recall / (precision + recall)
 
 
-def optional_sacrebleu(candidates: list[str], references: list[str]) -> dict[str, Any]:
+def optional_sacrebleu(
+    candidates: list[str],
+    references: list[str],
+    *,
+    tokenizer: str | None = None,
+) -> dict[str, Any]:
     """Return corpus BLEU/chrF when sacrebleu is installed, otherwise a skip note."""
 
     if not candidates or not references:
@@ -172,13 +177,16 @@ def optional_sacrebleu(candidates: list[str], references: list[str]) -> dict[str
         import sacrebleu  # type: ignore
     except ModuleNotFoundError:
         return {"available": False, "reason": "sacrebleu_not_installed"}
-    bleu = sacrebleu.corpus_bleu(candidates, [references])
+    bleu_kwargs = {"tokenize": tokenizer} if tokenizer else {}
+    bleu = sacrebleu.corpus_bleu(candidates, [references], **bleu_kwargs)
     chrf = sacrebleu.corpus_chrf(candidates, [references])
     result = {
         "available": True,
         "bleu": round(float(bleu.score), 6),
         "chrf": round(float(chrf.score), 6),
     }
+    if tokenizer:
+        result["bleu_tokenizer"] = tokenizer
     signatures = {
         "bleu": getattr(bleu, "signature", None),
         "chrf": getattr(chrf, "signature", None),

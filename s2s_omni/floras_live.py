@@ -350,16 +350,24 @@ def percentile(values: list[float], q: float) -> float:
 
 
 def corpus_metrics(candidate: str, reference: str, target_lang: str) -> dict[str, Any]:
+    target_lang_norm = (target_lang or "").lower()
+    bleu_tokenizer = None
+    if target_lang_norm.startswith("zh"):
+        bleu_tokenizer = "zh"
+    elif target_lang_norm.startswith(("ja", "ko")):
+        bleu_tokenizer = "char"
     out: dict[str, Any] = {
         "wer": wer(reference, candidate),
         "cer": cer(reference, candidate),
         "candidate_units": unit_count(candidate, target_lang),
         "reference_units": unit_count(reference, target_lang),
     }
-    sacre = optional_sacrebleu([candidate], [reference])
+    sacre = optional_sacrebleu([candidate], [reference], tokenizer=bleu_tokenizer)
     if sacre.get("available"):
         out["bleu"] = sacre.get("bleu")
         out["chrf"] = sacre.get("chrf")
+        if sacre.get("bleu_tokenizer"):
+            out["bleu_tokenizer"] = sacre.get("bleu_tokenizer")
     else:
         out["bleu"] = None
         out["chrf"] = None

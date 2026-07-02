@@ -6,6 +6,7 @@ from s2s_omni.metrics import (
     s2s_real_time_factor,
     token_count,
 )
+from s2s_omni.floras_live import corpus_metrics
 from s2s_omni.schema import S2SSample
 
 
@@ -55,3 +56,9 @@ def test_heuristic_score_reports_s2s_rtf_violation():
     row = heuristic_score_sample(sample, "你好世界啊")
     assert row["s2s_rtf"] == 1.25
     assert row["s2s_rtf_violation"] is True
+
+
+def test_corpus_metrics_uses_chinese_bleu_tokenizer():
+    row = corpus_metrics("你好世界今天很好", "你好世界今天不错", "zh")
+    assert row["bleu_tokenizer"] == "zh"
+    assert row["bleu"] > 0
