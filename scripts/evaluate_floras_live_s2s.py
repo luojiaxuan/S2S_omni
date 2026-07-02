@@ -39,6 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--asr-jsonl", default="")
     parser.add_argument("--window-asr-jsonl", default="")
+    parser.add_argument("--target-mfa-jsonl", default="")
     parser.add_argument("--asr-model", default="")
     parser.add_argument("--asr-device", default="cuda:0")
     parser.add_argument("--coverage-judge", choices=["none", "openai"], default="none")
@@ -151,6 +152,18 @@ def load_window_texts(path: str | Path) -> dict[tuple[str, int], str]:
     return out
 
 
+def load_target_mfa_texts(path: str | Path) -> dict[tuple[str, int], dict[str, Any]]:
+    out: dict[tuple[str, int], dict[str, Any]] = {}
+    if not path:
+        return out
+    for row in read_jsonl(path):
+        if row.get("run_id") is None or row.get("window_index") is None:
+            continue
+        key = (str(row["run_id"]), int(row["window_index"]))
+        out[key] = row
+    return out
+
+
 def cumulative_at(chunks: list[dict[str, Any]], wall_s: float, *, inclusive: bool = True) -> float:
     value = 0.0
     for chunk in chunks:
@@ -167,6 +180,7 @@ def build_timeline(
     *,
     candidate_text: str,
     window_texts: dict[tuple[str, int], str],
+    target_mfa_texts: dict[tuple[str, int], dict[str, Any]],
     window_s: float,
     backlog_threshold_s: float,
     target_context_s: float,
@@ -209,6 +223,7 @@ def build_timeline(
             generated_duration_s,
             target_context_s,
         )
+        mfa_row = target_mfa_texts.get((str(run["run_id"]), idx), {})
         rows.append(
             {
                 "run_id": run["run_id"],
@@ -231,6 +246,10 @@ def build_timeline(
                 "source_stream_window_audio_rel": rel(source_stream_window, run_eval_dir),
                 "target_window_audio_rel": rel(target_window, run_eval_dir),
                 "target_asr_window_text": window_texts.get((str(run["run_id"]), idx), ""),
+                "target_mfa_asr_text": str(mfa_row.get("target_mfa_asr_text") or ""),
+                "target_mfa_start_s": mfa_row.get("target_mfa_start_s"),
+                "target_mfa_end_s": mfa_row.get("target_mfa_end_s"),
+                "target_mfa_unit_count": mfa_row.get("target_mfa_unit_count"),
                 "target_full_asr_context_text": context_text,
                 "target_full_asr_context_start_s": round(context_start_s, 3),
                 "target_full_asr_context_end_s": round(context_end_s, 3),
@@ -386,6 +405,7 @@ def main() -> None:
     results = load_results(Path(args.run_output_dir))
     candidate_by_id = load_candidate_texts(args, results)
     window_texts = load_window_texts(args.window_asr_jsonl)
+    target_mfa_texts = load_target_mfa_texts(args.target_mfa_jsonl)
     judge_client = None
     if args.coverage_judge == "openai":
         import os
@@ -416,6 +436,7 @@ def main() -> None:
             run_eval_dir,
             candidate_text=candidate_text,
             window_texts=window_texts,
+            target_mfa_texts=target_mfa_texts,
             window_s=args.window_s,
             backlog_threshold_s=args.backlog_threshold_s,
             target_context_s=args.target_context_s,
