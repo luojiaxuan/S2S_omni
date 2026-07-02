@@ -147,6 +147,7 @@ def render_rows(rows: list[dict[str, Any]], out_dir: Path) -> str:
             f"<td>{num(row.get('generated_duration_s'), 2)}</td>"
             f"<td>{num(row.get('full_s2s_rtf'), 3)}</td>"
             f"<td>{num(row.get('end_lag_s'), 2)}</td>"
+            f"<td>{num(row.get('wall_clock_end_delay_s'), 2)}</td>"
             f"<td>{num(row.get('max_backlog_s'), 2)}</td>"
             f"<td>{num(row.get('max_playback_queue_s'), 2)}</td>"
             f"<td>{num(row.get('bleu'), 2)}</td>"
@@ -192,12 +193,13 @@ audio{{width:220px}}.meta{{color:#667085;margin:8px 0 16px}}
 <h1>{esc(args.title)}</h1>
 <div class="meta">
 {len(rows)} runs · source audio is the selected source clip · target audio is backend output
+<br>duration lag = target audio duration - source stream duration · wall delay = simulated target playback end wall-clock - source stream end · max backlog = max window-level emitted-target deficit
 </div>
 <table>
 <thead>
 <tr>
 <th>run</th><th>backend</th><th>chunk</th><th>speed</th><th>stream s</th>
-<th>target s</th><th>RTF</th><th>end lag</th><th>max backlog</th><th>max queue</th>
+<th>target s</th><th>RTF</th><th>duration lag</th><th>wall delay</th><th>max backlog</th><th>max queue</th>
 <th>BLEU</th><th>chrF</th><th>CER</th><th>detail</th><th>streamed source</th><th>target</th>
 </tr>
 </thead>

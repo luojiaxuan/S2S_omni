@@ -336,6 +336,42 @@ def reference_for_eval(run: dict[str, Any], sentence_rows: list[dict[str, Any]])
     return str(run.get("target_reference_text") or "")
 
 
+def final_audio_timing(run: dict[str, Any]) -> dict[str, float | None]:
+    chunks_path = Path(str(run.get("audio_chunks_path") or ""))
+    if not chunks_path.exists():
+        return {"arrival_s": None, "playback_end_s": None}
+    chunks = []
+    for chunk in read_jsonl(chunks_path):
+        try:
+            arrival_s = float(chunk.get("arrival_s"))
+        except (TypeError, ValueError):
+            continue
+        chunks.append((arrival_s, chunk))
+    if not chunks:
+        return {"arrival_s": None, "playback_end_s": None}
+
+    playback_end_s = 0.0
+    previous_cumulative_s = 0.0
+    final_arrival_s = max(arrival_s for arrival_s, _chunk in chunks)
+    for arrival_s, chunk in sorted(chunks, key=lambda item: item[0]):
+        try:
+            duration_s = float(chunk.get("audio_duration_s"))
+        except (TypeError, ValueError):
+            try:
+                cumulative_s = float(chunk.get("cumulative_audio_duration_s"))
+            except (TypeError, ValueError):
+                cumulative_s = previous_cumulative_s
+            duration_s = max(0.0, cumulative_s - previous_cumulative_s)
+        if duration_s <= 0:
+            continue
+        playback_end_s = max(playback_end_s, arrival_s) + duration_s
+        try:
+            previous_cumulative_s = max(previous_cumulative_s, float(chunk.get("cumulative_audio_duration_s")))
+        except (TypeError, ValueError):
+            previous_cumulative_s += duration_s
+    return {"arrival_s": final_arrival_s, "playback_end_s": playback_end_s if playback_end_s > 0 else None}
+
+
 def run_metric_row(
     run: dict[str, Any],
     candidate_text: str,
@@ -350,6 +386,9 @@ def run_metric_row(
     metrics = corpus_metrics(candidate_text, reference, target_lang)
     generated_duration = float(run.get("generated_duration_s") or audio_duration_s(run["generated_wav_path"]))
     source_stream_duration = float(run.get("source_stream_duration_s") or 0.0)
+    final_timing = final_audio_timing(run)
+    final_arrival = final_timing["arrival_s"]
+    playback_end = final_timing["playback_end_s"]
     missed = [row for row in sentence_rows if row.get("status") == "missed"]
     partial = [row for row in sentence_rows if row.get("status") == "partial"]
     metrics.update(
@@ -364,6 +403,15 @@ def run_metric_row(
             if source_stream_duration > 0
             else None,
             "end_lag_s": round(generated_duration - source_stream_duration, 6),
+            "duration_end_lag_s": round(generated_duration - source_stream_duration, 6),
+            "final_target_arrival_s": round(final_arrival, 6) if final_arrival is not None else None,
+            "final_arrival_lag_s": round(final_arrival - source_stream_duration, 6)
+            if final_arrival is not None and source_stream_duration > 0
+            else None,
+            "wall_clock_playback_end_s": round(playback_end, 6) if playback_end is not None else None,
+            "wall_clock_end_delay_s": round(max(0.0, playback_end - source_stream_duration), 6)
+            if playback_end is not None and source_stream_duration > 0
+            else None,
             "max_backlog_s": round(max((row["translation_backlog_s"] for row in timeline), default=0.0), 6),
             "mean_backlog_s": round(
                 sum(row["translation_backlog_s"] for row in timeline) / len(timeline), 6
