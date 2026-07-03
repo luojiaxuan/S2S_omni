@@ -78,17 +78,29 @@ def load_metrics(eval_label: str, eval_dir: Path) -> list[dict[str, Any]]:
             rows.append(json.loads(path.read_text(encoding="utf-8")))
     for row in rows:
         run_id = str(row.get("run_id") or "")
+        generated_path = existing_path(row.get("generated_wav_path") or "")
+        source_stream_path = existing_path(row.get("source_stream_audio_path") or "")
+        source_path = existing_path(row.get("source_audio_path") or "")
         run_dir = eval_dir / run_id
+        if generated_path is not None:
+            run_dir = generated_path.parent
         row["eval_label"] = eval_label
         row["eval_dir"] = str(eval_dir)
         row["compare_backend"] = infer_backend(eval_label, row)
         row["compare_chunk_ms"] = infer_chunk_ms(eval_label, row)
         row["run_dir"] = str(run_dir)
-        row["source_audio_path"] = str(run_dir / "source_eval.wav")
-        row["source_stream_audio_path"] = str(run_dir / "source_stream_24k.wav")
-        row["generated_audio_path"] = str(run_dir / "generated_target.wav")
+        row["source_audio_path"] = str(source_path or run_dir / "source_eval.wav")
+        row["source_stream_audio_path"] = str(source_stream_path or run_dir / "source_stream_24k.wav")
+        row["generated_audio_path"] = str(generated_path or run_dir / "generated_target.wav")
         row["run_page_path"] = str(run_dir / "index.html")
     return rows
+
+
+def existing_path(value: Any) -> Path | None:
+    if not value:
+        return None
+    path = Path(str(value)).expanduser()
+    return path if path.exists() else None
 
 
 def keep_row(row: dict[str, Any], prefix: str, pattern: re.Pattern[str] | None) -> bool:
@@ -113,14 +125,21 @@ def link(path: str | Path, base: Path, label: str) -> str:
     path = Path(path)
     if not path.exists():
         return ""
-    return f'<a href="{esc(rel(path, base))}">{esc(label)}</a>'
+    return f'<a href="{esc(href(path, base))}">{esc(label)}</a>'
 
 
 def audio(path: str | Path, base: Path) -> str:
     path = Path(path)
     if not path.exists():
         return ""
-    return f'<audio controls preload="metadata" src="{esc(rel(path, base))}"></audio>'
+    return f'<audio controls preload="metadata" src="{esc(href(path, base))}"></audio>'
+
+
+def href(path: Path, base: Path) -> str:
+    relative = rel(path, base)
+    if not relative.startswith("/"):
+        return relative
+    return path.resolve().as_uri()
 
 
 def sort_key(row: dict[str, Any]) -> tuple[Any, ...]:

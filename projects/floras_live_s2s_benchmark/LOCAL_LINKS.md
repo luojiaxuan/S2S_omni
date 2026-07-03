@@ -25,6 +25,15 @@ Seed AST full/audio window directory:
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1
 ```
 
+Seed AST chunk-size follow-up status:
+
+```text
+Requested: chunk_ms=960 and chunk_ms=1920 for speed=1.0 and speed=1.5.
+Current local credential status: blocked by Seed AST service error
+"quota exceeded for types: tokens_lifetime".
+Completed Seed AST result currently available: chunk_ms=100, speed=1.0.
+```
+
 ## OpenAI/Gemini Full Compare
 
 Combined dashboard for OpenAI vs Gemini at 0.96s and 1.92s chunks:

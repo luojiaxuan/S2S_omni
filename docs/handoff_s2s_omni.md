@@ -239,6 +239,17 @@ Those wavs are not tracked in Git. Use this file for the exact local paths:
 projects/floras_live_s2s_benchmark/LOCAL_LINKS.md
 ```
 
+Seed AST now has runner support for configurable `--chunk-ms`, but the requested
+960 ms and 1920 ms Seed runs at speeds 1.0 and 1.5 are not complete yet. The
+current local Seed AST credential returns:
+
+```text
+quota exceeded for types: tokens_lifetime
+```
+
+The only completed Seed AST FLORAS result at handoff time is the earlier
+`chunk_ms=100`, `speed=1.0` run, evaluated through target-speech ASR.
+
 ### ACL6060 / Seed AST S2S Metrics Script
 
 Path:

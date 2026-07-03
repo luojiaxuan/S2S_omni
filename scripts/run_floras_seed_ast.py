@@ -45,8 +45,6 @@ from python_protogen.products.understanding.ast.ast_service_pb2 import (  # noqa
 
 
 INPUT_RATE = 16000
-CHUNK_SAMPLES = 1600
-CHUNK_DURATION_S = 0.1
 TARGET_RATE = 24000
 BYTES_PER_SAMPLE = 2
 
@@ -73,11 +71,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--app-key", default="")
     parser.add_argument("--access-key", default="")
     parser.add_argument("--resource-id", default="volc.service_type.10053")
+    parser.add_argument("--chunk-ms", type=int, default=100)
     parser.add_argument("--receive-timeout-s", type=float, default=60.0)
     parser.add_argument("--progress-interval-s", type=float, default=30.0)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--dry-run", action=argparse.BooleanOptionalAction, default=False)
     return parser.parse_args()
+
+
+def chunk_duration_s(args: argparse.Namespace) -> float:
+    if args.chunk_ms <= 0:
+        raise ValueError(f"chunk-ms must be positive: {args.chunk_ms}")
+    return args.chunk_ms / 1000.0
 
 
 def select_runs(rows: list[dict[str, Any]], args: argparse.Namespace) -> list[dict[str, Any]]:
@@ -129,7 +134,7 @@ def prepare_audio(run: dict[str, Any], out_dir: Path, args: argparse.Namespace) 
     }
 
 
-def read_wav_as_chunks(audio_path: str | Path) -> list[bytes]:
+def read_wav_as_chunks(audio_path: str | Path, chunk_ms: int) -> list[bytes]:
     data, sr = sf.read(str(audio_path), dtype="int16", always_2d=True)
     if data.shape[1] > 1:
         data = data.mean(axis=1, keepdims=True).astype(np.int16)
@@ -142,7 +147,12 @@ def read_wav_as_chunks(audio_path: str | Path) -> list[bytes]:
             np.arange(n),
             data.astype(np.float64),
         ).astype(np.int16)
-    return [data[i : i + CHUNK_SAMPLES].tobytes() for i in range(0, len(data), CHUNK_SAMPLES) if data[i : i + CHUNK_SAMPLES].size]
+    chunk_samples = max(1, round(INPUT_RATE * chunk_ms / 1000.0))
+    return [
+        data[i : i + chunk_samples].tobytes()
+        for i in range(0, len(data), chunk_samples)
+        if data[i : i + chunk_samples].size
+    ]
 
 
 def save_pcm_as_wav(
@@ -251,7 +261,8 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace,
 
     src_lang = source_language_for_direction(str(run["direction"]))
     tgt_lang = target_language_for_direction(str(run["direction"]))
-    audio_input = read_wav_as_chunks(run["source_stream_wav_path"])
+    audio_input = read_wav_as_chunks(run["source_stream_wav_path"], args.chunk_ms)
+    source_chunk_duration_s = chunk_duration_s(args)
     conn_id = str(uuid.uuid4())
     conn = await connect_ws(conf, conn_id)
     session_id = str(uuid.uuid4())
@@ -274,7 +285,7 @@ async def run_live(run: dict[str, Any], out_dir: Path, args: argparse.Namespace,
 
     async def send_audio() -> None:
         for index, chunk in enumerate(audio_input):
-            target_time = first_send_time + index * CHUNK_DURATION_S
+            target_time = first_send_time + index * source_chunk_duration_s
             now = time.monotonic()
             if now < target_time:
                 await asyncio.sleep(target_time - now)
@@ -435,7 +446,7 @@ async def run_one(run: dict[str, Any], output_dir: Path, args: argparse.Namespac
             "source_eval_duration_s": run["source_eval_duration_s"],
             "source_stream_duration_s": run["source_stream_duration_s"],
             "target_reference_text": run.get("target_reference_text", ""),
-            "chunk_ms": int(CHUNK_DURATION_S * 1000),
+            "chunk_ms": args.chunk_ms,
         }
     )
     result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")

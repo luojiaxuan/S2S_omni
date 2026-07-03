@@ -128,11 +128,11 @@
     },
     {
       "path": "artifacts/compare_openai_gemini_seed_enzh_speed1/index.html",
-      "bytes": 4564
+      "bytes": 7125
     },
     {
       "path": "artifacts/compare_openai_gemini_seed_enzh_speed1/compare_metrics.jsonl",
-      "bytes": 53475
+      "bytes": 52840
     },
     {
       "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/summary.json",
