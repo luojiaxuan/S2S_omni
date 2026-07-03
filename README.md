@@ -523,8 +523,8 @@ This completed and saved a PEFT adapter at
 ## FLORAS Live S2S Benchmark
 
 The FLORAS live benchmark scripts build a small long-form ZH<->EN closed-model
-S2S eval. API keys are read only from environment variables and are never stored
-in manifests or logs.
+S2S eval. API keys are runtime-only inputs and are never stored in manifests or
+logs.
 
 Prepare one long sample per direction and expand speeds `1.0,1.5,2.0`:
 
@@ -590,6 +590,15 @@ python scripts/run_floras_gemini_live.py \
   --chunk-ms 960
 ```
 
+Run the same manifest through Seed / ByteDance AST S2S:
+
+```bash
+python scripts/run_floras_seed_ast.py \
+  --manifest outputs/floras_live_pilot/live_runs.jsonl \
+  --output-dir outputs/floras_live_pilot/seed_ast_live_runs \
+  --api-key <seed_ast_api_key>
+```
+
 Then evaluate and render the UI:
 
 ```bash
@@ -604,10 +613,10 @@ For ASR-based scoring of generated target speech, transcribe the generated wavs
 first and pass the resulting JSONL into evaluation:
 
 ```bash
-export OPENAI_API_KEY=...
 python scripts/openai_transcribe_live_outputs.py \
   --run-output-dir outputs/floras_live_pilot/live_runs \
-  --output outputs/floras_live_pilot/asr.jsonl
+  --output outputs/floras_live_pilot/asr.jsonl \
+  --api-key <openai_api_key>
 
 python scripts/evaluate_floras_live_s2s.py \
   --manifest outputs/floras_live_pilot/live_runs.jsonl \

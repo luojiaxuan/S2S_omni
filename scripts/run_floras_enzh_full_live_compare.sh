@@ -66,11 +66,13 @@ for chunk in "${CHUNKS[@]}"; do
   run_step "openai full ASR chunk=${chunk}" \
     "${PYTHON_BIN}" "${REPO}/scripts/openai_transcribe_live_outputs.py" \
       --run-output-dir "${OUT_BASE}/openai_live_full_enzh_chunk${chunk}" \
-      --output "${OUT_BASE}/openai_asr_full_enzh_chunk${chunk}.jsonl"
+      --output "${OUT_BASE}/openai_asr_full_enzh_chunk${chunk}.jsonl" \
+      --api-key "${OPENAI_API_KEY}"
   run_step "gemini full ASR chunk=${chunk}" \
     "${PYTHON_BIN}" "${REPO}/scripts/openai_transcribe_live_outputs.py" \
       --run-output-dir "${OUT_BASE}/gemini_live_full_enzh_chunk${chunk}_trim" \
-      --output "${OUT_BASE}/gemini_asr_full_enzh_chunk${chunk}_trim.jsonl"
+      --output "${OUT_BASE}/gemini_asr_full_enzh_chunk${chunk}_trim.jsonl" \
+      --api-key "${OPENAI_API_KEY}"
 done
 
 for chunk in "${CHUNKS[@]}"; do

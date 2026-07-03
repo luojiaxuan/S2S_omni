@@ -208,6 +208,7 @@ Important files:
 
 ```text
 projects/floras_live_s2s_benchmark/README.md
+projects/floras_live_s2s_benchmark/LOCAL_LINKS.md
 projects/floras_live_s2s_benchmark/RESULTS.md
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chunks/index.html
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chunks/compare_metrics.jsonl
@@ -222,6 +223,21 @@ Large wav artifacts are local only:
 If this benchmark needs to be shared beyond the original machine, upload the
 audio bundle to Hugging Face or a GitHub release asset and rewrite dashboard
 links.
+
+The Seed AST speed-1 dashboard and detail page are also packaged here. The
+tracked HTML/JSON lives under:
+
+```text
+projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_speed1
+projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1
+```
+
+The Seed AST detail page references 327 local wav files totaling about 200 MB.
+Those wavs are not tracked in Git. Use this file for the exact local paths:
+
+```text
+projects/floras_live_s2s_benchmark/LOCAL_LINKS.md
+```
 
 ### ACL6060 / Seed AST S2S Metrics Script
 
@@ -362,6 +378,7 @@ FLORAS live benchmark:
 scripts/prepare_floras_live_manifest.py
 scripts/run_floras_openai_realtime.py
 scripts/run_floras_gemini_live.py
+scripts/run_floras_seed_ast.py
 scripts/openai_transcribe_live_outputs.py
 scripts/openai_transcribe_eval_windows.py
 scripts/floras_target_mfa.py

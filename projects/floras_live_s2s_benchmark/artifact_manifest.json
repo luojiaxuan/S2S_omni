@@ -125,6 +125,50 @@
     {
       "path": "artifacts/eval_runs/gemini_chunk1920/index.html",
       "bytes": 1169
+    },
+    {
+      "path": "artifacts/compare_openai_gemini_seed_enzh_speed1/index.html",
+      "bytes": 4564
+    },
+    {
+      "path": "artifacts/compare_openai_gemini_seed_enzh_speed1/compare_metrics.jsonl",
+      "bytes": 53475
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/summary.json",
+      "bytes": 6199
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/metrics.jsonl",
+      "bytes": 9162
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/timeline.jsonl",
+      "bytes": 227660
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/sentence_coverage.jsonl",
+      "bytes": 37826
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/index.html",
+      "bytes": 913
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/index.html",
+      "bytes": 345758
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/metrics.json",
+      "bytes": 9239
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/timeline.jsonl",
+      "bytes": 227660
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/sentence_coverage.jsonl",
+      "bytes": 37826
     }
   ],
   "large_audio_policy": "Audio and per-window wav files are not checked into Git; use source_dir or regenerate.",

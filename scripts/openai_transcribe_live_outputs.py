@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -13,7 +12,6 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s2s_omni.floras_live import env_api_key
 from s2s_omni.io import write_jsonl
 from s2s_omni.openai_asr import transcode_for_upload, transcribe_openai
 
@@ -22,8 +20,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Transcribe live S2S generated wavs with OpenAI ASR.")
     parser.add_argument("--run-output-dir", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--model", default=os.environ.get("OPENAI_ASR_MODEL", "gpt-4o-mini-transcribe"))
-    parser.add_argument("--base-url", default=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
+    parser.add_argument("--model", default="gpt-4o-mini-transcribe")
+    parser.add_argument("--base-url", default="https://api.openai.com/v1")
+    parser.add_argument("--api-key", required=True)
     parser.add_argument("--max-upload-mb", type=float, default=24.0)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
     return parser.parse_args()
@@ -56,7 +55,6 @@ def main() -> None:
     output_path = Path(args.output)
     done = existing_rows(output_path) if args.resume else {}
     rows = []
-    api_key = env_api_key()
     max_upload_bytes = int(args.max_upload_mb * 1024 * 1024)
     with tempfile.TemporaryDirectory(prefix="s2s_omni_asr_") as tmp:
         tmp_dir = Path(tmp)
@@ -67,7 +65,7 @@ def main() -> None:
                 continue
             wav_path = Path(str(result["generated_wav_path"]))
             upload_path = transcode_for_upload(wav_path, tmp_dir, max_upload_bytes)
-            text = transcribe_openai(api_key, args.base_url, args.model, upload_path)
+            text = transcribe_openai(args.api_key, args.base_url, args.model, upload_path)
             row = {
                 "run_id": run_id,
                 "asr_text": text,

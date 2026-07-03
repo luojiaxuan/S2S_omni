@@ -1,0 +1,67 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>FLORAS Live S2S Compare: OpenAI vs Gemini vs Seed AST</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:24px;color:#202428}
+h1{font-size:22px}table{border-collapse:collapse;width:100%}
+td,th{border-top:1px solid #d6d9de;padding:8px;text-align:left;font-size:13px;vertical-align:top}
+audio{width:220px}.meta{color:#667085;margin:8px 0 16px}
+.audio-tools{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-top:4px;color:#667085;font-size:12px}
+.audio-tools input{width:100%}
+</style>
+<h1>FLORAS Live S2S Compare: OpenAI vs Gemini vs Seed AST</h1>
+<div class="meta">
+5 runs · source audio is the selected source clip · target audio is backend output
+<br>duration lag = target audio duration - source stream duration · wall delay = simulated target playback end wall-clock - source stream end · max backlog = max window-level emitted-target deficit
+</div>
+<table>
+<thead>
+<tr>
+<th>run</th><th>backend</th><th>chunk</th><th>speed</th><th>stream s</th>
+<th>target s</th><th>RTF</th><th>duration lag</th><th>wall delay</th><th>max backlog</th><th>max queue</th>
+<th>BLEU</th><th>chrF</th><th>CER</th><th>detail</th><th>streamed source</th><th>target</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>en-zh_mono_asr_test__0__speed_1</td><td>seed_ast_asr</td><td></td><td>1.00</td><td>1072.63</td><td>743.91</td><td>0.694</td><td>-328.72</td><td>3.27</td><td>330.68</td><td>0.00</td><td>18.40</td><td>20.63</td><td>0.824</td><td><a href="/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/index.html">open</a></td><td><audio controls preload="metadata" src="/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/source_stream_24k.wav"></audio></td><td><audio controls preload="metadata" src="/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/generated_target.wav"></audio></td></tr>
+<tr><td>en-zh_mono_asr_test__0__speed_1</td><td>chatgpt</td><td>0.96s</td><td>1.00</td><td>1072.63</td><td>1092.20</td><td>1.018</td><td>19.57</td><td>63.52</td><td>40.20</td><td>0.00</td><td>24.10</td><td>25.96</td><td>0.875</td><td></td><td></td><td></td></tr>
+<tr><td>en-zh_mono_asr_test__0__speed_1</td><td>gemini</td><td>0.96s</td><td>1.00</td><td>1072.63</td><td>1078.25</td><td>1.005</td><td>5.62</td><td>185.97</td><td>114.00</td><td>0.00</td><td>17.30</td><td>18.90</td><td>0.914</td><td></td><td></td><td></td></tr>
+<tr><td>en-zh_mono_asr_test__0__speed_1</td><td>chatgpt</td><td>1.92s</td><td>1.00</td><td>1072.63</td><td>1093.90</td><td>1.020</td><td>21.27</td><td>46.20</td><td>23.53</td><td>0.00</td><td>19.56</td><td>20.58</td><td>0.844</td><td></td><td></td><td></td></tr>
+<tr><td>en-zh_mono_asr_test__0__speed_1</td><td>gemini</td><td>1.92s</td><td>1.00</td><td>1072.63</td><td>1205.00</td><td>1.123</td><td>132.37</td><td>160.32</td><td>16.25</td><td>0.00</td><td>14.03</td><td>18.20</td><td>0.863</td><td></td><td></td><td></td></tr>
+</tbody>
+</table>
+<script>
+function fmtTime(s) {
+  if (!Number.isFinite(s)) return "0:00";
+  const m = Math.floor(s / 60);
+  const r = Math.floor(s % 60).toString().padStart(2, "0");
+  return `${m}:${r}`;
+}
+document.querySelectorAll("audio").forEach((audio) => {
+  const tools = document.createElement("div");
+  tools.className = "audio-tools";
+  const range = document.createElement("input");
+  range.type = "range";
+  range.min = "0";
+  range.max = "1";
+  range.step = "0.001";
+  range.value = "0";
+  const time = document.createElement("span");
+  time.textContent = "0:00 / 0:00";
+  tools.append(range, time);
+  audio.insertAdjacentElement("afterend", tools);
+  function update() {
+    const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
+    range.value = duration ? String(audio.currentTime / duration) : "0";
+    time.textContent = `${fmtTime(audio.currentTime)} / ${fmtTime(duration)}`;
+  }
+  range.addEventListener("input", () => {
+    if (Number.isFinite(audio.duration) && audio.duration > 0) {
+      audio.currentTime = Number(range.value) * audio.duration;
+    }
+  });
+  audio.addEventListener("loadedmetadata", update);
+  audio.addEventListener("timeupdate", update);
+  update();
+});
+</script>

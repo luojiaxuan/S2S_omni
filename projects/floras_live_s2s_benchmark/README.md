@@ -6,7 +6,8 @@ for EN->ZH long-form streaming translation.
 ## Scope
 
 - Source data: FLORAS long-form EN monolingual ASR test sample.
-- Backends: OpenAI Realtime and Gemini Live.
+- Backends: OpenAI Realtime and Gemini Live, plus one Seed AST sample for
+  source-to-speech comparison.
 - Chunk sizes: 960 ms and 1920 ms.
 - Speeds: 1.0x and 1.5x.
 - Evaluation: target speech ASR, BLEU/chrF/CER, window-level backlog, wall-clock
@@ -15,11 +16,18 @@ for EN->ZH long-form streaming translation.
 ## Tracked Artifacts
 
 - `RESULTS.md`: compact metric table.
+- `LOCAL_LINKS.md`: local complete dashboard/audio paths for the original
+  machine.
 - `artifact_manifest.json`: copied artifact list plus large local audio pointers.
 - `artifacts/compare_openai_gemini_enzh_full_chunks/index.html`: combined
   dashboard.
 - `artifacts/compare_openai_gemini_enzh_full_chunks/compare_metrics.jsonl`:
   source-of-truth metric rows for the combined dashboard.
+- `artifacts/compare_openai_gemini_seed_enzh_speed1/index.html`: one-sample
+  dashboard comparing OpenAI, Gemini, and Seed AST at 1.0x speed.
+- `artifacts/compare_openai_gemini_seed_enzh_speed1/compare_metrics.jsonl`:
+  metric rows for the one-sample dashboard. Seed text is ASR over generated
+  target speech, not the AST translation subtitle.
 - `artifacts/eval_runs/*`: per-backend/chunk `summary.json`, `metrics.jsonl`,
   `timeline.jsonl`, `sentence_coverage.jsonl`, and small HTML index files.
 - `artifacts/root_metadata/*`: selected sample metadata, run manifest, ASR
@@ -40,6 +48,10 @@ to the local audio files so it remains usable on the original machine. For a
 portable release, upload the audio bundle to Hugging Face or a GitHub release
 asset and rewrite the dashboard links.
 
+The Seed AST speed-1 detail page contains 327 wav references totaling about
+200 MB. Its lightweight HTML/JSON metadata is tracked in Git, while the wavs
+remain local. Use `LOCAL_LINKS.md` for the full local dashboard and audio paths.
+
 ## Metric Definitions
 
 - `duration_lag_s`: generated target wav duration minus streamed source wav
@@ -59,6 +71,12 @@ From the repository root:
 python3 scripts/package_floras_live_project.py \
   --source-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs \
   --project-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark
+```
+
+Seed AST live outputs are produced by:
+
+```text
+scripts/run_floras_seed_ast.py
 ```
 
 ## Current Takeaway
