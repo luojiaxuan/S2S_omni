@@ -74,6 +74,9 @@ scripts/
   benchmark artifacts, including the combined HTML dashboard, JSONL metrics,
   timeline data, sentence coverage, and a manifest for the large local audio
   artifacts that are intentionally not tracked in Git.
+- `projects/acl6060_s2s_metrics_seed/`: imported Seed / ByteDance AST S2S
+  metrics script bundle, with protobuf definitions, generated Python protobuf
+  files, and credentials removed for public GitHub tracking.
 
 ## Quick Start
 
