@@ -1,0 +1,293 @@
+{
+  "name": "floras_live_s2s_benchmark",
+  "source_dir": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs",
+  "copied_files": [
+    {
+      "path": "artifacts/compare_openai_gemini_enzh_full_chunks/index.html",
+      "bytes": 9615
+    },
+    {
+      "path": "artifacts/compare_openai_gemini_enzh_full_chunks/compare_metrics.jsonl",
+      "bytes": 81980
+    },
+    {
+      "path": "artifacts/root_metadata/live_runs.jsonl",
+      "bytes": 400024
+    },
+    {
+      "path": "artifacts/root_metadata/selected_samples.jsonl",
+      "bytes": 133204
+    },
+    {
+      "path": "artifacts/root_metadata/manifest_meta.json",
+      "bytes": 240
+    },
+    {
+      "path": "artifacts/root_metadata/openai_asr_full_enzh_chunk960.jsonl",
+      "bytes": 15690
+    },
+    {
+      "path": "artifacts/root_metadata/openai_asr_full_enzh_chunk1920.jsonl",
+      "bytes": 15036
+    },
+    {
+      "path": "artifacts/root_metadata/gemini_asr_full_enzh_chunk960_trim.jsonl",
+      "bytes": 14979
+    },
+    {
+      "path": "artifacts/root_metadata/gemini_asr_full_enzh_chunk1920_trim.jsonl",
+      "bytes": 14294
+    },
+    {
+      "path": "artifacts/root_metadata/openai_window_asr_full_enzh_chunk960_speed1.jsonl",
+      "bytes": 55167
+    },
+    {
+      "path": "artifacts/root_metadata/openai_mfa_target_windows_enzh_chunk960_speed1.jsonl",
+      "bytes": 49973
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk960/summary.json",
+      "bytes": 6439
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk960/metrics.jsonl",
+      "bytes": 23175
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk960/timeline.jsonl",
+      "bytes": 466461
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk960/sentence_coverage.jsonl",
+      "bytes": 75705
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk960/index.html",
+      "bytes": 1170
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk1920/summary.json",
+      "bytes": 6089
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk1920/metrics.jsonl",
+      "bytes": 17854
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk1920/timeline.jsonl",
+      "bytes": 417319
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk1920/sentence_coverage.jsonl",
+      "bytes": 75708
+    },
+    {
+      "path": "artifacts/eval_runs/openai_chunk1920/index.html",
+      "bytes": 1182
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk960/summary.json",
+      "bytes": 6061
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk960/metrics.jsonl",
+      "bytes": 17795
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk960/timeline.jsonl",
+      "bytes": 421781
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk960/sentence_coverage.jsonl",
+      "bytes": 75718
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk960/index.html",
+      "bytes": 1166
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk1920/summary.json",
+      "bytes": 6069
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk1920/metrics.jsonl",
+      "bytes": 17120
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk1920/timeline.jsonl",
+      "bytes": 411711
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk1920/sentence_coverage.jsonl",
+      "bytes": 75715
+    },
+    {
+      "path": "artifacts/eval_runs/gemini_chunk1920/index.html",
+      "bytes": 1169
+    }
+  ],
+  "large_audio_policy": "Audio and per-window wav files are not checked into Git; use source_dir or regenerate.",
+  "large_audio_examples": [
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk960_trim/en-zh_mono_asr_test__0__speed_1/generated_target_raw.wav",
+      "bytes": 70716044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk1920_trim/en-zh_mono_asr_test__0__speed_1/generated_target_raw.wav",
+      "bytes": 68376044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk1920_trim/en-zh_mono_asr_test__0__speed_1/generated_target.wav",
+      "bytes": 57840044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk1920_trim_asr/en-zh_mono_asr_test__0__speed_1/generated_target.wav",
+      "bytes": 57840044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/source_wav/zh-en_multi_asr_test__1178.wav",
+      "bytes": 55224468
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr/en-zh_mono_asr_test__0__speed_1/generated_target.wav",
+      "bytes": 52507244
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk1920/en-zh_mono_asr_test__0__speed_1/generated_target.wav",
+      "bytes": 52507244
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr/en-zh_mono_asr_test__0__speed_1/generated_target.wav",
+      "bytes": 52425644
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/mfa_target_align/openai_960/corpus/en-zh_mono_asr_test__0__speed_1.wav",
+      "bytes": 52425644
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk960/en-zh_mono_asr_test__0__speed_1/generated_target.wav",
+      "bytes": 52425644
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk960_trim/en-zh_mono_asr_test__0__speed_1/generated_target.wav",
+      "bytes": 51756044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk960_trim_asr/en-zh_mono_asr_test__0__speed_1/generated_target.wav",
+      "bytes": 51756044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr/en-zh_mono_asr_test__0__speed_1/source_stream_24k.wav",
+      "bytes": 51486522
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr/en-zh_mono_asr_test__0__speed_1/source_stream_24k.wav",
+      "bytes": 51486522
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk1920/en-zh_mono_asr_test__0__speed_1/source_stream_24k.wav",
+      "bytes": 51486522
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk960/en-zh_mono_asr_test__0__speed_1/source_stream_24k.wav",
+      "bytes": 51486522
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/source_wav/en-zh_mono_asr_test__0.wav",
+      "bytes": 51486520
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk1920_trim/en-zh_mono_asr_test__0__speed_1.5/generated_target_raw.wav",
+      "bytes": 48576044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk960_trim/en-zh_mono_asr_test__0__speed_1.5/generated_target_raw.wav",
+      "bytes": 48492044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk1920_trim/en-zh_mono_asr_test__0__speed_1.5/generated_target.wav",
+      "bytes": 38856044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk1920_trim_asr/en-zh_mono_asr_test__0__speed_1.5/generated_target.wav",
+      "bytes": 38856044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr/en-zh_mono_asr_test__0__speed_1.5/generated_target.wav",
+      "bytes": 35654444
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk960/en-zh_mono_asr_test__0__speed_1.5/generated_target.wav",
+      "bytes": 35654444
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr/en-zh_mono_asr_test__0__speed_1.5/generated_target.wav",
+      "bytes": 35414444
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk1920/en-zh_mono_asr_test__0__speed_1.5/generated_target.wav",
+      "bytes": 35414444
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk960_trim/en-zh_mono_asr_test__0__speed_1.5/generated_target.wav",
+      "bytes": 34572044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk960_trim_asr/en-zh_mono_asr_test__0__speed_1.5/generated_target.wav",
+      "bytes": 34572044
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr/en-zh_mono_asr_test__0__speed_1.5/source_stream_24k.wav",
+      "bytes": 34324956
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr/en-zh_mono_asr_test__0__speed_1.5/source_stream_24k.wav",
+      "bytes": 34324956
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk1920/en-zh_mono_asr_test__0__speed_1.5/source_stream_24k.wav",
+      "bytes": 34324956
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk960/en-zh_mono_asr_test__0__speed_1.5/source_stream_24k.wav",
+      "bytes": 34324956
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr/en-zh_mono_asr_test__0__speed_1.5/source_eval.wav",
+      "bytes": 34324374
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr/en-zh_mono_asr_test__0__speed_1/source_eval.wav",
+      "bytes": 34324374
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk960_trim/en-zh_mono_asr_test__0__speed_1.5/source_eval.wav",
+      "bytes": 34324374
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk960_trim/en-zh_mono_asr_test__0__speed_1/source_stream_16k.wav",
+      "bytes": 34324374
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_live_full_enzh_chunk960_trim/en-zh_mono_asr_test__0__speed_1/source_eval.wav",
+      "bytes": 34324374
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr/en-zh_mono_asr_test__0__speed_1.5/source_eval.wav",
+      "bytes": 34324374
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr/en-zh_mono_asr_test__0__speed_1/source_eval.wav",
+      "bytes": 34324374
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk1920/en-zh_mono_asr_test__0__speed_1.5/source_eval.wav",
+      "bytes": 34324374
+    },
+    {
+      "path": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_live_full_enzh_chunk1920/en-zh_mono_asr_test__0__speed_1/source_eval.wav",
+      "bytes": 34324374
+    }
+  ]
+}

@@ -68,6 +68,13 @@ scripts/
   run_smoke.sh                  # quick local/remote smoke test
 ```
 
+## Project Bundles
+
+- `projects/floras_live_s2s_benchmark/`: packaged FLORAS EN->ZH live S2S
+  benchmark artifacts, including the combined HTML dashboard, JSONL metrics,
+  timeline data, sentence coverage, and a manifest for the large local audio
+  artifacts that are intentionally not tracked in Git.
+
 ## Quick Start
 
 From this directory:

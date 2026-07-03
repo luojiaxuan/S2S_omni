@@ -1,0 +1,14 @@
+{
+  "repo_id": "espnet/floras",
+  "speeds": [
+    1.0,
+    1.5,
+    2.0
+  ],
+  "samples_per_direction": 1,
+  "min_duration_s": 600.0,
+  "reference_backend": "openai",
+  "reference_model": "gpt-5-mini",
+  "selected_samples": 2,
+  "runs": 6
+}
