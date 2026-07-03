@@ -34,6 +34,7 @@ docs/
   eval_plan.md                  # literature-backed metric plan
   hibiki_zero_backlog_route.md  # Hibiki-Zero cascade data and baseline route
   remote_artifacts.md           # remote data/checkpoint path index
+  handoff_s2s_omni.md           # project context, results, and next steps
 s2s_omni/
   schema.py                     # dataclasses for samples, timing, budgets
   io.py                         # JSONL/YAML helpers
