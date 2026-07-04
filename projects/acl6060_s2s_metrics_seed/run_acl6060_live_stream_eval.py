@@ -89,13 +89,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--openai-ws-url", default=OPENAI_WS_URL)
     parser.add_argument("--gemini-ws-url", default=GEMINI_WS_URL)
-    parser.add_argument(
-        "--instructions",
-        default=(
-            "Translate the English speech into Simplified Chinese. Return only "
-            "the translation, without explanations or source-language transcript."
-        ),
-    )
+    parser.add_argument("--instructions", default="")
     return parser.parse_args()
 
 

@@ -319,12 +319,14 @@ Local validation on 2026-07-04:
 ```text
 /tmp/rasst_main_result_data        # HF ACL6060 subset, 107 MB
 /tmp/acl6060_stream_dry_run        # dry-run log structure check
+/tmp/acl6060_stream_openai_smoke_real_fixed  # 15s real OpenAI smoke
+/tmp/acl6060_stream_gemini_smoke_real        # 15s real Gemini smoke
 ```
 
 The 5 full wavs total about 57.4 minutes. A paced OpenAI/Gemini live run should
 therefore take about an hour; `--no-pace` is only a fast protocol/debug mode.
-No OpenAI/Gemini key file was present locally during this correction pass, so a
-real GPT/Gemini streaming run is still pending.
+OpenAI and Gemini 15-second real API smokes produced Chinese target transcript
+deltas with 0 API errors, so the key files and live API paths are valid.
 
 Previous segmented diagnostic, kept only for tokenizer/scorer context:
 

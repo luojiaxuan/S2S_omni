@@ -132,6 +132,10 @@ Validated locally on 2026-07-04:
   resegmentation.
 - A dry-run generated `/tmp/acl6060_stream_dry_run/instances.log` with
   `source[0]` pointing at `2022.acl-long.268.wav`, not a segmented sentence wav.
+- Real 15-second API smoke tests succeeded for both providers:
+  `/tmp/acl6060_stream_openai_smoke_real_fixed` and
+  `/tmp/acl6060_stream_gemini_smoke_real`. Both produced Chinese target
+  transcript deltas and 0 API errors.
 
 Do not pass API keys through environment variables. Use a local key file and do
 not commit it.
