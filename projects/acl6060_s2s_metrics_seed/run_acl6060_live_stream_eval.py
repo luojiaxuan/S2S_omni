@@ -76,6 +76,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default="")
     parser.add_argument("--target-lang", default="zh", choices=sorted(TARGET_LANGUAGES))
     parser.add_argument("--chunk-ms", type=int, default=960)
+    parser.add_argument("--speed-factor", type=float, default=1.0)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--start-index", type=int, default=0)
     parser.add_argument("--max-audio-seconds", type=float, default=0.0)
@@ -215,7 +216,10 @@ def ffmpeg_convert(
     output_path: Path,
     sample_rate: int,
     duration_s: float,
+    speed_factor: float,
 ) -> None:
+    if speed_factor <= 0:
+        raise ValueError(f"speed_factor must be positive, got {speed_factor}")
     ensure_ffmpeg()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
@@ -224,13 +228,27 @@ def ffmpeg_convert(
         "-loglevel",
         "error",
         "-y",
-        "-i",
-        str(input_path),
     ]
     if duration_s > 0:
         cmd.extend(["-t", f"{duration_s:.6f}"])
+    cmd.extend(["-i", str(input_path)])
+    if abs(speed_factor - 1.0) > 1e-6:
+        cmd.extend(["-filter:a", atempo_filters(speed_factor)])
     cmd.extend(["-ac", "1", "-ar", str(sample_rate), "-sample_fmt", "s16", str(output_path)])
     subprocess.run(cmd, check=True)
+
+
+def atempo_filters(speed_factor: float) -> str:
+    filters: list[str] = []
+    remaining = speed_factor
+    while remaining > 2.0:
+        filters.append("atempo=2.0")
+        remaining /= 2.0
+    while remaining < 0.5:
+        filters.append("atempo=0.5")
+        remaining /= 0.5
+    filters.append(f"atempo={remaining:.8f}")
+    return ",".join(filters)
 
 
 def wav_duration_ms(path: Path) -> float:
@@ -795,6 +813,7 @@ async def async_main() -> None:
         "audio_yaml": str(paths.audio_yaml),
         "audio_yaml_rows": len(audio_rows),
         "chunk_ms": args.chunk_ms,
+        "speed_factor": args.speed_factor,
         "pace": args.pace,
         "max_audio_seconds": args.max_audio_seconds,
         "max_session_input_s": args.max_session_input_s,
@@ -816,8 +835,14 @@ async def async_main() -> None:
         run_dir = args.output_dir / f"{index:03d}_{run_id}"
         run_dir.mkdir(parents=True, exist_ok=True)
         stream_wav = run_dir / f"source_stream_{sample_rate}.wav"
-        ffmpeg_convert(source_wav, stream_wav, sample_rate, args.max_audio_seconds)
-        source_length_ms = wav_duration_ms(stream_wav if args.max_audio_seconds > 0 else source_wav)
+        ffmpeg_convert(
+            source_wav,
+            stream_wav,
+            sample_rate,
+            args.max_audio_seconds,
+            args.speed_factor,
+        )
+        source_length_ms = wav_duration_ms(stream_wav)
         start_s = time.monotonic()
         streamed = await run_stream(stream_wav, api_key, run_dir, args, source_length_ms)
         elapsed_ms = (time.monotonic() - start_s) * 1000.0

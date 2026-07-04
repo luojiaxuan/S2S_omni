@@ -109,18 +109,47 @@ as the WebSocket accepts them; that is useful for protocol debugging, but it is
 not a live wall-clock measurement. For Gemini full runs, pass
 `--max-session-input-s 480` so long talks are split into service-sized sessions.
 
+For the FLORAS-dashboard-style sweep over providers, chunk sizes, and input
+speed factors, use:
+
+```bash
+scripts/run_acl6060_live_compare.sh \
+  --providers openai,gemini \
+  --chunks 960,1920 \
+  --speeds 1,1.5
+```
+
+For a short smoke before an expensive full sweep:
+
+```bash
+scripts/run_acl6060_live_compare.sh \
+  --providers openai,gemini \
+  --chunks 1920 \
+  --speeds 1.5 \
+  --limit 1 \
+  --max-audio-seconds 6 \
+  --no-score \
+  --no-resume \
+  --output-base /tmp/acl6060_live_compare_smoke_fixed \
+  --gemini-receive-timeout-s 30 \
+  --gemini-post-send-idle-s 3
+```
+
 Score a completed `instances.log` in a RASST eval environment:
 
 ```bash
-python /mnt/data2/jiaxuanluo/RASST/code/rasst/eval/offline_sst_eval/offline_streamlaal_eval.py \
+PATH=/mnt/taurus/home/jiaxuanluo/mwerSegmenter:$PATH \
+/mnt/taurus/home/jiaxuanluo/miniconda3/envs/spaCyEnv/bin/python \
+  /mnt/data2/jiaxuanluo/RASST/code/rasst/eval/offline_sst_eval/offline_streamlaal_eval.py \
   --mode acl6060 \
   --instances-log /path/to/stream_run/instances.log \
   --lang-code zh \
   --ref-file /tmp/rasst_main_result_data/main_result/inputs/acl_zh/ref.txt \
   --source-file /tmp/rasst_main_result_data/main_result/inputs/acl_zh/source_text.txt \
   --audio-yaml /tmp/rasst_main_result_data/main_result/inputs/acl_zh/audio.yaml \
-  --glossary-acl6060 /mnt/data2/jiaxuanluo/RASST/data/glossaries/glossary_acl6060.json \
-  --fbk-fairseq-root /mnt/data2/jiaxuanluo/RASST/third_party/FBK-fairseq \
+  --glossary-acl6060 /mnt/data2/jiaxuanluo/RASST/data/glossaries/acl6060_tagged_gt_raw_min_norm2.json \
+  --fbk-fairseq-root /mnt/taurus/home/jiaxuanluo/FBK-fairseq \
+  --python-bin /mnt/taurus/home/jiaxuanluo/miniconda3/envs/spaCyEnv/bin/python \
   --output-tsv /path/to/stream_run/eval_results.tsv \
   --output-log /path/to/stream_run/eval_results.log
 ```
@@ -137,6 +166,9 @@ Validated locally on 2026-07-04:
   `/tmp/acl6060_stream_openai_smoke_real_fixed` and
   `/tmp/acl6060_stream_gemini_smoke_real`. Both produced Chinese target
   transcript deltas and 0 API errors.
+- The compare script smoke for `chunk_ms=1920`, `speed_factor=1.5`, first
+  6 seconds, succeeded for both providers with `source_length≈4009ms`, proving
+  the speed factor is applied before streaming.
 
 Do not pass API keys through environment variables. Use a local key file and do
 not commit it.

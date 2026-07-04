@@ -331,6 +331,21 @@ deltas with 0 API errors, so the key files and live API paths are valid. Gemini
 full runs should use `--max-session-input-s 480`, matching the FLORAS live
 runner's service-sized session split.
 
+For the FLORAS-dashboard-style ACL6060 sweep over provider, chunk size, and
+input speed, use:
+
+```bash
+scripts/run_acl6060_live_compare.sh \
+  --providers openai,gemini \
+  --chunks 960,1920 \
+  --speeds 1,1.5
+```
+
+The sweep script runs the same live streaming runner, then copies complete
+5-row runs to Taurus for RASST scoring. A short smoke with `chunk_ms=1920`,
+`speed_factor=1.5`, and the first 6 seconds succeeded for both providers with
+`source_length≈4009ms`, confirming the speed factor is applied before streaming.
+
 Full ACL6060 EN->ZH live results on 2026-07-04, using 5 full wavs and
 `chunk_ms=960`:
 

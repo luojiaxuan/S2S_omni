@@ -82,3 +82,9 @@ def test_pcm_segment_ranges_respects_session_limit() -> None:
         (8, 16),
         (16, 20),
     ]
+
+
+def test_atempo_filters_handles_ffmpeg_bounds() -> None:
+    assert acl6060_stream_eval.atempo_filters(1.5) == "atempo=1.50000000"
+    assert acl6060_stream_eval.atempo_filters(4.0) == "atempo=2.0,atempo=2.00000000"
+    assert acl6060_stream_eval.atempo_filters(0.25) == "atempo=0.5,atempo=0.50000000"
