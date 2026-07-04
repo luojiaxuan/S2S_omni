@@ -72,3 +72,13 @@ def test_zh_text_delta_uses_non_whitespace_units() -> None:
     assert "".join(streamed.text_parts) == "你 好。"
     assert streamed.delays_ms == [960.0, 960.0, 960.0]
     assert streamed.elapsed_ms == [1000.0, 1000.0, 1000.0]
+
+
+def test_pcm_segment_ranges_respects_session_limit() -> None:
+    pcm = b"\x00\x00" * 10
+    assert acl6060_stream_eval.pcm_segment_ranges(pcm, 10, 0) == [(0, 20)]
+    assert acl6060_stream_eval.pcm_segment_ranges(pcm, 10, 0.4) == [
+        (0, 8),
+        (8, 16),
+        (16, 20),
+    ]

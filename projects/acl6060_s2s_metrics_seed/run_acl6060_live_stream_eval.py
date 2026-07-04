@@ -82,6 +82,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--receive-timeout-s", type=float, default=60.0)
     parser.add_argument("--post-send-idle-s", type=float, default=8.0)
     parser.add_argument("--setup-timeout-s", type=float, default=30.0)
+    parser.add_argument("--max-session-input-s", type=float, default=0.0)
     parser.add_argument("--progress-interval-s", type=float, default=30.0)
     parser.add_argument("--pace", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
@@ -537,18 +538,24 @@ async def run_gemini_stream(
     out_dir: Path,
     args: argparse.Namespace,
     total_source_ms: float,
+    *,
+    base_source_ms: float = 0.0,
+    segment_index: int = 0,
+    run_start_time: float | None = None,
+    reset_logs: bool = True,
 ) -> StreamedText:
     ws = await connect_gemini(args.gemini_ws_url, api_key)
     raw_events = out_dir / "raw_events.jsonl"
     send_events = out_dir / "send_events.jsonl"
-    for path in [raw_events, send_events]:
-        if path.exists():
-            path.unlink()
+    if reset_logs:
+        for path in [raw_events, send_events]:
+            if path.exists():
+                path.unlink()
 
     streamed = StreamedText([], [], [], [], [])
     setup_done = asyncio.Event()
     receiver_done = asyncio.Event()
-    start_time = time.monotonic()
+    start_time = run_start_time if run_start_time is not None else time.monotonic()
     last_event_time = time.monotonic()
     sent_audio_s = 0.0
 
@@ -565,7 +572,11 @@ async def run_gemini_stream(
                 safe = sanitize_gemini(event)
                 if isinstance(safe, dict):
                     safe["received_at_s"] = round(now_s, 6)
-                    safe["sent_source_ms"] = round(min(total_source_ms, sent_audio_s * 1000.0), 3)
+                    safe["segment_index"] = segment_index
+                    safe["sent_source_ms"] = round(
+                        min(total_source_ms, base_source_ms + sent_audio_s * 1000.0),
+                        3,
+                    )
                     append_jsonl(raw_events, safe)
                 if event.get("setupComplete") is not None:
                     setup_done.set()
@@ -575,7 +586,7 @@ async def run_gemini_stream(
                     streamed,
                     gemini_transcription(event, "outputTranscription"),
                     args.target_lang,
-                    delay_ms=min(total_source_ms, sent_audio_s * 1000.0),
+                    delay_ms=min(total_source_ms, base_source_ms + sent_audio_s * 1000.0),
                     elapsed_ms=now_s * 1000.0,
                 )
                 input_delta = gemini_transcription(event, "inputTranscription")
@@ -588,7 +599,14 @@ async def run_gemini_stream(
 
     receiver_task = asyncio.create_task(receiver())
     await ws.send(json.dumps(gemini_setup_payload(args)))
-    append_jsonl(send_events, {"type": "setup", "sent_at_s": 0.0})
+    append_jsonl(
+        send_events,
+        {
+            "type": "setup",
+            "sent_at_s": round(time.monotonic() - start_time, 6),
+            "segment_index": segment_index,
+        },
+    )
     try:
         await asyncio.wait_for(setup_done.wait(), timeout=args.setup_timeout_s)
     except asyncio.TimeoutError:
@@ -606,8 +624,12 @@ async def run_gemini_stream(
             {
                 "type": "realtime_input.audio",
                 "send_index": send_index,
+                "segment_index": segment_index,
                 "sent_at_s": round(elapsed_s, 6),
-                "sent_source_ms": round(min(total_source_ms, sent_audio_s * 1000.0), 3),
+                "sent_source_ms": round(
+                    min(total_source_ms, base_source_ms + sent_audio_s * 1000.0),
+                    3,
+                ),
                 "audio_duration_s": round(pcm16_duration_s(payload, sample_rate), 6),
                 "bytes": len(payload),
             },
@@ -618,7 +640,7 @@ async def run_gemini_stream(
                 out_dir,
                 "sending",
                 elapsed_s,
-                sent_audio_s,
+                base_source_ms / 1000.0 + sent_audio_s,
                 len(streamed.delays_ms),
             )
             next_progress_s += args.progress_interval_s
@@ -632,6 +654,7 @@ async def run_gemini_stream(
         {
             "type": "realtime_input.audio_stream_end",
             "sent_at_s": round(send_finished_at - start_time, 6),
+            "segment_index": segment_index,
         },
     )
     while (
@@ -672,6 +695,20 @@ def print_progress(
     )
 
 
+def pcm_segment_ranges(
+    pcm: bytes,
+    sample_rate: int,
+    max_session_input_s: float,
+) -> list[tuple[int, int]]:
+    if max_session_input_s <= 0:
+        return [(0, len(pcm))]
+    max_bytes = max(2, int(round(max_session_input_s * sample_rate)) * 2)
+    return [
+        (start, min(len(pcm), start + max_bytes))
+        for start in range(0, len(pcm), max_bytes)
+    ]
+
+
 async def run_stream(
     stream_wav: Path,
     api_key: str,
@@ -693,7 +730,32 @@ async def run_stream(
         )
     if args.provider == "openai":
         return await run_openai_stream(pcm, sample_rate, api_key, out_dir, args, total_source_ms)
-    return await run_gemini_stream(pcm, sample_rate, api_key, out_dir, args, total_source_ms)
+    ranges = pcm_segment_ranges(pcm, sample_rate, args.max_session_input_s)
+    if len(ranges) == 1:
+        return await run_gemini_stream(pcm, sample_rate, api_key, out_dir, args, total_source_ms)
+
+    combined = StreamedText([], [], [], [], [])
+    run_start_time = time.monotonic()
+    for segment_index, (start, end) in enumerate(ranges):
+        base_source_ms = pcm16_duration_s(pcm[:start], sample_rate) * 1000.0
+        part = await run_gemini_stream(
+            pcm[start:end],
+            sample_rate,
+            api_key,
+            out_dir,
+            args,
+            total_source_ms,
+            base_source_ms=base_source_ms,
+            segment_index=segment_index,
+            run_start_time=run_start_time,
+            reset_logs=segment_index == 0,
+        )
+        combined.text_parts.extend(part.text_parts)
+        combined.delays_ms.extend(part.delays_ms)
+        combined.elapsed_ms.extend(part.elapsed_ms)
+        combined.input_transcript_parts.extend(part.input_transcript_parts)
+        combined.errors.extend(part.errors)
+    return combined
 
 
 def select_indices(total: int, start_index: int, limit: int) -> list[int]:
@@ -735,6 +797,7 @@ async def async_main() -> None:
         "chunk_ms": args.chunk_ms,
         "pace": args.pace,
         "max_audio_seconds": args.max_audio_seconds,
+        "max_session_input_s": args.max_session_input_s,
         "target_lang": args.target_lang,
         "hf_repo": HF_REPO,
     }

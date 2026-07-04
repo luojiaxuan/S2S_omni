@@ -321,12 +321,15 @@ Local validation on 2026-07-04:
 /tmp/acl6060_stream_dry_run        # dry-run log structure check
 /tmp/acl6060_stream_openai_smoke_real_fixed  # 15s real OpenAI smoke
 /tmp/acl6060_stream_gemini_smoke_real        # 15s real Gemini smoke
+/tmp/acl6060_stream_gemini_split_smoke_real  # 6s Gemini split-session smoke
 ```
 
 The 5 full wavs total about 57.4 minutes. A paced OpenAI/Gemini live run should
 therefore take about an hour; `--no-pace` is only a fast protocol/debug mode.
 OpenAI and Gemini 15-second real API smokes produced Chinese target transcript
-deltas with 0 API errors, so the key files and live API paths are valid.
+deltas with 0 API errors, so the key files and live API paths are valid. Gemini
+full runs should use `--max-session-input-s 480`, matching the FLORAS live
+runner's service-sized session split.
 
 Previous segmented diagnostic, kept only for tokenizer/scorer context:
 

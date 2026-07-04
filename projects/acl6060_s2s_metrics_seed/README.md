@@ -106,7 +106,8 @@ Run the full OpenAI or Gemini stream by removing `--limit` and
 `--max-audio-seconds`. The 5 ACL6060 full wavs are about 57.4 minutes total, so
 the default paced live run takes about an hour. `--no-pace` sends chunks as fast
 as the WebSocket accepts them; that is useful for protocol debugging, but it is
-not a live wall-clock measurement.
+not a live wall-clock measurement. For Gemini full runs, pass
+`--max-session-input-s 480` so long talks are split into service-sized sessions.
 
 Score a completed `instances.log` in a RASST eval environment:
 
