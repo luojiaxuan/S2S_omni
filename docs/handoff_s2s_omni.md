@@ -331,6 +331,35 @@ deltas with 0 API errors, so the key files and live API paths are valid. Gemini
 full runs should use `--max-session-input-s 480`, matching the FLORAS live
 runner's service-sized session split.
 
+Full ACL6060 EN->ZH live results on 2026-07-04, using 5 full wavs and
+`chunk_ms=960`:
+
+```text
+OpenAI gpt-realtime-translate: BLEU 35.600, StreamLAAL 4403.721, StreamLAAL_CA 4414.628, TERM_ACC 0.7404
+Gemini 3.5 Live Translate:    BLEU 48.230, StreamLAAL 2428.819, StreamLAAL_CA 2531.411, TERM_ACC 0.7472
+```
+
+Tracked small artifacts:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk960/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960/
+```
+
+Large raw event/audio dirs are local-only:
+
+```text
+/tmp/acl6060_stream_openai_full_chunk960
+/tmp/acl6060_stream_gemini_full_chunk960
+```
+
+Taurus scorer dirs:
+
+```text
+/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_openai_chunk960_20260704
+/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_gemini_chunk960_20260704
+```
+
 Previous segmented diagnostic, kept only for tokenizer/scorer context:
 
 ```text

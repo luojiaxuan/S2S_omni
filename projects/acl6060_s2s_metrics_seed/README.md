@@ -141,6 +141,38 @@ Validated locally on 2026-07-04:
 Do not pass API keys through environment variables. Use a local key file and do
 not commit it.
 
+### 2026-07-04 ACL6060 EN->ZH Live Results
+
+These rows use the corrected 5-full-wav streaming input protocol, `chunk_ms=960`,
+HF/RASST release data, and RASST `offline_streamlaal_eval.py` scoring with
+`lang_code=zh`.
+
+| run | rows | BLEU | masked BLEU | StreamLAAL | StreamLAAL_CA | TERM_ACC | TERM_ADOPTION | notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| OpenAI `gpt-realtime-translate` | 5 | 35.600 | 29.701 | 4403.721 | 4414.628 | 0.7404 | 0.4767 | full paced run, 0 API errors |
+| Gemini `gemini-3.5-live-translate-preview` | 5 | 48.230 | 42.656 | 2428.819 | 2531.411 | 0.7472 | 0.5867 | full paced run, 480s session split, 0 API errors |
+
+Tracked small artifacts:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk960/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960/
+```
+
+Large local raw event/audio directories were not committed:
+
+```text
+/tmp/acl6060_stream_openai_full_chunk960
+/tmp/acl6060_stream_gemini_full_chunk960
+```
+
+Taurus scorer work dirs:
+
+```text
+/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_openai_chunk960_20260704
+/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_gemini_chunk960_20260704
+```
+
 ## ACL6060 GPT/Gemini Segmented Diagnostic
 
 `run_acl6060_llm_audio_eval.py` runs an offline speech-to-text translation
