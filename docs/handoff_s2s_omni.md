@@ -1,6 +1,6 @@
 # S2S_omni Handoff
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 Repository:
 
@@ -212,6 +212,8 @@ projects/floras_live_s2s_benchmark/LOCAL_LINKS.md
 projects/floras_live_s2s_benchmark/RESULTS.md
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chunks/index.html
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chunks/compare_metrics.jsonl
+projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks/index.html
+projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl
 ```
 
 Large wav artifacts are local only:
@@ -224,31 +226,35 @@ If this benchmark needs to be shared beyond the original machine, upload the
 audio bundle to Hugging Face or a GitHub release asset and rewrite dashboard
 links.
 
-The Seed AST speed-1 dashboard and detail page are also packaged here. The
-tracked HTML/JSON lives under:
+The Seed AST chunk/speed sweep is packaged here. It covers 0.96s and 1.92s
+chunks at source speeds 1.0x and 1.5x, evaluated by running
+`gpt-4o-mini-transcribe` over the generated target speech. The AST backend
+translation subtitle is not used for BLEU/chrF/CER. The tracked HTML/JSON lives
+under:
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_speed1
-projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1
+projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks
+projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr
+projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr
 ```
 
-The Seed AST detail page references 327 local wav files totaling about 200 MB.
-Those wavs are not tracked in Git. Use this file for the exact local paths:
+The Seed AST detail pages reference local wav/window files that are not tracked
+in Git. Use this file for the exact local dashboard, detail, raw run, and ASR
+transcript paths:
 
 ```text
 projects/floras_live_s2s_benchmark/LOCAL_LINKS.md
 ```
 
-Seed AST now has runner support for configurable `--chunk-ms`, but the requested
-960 ms and 1920 ms Seed runs at speeds 1.0 and 1.5 are not complete yet. The
-current local Seed AST credential returns:
+Seed AST summary on the selected FLORAS example:
 
 ```text
-quota exceeded for types: tokens_lifetime
+chunk=960,  speed=1.0: BLEU 21.48, chrF 21.85, CER 0.836, wall delay 1.75s, max backlog 314.53s
+chunk=1920, speed=1.0: BLEU 20.81, chrF 21.53, CER 0.812, wall delay 1.58s, max backlog 288.37s
+chunk=960,  speed=1.5: BLEU 21.13, chrF 21.65, CER 0.805, wall delay 24.40s, max backlog 241.92s
+chunk=1920, speed=1.5: BLEU 21.30, chrF 21.46, CER 0.818, wall delay 2.13s, max backlog 203.37s
 ```
-
-The only completed Seed AST FLORAS result at handoff time is the earlier
-`chunk_ms=100`, `speed=1.0` run, evaluated through target-speech ASR.
 
 ### ACL6060 / Seed AST S2S Metrics Script
 

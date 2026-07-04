@@ -2,36 +2,54 @@
 
 These links are for the original local machine. They point to complete HTML
 dashboards with audio files present on disk. The wav files are intentionally not
-tracked in Git because the Seed AST detail run contains 327 wav files totaling
-about 200 MB.
+tracked in Git. The current Seed AST chunk sweep has 1,308 local wav/window
+files in the Git worktree, totaling about 721 MB, plus raw Seed run outputs
+under the local artifact root.
+
+## Seed AST Full Chunk/Speed Compare
+
+Combined dashboard with OpenAI, Gemini, and Seed AST at 0.96s/1.92s chunks and
+1.0x/1.5x speed:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks/index.html
+```
 
 ## Seed AST Speed-1 Compare
 
-Combined dashboard with OpenAI, Gemini, and Seed AST at 1.0x:
+Combined dashboard with OpenAI, Gemini, and Seed AST at 0.96s/1.92s chunks and
+1.0x speed:
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_speed1/index.html
 ```
 
-Seed AST detail page with per-window audio:
+Seed AST 0.96s detail pages with per-window audio:
 
 ```text
-/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/index.html
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/index.html
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/index.html
 ```
 
-Seed AST full/audio window directory:
+Seed AST 1.92s detail pages with per-window audio:
 
 ```text
-/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/index.html
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/index.html
 ```
 
-Seed AST chunk-size follow-up status:
+Seed AST raw run directories:
 
 ```text
-Requested: chunk_ms=960 and chunk_ms=1920 for speed=1.0 and speed=1.5.
-Current local credential status: blocked by Seed AST service error
-"quota exceeded for types: tokens_lifetime".
-Completed Seed AST result currently available: chunk_ms=100, speed=1.0.
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/seed_ast_full_enzh_chunk960
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/seed_ast_full_enzh_chunk1920
+```
+
+Seed AST target-speech ASR transcripts:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/seed_ast_asr_full_enzh_chunk960.jsonl
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/seed_ast_asr_full_enzh_chunk1920.jsonl
 ```
 
 ## OpenAI/Gemini Full Compare
@@ -54,7 +72,9 @@ The corresponding JSON/HTML metadata tracked in Git is under:
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_speed1
-projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1
+projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks
+projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr
+projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chunks
 ```
 

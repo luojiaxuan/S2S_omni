@@ -128,11 +128,11 @@
     },
     {
       "path": "artifacts/compare_openai_gemini_seed_enzh_speed1/index.html",
-      "bytes": 7125
+      "bytes": 8175
     },
     {
       "path": "artifacts/compare_openai_gemini_seed_enzh_speed1/compare_metrics.jsonl",
-      "bytes": 52840
+      "bytes": 63629
     },
     {
       "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/summary.json",
@@ -169,6 +169,118 @@
     {
       "path": "artifacts/eval_runs/seed_ast_gpt4o_mini_asr_speed1/en-zh_mono_asr_test__0__speed_1/sentence_coverage.jsonl",
       "bytes": 37826
+    },
+    {
+      "path": "artifacts/compare_openai_gemini_seed_enzh_full_chunks/index.html",
+      "bytes": 13817
+    },
+    {
+      "path": "artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl",
+      "bytes": 122643
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/index.html",
+      "bytes": 347577
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/metrics.json",
+      "bytes": 9423
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/sentence_coverage.jsonl",
+      "bytes": 37821
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/timeline.jsonl",
+      "bytes": 229979
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/index.html",
+      "bytes": 368157
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/metrics.json",
+      "bytes": 9306
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/sentence_coverage.jsonl",
+      "bytes": 37888
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/timeline.jsonl",
+      "bytes": 251800
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/index.html",
+      "bytes": 1182
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/metrics.jsonl",
+      "bytes": 18575
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/sentence_coverage.jsonl",
+      "bytes": 75709
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/summary.json",
+      "bytes": 6217
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/timeline.jsonl",
+      "bytes": 481779
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/index.html",
+      "bytes": 349019
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/metrics.json",
+      "bytes": 9819
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/sentence_coverage.jsonl",
+      "bytes": 37824
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/timeline.jsonl",
+      "bytes": 231329
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/index.html",
+      "bytes": 366300
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/metrics.json",
+      "bytes": 9357
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/sentence_coverage.jsonl",
+      "bytes": 37888
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1.5/timeline.jsonl",
+      "bytes": 250216
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/index.html",
+      "bytes": 1182
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/metrics.jsonl",
+      "bytes": 19022
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/sentence_coverage.jsonl",
+      "bytes": 75712
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/summary.json",
+      "bytes": 6205
+    },
+    {
+      "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/timeline.jsonl",
+      "bytes": 481545
     }
   ],
   "large_audio_policy": "Audio and per-window wav files are not checked into Git; use source_dir or regenerate.",
