@@ -283,6 +283,27 @@ The downloaded script originally contained hard-coded credentials. Those were
 removed before committing to the public repo. Credentials must be passed
 explicitly via CLI arguments.
 
+2026-07-04 ACL6060 EN->ZH dev reproduction:
+
+```text
+old Infinisst/RAG zh log: BLEU 51.316, LAAL 6639.597, AP 1.034
+OpenAI gpt-audio-mini:  BLEU 51.438, LAAL 6639.597, AP 1.668
+Gemini 3.5 Flash:       BLEU 50.106, LAAL 6639.597, AP 0.958
+```
+
+Result artifacts:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_dev_enzh_compare/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_dev_enzh_openai_gpt_audio_mini/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_dev_enzh_gemini_audio/
+```
+
+The high ACL6060 zh BLEU is expected under the old scoring setup: it is text
+prediction vs text reference with `sacrebleu-tokenizer=zh`, not target-speech
+ASR BLEU. The same old log scores 51.316 with tokenizer `zh` but only 3.479
+with default `13a`.
+
 ## Major Remote Artifacts
 
 See `docs/remote_artifacts.md` for the full list. The most important entries

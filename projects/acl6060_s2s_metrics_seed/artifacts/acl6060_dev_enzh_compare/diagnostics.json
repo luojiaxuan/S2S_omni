@@ -1,0 +1,17 @@
+{
+  "openai_gpt_audio_mini_refusals_empty": {
+    "description": "Diagnostic only: 20 refusal-like GPT mini outputs replaced with empty predictions before scoring.",
+    "BLEU": 52.905,
+    "LAAL": 6639.597,
+    "AL": 6639.597,
+    "AP": 0.971,
+    "DAL": 6639.597,
+    "ATD": 2357.521,
+    "refusal_like_replaced": 20,
+    "temp_dir": "/tmp/acl6060_gpt_audio_mini_refusals_empty"
+  },
+  "openai_gpt_audio_1_5_partial": {
+    "description": "Stopped partial run because gpt-audio-1.5 repeatedly returned HTTP 500 model_error on some ACL6060 clips.",
+    "artifact_retained": false
+  }
+}

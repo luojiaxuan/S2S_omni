@@ -1,0 +1,4 @@
+run_id	provider	model	rows	BLEU	LAAL	AL	AP	DAL	ATD	errors	empty_predictions	refusal_like	prediction_length_mean	prediction_length_min	prediction_length_max	artifact_dir
+old_infinisst_rag_acl6060_zh	old	infinisst_rag_old_log	468	51.316	6639.597	6639.597	1.034	6639.597	2215.145	0						taurus:/mnt/data/siqiouyang/runs/infinisst_rag/offline/acl6060/zh
+openai_gpt_audio_mini	openai	gpt-audio-mini	468	51.438	6639.597	6639.597	1.668	6639.597	2277.545	0	0	20	37.145	5	319	projects/acl6060_s2s_metrics_seed/artifacts/acl6060_dev_enzh_openai_gpt_audio_mini
+gemini_audio	gemini	gemini-3.5-flash	468	50.106	6639.597	6639.597	0.958	6639.597	2677.523	0	1	0	28.998	0	114	projects/acl6060_s2s_metrics_seed/artifacts/acl6060_dev_enzh_gemini_audio

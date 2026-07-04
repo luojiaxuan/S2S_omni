@@ -1,0 +1,13 @@
+{
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "split": "dev",
+  "target_lang": "zh",
+  "dataset_root": "/tmp/acl6060_data",
+  "reference_path": "/tmp/acl6060_data/dev/text/txt/ACL.6060.dev.en-xx.zh.txt",
+  "start_index": 0,
+  "end_index": 468,
+  "latency_unit": "char",
+  "sacrebleu_tokenizer": "zh",
+  "prompt": "Translate the English speech in the audio into Simplified Chinese. Return only the translation text. Do not include explanations, markdown, or source-language transcript."
+}

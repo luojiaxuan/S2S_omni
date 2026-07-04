@@ -1,0 +1,468 @@
+{"index": 0, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "西班牙语中的未同化借词：标注语料库与建模方法\" (or \"以及", "elapsed_ms": 3171.622}
+{"index": 1, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以，我们将介绍什么是词汇借用、我们提出的任务、我们发布的数据集，以及我们探索的一些模型。", "elapsed_ms": 3513.295}
+{"index": 2, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "但首先，什么是词汇借用，以及为什么它作为一项NLP任务很重要？", "elapsed_ms": 3408.985}
+{"index": 3, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "嗯，词汇借用基本上就是将一种语言的词汇融入到另一种语言", "elapsed_ms": 3799.348}
+{"index": 4, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，在西班牙语中，我们使用源自英语的词汇。", "elapsed_ms": 3646.548}
+{"index": 5, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里有几个例子，比如播客、应用程序、在线、众筹，这些都是我们有时在西班牙语中使用的英语单词。", "elapsed_ms": 4230.201}
+{"index": 6, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "词汇借用是一种语言借用，它基本上是在一种语言中复制其他语言的模式。", "elapsed_ms": 4720.194}
+{"index": 7, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "借用和语码转换有时会被拿来比较，并被描述为一个连续体。语码转换是双语者所做的事情", "elapsed_ms": 4219.864}
+{"index": 8, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然而，词汇借用和语码转换之间存在一些差异。", "elapsed_ms": 2848.405}
+{"index": 9, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们将重点关注词汇借用。", "elapsed_ms": 3263.193}
+{"index": 10, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "语码转换是双语者会做的事情，而且根据定义，语码转换者并没有", "elapsed_ms": 3938.112}
+{"index": 11, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "借词将符合借入语的语法。", "elapsed_ms": 3605.723}
+{"index": 12, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "并且植骨最终可以融入受体骨中。", "elapsed_ms": 3900.339}
+{"index": 13, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "那么，为什么借贷是一个有趣的现象呢？", "elapsed_ms": 3937.505}
+{"index": 14, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "从语言学的角度来看，借用是语言如何变化以及它们如何相互影响的一种体现。", "elapsed_ms": 4112.544}
+{"index": 15, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "而且，词汇借用也是新词的来源。", "elapsed_ms": 3551.77}
+{"index": 16, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里有一些作为新词融入西班牙语的词汇借用例子。", "elapsed_ms": 3574.607}
+{"index": 17, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在NLP中，借词是未登录词的常见来源。", "elapsed_ms": 3967.577}
+{"index": 18, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "事实上，自动检测词汇借用已被证明对自然语言处理下游任务非常有用，例如句法", "elapsed_ms": 3922.475}
+{"index": 19, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "特别是在英语词汇借用方面，这些借用有时被称为英语借词。", "elapsed_ms": 4084.675}
+{"index": 20, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里有一些在其中一些语言中自动检测借词 and here you have some examples of, uh, work on automatic detection of borrowings in, uh, some of these languages.", "elapsed_ms": 3569.169}
+{"index": 21, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，我们提出的任务是检测西班牙语新闻 and 00:08", "elapsed_ms": 4411.637}
+{"index": 22, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这意味着我们感兴趣的是提取那些在西班牙语报纸中被使用、但尚未融入或同", "elapsed_ms": 4206.946}
+{"index": 23, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "尚未融入西班牙语", "elapsed_ms": 2967.144}
+{"index": 24, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里有一个例子", "elapsed_ms": 2506.592}
+{"index": 25, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是一个西班牙语面句：“Sellers 的 ands 服装印有花卉图案、动物", "elapsed_ms": 4388.446}
+{"index": 26, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如你所看到的，有三段文本实际上是英文单词，比如 bestseller、animal print 和", "elapsed_ms": 4231.012}
+{"index": 27, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些就是我们感兴趣提取和检测的跨度类型。", "elapsed_ms": 4070.477}
+{"index": 28, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "此前已有关于英语借词检测的研究工作，其中包括一个用于西班牙语新闻中英语借词检测的CRF模型。", "elapsed_ms": 4373.539}
+{"index": 29, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "该模型取得的F1分数为", "elapsed_ms": 3842.784}
+{"index": 30, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "86。但无论是在数据集还是在建模方法上，都存在一些局限性。", "elapsed_ms": 3962.17}
+{"index": 31, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以这个数据集仅专注于单一新闻来源，只由标题组成。", "elapsed_ms": 3597.928}
+{"index": 32, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "而且，在训练集和测试集中出现的借词也存在重叠。", "elapsed_ms": 3571.224}
+{"index": 33, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，这使得无法评估该建模方法是否真的可以泛化到以前未见过的", "elapsed_ms": 3865.012}
+{"index": 34, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以，我们的目标是解决这项任务中的一些局限性。", "elapsed_ms": 3395.768}
+{"index": 35, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以首先，我们创建了", "elapsed_ms": 4177.251}
+{"index": 36, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一个新数据集。嗯，目的，一个用词 and 汇借用标注的新数据集，其目的是创建一个尽可能困难的测试集。", "elapsed_ms": 3509.623}
+{"index": 37, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "\"因此，训练集和测试集在词汇和主题上的重叠将是", "elapsed_ms": 3754.642}
+{"index": 38, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，测试集来自训练集中未曾出现过的来源和日期。", "elapsed_ms": 3190.51}
+{"index": 39, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "中没有重叠\" -> \"你可以看到没有重叠\" is safer and cleaner. Or", "elapsed_ms": 4129.122}
+{"index": 40, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "时间，嗯，测试集在当时也非常枯燥。", "elapsed_ms": 4054.72}
+{"index": 41, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "只是给你一些数据，如果训练集每千个 and 标记包含六个", "elapsed_ms": 4365.809}
+{"index": 42, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "测试集包含尽可能多的未登录词。", "elapsed_ms": 3564.523}
+{"index": 43, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "事实上，测试集中92%的借词都是OOV。", "elapsed_ms": 4192.02}
+{"index": 44, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以它们在训练期间没有被看到。", "elapsed_ms": 3748.766}
+{"index": 45, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "*   \"a collection of texts that came from different sources of Spanish newspapers\" -> 来自不同西班牙", "elapsed_ms": 3990.667}
+{"index": 46, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "并且，它是手工使用两个标签进行标注的。", "elapsed_ms": 4190.096}
+{"index": 47, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一个是英语词汇借用，这占了西班牙语词汇借用的大多数，", "elapsed_ms": 3998.962}
+{"index": 48, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们使用了 CoNLL 格式，并采用了 BIO 编码，以便我们能够对单词", "elapsed_ms": 4086.096}
+{"index": 49, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些是语料库的数字。", "elapsed_ms": 3955.74}
+{"index": 50, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如你所看到的，它大约相当于37万个Token。", "elapsed_ms": 4131.545}
+{"index": 51, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里有被标记为英语的跨度数量、 and the spans that were labeled", "elapsed_ms": 4139.761}
+{"index": 52, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里有该数据集的几个示例。", "elapsed_ms": 3479.464}
+{"index": 53, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如您在这里看到的，例如，在第一个例子中，我们有借词“batch cooking”，这是一个", "elapsed_ms": 4055.287}
+{"index": 54, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们使用 BIO 编码对其进行了标注。", "elapsed_ms": 3064.402}
+{"index": 55, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以，b-i-o被用于西班牙语单词，因此不用于非外来", "elapsed_ms": 4050.659}
+{"index": 56, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这第二个例子中，有 benching 和 crash，它们也被标记为来自英语的借词。", "elapsed_ms": 3766.749}
+{"index": 57, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，一旦我们有了数据集，我们就探索了几个模型，用于提取和检测这些词", "elapsed_ms": 3799.798}
+{"index": 58, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们尝试的第一个是条件随机场模型。", "elapsed_ms": 3832.345}
+{"index": 59, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是先前工作中所使用的模型。", "elapsed_ms": 3527.909}
+{"index": 60, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们使用了那项工作中的相同手工特征。", "elapsed_ms": 4281.614}
+{"index": 61, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如您所见，这些就是它的特点。", "elapsed_ms": 3717.3}
+{"index": 62, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些是二值特征，例如单词或标记是否为大写。", "elapsed_ms": 3574.943}
+{"index": 63, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "接手一个案子，接手一个案子", "elapsed_ms": 4223.933}
+{"index": 64, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是一个引号吗？", "elapsed_ms": 4033.235}
+{"index": 65, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "诸如此类，这些是人们在命名实体识别任务中会期望的特征类型。", "elapsed_ms": 3577.615}
+{"index": 66, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些是我们得到的结果。", "elapsed_ms": 3022.441}
+{"index": 67, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们使用具有手工特征的CRF模型获得了55的F1分数。", "elapsed_ms": 3790.954}
+{"index": 68, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "与报告的 86 的 F1 分数相比，这是一个巨大的差异。该分数是使用相同的 CRF 模型和相同的特征，但在不同的数据集上获得的结果，同样用于西班牙语词汇借用检测。", "elapsed_ms": 3828.977}
+{"index": 69, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以这证明了我们创建的数据集更难，我们需要为这项任务探索更复杂的模型。", "elapsed_ms": 3162.706}
+{"index": 70, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以我们测试了两个基于Transformer的模型。", "elapsed_ms": 3570.84}
+{"index": 71, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们使用了 Beto（这是一个针对西班牙语训练的单语 BERT 模型）以及多语言 BERT。", "elapsed_ms": 3151.334}
+{"index": 72, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这两个模型我们都是通过 Hugging Face 的 Transformers 库来使用的。", "elapsed_ms": 3566.795}
+{"index": 73, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些是我们得到的结果。", "elapsed_ms": 3061.667}
+{"index": 74, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如您所看到的，多语言 BERT 在开发集和测试集上，以及在所有指标上的表现都优于 BETO。", "elapsed_ms": 3699.254}
+{"index": 75, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "只是为了让我们有一个概念来对比CRF。", "elapsed_ms": 3547.109}
+{"index": 76, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "CRF模型获得了82……CRF模型获得了55……获得了55的F1分数", "elapsed_ms": 3932.883}
+{"index": 77, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以，在得到这些结果之后，我们又问了自己另一个问题，那就是：我们能否找到一个配备了不同类型嵌入（这些嵌入编码了不同类型的语言信息）的 BiLSTM-CRF 模型，并使其性能超越基于 Transformer 的模型所获得的结果？", "elapsed_ms": 3862.76}
+{"index": 78, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，为了做到这一点，我们进行了一些初步实验。我们使用 Flair 库运行了这个 Bi", "elapsed_ms": 4118.631}
+{"index": 79, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们尝试并实验了不同类型的嵌入，比如基于Transformer的，还有fastText、字符嵌入等等。", "elapsed_ms": 5168.106}
+{"index": 80, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们发现，基于Transformer的嵌入表现优于非上下文嵌入，英语BERT和西班牙语BETO嵌入的结合优于多语言BERT嵌入。", "elapsed_ms": 3600.31}
+{"index": 81, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "而且BP嵌入产生了更好的F1值，而字符嵌入产生了更好的召回率。", "elapsed_ms": 3764.574}
+{"index": 82, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "考虑到这一点，这些是我们得到的表现最好的结果。", "elapsed_ms": 3306.389}
+{"index": 83, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "两个模型都是使用 Flair 的 BiLSTM-CRF 模型。", "elapsed_ms": 3220.514}
+{"index": 84, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "):**     一个输入了 Beto 和 BERT 嵌入以及 BPE，另一个输入了", "elapsed_ms": 3942.634}
+{"index": 85, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这最后一个是在测试集上产生最高F1分数的，尽管开发集上的最高分数是由", "elapsed_ms": 4077.439}
+{"index": 86, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "需要注意的是，我们使用多语言BERT获得的最 and 82 on the test", "elapsed_ms": 4194.586}
+{"index": 87, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以，与那些结果相比，这是一个改进。", "elapsed_ms": 2959.115}
+{"index": 88, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最后，我们问了自己另一个问题，即： and 词汇借用检测是否", "elapsed_ms": 4223.357}
+{"index": 89, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以我们运行了与之前使用 Flair 运行的 and BERT 嵌入，而是使用了", "elapsed_ms": 4195.533}
+{"index": 90, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "什么是语码转换嵌入？", "elapsed_ms": 4040.746}
+{"index": 91, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些是经过微调的、基于Transformer的嵌入，它们已在LinCE语码转换数据集的西班牙语-英语部分上针对语言识别进行了预训练。", "elapsed_ms": 3475.303}
+{"index": 92, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "关于语码转换的数据集，其中包含一个关于西班牙语-英语，呃，西班牙语-", "elapsed_ms": 3918.047}
+{"index": 93, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，我们向我们的 BiLSTM-CRF 输入了代码切换嵌入，以及可选的字符", "elapsed_ms": 4072.928}
+{"index": 94, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在测试集上得到的最好结果是84.22，这是我们尝试过的所有模型中最高的。", "elapsed_ms": 5260.397}
+{"index": 95, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "低于采用自适应嵌入的BiLSTM-CRF所获得的最佳结果。\"  4", "elapsed_ms": 4331.093}
+{"index": 96, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，我们工作的一些结论……", "elapsed_ms": 2578.124}
+{"index": 97, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们引入了一个新的西班牙语新闻电讯数据集 and it is annotated with assimilated lexical borrowings ->", "elapsed_ms": 4458.513}
+{"index": 98, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "该数据集比以前的资源具有更高的借词密", "elapsed_ms": 4080.881}
+{"index": 99, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们探索了四种用于词汇借用检测的模型。", "elapsed_ms": 2899.069}
+{"index": 100, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在错误分析方面，召回率是所有模型的薄弱环节。", "elapsed_ms": 4189.368}
+{"index": 101, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如您在这里看到的，一些常见的假阴性 and 漏报包括大写借词，例如同时存在于英语和西班牙语中的单词。", "elapsed_ms": 3867.776}
+{"index": 102, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "同样有趣的是，BP 嵌入似乎提高了 F1 分数。", "elapsed_ms": 3698.611}
+{"index": 103, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "而且字符嵌入似乎提高了召回率。", "elapsed_ms": 3813.159}
+{"index": 104, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是一个有趣的发现，也许我们可以在未来的工作中进行探索。", "elapsed_ms": 3712.532}
+{"index": 105, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "好吧，这就是我有的全部了。", "elapsed_ms": 3896.637}
+{"index": 106, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "非常感谢您的收听。", "elapsed_ms": 2820.406}
+{"index": 107, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我叫安托万。", "elapsed_ms": 3111.619}
+{"index": 108, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我是马萨诸塞大学阿默斯特分校的博士生。", "elapsed_ms": 3214.445}
+{"index": 109, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我将介绍我们的论文：KinyeBERT，一种形态学感知的卢旺达语语言模型。", "elapsed_ms": 3858.417}
+{"index": 110, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "今天，我将谈谈这项研究的动机。", "elapsed_ms": 3717.947}
+{"index": 111, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后你详细介绍KinyaBERT模型架构。", "elapsed_ms": 3934.716}
+{"index": 112, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后我将讨论我们的实验结果，最后以一些结论结束。", "elapsed_ms": 3296.183}
+{"index": 113, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们都知道，近期自然语言处理的进展得益于诸如 BERT 等预训练语言模型的使用。", "elapsed_ms": 3402.318}
+{"index": 114, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然而，仍然存在一些局限性。", "elapsed_ms": 3837.803}
+{"index": 115, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "由于大多数形态丰富语言所表现出的复杂形态 and 无法提取出准确的子词词", "elapsed_ms": 4282.566}
+{"index": 116, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，这里有三个卢旺达语单词，它们包含多个词素，但 BPE 算法无法提取它们。", "elapsed_ms": 3614.423}
+{"index": 117, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是因为一些形态学规则会产生不同的表层形式，从而隐藏了准确的词汇信息，而完全基于表层形式的 BPE 无法访问这种词汇模型。", "elapsed_ms": 3436.59}
+{"index": 118, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "第二个挑战是，即使能够使用神谕形态分析器，用词素替换 BPE", "elapsed_ms": 4389.13}
+{"index": 119, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "研究中的第三个空白是，新的预训练语言模型最常在高资源语言上进行评估", "elapsed_ms": 4290.938}
+{"index": 120, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们还需要评估它们在低资源和多样化语言上的适用性。", "elapsed_ms": 4724.383}
+{"index": 121, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，我们提出了 KinyaBERT，这是对 BERT 架构的一种简单但有效的改进，旨在更有效地处理形态丰富的语言。", "elapsed_ms": 3382.239}
+{"index": 122, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在卢旺达语上评估了 KinyaBERT，这是一种低资源、形态丰富的语言，在东非和中非有超过1200万人使用。", "elapsed_ms": 3753.302}
+{"index": 123, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "模型的输入是一个句子或一个文档。", "elapsed_ms": 3559.122}
+{"index": 124, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，这里有“John twasanzeyo biradutangaza”，意思是", "elapsed_ms": 4482.75}
+{"index": 125, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如你所看到的，卢旺达语单词包含多个语素，每个语素", "elapsed_ms": 4188.024}
+{"index": 126, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，在我们的模型中，我们将这些句子或文档传递给词法分析器。", "elapsed_ms": 3687.979}
+{"index": 127, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后生成每个单词中包含的词素。", "elapsed_ms": 3646.843}
+{"index": 128, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "语素通常由一个词干和零个或多个词缀组成。", "elapsed_ms": 3666.484}
+{"index": 129, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "通常与主语和宾语的班图语名词类别相关。     *   Draft", "elapsed_ms": 4383.073}
+{"index": 130, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "形态分析器还会为每个单词生成一个词性标签。", "elapsed_ms": 3991.249}
+{"index": 131, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这步之后，我们为词性标签生成嵌入。", "elapsed_ms": 4054.38}
+{"index": 132, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "词缀的嵌入", "elapsed_ms": 3268.671}
+{"index": 133, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": ") or \"以及主干的嵌入\".     *   Let's go with \"", "elapsed_ms": 4098.858}
+{"index": 134, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些是形态学级别的嵌入。", "elapsed_ms": 3821.819}
+{"index": 135, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后，我们将这些嵌入通过一个形态学编码器，这是一个独立应用于每个单词的小型 Transformer 编码器。", "elapsed_ms": 3800.057}
+{"index": 136, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "输出是结合了每个单词形态学信息的上下文 and 向量。", "elapsed_ms": 4126.203}
+{"index": 137, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "现在，我们进行组合，其中对应于词性和词干的形态学嵌入被拼接在一起。", "elapsed_ms": 3960.65}
+{"index": 138, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在句子层面进一步将它们与另一个词干嵌入进行拼接。", "elapsed_ms": 4045.859}
+{"index": 139, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后，我们形成主句子或文档编码器的输入。", "elapsed_ms": 3414.207}
+{"index": 140, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最终输出是上下文相关的嵌入，可用于下游NLP任务。", "elapsed_ms": 3752.362}
+{"index": 141, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "对于词法分析器，我们使用有限状态双层形态学原理，并结合了针对卢", "elapsed_ms": 4216.745}
+{"index": 142, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们有效地对所有卢旺达语单词的形态进行了建模，包括动词、名词、", "elapsed_ms": 3719.789}
+{"index": 143, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们使用一种无监督的词性标注算法。", "elapsed_ms": 3521.764}
+{"index": 144, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一阶因子模型用于计算词法概率，基本上就是由词法分析器所分配的概率。", "elapsed_ms": 3384.203}
+{"index": 145, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们还考虑了词性标注优先级，以及输入词中存在的句法一致性。", "elapsed_ms": 3929.788}
+{"index": 146, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "词性标注器采用双向推理，这改进了更常用于解码的维特比算法。", "elapsed_ms": 3635.695}
+{"index": 147, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "关于位置编码，这里有几点说明。", "elapsed_ms": 3680.522}
+{"index": 148, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一、形态学编码器不使用任何位置编码。", "elapsed_ms": 3316.487}
+{"index": 149, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是因为每个语素在形态学模型中都占有一个已知的槽位。", "elapsed_ms": 3122.884}
+{"index": 150, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，当给定语素时，位置信息是固有的。", "elapsed_ms": 3767.588}
+{"index": 151, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "其次，句子编码器使用了所谓的解耦相对位置嵌入，该方法最近在 ICLR 会议", "elapsed_ms": 4276.096}
+{"index": 152, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些位置嵌入本质上将位置相关性从词元到词元的注意力计算中解耦", "elapsed_ms": 4484.965}
+{"index": 153, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "与BERT类似，我们使用了掩码语言模型预训练目标。", "elapsed_ms": 2963.732}
+{"index": 154, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "基本上，我们必须预测与单词相关联的词干和词缀。", "elapsed_ms": 3799.569}
+{"index": 155, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在预训练期间，15%的单词被用于预测，其中80%被掩盖，10%被替换为随机单词，10%保持不变。", "elapsed_ms": 3589.041}
+{"index": 156, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "对于词缀预测，我们面临一个多标签分类问题。", "elapsed_ms": 3096.085}
+{"index": 157, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "对于这些，我们要么将词缀分组成固定数量的集合，并将该集合预测为类别标签。", "elapsed_ms": 3543.778}
+{"index": 158, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "另一种选择是预测词缀概率向量。", "elapsed_ms": 2982.287}
+{"index": 159, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在实验中评估了这两种方法。", "elapsed_ms": 3087.929}
+{"index": 160, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在大约2.5 GB的卢旺达语文本上对KinyaBERT进行了预训练，并将其与三个基线模型进行了比较。", "elapsed_ms": 3551.464}
+{"index": 161, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一个是名为 XLMR 的多语言模型，它是在由多种语言组成的大型文本语料库上训练而成的。", "elapsed_ms": 3599.557}
+{"index": 162, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "):**     \"有两个基线模型在相同的卢旺达语文本上进行了预训练", "elapsed_ms": 4160.669}
+{"index": 163, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所有模型都配置在基础架构中，参数量大约在1亿到1.1亿之间，其中KinyaBERT使用的参数量最少。", "elapsed_ms": 3923.991}
+{"index": 164, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "除了多语言模型外，所有模型都进行了 32,000 次梯度更新的预训练，每个批次的大小为 2,560 个序列。", "elapsed_ms": 5343.495}
+{"index": 165, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在三组任务上评估了预训练模型。", "elapsed_ms": 2906.415}
+{"index": 166, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一个是 GLUE 基准，它常被用于评估预训练语言模型的有效性。", "elapsed_ms": 3092.792}
+{"index": 167, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们通过使用谷歌翻译将原始基准数据翻译成卢旺达语来获取我们的基准数据。", "elapsed_ms": 4245.158}
+{"index": 168, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "第二个任务是卢旺达语命名实体识别基准，这是一个由经过培训的母语使用者标注的高质量数据集。", "elapsed_ms": 3364.588}
+{"index": 169, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "第三个是新闻分类任务，我们从几个网站获取新闻文章，收集作者分配的分类标签，然后基本上试图预测相同的类别。", "elapsed_ms": 3444.782}
+{"index": 170, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "现在我们来看结果。", "elapsed_ms": 4072.054}
+{"index": 171, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "BERT 始终优于基线模型。\" (This is very natural and accurate).", "elapsed_ms": 3931.224}
+{"index": 172, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里我们展示了10次微调运行的平均性能。", "elapsed_ms": 3491.001}
+{"index": 173, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们还对谷歌翻译生成的翻译进行了用户评估。", "elapsed_ms": 3444.705}
+{"index": 174, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "基本上，用户对大约 6000 个示例进行了评估，按 1 到 4", "elapsed_ms": 4347.741}
+{"index": 175, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "结果是许多翻译都存在噪声。", "elapsed_ms": 4079.201}
+{"index": 176, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "但所有模型都必须应对相同的翻译噪声，模型之间的相对性能仍然值得关注。", "elapsed_ms": 3549.717}
+{"index": 177, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "对于命名实体识别任务，我们也发现 KinyaBERT 的性能最好，其中词缀分布正则化", "elapsed_ms": 5574.828}
+{"index": 178, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些结果也是10次微调运行的平均值。", "elapsed_ms": 2976.817}
+{"index": 179, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "对于新闻分类任务，我们发现了喜忧参半 and 结果。", "elapsed_ms": 4224.098}
+{"index": 180, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "先前关于卢旺达语文本分类的研究发现，简单的关键词检测基本上就足以解决这一特定任务。", "elapsed_ms": 3633.741}
+{"index": 181, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，使用预训练语言模型带来的收益较少。", "elapsed_ms": 4018.384}
+{"index": 182, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这个特定的新闻分类任务上", "elapsed_ms": 3454.647}
+{"index": 183, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们还进行了消融实验，以查看是否存在可以提高性能的替代结构。", "elapsed_ms": 4174.793}
+{"index": 184, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "对于 GLUE 基准，我们发现使用词缀集始终表现更好，而词缀概率回归目标在", "elapsed_ms": 4015.146}
+{"index": 185, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "此外，通过观察微调的损失曲线，我们发现 Nybert 在大多数情况下具有更好的收", "elapsed_ms": 3766.078}
+{"index": 186, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "总之，这项工作证明了在预训练语言模型中显式使用形态学信息的有效性。", "elapsed_ms": 4260.163}
+{"index": 187, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所提出的双层Transformer编码器架构能够捕获形态组合性，这是形态丰富语言的一个重要方面。", "elapsed_ms": 3759.215}
+{"index": 188, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些发现应该会推动对形态感知预训练语言模型的进一步研究。", "elapsed_ms": 3837.99}
+{"index": 189, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "你好，我叫 Michał Pietruszka，很高兴向大家介绍这篇题为《通过", "elapsed_ms": 4318.679}
+{"index": 190, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我与卢卡斯·波特曼和卢卡斯·根奇合作，研究", "elapsed_ms": 3721.9}
+{"index": 191, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "让我先从我们工作所针对的问题开始。", "elapsed_ms": 2986.052}
+{"index": 192, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们的方法在考虑长输入的情况下表现良好。", "elapsed_ms": 3790.14}
+{"index": 193, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "粗略地说，它适用于输入超过 2000 个 token 且目标短于所", "elapsed_ms": 4153.894}
+{"index": 194, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这在自然语言处理中具有一些特定的应用。", "elapsed_ms": 3454.238}
+{"index": 195, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，可以想象，给定一份长文档，需要对其进行摘要、分类、回答相关问题、提取信息或一些关键短语。", "elapsed_ms": 3272.925}
+{"index": 196, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "让我回顾一下原始Transformer，以及其注意力复杂度取决于输入长度平方的问题。", "elapsed_ms": 3575.825}
+{"index": 197, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在具有全注意力连接的标准 Transformer 中，每个词元与所有其他词元之间的关系", "elapsed_ms": 4382.646}
+{"index": 198, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，注意力的计算复杂度取决于层数 L、序列长度 n、另一个序列长度以及表示", "elapsed_ms": 3906.692}
+{"index": 199, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "同样地，在解码器对右侧这张图片的交叉注意力中，这里唯一的区别在于，在这种情况下，目标词元会关注输入词元。", "elapsed_ms": 4132.901}
+{"index": 200, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这也可以在这个公式中看到。", "elapsed_ms": 3068.765}
+{"index": 201, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "蓝色得分代表需要计算的关系。", "elapsed_ms": 4017.875}
+{"index": 202, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在全注意力的情况下，我们需要计算该输入序列内的每一个关系。", "elapsed_ms": 4233.35}
+{"index": 203, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "现在，我们将看看当使用分块编码器时会发生什么，该编码器通过限制", "elapsed_ms": 4452.357}
+{"index": 204, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "器端的计算量，但并不能改善解码器的交叉注意力，因为每个输入词元无论", "elapsed_ms": 4145.346}
+{"index": 205, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这种方法通常被称为解码器中融合。", "elapsed_ms": 4079.064}
+{"index": 206, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里的改进可以理解为将 n 的其中一个依赖项改变为另一个表示块大小的常数 M。", "elapsed_ms": 3712.516}
+{"index": 207, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "。\"     *   Alternative: \"我们的核心发现是，对于各种各样的任务，大多数", "elapsed_ms": 3978.081}
+{"index": 208, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "或者只有输入的一部分与期望的输出相关。", "elapsed_ms": 2743.512}
+{"index": 209, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如", "elapsed_ms": 2711.481}
+{"index": 210, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "人们可以把文章读一遍，用荧光笔标出最重要的部分，然后仅根据这些部分", "elapsed_ms": 4038.831}
+{"index": 211, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，突出显示并决定当前词元对于生成摘要是否必不可少的成本很低", "elapsed_ms": 3970.717}
+{"index": 212, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "可以对高亮显示的标记进行池化。", "elapsed_ms": 4242.512}
+{"index": 213, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "得益于我们的 TopK 算子，其开销可以忽略不计。", "elapsed_ms": 3783.857}
+{"index": 214, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "与考虑完整输入的Vanilla模型相比，从缩 and translate closely:         \"The cost of", "elapsed_ms": 3977.67}
+{"index": 215, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "但这里有一个问题。", "elapsed_ms": 3416.378}
+{"index": 216, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "如何选择重要的词元并通过该选择反向传播梯度。", "elapsed_ms": 3422.741}
+{"index": 217, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们解决的根本底层问题是提出可训练的选择机制。", "elapsed_ms": 3248.612}
+{"index": 218, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "第一，这可以允许在训练过程中进行梯度 and Format Check:**     *   \"第一", "elapsed_ms": 4320.894}
+{"index": 219, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "更确切地说", "elapsed_ms": 2590.86}
+{"index": 220, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "给定从一个简单的线性层中获得的一些嵌入及其分数，任务是返回得分最高的嵌入", "elapsed_ms": 4089.734}
+{"index": 221, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "接下来，使用分数上的提升softmax计算权重。", "elapsed_ms": 3411.637}
+{"index": 222, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在每轮锦标赛之后，新的向量和 and得分由这些部分与所获得权", "elapsed_ms": 4108.985}
+{"index": 223, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "简而言之，我们通过对它们的分数进行 softmax 来对它们进行线性组合。", "elapsed_ms": 3167.779}
+{"index": 224, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "而在合并两个标记时，可能会产生一些噪声。", "elapsed_ms": 2644.596}
+{"index": 225, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "但它也允许将梯度传播到所有输入嵌入。", "elapsed_ms": 3745.8}
+{"index": 226, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "简而言之，我们提出的可训练 top-k 是基于在每一步进行类似于锦标赛的软选择", "elapsed_ms": 3900.909}
+{"index": 227, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "从另一个角度来看，表示池化紧跟在编码器层之后。", "elapsed_ms": 3474.998}
+{"index": 228, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "首先，对每个表征进行评分，然后只有得分最高的表征会被传递到下一层。", "elapsed_ms": 3560.09}
+{"index": 229, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "编码可以像在标准Transformer架构中那样在全长输入上进行。", "elapsed_ms": 3843.835}
+{"index": 230, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然而，以固定长度的块处理文本并全局选择最佳表示是可能的。", "elapsed_ms": 3872.354}
+{"index": 231, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里是在编码器之后引入的表示池化的一个例子。", "elapsed_ms": 3428.863}
+{"index": 232, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这直接影响了交叉注意力的开销，它不取决于输入长度 N，而是取决于表示池化长度的常数 K。", "elapsed_ms": 3650.201}
+{"index": 233, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "该约束决定了选择多少个表示并传递给解码器。", "elapsed_ms": 3970.074}
+{"index": 234, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "从较短的文本中生成摘要的成本显著低于以前的解决方案。", "elapsed_ms": 3657.532}
+{"index": 235, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "由于序列长度可以大幅缩短", "elapsed_ms": 3467.976}
+{"index": 236, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，在我们的实验中，我们成功地使用了比 N 的值小 16 甚至 60 倍，甚至 64 倍的 K。", "elapsed_ms": 3902.59}
+{"index": 237, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "请注意，分块编码和自注意力的有益影响是持续的。", "elapsed_ms": 3400.16}
+{"index": 238, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "请记住，注意力的计算成本取决于输入长度的平方。", "elapsed_ms": 3441.351}
+{"index": 239, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在编码过程中更早地引入输入可以显著降低成本。", "elapsed_ms": 2666.457}
+{"index": 240, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "对于金字塔模型，我们缩小了每个所选层输出的表示尺寸，从而随着", "elapsed_ms": 3895.575}
+{"index": 241, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如您所看到的，这里一个完整编码器的总计算成本不到完整尺寸第一层成本的两倍。", "elapsed_ms": 4092.316}
+{"index": 242, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "当更早引入池化时，所有紫色正方形的和因此被限制在一个常数内，不依赖于层数 L。", "elapsed_ms": 4526.028}
+{"index": 243, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "而是取决于恒定性，这可能会受到网络中池化层位置的影响。", "elapsed_ms": 4010.386}
+{"index": 244, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们的改进是在长度为 8,000 个 token 的输入上进行基", "elapsed_ms": 4343.793}
+{"index": 245, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "该图表明，当引入池化时，网络深度实现了最佳的可扩展性。", "elapsed_ms": 3484.373}
+{"index": 246, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这里可以注意到，在如此长的输入上，训练 and 24 层的 Pyramideon", "elapsed_ms": 4090.831}
+{"index": 247, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "更不用说对于如此长的输入，原生Tra and Transformer有多容易发生显存溢出了。", "elapsed_ms": 4226.388}
+{"index": 248, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们对训练好的 DeepPyramidon 与其他基线在长文档摘要任务上进行了定性比较，在该任务中，给定来自 arXiv 或 PubMed 的文章正文，任务是生成其摘要。", "elapsed_ms": 3626.753}
+{"index": 249, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如所见，作为我们基线的 Blockwise 的表现达到了近期最先进模型的水平，而 Deep", "elapsed_ms": 3844.758}
+{"index": 250, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "同时，与分块基线相比，我们的模 and over 450% faster", "elapsed_ms": 4019.232}
+{"index": 251, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "两个模型的参数量都少得多，并且是在所选任务上从头开始训练的。", "elapsed_ms": 3369.709}
+{"index": 252, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "先前为了实现类似的性能，以往的方法必须使用更多的参数，并利用预训练的基础模型以及额外的", "elapsed_ms": 4182.686}
+{"index": 253, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们邀请您阅读我们的完整论文并使用我们的 GitHub 代码。", "elapsed_ms": 2995.158}
+{"index": 254, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "谢谢观看", "elapsed_ms": 2861.783}
+{"index": 255, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "你好，我是来自哈佛大学的姜晓伟。", "elapsed_ms": 3814.357}
+{"index": 256, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我很高兴向大家介绍我们在面向任务的对话中用于降低延迟的在线语义解析方面的工作。", "elapsed_ms": 3847.271}
+{"index": 257, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是与来自微软 Semantic Machines 的 Jason、Michael、Anthony 和 Sam 共同完成的工作。", "elapsed_ms": 4454.038}
+{"index": 258, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在任务型对话中，用户与系统进行交互，该系统处理来自用户话语（", "elapsed_ms": 4167.721}
+{"index": 259, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "从用户话语结束到系统响应，往往存在明显的延迟。", "elapsed_ms": 3627.471}
+{"index": 260, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在底层，用户话语被翻译成一个可执行程序。", "elapsed_ms": 4134.696}
+{"index": 261, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后被执行，以便系统能够做出适当的响应。", "elapsed_ms": 3163.632}
+{"index": 262, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这里，程序被表示为一个语义图，它概述了计算过程，其中节点表示函数调用，其子节点是参数。", "elapsed_ms": 3823.594}
+{"index": 263, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "大节点标记瞬时操作，但其他节点执行缓慢。", "elapsed_ms": 4367.909}
+{"index": 264, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "请注意，与我们在此展示的简单示例不同，这些程序通常可以是超出树状结构的更复杂的图。", "elapsed_ms": 3419.736}
+{"index": 265, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在本次演讲中，我们提出了一个问题：我们能否在用户甚至还没说完话", "elapsed_ms": 4228.431}
+{"index": 266, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是一个在线预测与决策问题。", "elapsed_ms": 3161.267}
+{"index": 267, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这个世界上还有很多其他人。", "elapsed_ms": 3191.657}
+{"index": 268, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "\" -> 智能文本自动补全，用于猜测用户意图；         \"and Uber", "elapsed_ms": 4203.533}
+{"index": 269, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所有这些场景都有一个共同点。", "elapsed_ms": 3130.318}
+{"index": 270, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "也就是说，在看到其他输入之前做出决策是有益的。", "elapsed_ms": 3400.32}
+{"index": 271, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在我们的情况下，我们将处理在线语义解析，这预计会具有挑战性，因为我们必须猜测用户可能会说什么。", "elapsed_ms": 3452.858}
+{"index": 272, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "而且它也尚未得到充分研究，且没有正式的评估指标。", "elapsed_ms": 3790.718}
+{"index": 273, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "首先，让我们来看看普通系统是如何运作的。", "elapsed_ms": 3654.967}
+{"index": 274, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "它是离线运行的，仅在用户话语 and then parsing to the program ->", "elapsed_ms": 4007.707}
+{"index": 275, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这里，信用图是在看到其他信息后被预测出来的。", "elapsed_ms": 4885.389}
+{"index": 276, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "相比之下，我们提出了一种在线系统，它可以在每个话语前缀处进行解析。", "elapsed_ms": 4034.561}
+{"index": 277, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，每次我们看到一个新标记，我们都会预测一个新图。", "elapsed_ms": 4533.594}
+{"index": 278, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "请注意，可能存在错误。", "elapsed_ms": 3266.177}
+{"index": 279, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "而在“与贝拉克·奥巴马在泳池派对”的位置上，我们得到了", "elapsed_ms": 3794.74}
+{"index": 280, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这个过程一直持续，直到我们收到完整的用户话语。", "elapsed_ms": 3449.222}
+{"index": 281, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这将如何影响离线系统中的执行时间线？", "elapsed_ms": 3994.878}
+{"index": 282, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "看一下末尾的程序图，以便系统可以从这一点开始执行。", "elapsed_ms": 3626.205}
+{"index": 283, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "请记住，灰色节点是快速操作，因此我们只考虑彩色慢速函数的执行时间线。", "elapsed_ms": 3486.51}
+{"index": 284, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "首先，这五个解析器函数可以并行执行，它们在粉色框中以白色高", "elapsed_ms": 4402.619}
+{"index": 285, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "接下来，在从低层节点获取结果后，就可以执行警报事件。然后顶层函数", "elapsed_ms": 4131.231}
+{"index": 286, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "执行过程受限于程序的依赖结构，其中某些操作无法并行化，从而导致了明显的延迟。", "elapsed_ms": 3882.176}
+{"index": 287, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在我们的在线系统中，我们边运行边预测，程序执行可以更早开始。", "elapsed_ms": 3896.648}
+{"index": 288, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这里，__ 之后的前缀确信地预测程序中应该包含 find person 函数，但其余", "elapsed_ms": 4389.811}
+{"index": 289, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "该节点的执行可以立即按原样启动。", "elapsed_ms": 4065.076}
+{"index": 290, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后，使用更多的 token，我们将预测一个完整的 n-gram，但其中一部分已经正在执行了", "elapsed_ms": 3932.33}
+{"index": 291, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以我们只需要考虑其余我们同样有把握的笔记。", "elapsed_ms": 3993.58}
+{"index": 292, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "aɪnd ɒpəreɪʃən/. No, it's definitely \"fine portion", "elapsed_ms": 4303.518}
+{"index": 293, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "再次，我们可能会做出错误的预测。", "elapsed_ms": 4223.044}
+{"index": 294, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "有了更多的文本，我们就有更多的能力把它做好。", "elapsed_ms": 4124.778}
+{"index": 295, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如这里的事件时间，其中 AM 也被正确预测。", "elapsed_ms": 4045.162}
+{"index": 296, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后，我们可以按照程序依赖结构开始执行其余部分。", "elapsed_ms": 3283.106}
+{"index": 297, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "通过将执行时间线与话语时间线重叠，我们节省了大量时间。", "elapsed_ms": 2972.333}
+{"index": 298, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，我们提出了在线语义解析的任务。", "elapsed_ms": 2963.35}
+{"index": 299, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一个潜在的假设是，执行时间主导了模型预测时间。", "elapsed_ms": 3670.824}
+{"index": 300, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以它只能通过提前预测来争取时间。", "elapsed_ms": 3522.356}
+{"index": 301, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "另一个假设是，预测和执行是在对用户不可见的后台进行的。", "elapsed_ms": 4325.364}
+{"index": 302, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "没有必要保持一致的价格历史记录。", "elapsed_ms": 2963.631}
+{"index": 303, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以我们在每个 token 之后都从头开始解析。", "elapsed_ms": 4348.67}
+{"index": 304, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "特别是，我们提出了一种两步方法。", "elapsed_ms": 3530.021}
+{"index": 305, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一个用于预测具有完整结构图的提议步骤，以及一个用于选择当前值得执行的节点的选择步骤。", "elapsed_ms": 3985.014}
+{"index": 306, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们所提出的方法有两种变体。", "elapsed_ms": 4333.419}
+{"index": 307, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "第一种方法将语言模型补全与完整的自动到图解析相结合。", "elapsed_ms": 4396.097}
+{"index": 308, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "特别是，截至 Obama 的前缀首先通过微调的 BART 语言模型进行补全，然后被翻译成具有完整离线解析器的程序。", "elapsed_ms": 3631.936}
+{"index": 309, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "第二种方法直接根据用户话语前缀预测程序。", "elapsed_ms": 3480.677}
+{"index": 310, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是通过训练一个单一的在线解析器，将每个前缀翻译为目标图来实现的。", "elapsed_ms": 3307.043}
+{"index": 311, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这有助于模型学习正确的预期。", "elapsed_ms": 3416.02}
+{"index": 312, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "更详细一点，我们如何生成这些图表？", "elapsed_ms": 4020.067}
+{"index": 313, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们通过生成图的串行版本来构建这个问题。", "elapsed_ms": 4354.684}
+{"index": 314, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "每个节点或边都由一个动作表示。", "elapsed_ms": 3346.772}
+{"index": 315, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里，我们从第一个音符开始。", "elapsed_ms": 2864.146}
+{"index": 316, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "下方的数字记录了操作历史中的绝对索引。", "elapsed_ms": 3008.8}
+{"index": 317, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后，我们得到第二个节点。", "elapsed_ms": 3380.39}
+{"index": 318, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "接下来是它们之间的边。", "elapsed_ms": 3230.521}
+{"index": 319, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "它包含一个指向前一个节点索引的指针和边标签。", "elapsed_ms": 3067.52}
+{"index": 320, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这里的0表示将最近的节点与第0次操作生成的节点连接起来，以及下一个节点、下一条边", "elapsed_ms": 4276.039}
+{"index": 321, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这个过程一直持续，直到我们生成完整的图。", "elapsed_ms": 3578.853}
+{"index": 322, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "底层模型基于具有自指向机制的 Transformer，类似于以前的基于转移的解析器。", "elapsed_ms": 3874.421}
+{"index": 323, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在生成完整的图之后，我们得到了与图的不同部分相对应的动作级概率。", "elapsed_ms": 3466.56}
+{"index": 324, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们基于阈值启发式选择置信子图进行执行。", "elapsed_ms": 3995.262}
+{"index": 325, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "\" -> \"降低延迟\" / \"减少延迟\". \"降低延迟\" is standard.", "elapsed_ms": 4243.363}
+{"index": 326, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "为了对在线方法进行正式评估，我们提出了最终延迟降低（FLR）指标。", "elapsed_ms": 3106.301}
+{"index": 327, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "以下是离线系统如何完成执行时间线的回顾。", "elapsed_ms": 3270.04}
+{"index": 328, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在在线系统中，执行与话语时间线重叠，因此它结束得更早。", "elapsed_ms": 3235.683}
+{"index": 329, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "相比所减少的时间。\" or \"FLR定义为与离线系统相比减少的时间，以执行", "elapsed_ms": 4625.377}
+{"index": 330, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在两个大型对话语义解析数据集 SMCalFlow 和 TreeDST 上进行了实验。", "elapsed_ms": 4477.409}
+{"index": 331, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们的基于图的解析器在离线运行时，在两个数据集的解析上都达到了最", "elapsed_ms": 3788.342}
+{"index": 332, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "相比于无补全的简单基线，LM补全模型也获得了显著的", "elapsed_ms": 4034.593}
+{"index": 333, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "现在，让我们来看看我们的句法图解析器的预测准确率。", "elapsed_ms": 3391.825}
+{"index": 334, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在Y轴上测试了验证数据中生成图与标准图之间图元组的匹配F", "elapsed_ms": 3961.413}
+{"index": 335, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些曲线中的每一条都代表一个不同的模型，唯一的区别在于训练数据。", "elapsed_ms": 2964.561}
+{"index": 336, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最底部的曲线是离线解析器，我们正在混合不同长度的前缀数据，以将模型过渡为在线解析器。", "elapsed_ms": 3657.126}
+{"index": 337, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，图例中的“prefix 80%+”表示该模型是使用前缀长度大于完整话语长度80%的前缀数据进行训练的。", "elapsed_ms": 3792.264}
+{"index": 338, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "左上角是设计区域。", "elapsed_ms": 3084.968}
+{"index": 339, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们可以看到，黑色曲线中的离线解析器在前缀数据上表现不佳。", "elapsed_ms": 3285.994}
+{"index": 340, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "随着我们在训练中加入更多前缀，曲线向左上方移动，在所有前缀长度上都表现得更好。", "elapsed_ms": 3963.522}
+{"index": 341, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然而，在右上角的点中，完整话语解析性能并未受到影响。", "elapsed_ms": 3764.62}
+{"index": 342, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "基于这些强劲的结果，我们降低了多少延迟？", "elapsed_ms": 3518.501}
+{"index": 343, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "通过源标记的数量来测量时间，并模拟不同的函数执行时间。", "elapsed_ms": 3806.268}
+{"index": 344, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些曲线展示了 FLR 指标与执行成本之间的权衡，该成本是通过不正确的超", "elapsed_ms": 3914.224}
+{"index": 345, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是通过改变子类选择阈值来实现的。", "elapsed_ms": 3438.415}
+{"index": 346, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "较高的阈值错误选择的函数较少，但获得的 FLR 较小，而较低的", "elapsed_ms": 5779.129}
+{"index": 347, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们对比了我们提出的两种方法以及一个仅直接将离线解析器用于在线", "elapsed_ms": 4211.758}
+{"index": 348, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "左上角区域具有最佳的 FLR 和成本权衡。", "elapsed_ms": 3865.859}
+{"index": 349, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们看到，我们的两种方法都以很大优势击败了基线，并且它们在", "elapsed_ms": 3927.397}
+{"index": 350, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "当单个函数执行速度更快时，往往会有更多的运行执行次数，且延迟降低的空间也更小。", "elapsed_ms": 3553.237}
+{"index": 351, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "当单个函数执行较慢时，FLR 的改进空间更大。", "elapsed_ms": 3982.099}
+{"index": 352, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们的两种方法在不同的成本区间实现了更好的性能。", "elapsed_ms": 3315.527}
+{"index": 353, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "总体而言，根据执行时间和允许的成本，我们实现了 30% 到 63% 的相对延迟降低。", "elapsed_ms": 3460.196}
+{"index": 354, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最后，我们给出了当允许的开销为三次运行执行时，每种类型函数节点的", "elapsed_ms": 3737.439}
+{"index": 355, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "，全线都在上涨。\" is highly accurate for \"gains all over the board\".  5", "elapsed_ms": 3835.185}
+{"index": 356, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在一些功能上，我们也实现了显著的延迟降低，其中红条要长得多，例如文件管理器和收件人。", "elapsed_ms": 2925.121}
+{"index": 357, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些是底层函数，对其他函数没有太多依赖。", "elapsed_ms": 3943.85}
+{"index": 358, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "综上所述，我们提出将在线语义解析作为一个新的探索任务，并引入了严格的延迟降低度量标准。", "elapsed_ms": 3842.757}
+{"index": 359, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "凭借强大的前缀语义解析器，无论是通过结合大语言模型补全和完整解析器的", "elapsed_ms": 4745.263}
+{"index": 360, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "此外，我们的方法可以作为一个通用框架，并可应用于不同领域的其他可执行语义表示。", "elapsed_ms": 3484.258}
+{"index": 361, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "未来的研究可以探索更智能的预测与执行集成方法。", "elapsed_ms": 3753.609}
+{"index": 362, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "感谢收听", "elapsed_ms": 3945.809}
+{"index": 363, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "谢谢。", "elapsed_ms": 4272.063}
+{"index": 364, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我将介绍我们关于生成用于问答任务的检索增强反事实的工作。", "elapsed_ms": 3563.793}
+{"index": 365, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这是我在谷歌研究院实习期间完成的工作，期间我得到了 Matthew Lamm 和 Ian Tenney 的指导。", "elapsed_ms": 3762.997}
+{"index": 366, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "为了说明这项任务的动机，让我先来定义什么是反事实。", "elapsed_ms": 3974.04}
+{"index": 367, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这项工作中，我们将反事实定义为对输入文本的扰动，它以某种有意义且受控的方式与原始文本有所不同。", "elapsed_ms": 3286.16}
+{"index": 368, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "并使我们能够对结果或任务标签的变化进行推理。", "elapsed_ms": 3257.729}
+{"index": 369, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，将词语“fascinating”改为“captivating”，或者将“expected”", "elapsed_ms": 4097.8}
+{"index": 370, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "同样地，在问题中加入限定词“女性”会改变下面例子中该问题的答案。", "elapsed_ms": 3365.544}
+{"index": 371, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "与在该任务上训练的NLP模型相比，人类通常对这类扰动具有鲁棒", "elapsed_ms": 4281.402}
+{"index": 372, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "为什么会这样？", "elapsed_ms": 3613.818}
+{"index": 373, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "数据集在采样时可能存在系统性偏差，从而导致一个更简单的决策边界，而这一边界会被反事实所违背。", "elapsed_ms": 5528.851}
+{"index": 374, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如这个二维分类问题所示。", "elapsed_ms": 3713.003}
+{"index": 375, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "先前的工作发现，在训练数据中添加反事实样本可以使模型对此类扰动更具鲁棒性。", "elapsed_ms": 3836.525}
+{"index": 376, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所以，如果反事实是有价值的，我们该如何生成它们？", "elapsed_ms": 3137.901}
+{"index": 377, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这项任务对NLP来说尤其困难，因为这里有来自三个不同NLP任务的三个例子。", "elapsed_ms": 3954.842}
+{"index": 378, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "正如你所看到的，违反结果之间决策边界的样本需要通过扰动此处标", "elapsed_ms": 3961.759}
+{"index": 379, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这可以通过人工标注来完成，但这成本高昂且存在偏见。", "elapsed_ms": 3701.898}
+{"index": 380, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "先前的一些工作专注于使用语法树或语义角色标注。", "elapsed_ms": 3058.537}
+{"index": 381, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "但是，由这些技术产生的扰动集合受限于语义框架。", "elapsed_ms": 3966.374}
+{"index": 382, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最近的工作使用掩码语言模型来填充文本中被掩码的部分，以改变标签。", "elapsed_ms": 3527.316}
+{"index": 383, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "但要找出对文本的哪些部分进行扰动可能具有挑战性。", "elapsed_ms": 3804.596}
+{"index": 384, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "特别是在问答方面，生成反事实面临着更多挑战。", "elapsed_ms": 4086.908}
+{"index": 385, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这项任务需要背景知识。", "elapsed_ms": 2866.875}
+{"index": 386, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，将原始问题“《夺宝奇兵之魔宫传奇》是前传吗”", "elapsed_ms": 4118.076}
+{"index": 387, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们需要了解该系列中的其他电影，才能回答像“《夺宝奇兵》是前传", "elapsed_ms": 4158.816}
+{"index": 388, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "此外，随机扰动可能会导致一些无法根据现有证据回答或存在错误前提的问题。", "elapsed_ms": 3793.0}
+{"index": 389, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "此外，某些问题扰动可能会导致与原始输入产生显著的语义漂移。", "elapsed_ms": 3530.51}
+{"index": 390, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，这个问题是：印第安纳·琼斯在《魔域奇兵", "elapsed_ms": 3998.571}
+{"index": 391, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们提出了一种非常简单但有效的技术，称为“检索-生成-过滤”（RGF），用于", "elapsed_ms": 4040.991}
+{"index": 392, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "RGF背后的核心直觉是，生成扰 and 动所需的必要背景信息可能", "elapsed_ms": 4121.17}
+{"index": 393, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，最先进的模型 Realm 针对“谁是里士满足球俱乐部的队长", "elapsed_ms": 3886.317}
+{"index": 394, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "嗯，它确实恢复了原始参考段落，并将 Trent Cotchin 作为首选答案。", "elapsed_ms": 4352.486}
+{"index": 395, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "它还会检索额外的段落和答案，这些可用于指导问题扰动。", "elapsed_ms": 3391.605}
+{"index": 396, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "corresponding to the captains of the reserve team and the women's team of the same club", "elapsed_ms": 4055.491}
+{"index": 397, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "总而言之，RAG 首先检索前 K 个最相关的答案和上下文，这些答案和上下文", "elapsed_ms": 4526.961}
+{"index": 398, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "\"在这一步之后，问题生成模型以这些备选答案为条件，生成一个与", "elapsed_ms": 4216.929}
+{"index": 399, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最后，我们可以基于极小性，或者基于我们有兴趣引入的语义扰动类型，来过滤生成的问题。", "elapsed_ms": 3301.328}
+{"index": 400, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "更详细地介绍每个步骤，对于检索，我们使用像 REALM 这样的“检索并阅读”模型，该模型将原始问题和像维基百科这样的大型语料库作为输入。", "elapsed_ms": 3537.984}
+{"index": 401, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "它由两个模块组成。", "elapsed_ms": 3584.227}
+{"index": 402, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "检索模块在稠密段落索引上进行相似度搜索，以检索出与问题", "elapsed_ms": 4178.844}
+{"index": 403, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然后，阅读器模块从每个段落中提取一个片段作为候选答案。", "elapsed_ms": 3941.052}
+{"index": 404, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "REALM在大多数情况下都能检索到黄金段落和答案。", "elapsed_ms": 3727.092}
+{"index": 405, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然而，在这项工作中，我们更感兴趣的是它在后续阶段检索到的答案和上下文。", "elapsed_ms": 4112.163}
+{"index": 406, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在下一步“问题生成”中，我们使用这些备选答案和上下文来生成与这些备选项相对应的新问题。", "elapsed_ms": 3846.765}
+{"index": 407, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "问题生成模型是一个预训练的文本到文本 Transformer，它在 NQ 数据上进行了微", "elapsed_ms": 4020.083}
+{"index": 408, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在推理过程中，我们向问题生成模型提供在上一步中检索到的备选答案和上下文。", "elapsed_ms": 3515.148}
+{"index": 409, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，对于查询“谁是里士满足球俱乐部的队长？”，REALM 检索", "elapsed_ms": 3796.667}
+{"index": 410, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "具有特定的语义扰动", "elapsed_ms": 3090.921}
+{"index": 411, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "同样地，我们也会收到诸如谁担任了里士满VFL预备队队长这样的查询。", "elapsed_ms": 4209.392}
+{"index": 412, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "或者在去年的总决赛中命令了格雷厄姆·内格。", "elapsed_ms": 4213.462}
+{"index": 413, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最后，我们根据一些所需的特征筛选出生成查询的一个子集。", "elapsed_ms": 3339.076}
+{"index": 414, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "新问题在语义上仍然接近原问题。\" or \"正如前面所阐述的，", "elapsed_ms": 4051.148}
+{"index": 415, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，对于不需要额外监督的过滤技术，我们只需保留与原始问题具有较小词元级别编辑距离的新问题。", "elapsed_ms": 3986.29}
+{"index": 416, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，我们删除了“格雷厄姆在去年的总决赛中反驳了谁", "elapsed_ms": 4240.429}
+{"index": 417, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因为它与原始问题的编辑距离更长。", "elapsed_ms": 4045.414}
+{"index": 418, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在我们的实验中，我们证明了这种简单的启发式方法可以用于扩充NQ训练数据。", "elapsed_ms": 3588.762}
+{"index": 419, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们还尝试了一种基于语义扰动类型的过滤策略。", "elapsed_ms": 3314.75}
+{"index": 420, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "为此，我们使用了一个名为 QED 的通用 and 查询分解框架。", "elapsed_ms": 3243.565}
+{"index": 421, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "00:00:01) usually means \"identify/distinguish/find\". \"指出", "elapsed_ms": 4184.365}
+{"index": 422, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "指代是问题中与上下文中的实体相对应的名词短语。", "elapsed_ms": 4090.739}
+{"index": 423, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "谓语基本上是问题的剩余部分。", "elapsed_ms": 4049.483}
+{"index": 424, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，我们能够将查询“谁担任了里士满有史以来第一支女子队的", "elapsed_ms": 3671.107}
+{"index": 425, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一个在 NQ 参考谓词标注上训练的模型为我们提供了这种问题分解。", "elapsed_ms": 3511.874}
+{"index": 426, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "基于 QED 对原始问题和生成的问题进行 and ML are indeed \"反事实\").", "elapsed_ms": 4782.352}
+{"index": 427, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "具体来说，我们得到了两组问题。", "elapsed_ms": 2954.331}
+{"index": 428, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "那些在保留谓词的同时发生指称变化的，以及那些发生谓词变化并可选择", "elapsed_ms": 3863.443}
+{"index": 429, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，谁担任里士满VFL预备队队长是一个指代变化。", "elapsed_ms": 3792.245}
+{"index": 430, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "虽然谁在俱乐部身穿9号球衣是一个相当大的变化。", "elapsed_ms": 3757.082}
+{"index": 431, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们现在评估将RGF扰动用于增强训练数据时的有效性。", "elapsed_ms": 3992.445}
+{"index": 432, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "因此，为了有效评估特别是反事实增强的有效性，我们使用两个强数据增强基线进行了实验。", "elapsed_ms": 3779.403}
+{"index": 433, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "第一个被称为随机答案和问题生成的基线，添加了与原始问题无关的数据。", "elapsed_ms": 3310.604}
+{"index": 434, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "也就是说，段落和答案只是从维基百科中随机抽取的。", "elapsed_ms": 3621.598}
+{"index": 435, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这个基线基本上增加了更多看起来像 MQ 的数据。", "elapsed_ms": 4007.961}
+{"index": 436, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在第二个基线、标准答案和问题生成中，我们专门应用了我们方法的检索部分。", "elapsed_ms": 3431.07}
+{"index": 437, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "在这里，备选答案仅选自包含标准答案的同一段落。", "elapsed_ms": 3976.283}
+{"index": 438, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "基线和RGF增强在阅读理解（其中模型可以访问问题和上下文）中", "elapsed_ms": 3920.568}
+{"index": 439, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在六个域外数据集上进行了实验，并在此展示了结果，其中训练数据在增强中翻了一倍。", "elapsed_ms": 3889.49}
+{"index": 440, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们发现两种数据增强基线都无法提高域外泛化能力。", "elapsed_ms": 3672.213}
+{"index": 441, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "事实上，在原始数据上训练的六个模型的集成似乎是最具竞争力的基线。", "elapsed_ms": 4233.554}
+{"index": 442, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "与该基线相比，我们发现 RLF 反事实能够在保持域内性能的同时，提高域", "elapsed_ms": 3948.677}
+{"index": 443, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这表明，通过反事实增强来填补模型的推理空白，比从训练分布中添加更多数据更有效。", "elapsed_ms": 3497.342}
+{"index": 444, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "此外，我们发现使用检索来采样替代结果或答案对于有效的CD至关重要。", "elapsed_ms": 2955.285}
+{"index": 445, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们还尝试了开放域问答设置，其中模型只能看到问题，并且我们再次在四个域外数据集上进行了评估。", "elapsed_ms": 3527.319}
+{"index": 446, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们发现基线模型在域外泛化方面的效果不佳。", "elapsed_ms": 4194.162}
+{"index": 447, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然而，使用 RGF 进行数据增强显示出更显著的改进。", "elapsed_ms": 3388.597}
+{"index": 448, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们甚至在域内 NQ 数据集上有所提升。", "elapsed_ms": 3115.561}
+{"index": 449, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们假设反事实数据增强有助于模型针对非常相似的查询学习更好的查询编码。", "elapsed_ms": 3184.869}
+{"index": 450, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最后，我们还评估了模型在原始问题局部邻域内提高一致性的能力。", "elapsed_ms": 3714.521}
+{"index": 451, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "一致性衡量了模型正确回答问题的比例，其中原始查询和反事实查询均被正确回答。", "elapsed_ms": 3970.124}
+{"index": 452, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这明确地帮助我们衡量模型对原始输入邻域内微小扰动的鲁棒性。", "elapsed_ms": 3207.095}
+{"index": 453, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们在五个数据集上进行实验，这些数据集包含语义相近的问题对。", "elapsed_ms": 3900.62}
+{"index": 454, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "除了已经可用的三个数据集 AQA、Am and CoRef Contrast 集之外，我们", "elapsed_ms": 3878.751}
+{"index": 455, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "这些子集在内部进行了标注以消除噪声，并作为资源提供。", "elapsed_ms": 3521.23}
+{"index": 456, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "所有基线都无法显著提高一致性，而集成模型仅小幅提高了一致", "elapsed_ms": 4567.235}
+{"index": 457, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "然而，我们使用反事实增强在一致性方面取得了显著的提升，无论是在先前", "elapsed_ms": 4287.562}
+{"index": 458, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "Simplified Chinese):**     请注意，增强的RGB数据不受扰动类型偏置的影响", "elapsed_ms": 4389.066}
+{"index": 459, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "事实上，对生成的反事实类型进行定性检查表明，生成的问题包含多种不同的扰", "elapsed_ms": 4451.785}
+{"index": 460, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，这个关于明尼苏达州沃纳特格罗夫人口的原始问题，沿着", "elapsed_ms": 4024.247}
+{"index": 461, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "\" -> \"Perturbations are context-specific.\"     *   If the audio says \"Arch", "elapsed_ms": 4379.742}
+{"index": 462, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "例如，对于关于温布尔登单打锦 and 标赛的另一个问题，扰", "elapsed_ms": 4211.702}
+{"index": 463, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "最后的要点：我们解决了针对信息寻求型查 and 询的反事实数据增强和", "elapsed_ms": 4108.305}
+{"index": 464, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "", "elapsed_ms": 4063.261}
+{"index": 465, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "数据增强提高了域外泛化和邻域一致性。", "elapsed_ms": 4032.869}
+{"index": 466, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "我们发现，我们的GF反事实在语义上具有多样性，且在增强过程中不会引入偏差。", "elapsed_ms": 4149.806}
+{"index": 467, "provider": "gemini", "model": "gemini-3.5-flash", "prediction": "谢谢", "elapsed_ms": 2510.683}

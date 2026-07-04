@@ -1,0 +1,468 @@
+{"index": 0, "provider": "openai", "model": "gpt-audio-mini", "prediction": "嗨，我是 Elena，我将介绍我们的工作：在西班牙语中检测模拟借用词的语料库及其建模方法。", "elapsed_ms": 1226.418}
+{"index": 1, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们将讨论词汇借用是什么、我们提出的任务、我们发布的数据集以及我们探索的一些模型。", "elapsed_ms": 957.725}
+{"index": 2, "provider": "openai", "model": "gpt-audio-mini", "prediction": "首先，什么是词汇借用，以及为什么它作为自然语言处理任务很重要？", "elapsed_ms": 951.38}
+{"index": 3, "provider": "openai", "model": "gpt-audio-mini", "prediction": "词汇借用基本上是指将一个语言中的词汇纳入到另一个语言中。", "elapsed_ms": 913.952}
+{"index": 4, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，在西班牙语中，我们使用来自英语的词汇。", "elapsed_ms": 847.626}
+{"index": 5, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这里有一些例子，比如“podcast”、“app”、“online”、“crowdfunding”，这些都是我们有时在西班牙语中使用的英语词汇。", "elapsed_ms": 1055.605}
+{"index": 6, "provider": "openai", "model": "gpt-audio-mini", "prediction": "词汇借用是一种语言借用，基本上是指一种语言模式的复制，涉及所有语言的模式。", "elapsed_ms": 1176.69}
+{"index": 7, "provider": "openai", "model": "gpt-audio-mini", "prediction": "借用和代码转换有时被比较并描述为一个连续体，代码转换是双语者在同一时间混合使用两种语言的行为。", "elapsed_ms": 1079.213}
+{"index": 8, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然而，词汇借用和代码混用之间确实存在一些差异。", "elapsed_ms": 974.855}
+{"index": 9, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们将专注于词汇层面。", "elapsed_ms": 706.883}
+{"index": 10, "provider": "openai", "model": "gpt-audio-mini", "prediction": "代码转换是双语者所做的事情，根据定义，代码转换者并没有完全融入任何一种使用的语言，而词汇借用也是单语者所做的事情。", "elapsed_ms": 1183.723}
+{"index": 11, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't process audio directly. If you provide the text from the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 776.862}
+{"index": 12, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最终，借用词可以被整合进接受语言中。", "elapsed_ms": 5723.669}
+{"index": 13, "provider": "openai", "model": "gpt-audio-mini", "prediction": "为什么借贷是一个有趣的现象？", "elapsed_ms": 773.098}
+{"index": 14, "provider": "openai", "model": "gpt-audio-mini", "prediction": "从语言学的角度来看，借词是语言变化以及语言之间相互作用的一种表现。", "elapsed_ms": 969.294}
+{"index": 15, "provider": "openai", "model": "gpt-audio-mini", "prediction": "而且，词汇借用也是新词的来源之一。", "elapsed_ms": 835.706}
+{"index": 16, "provider": "openai", "model": "gpt-audio-mini", "prediction": "你有一些例子是词汇借用，这些词汇已经被纳入西班牙语作为新词。", "elapsed_ms": 936.722}
+{"index": 17, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在自然语言处理方面，借用词是词汇表外单词的常见来源。", "elapsed_ms": 888.365}
+{"index": 18, "provider": "openai", "model": "gpt-audio-mini", "prediction": "事实上，自动检测词汇借用已被证明对自然语言处理的下游任务非常有用，比如解析文本、语句或机器翻译。", "elapsed_ms": 1082.952}
+{"index": 19, "provider": "openai", "model": "gpt-audio-mini", "prediction": "人们对英语对其他语言的影响越来越感兴趣，特别是与英语词汇借用有关的现象，这些借用有时被称为“英语化”。", "elapsed_ms": 1966.196}
+{"index": 20, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这里，你可以看到一些关于在这些语言中自动检测借用词的工作示例。", "elapsed_ms": 1003.993}
+{"index": 21, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们提出的任务是检测西班牙语新闻中模拟的词汇借用。", "elapsed_ms": 1491.859}
+{"index": 22, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这意味着我们有兴趣提取那些从其他语言借用而来、但尚未被整合或同化到西班牙语中的词汇，这些词汇出现在西班牙语报纸中。", "elapsed_ms": 2194.405}
+{"index": 23, "provider": "openai", "model": "gpt-audio-mini", "prediction": "好的，请播放音频，我会将其翻译成简体中文。", "elapsed_ms": 809.545}
+{"index": 24, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't listen to or process audio. If you provide the text of the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 829.925}
+{"index": 25, "provider": "openai", "model": "gpt-audio-mini", "prediction": "畅销款式的服装印有花卉图案、动物纹理或拼布风格的装饰。", "elapsed_ms": 953.01}
+{"index": 26, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您所看到的，这里有三段文本，它们实际上是英文单词，比如“畅销书”、“动物纹”和“包装”。", "elapsed_ms": 938.069}
+{"index": 27, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些是我们感兴趣的提取和检测的跨度类型。", "elapsed_ms": 794.071}
+{"index": 28, "provider": "openai", "model": "gpt-audio-mini", "prediction": "之前已经有关于英语借词检测的研究，这包括在西班牙新闻稿上使用CRF模型进行英语借词检测。", "elapsed_ms": 1006.415}
+{"index": 29, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这个模型达到了一个 F1 分数。", "elapsed_ms": 864.551}
+{"index": 30, "provider": "openai", "model": "gpt-audio-mini", "prediction": "但是在数据集和建模方法上都有一些限制。", "elapsed_ms": 926.842}
+{"index": 31, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，该数据集完全专注于一个新闻来源，仅由标题组成。", "elapsed_ms": 1010.227}
+{"index": 32, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在训练集和测试集中出现了借用词的重叠。", "elapsed_ms": 842.572}
+{"index": 33, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，这阻碍了评估该建模方法是否能够真正推广到之前未见过的借款人的能力。", "elapsed_ms": 1068.336}
+{"index": 34, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，我们的目标是解决任务中的一些这些限制。", "elapsed_ms": 844.441}
+{"index": 35, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以我们开始，我们先创建", "elapsed_ms": 810.938}
+{"index": 36, "provider": "openai", "model": "gpt-audio-mini", "prediction": "一个新的数据集，目的是创建一个尽可能困难的测试集，这个数据集已经标注了词汇借用。", "elapsed_ms": 1023.707}
+{"index": 37, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，训练集和测试集之间在词汇和主题上会有最小的重叠。", "elapsed_ms": 1071.012}
+{"index": 38, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，测试集来自训练集中未曾出现过的来源和日期。", "elapsed_ms": 919.285}
+{"index": 39, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这里你可以看到，图中没有重叠。", "elapsed_ms": 879.112}
+{"index": 40, "provider": "openai", "model": "gpt-audio-mini", "prediction": "时间……测试集也非常具有挑战性。", "elapsed_ms": 920.348}
+{"index": 41, "provider": "openai", "model": "gpt-audio-mini", "prediction": "如果训练集每千个标记包含6次借用，那么测试集每千个标记包含20次借用。", "elapsed_ms": 2719.643}
+{"index": 42, "provider": "openai", "model": "gpt-audio-mini", "prediction": "测试包含尽可能多的超出词汇范围的单词。", "elapsed_ms": 947.84}
+{"index": 43, "provider": "openai", "model": "gpt-audio-mini", "prediction": "事实上，测试集中的92%的借款是ROE。", "elapsed_ms": 878.92}
+{"index": 44, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以在训练期间他们没有被看到。", "elapsed_ms": 841.259}
+{"index": 45, "provider": "openai", "model": "gpt-audio-mini", "prediction": "语料库基本上由来自不同西班牙报纸来源的文本集合组成。", "elapsed_ms": 869.882}
+{"index": 46, "provider": "openai", "model": "gpt-audio-mini", "prediction": "它是用手工标注的，使用了两个标签。", "elapsed_ms": 843.29}
+{"index": 47, "provider": "openai", "model": "gpt-audio-mini", "prediction": "一种是英语词汇借用，这是西班牙语中大多数词汇借用的来源，然后将其他语言的借用标记为“其他”。", "elapsed_ms": 989.655}
+{"index": 48, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们使用了通用格式，并且使用了 BIO 编码，这样我们就可以对单个标记的借用（例如“app”）或多标记的借用（例如“machine learning”）进行编码。", "elapsed_ms": 1109.359}
+{"index": 49, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些是公司的数字。", "elapsed_ms": 834.419}
+{"index": 50, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您所看到的，这大约相当于37万个代币。", "elapsed_ms": 946.763}
+{"index": 51, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这里，你有被标记为英语的片段数量，以及被标记为其他借用词的片段数量，还有其中有多少是独特的。", "elapsed_ms": 1100.047}
+{"index": 52, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这里有一些数据集的示例。", "elapsed_ms": 835.883}
+{"index": 53, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您所看到的，例如在第一个例子中，我们有借用的批量烹饪，这是一个多词短语。", "elapsed_ms": 1188.791}
+{"index": 54, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们已经使用 BIO 编码对其进行了标注。", "elapsed_ms": 909.67}
+{"index": 55, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以 BI、O 是用于西班牙语中的借用词，而不是用于那些没有被借用的词。", "elapsed_ms": 979.404}
+{"index": 56, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这个第二个例子中，你有“benching”和“crash”，它们也被标注为从英语借用的词汇。", "elapsed_ms": 986.559}
+{"index": 57, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以在我们拥有数据集之后，我们探索了几种模型，用于提取和检测这些词汇边界。", "elapsed_ms": 1377.032}
+{"index": 58, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们尝试的第一个是条件随机场模型。", "elapsed_ms": 831.758}
+{"index": 59, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是之前在以往工作中使用的模型。", "elapsed_ms": 812.742}
+{"index": 60, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们使用了来自那项工作的相同手工制作的功能。", "elapsed_ms": 866.602}
+{"index": 61, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您所看到的，这些就是功能。", "elapsed_ms": 752.275}
+{"index": 62, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些是二元特征，即该词或标记是否为大写。", "elapsed_ms": 831.603}
+{"index": 63, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't identify or transcribe speech from audio. If you can provide the text of the speech, I’d be happy to translate it into Simplified Chinese for you.", "elapsed_ms": 968.134}
+{"index": 64, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't identify or transcribe speech from audio. If you can provide the text of the speech, I’d be happy to translate it into Simplified Chinese for you.", "elapsed_ms": 774.99}
+{"index": 65, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些就是在命名实体识别任务中人们通常会期待的特征类型。", "elapsed_ms": 867.864}
+{"index": 66, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是我们得到的结果。", "elapsed_ms": 866.04}
+{"index": 67, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们使用带有手工特征的 CRF 模型获得了 55 的 F1 分数。", "elapsed_ms": 988.53}
+{"index": 68, "provider": "openai", "model": "gpt-audio-mini", "prediction": "与报告的 F1 分数 86 相比，这是一个巨大的差异，该 F1 分数是在相同的 CRF 模型、相同的特征，但在不同的数据集上获得的，同样用于西班牙语词汇借用检测。", "elapsed_ms": 1101.883}
+{"index": 69, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这证明了我们创建的数据集更具挑战性，因此我们需要探索更复杂的模型来完成这些任务。", "elapsed_ms": 1091.728}
+{"index": 70, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以我们测试了两种基于 Transformer 的模型。", "elapsed_ms": 1246.293}
+{"index": 71, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们使用了 BETO，这是一个为西班牙语训练的单语 BERT 模型，也使用了多语种 BERT。", "elapsed_ms": 1019.959}
+{"index": 72, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们通过 Hugging Face 的 Transformers 库使用这两个模型。", "elapsed_ms": 842.098}
+{"index": 73, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是我们得到的结果。", "elapsed_ms": 669.858}
+{"index": 74, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您所看到的，多语言模型在开发集和测试集上，以及在所有指标上，都比 BERT 表现更好。", "elapsed_ms": 993.448}
+{"index": 75, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这样我们就有一个概念来比较这个CRF。", "elapsed_ms": 1044.419}
+{"index": 76, "provider": "openai", "model": "gpt-audio-mini", "prediction": "CRF模型获得了82，而CRF模型获得了55，F1分数为55，而多语言模型……", "elapsed_ms": 1026.103}
+{"index": 77, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以在得到这些结果之后，我们又问了自己另一个问题：我们能否找到一个基于 BiLSTM-CRF 的模型，使用不同类型的嵌入，这些嵌入能够编码不同类型的语言信息，并且在性能上超过基于 Transformer 的模型所取得的结果？", "elapsed_ms": 2425.039}
+{"index": 78, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，为了做到这一点，我们进行了一些初步实验，我们使用 Flair 库运行了这个 BiLSTM-CRF 模型。", "elapsed_ms": 978.603}
+{"index": 79, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后我们尝试并实验了不同类型的嵌入，比如基于 Transformer 的，还有 FastText、Keyphrase 嵌入等等。", "elapsed_ms": 1006.89}
+{"index": 80, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们发现基于 Transformer 的嵌入表现优于非上下文化的嵌入，并且英语 BERT 和西班牙语 BETO 嵌入的组合优于多语言 BERT 嵌入。", "elapsed_ms": 1154.042}
+{"index": 81, "provider": "openai", "model": "gpt-audio-mini", "prediction": "并且，BPE 嵌入产生更好的 F1，而字符嵌入产生更好的召回率。", "elapsed_ms": 972.58}
+{"index": 82, "provider": "openai", "model": "gpt-audio-mini", "prediction": "考虑到这一点，这些是我们获得的表现最好的结果。", "elapsed_ms": 840.779}
+{"index": 83, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这两个模型都是使用 CRF 的 BiLSTM 模型。", "elapsed_ms": 852.516}
+{"index": 84, "provider": "openai", "model": "gpt-audio-mini", "prediction": "一个是用贝托和伯顿床上用品以及个人防护装备喂养的，另一个是用贝托、伯顿床上用品、个人防护装备以及卡尔顿床上用品喂养的。", "elapsed_ms": 999.591}
+{"index": 85, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最后一个模型在测试集上取得了最高的 F1 分数，尽管在开发集上最高分是由没有字符嵌入的模型获得的。", "elapsed_ms": 1103.757}
+{"index": 86, "provider": "openai", "model": "gpt-audio-mini", "prediction": "请注意，我们使用多语言 BERT 获得的最佳结果是在开发集上取得了 76 的 F1 分数，在测试集上取得了 82。", "elapsed_ms": 1055.34}
+{"index": 87, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以这比那些结果有所改善。", "elapsed_ms": 754.078}
+{"index": 88, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最后，我们还问了另一个问题，那就是：词汇借用检测能否被视为从语言识别和代码转换中进行迁移学习？", "elapsed_ms": 1025.418}
+{"index": 89, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以我们运行了与之前使用 Flair 运行的相同的 BiLSTM-CRF 模型，但我们使用了代码切换嵌入，而不是使用这些未经调整的基于 Transformer 的 BETO 和 BERT 嵌入。", "elapsed_ms": 1753.362}
+{"index": 90, "provider": "openai", "model": "gpt-audio-mini", "prediction": "什么是代码转换？", "elapsed_ms": 688.318}
+{"index": 91, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些是经过微调的嵌入，是基于 Transformer 的嵌入，已经在 LINT 的西班牙语-英语代码切换数据集的语言识别部分进行了预训练。", "elapsed_ms": 1175.143}
+{"index": 92, "provider": "openai", "model": "gpt-audio-mini", "prediction": "清理一个包含代码转换的语料库，其中有一部分是关于西班牙语和英语的代码转换。", "elapsed_ms": 926.381}
+{"index": 93, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，我们为我们的 BiLSTM-CRF 模型提供了代码切换嵌入，并可选地提供了字符嵌入、BPE 嵌入等等。", "elapsed_ms": 1097.025}
+{"index": 94, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们得到的最佳结果是 84.22，这是我们尝试的所有模型中最高的。", "elapsed_ms": 950.978}
+{"index": 95, "provider": "openai", "model": "gpt-audio-mini", "prediction": "尽管我们在开发集上获得的最佳结果 F1 分数是 79，比使用未经调整的嵌入训练的 BiLSTM-CRF 获得的最佳结果要低。", "elapsed_ms": 1287.484}
+{"index": 96, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以我们工作的几个结论。", "elapsed_ms": 872.741}
+{"index": 97, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们已经制作了一个新的西班牙新闻数据集，该数据集带有模拟的词汇借用注释。", "elapsed_ms": 1156.171}
+{"index": 98, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这个数据集在借贷密度和超出范围方面比之前的资源更高。", "elapsed_ms": 1644.512}
+{"index": 99, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们已经探讨了四种用于词汇借用检测的模型类型。", "elapsed_ms": 1055.273}
+{"index": 100, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在错误分析方面，召回率是我们所有模型的薄弱环节。", "elapsed_ms": 941.408}
+{"index": 101, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您在这里看到的，一些常见的假阴性包括大写借词，即在英语和西班牙语中都存在的词，例如。", "elapsed_ms": 1815.052}
+{"index": 102, "provider": "openai", "model": "gpt-audio-mini", "prediction": "有趣的是，BP 嵌入似乎提高了 F1 分数。", "elapsed_ms": 990.164}
+{"index": 103, "provider": "openai", "model": "gpt-audio-mini", "prediction": "并且联系人嵌入似乎改善了我们的表现。", "elapsed_ms": 908.655}
+{"index": 104, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是一个有趣的发现，也许我们可以在未来的工作中进一步探索。", "elapsed_ms": 989.665}
+{"index": 105, "provider": "openai", "model": "gpt-audio-mini", "prediction": "好的，这就是你要的全部。", "elapsed_ms": 841.903}
+{"index": 106, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't process audio directly. If you provide the text of the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 967.353}
+{"index": 107, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我的名字是安托万。", "elapsed_ms": 895.988}
+{"index": 108, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我是马萨诸塞大学阿默斯特分校的博士生。", "elapsed_ms": 949.893}
+{"index": 109, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我正在介绍我们的论文：《基于形态学感知的基尼亚卢旺达语言模型》。", "elapsed_ms": 1285.004}
+{"index": 110, "provider": "openai", "model": "gpt-audio-mini", "prediction": "今天，我将讨论这项研究的动机。", "elapsed_ms": 996.933}
+{"index": 111, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't identify or transcribe speech from audio. If you can provide the text of the speech, I’d be happy to translate it into Simplified Chinese for you.   Regarding the Kenyabaret model architecture, could you clarify what specific details you need? Are you looking for an overview, technical specifications, or something else? Let me know how you'd like to proceed.", "elapsed_ms": 1570.431}
+{"index": 112, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后我将讨论实验结果，最后总结一些结论。", "elapsed_ms": 899.237}
+{"index": 113, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们都知道，最近自然语言处理的进步是通过使用像 BERT 这样的预训练语言模型实现的。", "elapsed_ms": 1301.802}
+{"index": 114, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然而，它们仍然存在一些限制。", "elapsed_ms": 914.379}
+{"index": 115, "provider": "openai", "model": "gpt-audio-mini", "prediction": "由于大多数形态丰富的语言所表现出的复杂形态结构，广泛使用的字节对编码分词算法无法提取所需的精确词干词汇单位，即词素，这对于有效的表征是必要的。", "elapsed_ms": 1428.988}
+{"index": 116, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，这里有三个基尼亚卢安达语单词，它们包含更多的语素，但 BP 算法无法提取它们。", "elapsed_ms": 1038.471}
+{"index": 117, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是因为某些形态规则会产生不同的表面形式，从而掩盖确切的词汇信息，而基于表面形式的 BPE 无法访问这些词汇模型。", "elapsed_ms": 1189.312}
+{"index": 118, "provider": "openai", "model": "gpt-audio-mini", "prediction": "第二个挑战是，即使拥有一个形态分析器，将 BPE 标记替换为词素也不足以表达形态结构的组合性。", "elapsed_ms": 1189.308}
+{"index": 119, "provider": "openai", "model": "gpt-audio-mini", "prediction": "第三个研究差距是，新预训练语言模型更常在高资源语言上进行评估。", "elapsed_ms": 970.818}
+{"index": 120, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们还需要评估它们在资源匮乏和多样化语言中的适用性。", "elapsed_ms": 980.975}
+{"index": 121, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，我们提出了 Kinyabert，这是一种简单但有效的 BERT 架构改进，旨在更有效地处理形态丰富的语言。", "elapsed_ms": 1692.077}
+{"index": 122, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们评估了基尼亚贝尔语，这是一种资源有限、形态丰富的语言，有超过1200万人在东非和中非地区使用。", "elapsed_ms": 1128.646}
+{"index": 123, "provider": "openai", "model": "gpt-audio-mini", "prediction": "模型的输入可以是一个句子或一篇文档。", "elapsed_ms": 959.826}
+{"index": 124, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，在这里，我们发现了“John”这个名字，这意味着我们很惊讶地发现了John在那里。", "elapsed_ms": 923.225}
+{"index": 125, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您所看到的，基尼亚卢安达语词汇包含几个形态素，其中包含不同的信息。", "elapsed_ms": 1235.491}
+{"index": 126, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，在我们的模型中，我们将这个句子或文档传递给形态分析器。", "elapsed_ms": 1043.156}
+{"index": 127, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后在每个单词中生成更多的形态内容。", "elapsed_ms": 946.476}
+{"index": 128, "provider": "openai", "model": "gpt-audio-mini", "prediction": "词素通常由词根和零个或多个词缀构成。", "elapsed_ms": 778.048}
+{"index": 129, "provider": "openai", "model": "gpt-audio-mini", "prediction": "词缀主要用来表示动词的时态、体、主语或宾语，并且更常与班图语的名词类别相关，用于主语和宾语。", "elapsed_ms": 1049.563}
+{"index": 130, "provider": "openai", "model": "gpt-audio-mini", "prediction": "形态分析器还会为每个单词生成一个词性标签。", "elapsed_ms": 1075.596}
+{"index": 131, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这一步之后，我们为词性标签创建嵌入。", "elapsed_ms": 854.898}
+{"index": 132, "provider": "openai", "model": "gpt-audio-mini", "prediction": "词缀的嵌入", "elapsed_ms": 834.155}
+{"index": 133, "provider": "openai", "model": "gpt-audio-mini", "prediction": "抱歉，我无法识别或转录音频中的内容。如果您能提供音频中的文字内容，我可以帮助翻译成简体中文。", "elapsed_ms": 826.456}
+{"index": 134, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些是形态学层面的嵌入。", "elapsed_ms": 870.945}
+{"index": 135, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后我们将这些嵌入通过一个形态编码器，该编码器是一个小型的 Transformer 编码器，独立地应用于每个单词。", "elapsed_ms": 1178.045}
+{"index": 136, "provider": "openai", "model": "gpt-audio-mini", "prediction": "输出是与每个词的形态信息相结合的上下文化向量。", "elapsed_ms": 1634.811}
+{"index": 137, "provider": "openai", "model": "gpt-audio-mini", "prediction": "现在我们进行组合，将对应于词性和词干的形态嵌入连接在一起。", "elapsed_ms": 1018.848}
+{"index": 138, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们进一步将它们与另一个句子层面的词干嵌入进行连接。", "elapsed_ms": 882.383}
+{"index": 139, "provider": "openai", "model": "gpt-audio-mini", "prediction": "好的，请播放音频，我会将其翻译成简体中文。", "elapsed_ms": 869.919}
+{"index": 140, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最终输出是可以用于下游自然语言处理任务的上下文化嵌入。", "elapsed_ms": 838.669}
+{"index": 141, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于我们的形态分析器，我们使用有限状态双层形态学原理，并采用专门针对基尼阿兰达语定制的实现。", "elapsed_ms": 1187.709}
+{"index": 142, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们有效地对所有基尼阿万达语词汇的形态进行了建模，包括动词、名词、指示代词、物主代词、数词等。", "elapsed_ms": 2648.942}
+{"index": 143, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们使用了一种无监督的词性标注算法。", "elapsed_ms": 902.625}
+{"index": 144, "provider": "openai", "model": "gpt-audio-mini", "prediction": "如果使用一阶启动因子模型来考虑形态概率，基本上就是形态分析器所赋予的概率。", "elapsed_ms": 1028.845}
+{"index": 145, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们还考虑了词性标记的优先顺序，以及输入词中存在的句法一致性。", "elapsed_ms": 982.884}
+{"index": 146, "provider": "openai", "model": "gpt-audio-mini", "prediction": "该词性标注器使用双向推理，这比更常用的 Viterbi 解码算法有更好的改进。", "elapsed_ms": 933.562}
+{"index": 147, "provider": "openai", "model": "gpt-audio-mini", "prediction": "关于位置编码的几点说明。", "elapsed_ms": 790.858}
+{"index": 148, "provider": "openai", "model": "gpt-audio-mini", "prediction": "形态编码器不使用任何位置编码。", "elapsed_ms": 868.245}
+{"index": 149, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是因为每个语素在形态模式中都占据一个独立的位置。", "elapsed_ms": 877.999}
+{"index": 150, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，当给出语素时，位置性信息是固有的。", "elapsed_ms": 859.215}
+{"index": 151, "provider": "openai", "model": "gpt-audio-mini", "prediction": "其次，该句子编码器使用了所谓的“非绑定相对位置嵌入”，这一方法最近在 ICLR 会议上发表。", "elapsed_ms": 1083.576}
+{"index": 152, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些位置嵌入本质上将位置相关性从标记到标记的注意力计算中解耦。", "elapsed_ms": 1806.873}
+{"index": 153, "provider": "openai", "model": "gpt-audio-mini", "prediction": "类似于 BERT，我们使用了掩码语言模型预训练目标。", "elapsed_ms": 805.207}
+{"index": 154, "provider": "openai", "model": "gpt-audio-mini", "prediction": "本质上，我们必须预测与这些词相关的词干和词缀。", "elapsed_ms": 853.34}
+{"index": 155, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在预训练过程中，15%的所有词会被考虑用于预测，其中80%会被屏蔽，10%会被替换为随机词，10%保持不变。", "elapsed_ms": 1215.752}
+{"index": 156, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于词缀预测，我们面临一个多标签分类问题。", "elapsed_ms": 865.366}
+{"index": 157, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于这些，我们要么将词缀分组到固定数量的集合中，并将集合预测为类别标签。", "elapsed_ms": 898.039}
+{"index": 158, "provider": "openai", "model": "gpt-audio-mini", "prediction": "另一种选择是预测词缀的概率向量。", "elapsed_ms": 764.569}
+{"index": 159, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们在实验中评估了这两种方法。", "elapsed_ms": 905.934}
+{"index": 160, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们在大约2.5GB的基尼亚卢旺达语文本上对KenyaBERT进行了预训练，并将其与三个基准模型进行了比较。", "elapsed_ms": 1052.44}
+{"index": 161, "provider": "openai", "model": "gpt-audio-mini", "prediction": "有一个多语言模型叫做 XLM-R，它是在一个由多种语言组成的大型文本语料库上训练的。", "elapsed_ms": 973.21}
+{"index": 162, "provider": "openai", "model": "gpt-audio-mini", "prediction": "另外两个基线是在相同的基尼阿卢安达文本上进行预训练的，使用的是字节对编码算法，或者使用形态分析，而没有使用双层变换器编码器架构。", "elapsed_ms": 1402.823}
+{"index": 163, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所有模型都配置在基础架构中，大约在一亿到一亿一千万个参数之间，其中使用最少参数的是基于基尼亚贝尔特的模型。", "elapsed_ms": 1187.788}
+{"index": 164, "provider": "openai", "model": "gpt-audio-mini", "prediction": "除了多语言模型之外，所有模型都经过 32,000 次梯度更新的预训练，每个批次的批量大小为 2,560 个序列。", "elapsed_ms": 1053.945}
+{"index": 165, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们在三组任务上评估了预训练模型。", "elapsed_ms": 839.523}
+{"index": 166, "provider": "openai", "model": "gpt-audio-mini", "prediction": "一个是GLUE基准测试，它经常被用来评估预训练语言模型的有效性。", "elapsed_ms": 983.41}
+{"index": 167, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们通过使用 Google 翻译将原始基准数据翻译成基尼亚卢安达语，从而获得了我们的蓝图基准数据。", "elapsed_ms": 999.589}
+{"index": 168, "provider": "openai", "model": "gpt-audio-mini", "prediction": "第二个任务是基尼阿万达语姓名实体识别基准，这是一个高质量的数据集，由经过训练的母语者进行标注。", "elapsed_ms": 1232.574}
+{"index": 169, "provider": "openai", "model": "gpt-audio-mini", "prediction": "第三个任务是新闻分类任务，我们从几个网站获取新闻文章，并收集作者所分配的分类标签，然后基本上尝试预测相同的类别。", "elapsed_ms": 1214.455}
+{"index": 170, "provider": "openai", "model": "gpt-audio-mini", "prediction": "现在我们来看结果。", "elapsed_ms": 695.476}
+{"index": 171, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于胶水基准测试，我们发现 KeniaBERT 一直优于基线模型。", "elapsed_ms": 890.439}
+{"index": 172, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这里展示的是10次微调运行的平均表现。", "elapsed_ms": 824.996}
+{"index": 173, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们还对 Google 翻译生成的翻译进行了用户评估。", "elapsed_ms": 920.665}
+{"index": 174, "provider": "openai", "model": "gpt-audio-mini", "prediction": "基本上，用户对大约 6000 个示例进行了评分，在 1 到 4 的范围内给出分数，以评估翻译的质量。", "elapsed_ms": 1339.279}
+{"index": 175, "provider": "openai", "model": "gpt-audio-mini", "prediction": "结果是许多翻译存在噪音。", "elapsed_ms": 758.845}
+{"index": 176, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所有模型都必须应对相同的翻译噪音，而且模型之间的相对表现仍然值得注意。", "elapsed_ms": 988.636}
+{"index": 177, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于命名实体识别任务，我们还发现，在词缀分布正则化变体表现最佳的情况下，BERT模型的表现最好。", "elapsed_ms": 1304.945}
+{"index": 178, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些结果也是10次微调运行的平均值。", "elapsed_ms": 1120.394}
+{"index": 179, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于新闻分类任务，我们发现了混合的结果。", "elapsed_ms": 806.544}
+{"index": 180, "provider": "openai", "model": "gpt-audio-mini", "prediction": "之前在基尼亚卢旺达的文本分类工作中发现，简单的关键词检测通常足以解决这个特定任务。", "elapsed_ms": 1036.712}
+{"index": 181, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，使用预训练语言模型的收益较少。", "elapsed_ms": 798.969}
+{"index": 182, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这个特定的新闻分类任务上", "elapsed_ms": 917.439}
+{"index": 183, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们还进行了消融研究，以查看是否存在其他结构可以提升性能。", "elapsed_ms": 897.832}
+{"index": 184, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于组基准测试，我们发现使用词缀集一致性表现更好，而词缀概率回归目标在命名实体识别上取得了最佳表现。", "elapsed_ms": 1198.135}
+{"index": 185, "provider": "openai", "model": "gpt-audio-mini", "prediction": "此外，通过观察微调的损失曲线，我们发现 KNN-BERT 在大多数情况下具有更好的收敛性。", "elapsed_ms": 948.731}
+{"index": 186, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，总结来说，这项工作展示了在预训练语言模型中明确使用形态信息的有效性。", "elapsed_ms": 1018.713}
+{"index": 187, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所提出的双层 Transformer 编码器架构能够捕捉形态学组合性，这是形态丰富语言中的一个重要方面。", "elapsed_ms": 1090.18}
+{"index": 188, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些发现应当激励进一步研究形态感知的语言预训练模型。", "elapsed_ms": 1233.151}
+{"index": 189, "provider": "openai", "model": "gpt-audio-mini", "prediction": "你好，我叫 Michał Pietruszka，很高兴向你们介绍这篇题为“用可训练表示约束来稀疏化 Transformer 模型”的论文。", "elapsed_ms": 1056.293}
+{"index": 190, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我在 Applai AI 工作，与 Lukasz Borkman 和 Lukasz Ganczar 合作。", "elapsed_ms": 1087.812}
+{"index": 191, "provider": "openai", "model": "gpt-audio-mini", "prediction": "让我先从我们工作的目标所针对的问题开始。", "elapsed_ms": 776.347}
+{"index": 192, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们的方法在处理较长输入的情况下表现良好。", "elapsed_ms": 827.582}
+{"index": 193, "provider": "openai", "model": "gpt-audio-mini", "prediction": "大致来说，它是针对输入超过 2000 个标记的任务设计的，而目标比提供的输入要短。", "elapsed_ms": 1012.607}
+{"index": 194, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这在自然语言处理方面有一些具体的应用。", "elapsed_ms": 780.426}
+{"index": 195, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，可以想象在处理一份长文档时，需要对其进行总结、分类、回答相关问题、提取信息或一些关键短语。", "elapsed_ms": 939.922}
+{"index": 196, "provider": "openai", "model": "gpt-audio-mini", "prediction": "让我回顾一下 Vanilla Transformer 之前的一个问题：它的注意力复杂度取决于输入长度的平方。", "elapsed_ms": 1051.498}
+{"index": 197, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在标准 Transformer 中，具有全注意力连接性，每个标记与每个其他标记的关系都必须被计算。", "elapsed_ms": 932.518}
+{"index": 198, "provider": "openai", "model": "gpt-audio-mini", "prediction": "注意力的计算复杂度取决于层数 L、序列长度 N、另一个序列长度以及表示的维度。", "elapsed_ms": 2651.662}
+{"index": 199, "provider": "openai", "model": "gpt-audio-mini", "prediction": "同样地，在解码器中注意力机制关注的是右侧的这张图片，唯一的区别在于目标标记正在关注输入标记，在这种情况下。", "elapsed_ms": 1204.127}
+{"index": 200, "provider": "openai", "model": "gpt-audio-mini", "prediction": "可以在这个公式中看到。", "elapsed_ms": 772.786}
+{"index": 201, "provider": "openai", "model": "gpt-audio-mini", "prediction": "蓝色分数代表需要计算的关系。", "elapsed_ms": 1464.971}
+{"index": 202, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在全注意力的情况下，我们需要计算输入序列中的每一个关系。", "elapsed_ms": 898.806}
+{"index": 203, "provider": "openai", "model": "gpt-audio-mini", "prediction": "好的，我们来看看当我们有一个顺时针编码器时会发生什么，它通过限制标记的连接性来工作，使它们只能看到其他附近的标记。", "elapsed_ms": 1596.55}
+{"index": 204, "provider": "openai", "model": "gpt-audio-mini", "prediction": "文本被分块处理，这可以显著减少编码器端的计算量，但并不会改善解码器的交叉注意力，因为每个输入标记仍然会传递给解码器。", "elapsed_ms": 1198.163}
+{"index": 205, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这种方法通常被称为解码器中的融合。", "elapsed_ms": 809.37}
+{"index": 206, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这里的改进可以理解为将 n 的一个依赖项改为另一个常数 m，代表块的大小。", "elapsed_ms": 931.606}
+{"index": 207, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们的主要观察是，大多数标记对于各种任务来说都是无关紧要的，可以几乎完全忽略。这一点在幻灯片中有具体的例证。", "elapsed_ms": 1122.502}
+{"index": 208, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't process audio directly. If you provide the text from the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 986.348}
+{"index": 209, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't process audio directly. If you provide the text of the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 833.414}
+{"index": 210, "provider": "openai", "model": "gpt-audio-mini", "prediction": "可以先读一篇文章一次，用荧光笔标出最重要的部分，然后仅根据这些部分从中间阶段开始制作摘要。", "elapsed_ms": 923.307}
+{"index": 211, "provider": "openai", "model": "gpt-audio-mini", "prediction": "突出显示并决定当前标记是否对生成摘要至关重要的成本很低，并且仅取决于标记的表示。", "elapsed_ms": 1087.214}
+{"index": 212, "provider": "openai", "model": "gpt-audio-mini", "prediction": "突出显示的标记的合并是可能的。", "elapsed_ms": 816.653}
+{"index": 213, "provider": "openai", "model": "gpt-audio-mini", "prediction": "感谢我们的顶级运营商，而且它的成本可以忽略不计。", "elapsed_ms": 835.1}
+{"index": 214, "provider": "openai", "model": "gpt-audio-mini", "prediction": "从较短输入生成摘要的成本也比在原始模型中考虑整个输入时要低得多。", "elapsed_ms": 1134.012}
+{"index": 215, "provider": "openai", "model": "gpt-audio-mini", "prediction": "Sure, please provide the audio or the content of the speech you would like translated. Once I have the details, I can translate it into Simplified Chinese.", "elapsed_ms": 820.304}
+{"index": 216, "provider": "openai", "model": "gpt-audio-mini", "prediction": "如何选择重要的标记并通过该选择进行反向传播梯度？", "elapsed_ms": 917.234}
+{"index": 217, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们解决的根本问题是提出可训练的选择机制。", "elapsed_ms": 989.599}
+{"index": 218, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这可以让梯度在训练过程中进行反向传播，从而使网络能够学习选择最重要的标记。", "elapsed_ms": 944.688}
+{"index": 219, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't process audio directly. If you provide the text of the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 1091.441}
+{"index": 220, "provider": "openai", "model": "gpt-audio-mini", "prediction": "给定一些从简单线性层获得的嵌入（embeddings），任务是返回得分最高的嵌入。首先，对序列进行排列，并准备配对，使得得分较高的向量与得分较低的向量配对。", "elapsed_ms": 2008.171}
+{"index": 221, "provider": "openai", "model": "gpt-audio-mini", "prediction": "接下来，权重是通过对分数使用提升的 Softmax 进行计算的。", "elapsed_ms": 756.966}
+{"index": 222, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在每一轮比赛之后，新的向量和分数是通过将这些部分与获得的权重进行线性组合而构成的。", "elapsed_ms": 1227.625}
+{"index": 223, "provider": "openai", "model": "gpt-audio-mini", "prediction": "简而言之，我们通过对它们的分数执行 softmax 操作，将它们线性地组合在一起。", "elapsed_ms": 1517.184}
+{"index": 224, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在将两个标记组合时，可能会产生一些噪音。", "elapsed_ms": 1024.219}
+{"index": 225, "provider": "openai", "model": "gpt-audio-mini", "prediction": "但它也允许梯度传播到所有输入嵌入。", "elapsed_ms": 981.688}
+{"index": 226, "provider": "openai", "model": "gpt-audio-mini", "prediction": "简而言之，我们提出的可训练 Top-K 方法是基于在每一步执行类似锦标赛的软选择。", "elapsed_ms": 901.566}
+{"index": 227, "provider": "openai", "model": "gpt-audio-mini", "prediction": "从另一个角度来看，表示提取是在编码器层之后进行的。", "elapsed_ms": 869.046}
+{"index": 228, "provider": "openai", "model": "gpt-audio-mini", "prediction": "首先，每个表示都会被评分，然后只有得分最高的那些才会被传递到下一层。", "elapsed_ms": 1132.247}
+{"index": 229, "provider": "openai", "model": "gpt-audio-mini", "prediction": "编码可以在标准 Transformer 架构上对完整长度的输入进行。", "elapsed_ms": 1168.442}
+{"index": 230, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然而，可以将文本分成固定长度的块，并全局选择最佳表示。", "elapsed_ms": 1125.442}
+{"index": 231, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是在编码器之后引入的表示投票的一个示例。", "elapsed_ms": 1484.424}
+{"index": 232, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这直接影响交叉注意力的原因，它取决于常数 K，而不是输入长度 N，K 代表池化长度。", "elapsed_ms": 1036.43}
+{"index": 233, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这个字段表示有多少个表示被选中并传递给解码器。", "elapsed_ms": 808.919}
+{"index": 234, "provider": "openai", "model": "gpt-audio-mini", "prediction": "从较短的文本中生成摘要比以前的解决方案便宜得多。", "elapsed_ms": 945.84}
+{"index": 235, "provider": "openai", "model": "gpt-audio-mini", "prediction": "由于序列长度可以被大幅缩短。", "elapsed_ms": 690.356}
+{"index": 236, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，在我们的实验中，我们成功地使用了 K 的 16 倍，甚至 60 倍，或者 64 倍小于 N 的值。", "elapsed_ms": 1155.288}
+{"index": 237, "provider": "openai", "model": "gpt-audio-mini", "prediction": "请注意，块级编码和自注意力的有益影响是持续存在的。", "elapsed_ms": 813.57}
+{"index": 238, "provider": "openai", "model": "gpt-audio-mini", "prediction": "请记住，注意力的计算成本取决于输入长度的平方。", "elapsed_ms": 829.507}
+{"index": 239, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我认为在编码过程中提前输入数据可以显著降低成本。", "elapsed_ms": 822.575}
+{"index": 240, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于金字塔模型，我们在每一层的输出上缩小表示的尺寸，从而随着编码的进行，计算成本呈指数级减少。", "elapsed_ms": 1099.005}
+{"index": 241, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您所看到的，这里的完整编码器的总计算成本不到全尺寸第一层成本的两倍。", "elapsed_ms": 866.065}
+{"index": 242, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如之前引入的，所有紫色方块的总和因此被限制在一个常数范围内，这个常数与层数 L 无关。", "elapsed_ms": 1031.42}
+{"index": 243, "provider": "openai", "model": "gpt-audio-mini", "prediction": "但是关于常数 C，它可以受到在网络中放置池化层位置的影响。", "elapsed_ms": 1230.173}
+{"index": 244, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们的改进是在 8000 个标记长的输入上进行基准测试的。", "elapsed_ms": 977.338}
+{"index": 245, "provider": "openai", "model": "gpt-audio-mini", "prediction": "图中显示，当启用拉伸时，网络深度的最佳可扩展性得以实现。", "elapsed_ms": 889.767}
+{"index": 246, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这里可以注意到，训练一个24层的金字塔模型可能比在如此长的输入上训练一个两层的普通 Transformer 更便宜。", "elapsed_ms": 1005.462}
+{"index": 247, "provider": "openai", "model": "gpt-audio-mini", "prediction": "更不用说，对于如此长的输入，普通的 Transformer 容易耗尽内存。", "elapsed_ms": 940.831}
+{"index": 248, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们对训练好的深度金字塔模型与其他基线模型在长文档摘要任务上的定性比较是基于这样的场景：给定来自 arXiv 或 PubMed 的文章正文，任务是生成其摘要。", "elapsed_ms": 1152.697}
+{"index": 249, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如所见，Blockwise（作为我们的基线）在最近的最先进模型水平上表现，而Deep Pyramidion 保持或提升了这一竞争基线的性能。", "elapsed_ms": 1114.886}
+{"index": 250, "provider": "openai", "model": "gpt-audio-mini", "prediction": "与此同时，我们的模型在训练速度上快了 80%，在推理速度上比块状贝叶斯快了超过 450%。", "elapsed_ms": 982.326}
+{"index": 251, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这两个模型的参数数量都要低得多，并且是从头开始在所选任务上训练的。", "elapsed_ms": 953.631}
+{"index": 252, "provider": "openai", "model": "gpt-audio-mini", "prediction": "以往的方法为了达到类似的性能，需要使用更多的参数，并利用预训练的基础模型和额外的语言预训练目标来实现类似的效果。", "elapsed_ms": 1085.207}
+{"index": 253, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们邀请您阅读我们的完整论文并使用我们的 GitHub 代码。", "elapsed_ms": 784.753}
+{"index": 254, "provider": "openai", "model": "gpt-audio-mini", "prediction": "谢谢您的观看。", "elapsed_ms": 692.293}
+{"index": 255, "provider": "openai", "model": "gpt-audio-mini", "prediction": "你好，我是来自哈佛大学的嘉伟·周。", "elapsed_ms": 752.005}
+{"index": 256, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我很高兴在这里展示我们关于面向任务对话中降低延迟的在线语义解析的工作。", "elapsed_ms": 864.839}
+{"index": 257, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是与来自微软 Semantic Machines 的 Jason、Michael、Anthony 和 Sam 的合作成果。", "elapsed_ms": 741.779}
+{"index": 258, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在任务导向的对话中，用户与系统互动，系统处理用户的请求，通常是通过语音进行交流。", "elapsed_ms": 930.819}
+{"index": 259, "provider": "openai", "model": "gpt-audio-mini", "prediction": "从用户的操作完成到系统的响应之间，通常会有一个不易察觉的延迟。", "elapsed_ms": 937.938}
+{"index": 260, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在幕后，用户的指令被转换成可执行的程序。", "elapsed_ms": 857.398}
+{"index": 261, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后执行它，以便系统能够正确响应。", "elapsed_ms": 922.56}
+{"index": 262, "provider": "openai", "model": "gpt-audio-mini", "prediction": "程序被表示为一个语义图，概述了计算过程，其中节点代表函数调用，而它的子节点则是参数。", "elapsed_ms": 917.061}
+{"index": 263, "provider": "openai", "model": "gpt-audio-mini", "prediction": "伟大的“无”标记瞬时操作，而其他操作则执行缓慢。", "elapsed_ms": 874.192}
+{"index": 264, "provider": "openai", "model": "gpt-audio-mini", "prediction": "请注意，与这里展示的简单示例不同，这些程序通常可能是更复杂的图形，而不仅仅是树结构。", "elapsed_ms": 998.578}
+{"index": 265, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这次演讲中，我们提出了一个问题：我们能否在用户甚至还没有完成输入之前就开始生成程序并执行它，从而让系统能够更快地做出响应？", "elapsed_ms": 1050.114}
+{"index": 266, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是一个在线预测和决策问题。", "elapsed_ms": 1099.222}
+{"index": 267, "provider": "openai", "model": "gpt-audio-mini", "prediction": "房间里还有很多其他人。", "elapsed_ms": 699.71}
+{"index": 268, "provider": "openai", "model": "gpt-audio-mini", "prediction": "包括实时翻译，即现场翻译员将一种语言实时翻译成另一种语言；智能文本自动补全，能够猜测用户意图；以及 UberPool，根据预测的需求将司机派往可能需要的地方。", "elapsed_ms": 1388.695}
+{"index": 269, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所有这些场景都有一个共同点。", "elapsed_ms": 810.543}
+{"index": 270, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在看到其他信息之前做出决定是有益的。", "elapsed_ms": 1200.065}
+{"index": 271, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在我们的案例中，我们将处理在线语义解析，这可能会被认为是具有挑战性的，因为我们必须猜测用户可能会说什么。", "elapsed_ms": 965.949}
+{"index": 272, "provider": "openai", "model": "gpt-audio-mini", "prediction": "而且它也尚未被充分探索，没有正式的评估指标。", "elapsed_ms": 776.164}
+{"index": 273, "provider": "openai", "model": "gpt-audio-mini", "prediction": "首先，让我们看看一个听觉系统是如何工作的。", "elapsed_ms": 722.85}
+{"index": 274, "provider": "openai", "model": "gpt-audio-mini", "prediction": "它在离线运行，通过在用户命令结束时才将其解析到程序中。", "elapsed_ms": 795.562}
+{"index": 275, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这里，曲线图是在看到所有信息之后预测出来的。", "elapsed_ms": 779.189}
+{"index": 276, "provider": "openai", "model": "gpt-audio-mini", "prediction": "相反，我们提出了一种在线系统，可以在每个替代项的前缀处进行解析。", "elapsed_ms": 825.24}
+{"index": 277, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，每当我们看到一个新的标记时，我们就预测一个新的图。", "elapsed_ms": 1131.193}
+{"index": 278, "provider": "openai", "model": "gpt-audio-mini", "prediction": "Understood. Please provide the audio or the content you would like translated.", "elapsed_ms": 749.053}
+{"index": 279, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在“与巴拉克·奥巴马的聚会”这个位置，我们得到了一张图，其中红色节点代表人物和事件主题，但时间信息却是错误的。", "elapsed_ms": 1002.764}
+{"index": 280, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这个过程会一直持续，直到我们收到完整的用户授权。", "elapsed_ms": 749.331}
+{"index": 281, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这将如何影响离线系统中的执行时间表？", "elapsed_ms": 5353.064}
+{"index": 282, "provider": "openai", "model": "gpt-audio-mini", "prediction": "将程序图放在最后，以便系统可以从这一点开始执行。", "elapsed_ms": 1197.349}
+{"index": 283, "provider": "openai", "model": "gpt-audio-mini", "prediction": "请记住，大节点是快速操作，因此我们只考虑彩色慢函数的执行时间线。", "elapsed_ms": 954.874}
+{"index": 284, "provider": "openai", "model": "gpt-audio-mini", "prediction": "首先，这两个“查找人员”功能可以并行执行，从粉色框中以白色突出显示，因为它们不依赖于其他功能。", "elapsed_ms": 1058.121}
+{"index": 285, "provider": "openai", "model": "gpt-audio-mini", "prediction": "接下来，创建事件的节点可以在从下层节点获取结果后执行，然后顶层函数返回，从而整个程序结束。", "elapsed_ms": 935.674}
+{"index": 286, "provider": "openai", "model": "gpt-audio-mini", "prediction": "执行过程受限于程序依赖结构，其中某些操作无法并行化，这导致了明显的延迟。", "elapsed_ms": 898.377}
+{"index": 287, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在我们的在线系统中，我们会边预测边进行，这样程序执行就能更早开始。", "elapsed_ms": 808.247}
+{"index": 288, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这里，在“after Obama”这个前缀下，我们可以自信地预测“findPerson”函数应该包含在程序中，但其余部分可能存在错误，因为它们的等级较低。", "elapsed_ms": 1034.247}
+{"index": 289, "provider": "openai", "model": "gpt-audio-mini", "prediction": "节点的执行可以在此时立即开始。", "elapsed_ms": 698.283}
+{"index": 290, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后，使用更多的标记，我们预测一个全新的图，但其中一部分已经在执行中。", "elapsed_ms": 981.132}
+{"index": 291, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以我只需要考虑我们已经涵盖的其他要点。", "elapsed_ms": 786.92}
+{"index": 292, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这里，另一个优秀的人可以并行执行。", "elapsed_ms": 814.611}
+{"index": 293, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们可能有错误的预测。", "elapsed_ms": 743.673}
+{"index": 294, "provider": "openai", "model": "gpt-audio-mini", "prediction": "有了更多的文本，我们就有更大的能力去完善它。", "elapsed_ms": 755.702}
+{"index": 295, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，这里是事件时间，其中预计也会有上午的情况。", "elapsed_ms": 770.704}
+{"index": 296, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后，我们可以开始执行剩下的部分，按照程序的依赖结构进行。", "elapsed_ms": 992.935}
+{"index": 297, "provider": "openai", "model": "gpt-audio-mini", "prediction": "通过将执行时间线与替代时间线重叠，我们将节省大量时间。", "elapsed_ms": 941.167}
+{"index": 298, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，我们提出了在线语义分割的任务。", "elapsed_ms": 982.72}
+{"index": 299, "provider": "openai", "model": "gpt-audio-mini", "prediction": "一个潜在的假设是，执行时间主导了模型预测时间。", "elapsed_ms": 829.031}
+{"index": 300, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这样我们就可以通过更早地预测来节省时间。", "elapsed_ms": 767.051}
+{"index": 301, "provider": "openai", "model": "gpt-audio-mini", "prediction": "另一个假设是，预测和执行是在后台进行的，用户无法看到。", "elapsed_ms": 844.915}
+{"index": 302, "provider": "openai", "model": "gpt-audio-mini", "prediction": "Understood. Please provide the audio file or a link to it, and I will translate the speech into Simplified Chinese.", "elapsed_ms": 1492.595}
+{"index": 303, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所以我们在每个标记之后都从头开始解析。", "elapsed_ms": 798.207}
+{"index": 304, "provider": "openai", "model": "gpt-audio-mini", "prediction": "具体来说，我们提出了一个两步的建议。", "elapsed_ms": 811.634}
+{"index": 305, "provider": "openai", "model": "gpt-audio-mini", "prediction": "一个预测具有完整结构的图的步骤，以及一个选择步骤，用于选择此时值得执行的节点。", "elapsed_ms": 882.426}
+{"index": 306, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们有两种拟议方法的变体。", "elapsed_ms": 694.748}
+{"index": 307, "provider": "openai", "model": "gpt-audio-mini", "prediction": "第一种方法将语言模型补全与完整的语句图解析相结合。", "elapsed_ms": 888.321}
+{"index": 308, "provider": "openai", "model": "gpt-audio-mini", "prediction": "特别地，前缀“apt to Obama”首先通过一个微调过的 BART 语言模型完成，然后被翻译成一个具有完整离线部分的程序。", "elapsed_ms": 1531.452}
+{"index": 309, "provider": "openai", "model": "gpt-audio-mini", "prediction": "第二种方法是直接从用户的前缀预测程序。", "elapsed_ms": 763.653}
+{"index": 310, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是通过训练一个单一的在线解析器来实现的，该解析器能够从每个前缀翻译到目标图。", "elapsed_ms": 933.18}
+{"index": 311, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这使模型能够学习正确的预期。", "elapsed_ms": 870.44}
+{"index": 312, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们是如何生成这些图表的？我们可以更详细地解释一下。", "elapsed_ms": 1067.035}
+{"index": 313, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们通过生成图的序列版本来解决这个问题。", "elapsed_ms": 742.722}
+{"index": 314, "provider": "openai", "model": "gpt-audio-mini", "prediction": "每一个结点或边都由一个动作来表示。", "elapsed_ms": 782.289}
+{"index": 315, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't listen to or process audio. If you provide the text of the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 833.11}
+{"index": 316, "provider": "openai", "model": "gpt-audio-mini", "prediction": "下面的数字记录了绝对索引在操作历史中的情况。", "elapsed_ms": 755.947}
+{"index": 317, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后，我们得到了第二个音符。", "elapsed_ms": 690.091}
+{"index": 318, "provider": "openai", "model": "gpt-audio-mini", "prediction": "接下来是它们之间的边缘。", "elapsed_ms": 901.075}
+{"index": 319, "provider": "openai", "model": "gpt-audio-mini", "prediction": "它包含指向前一个节点索引的指针和边的标签。", "elapsed_ms": 751.958}
+{"index": 320, "provider": "openai", "model": "gpt-audio-mini", "prediction": "0 这里的意思是将最近的节点与由第零个动作生成的节点连接起来，以及下一个节点、下一个边。", "elapsed_ms": 941.317}
+{"index": 321, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这个过程一直持续，直到我们生成完整的图表。", "elapsed_ms": 858.941}
+{"index": 322, "provider": "openai", "model": "gpt-audio-mini", "prediction": "该基础模型基于具有自注意力机制的 Transformer，类似于之前的基于转换的解析器。", "elapsed_ms": 1131.451}
+{"index": 323, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在生成完整的图之后，我们获得了对应于图中不同部分的实际水平概率。", "elapsed_ms": 836.445}
+{"index": 324, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们根据阈值启发式选择要执行的置信子图。", "elapsed_ms": 812.025}
+{"index": 325, "provider": "openai", "model": "gpt-audio-mini", "prediction": "稍后，我们将调整阈值，以在降低延迟和执行成本之间实现不同的权衡。", "elapsed_ms": 928.541}
+{"index": 326, "provider": "openai", "model": "gpt-audio-mini", "prediction": "为了对在线方法进行正式评估，我们提出了最终延迟减少（FLR）匹配。", "elapsed_ms": 882.074}
+{"index": 327, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是一个关于离线系统如何完成执行时间线的总结。", "elapsed_ms": 844.367}
+{"index": 328, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在在线系统中，执行与替代时间线重叠，因此它提前结束。", "elapsed_ms": 787.87}
+{"index": 329, "provider": "openai", "model": "gpt-audio-mini", "prediction": "FLR 被定义为相对于离线系统的缩短时间，以执行结束为标志。", "elapsed_ms": 862.731}
+{"index": 330, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们在两个大型对话语义解析数据集上进行了实验：SMCalFlow 和 GQA。", "elapsed_ms": 1293.018}
+{"index": 331, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们的基于图的解析器在离线运行时，在两个数据集上的解析性能达到了最先进的水平。", "elapsed_ms": 962.769}
+{"index": 332, "provider": "openai", "model": "gpt-audio-mini", "prediction": "完整模型还实现了相对于简单的无补全基线的非平凡蓝色增益。", "elapsed_ms": 939.422}
+{"index": 333, "provider": "openai", "model": "gpt-audio-mini", "prediction": "现在，让我们来看一下我们前缀到图解析器的预测准确性。", "elapsed_ms": 792.002}
+{"index": 334, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们在验证数据中测试生成图和真实图之间的图三元组的匹配 F1 分数，纵轴表示 F1 分数，横轴表示每个前缀长度，以百分比表示。", "elapsed_ms": 1196.712}
+{"index": 335, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些曲线代表不同的模型，它们之间唯一的区别在于训练数据。", "elapsed_ms": 730.968}
+{"index": 336, "provider": "openai", "model": "gpt-audio-mini", "prediction": "底部曲线是离线解析器，我们将不同长度的前缀数据混合，以将模型过渡到在线解析器。", "elapsed_ms": 973.015}
+{"index": 337, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，“前缀 80%+”意味着该模型是用前缀长度超过完整序列长度 80% 的前缀数据进行训练的。", "elapsed_ms": 925.28}
+{"index": 338, "provider": "openai", "model": "gpt-audio-mini", "prediction": "左上角是所需区域。", "elapsed_ms": 761.409}
+{"index": 339, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如我们所看到的，黑色曲线中的离线解析器在前缀状态下表现不佳。", "elapsed_ms": 972.474}
+{"index": 340, "provider": "openai", "model": "gpt-audio-mini", "prediction": "随着在训练中增加更多的前缀，曲线向上和向左提升，在所有前缀长度上表现更好。", "elapsed_ms": 1038.383}
+{"index": 341, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然而，完整的作者表现并未受到右上角点的影响。", "elapsed_ms": 916.005}
+{"index": 342, "provider": "openai", "model": "gpt-audio-mini", "prediction": "根据这些强劲的结果，我们减少了多少延迟？", "elapsed_ms": 771.457}
+{"index": 343, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't process audio directly. If you provide the text from the speech, I can translate it into Simplified Chinese for you. Please share the text, and I'll assist you with the translation.", "elapsed_ms": 1046.034}
+{"index": 344, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些曲线显示了 FLR 指标与执行成本之间的权衡，执行成本由未被纠正的过度函数调用次数来衡量。", "elapsed_ms": 876.92}
+{"index": 345, "provider": "openai", "model": "gpt-audio-mini", "prediction": "通过改变子图选择阈值来实现这一点。", "elapsed_ms": 902.55}
+{"index": 346, "provider": "openai", "model": "gpt-audio-mini", "prediction": "较高的阈值选择较少的函数并减少错误率，但获得较小的误报率，而较低的阈值则更积极地选择和执行程序。", "elapsed_ms": 960.543}
+{"index": 347, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们将我们提出的两种方法与一个基线进行比较，该基线什么也不做，而是直接将离线解析器应用于在线使用。", "elapsed_ms": 978.426}
+{"index": 348, "provider": "openai", "model": "gpt-audio-mini", "prediction": "左上区域具有最佳的 FLR 和成本交易。", "elapsed_ms": 787.003}
+{"index": 349, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们看到我们的方法都大幅超越了基线，并且在测试集上表现得更为相似。", "elapsed_ms": 941.485}
+{"index": 350, "provider": "openai", "model": "gpt-audio-mini", "prediction": "当单个函数执行更快时，通常会有更多的运行执行次数，并且延迟降低的幅度较小。", "elapsed_ms": 856.112}
+{"index": 351, "provider": "openai", "model": "gpt-audio-mini", "prediction": "当单个函数执行变慢时，就有更多提升 FLR 的空间。", "elapsed_ms": 967.461}
+{"index": 352, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们的方法在不同的成本范围内实现了更好的性能。", "elapsed_ms": 832.805}
+{"index": 353, "provider": "openai", "model": "gpt-audio-mini", "prediction": "总体而言，我们实现了 32% 到 63% 的相对延迟减少，这取决于执行时间和允许的成本。", "elapsed_ms": 1041.248}
+{"index": 354, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最后，我们展示了在允许调用次数为3次运行时，每种函数节点类型的平均延迟减少（以标记为单位）的详细情况。", "elapsed_ms": 2433.068}
+{"index": 355, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如我们所看到的，各方面都有所增长。", "elapsed_ms": 719.65}
+{"index": 356, "provider": "openai", "model": "gpt-audio-mini", "prediction": "还有一些功能在延迟方面取得了显著的改善，进度条明显更长，比如文件管理器和收件箱。", "elapsed_ms": 939.738}
+{"index": 357, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些是低级函数，对其他函数的依赖性不大。", "elapsed_ms": 812.87}
+{"index": 358, "provider": "openai", "model": "gpt-audio-mini", "prediction": "总之，我们提出将在线提交解析作为一个新的任务进行探索，并采用严格的延迟减少指标。", "elapsed_ms": 938.312}
+{"index": 359, "provider": "openai", "model": "gpt-audio-mini", "prediction": "通过强大的基于图的语法分析器，我们实现了相对较好的延迟减少，无论是通过带有 LLM 完成和完整解析器的流水线方法，还是直接通过对前缀进行学习的解析器。", "elapsed_ms": 1052.853}
+{"index": 360, "provider": "openai", "model": "gpt-audio-mini", "prediction": "此外，我们的方法可以作为一个通用框架，并且可以应用于不同领域的其他可执行语义表示。", "elapsed_ms": 963.955}
+{"index": 361, "provider": "openai", "model": "gpt-audio-mini", "prediction": "未来的工作可以探索更智能的预测和执行集成方法。", "elapsed_ms": 795.101}
+{"index": 362, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't identify or transcribe speech from audio. If you can provide the text of the speech, I’d be happy to translate it into Simplified Chinese for you.", "elapsed_ms": 770.87}
+{"index": 363, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't process audio directly. If you provide the text of the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 721.126}
+{"index": 364, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我将讨论我们在为问答任务生成检索增强的反事实方面所做的工作。", "elapsed_ms": 797.723}
+{"index": 365, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这是我在谷歌研究实习期间完成的工作，我的导师是Matthew Lam和Ian Deng。", "elapsed_ms": 783.212}
+{"index": 366, "provider": "openai", "model": "gpt-audio-mini", "prediction": "为了激励这项任务，让我先通过定义一个反事实来开始。", "elapsed_ms": 776.663}
+{"index": 367, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在这项工作中，我们将反事实定义为输入文本的一个扰动，它在某种有意义的可控方式上与原始文本不同。", "elapsed_ms": 1041.939}
+{"index": 368, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这使我们能够推理任务结果或任务标签的变化。", "elapsed_ms": 742.545}
+{"index": 369, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，将“fascinating”改为“captivating”，或者将“expected”改为“mind-numbing”，会改变这部电影评论的情感基调。", "elapsed_ms": 881.48}
+{"index": 370, "provider": "openai", "model": "gpt-audio-mini", "prediction": "同样地，在问题中添加“女性”这个限定词，会改变下面示例中问题的答案。", "elapsed_ms": 914.215}
+{"index": 371, "provider": "openai", "model": "gpt-audio-mini", "prediction": "人类通常比在该任务上训练的自然语言处理模型更能抵抗这种扰动。", "elapsed_ms": 756.545}
+{"index": 372, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't identify speakers from a voice sample. If you can provide the text of the speech, I’d be happy to translate it into Simplified Chinese.", "elapsed_ms": 839.905}
+{"index": 373, "provider": "openai", "model": "gpt-audio-mini", "prediction": "数据集可能存在系统性偏差，导致决策边界变得过于简单，而这一点被反事实所违背。", "elapsed_ms": 929.614}
+{"index": 374, "provider": "openai", "model": "gpt-audio-mini", "prediction": "如同在这个二维分类问题中所示。", "elapsed_ms": 772.249}
+{"index": 375, "provider": "openai", "model": "gpt-audio-mini", "prediction": "研究发现，向训练数据中加入反事实示例可以使模型对这种扰动具有鲁棒性。", "elapsed_ms": 976.389}
+{"index": 376, "provider": "openai", "model": "gpt-audio-mini", "prediction": "那么，如果发现这些价值很重要，我们该如何创造它们呢？", "elapsed_ms": 787.336}
+{"index": 377, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这个任务对自然语言处理来说尤其困难，因为这里有来自三个不同自然语言处理任务的三个例子。", "elapsed_ms": 1024.129}
+{"index": 378, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如您所看到的，违反结果决策边界的示例需要通过扰动这里所强调的一些文本属性来精心构造。", "elapsed_ms": 937.583}
+{"index": 379, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这可以通过人工标注来完成，但这很昂贵且存在偏见。", "elapsed_ms": 826.65}
+{"index": 380, "provider": "openai", "model": "gpt-audio-mini", "prediction": "桑布赖沃克专注于使用句法树或语义角色标注。", "elapsed_ms": 739.07}
+{"index": 381, "provider": "openai", "model": "gpt-audio-mini", "prediction": "但是这些技术生成的扰动集受到语义框架的限制。", "elapsed_ms": 1010.334}
+{"index": 382, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最近的研究使用大型语言模型来填补文本中被遮蔽的部分，以改变标签。", "elapsed_ms": 1473.481}
+{"index": 383, "provider": "openai", "model": "gpt-audio-mini", "prediction": "但要找到哪些部分需要扰动可能会很有挑战性。", "elapsed_ms": 783.341}
+{"index": 384, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在问答方面，生成反事实存在更多挑战。", "elapsed_ms": 777.571}
+{"index": 385, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't identify or transcribe speech from audio. If you can provide the text of the speech, I’d be happy to translate it into Simplified Chinese for you.", "elapsed_ms": 811.769}
+{"index": 386, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，补充原始问题：印第安纳·琼斯与魔宫传奇是前传吗？", "elapsed_ms": 789.199}
+{"index": 387, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们需要了解该系列中的其他电影，才能提出这样的问题：比如《夺宝奇兵》是前传吗？", "elapsed_ms": 927.307}
+{"index": 388, "provider": "openai", "model": "gpt-audio-mini", "prediction": "此外，随机扰动可能导致一些问题无法根据现有证据回答，或者存在错误的前提。", "elapsed_ms": 837.777}
+{"index": 389, "provider": "openai", "model": "gpt-audio-mini", "prediction": "此外，一些问题扰动可能导致与原始输入显著的语义偏离。", "elapsed_ms": 876.042}
+{"index": 390, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，这个问题是关于印第安纳·琼斯在《夺宝奇兵》中是否在练习童工。", "elapsed_ms": 1048.589}
+{"index": 391, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我提出了一种非常简单但有效的技术，称为“检索-生成-过滤”（RGF），用于应对问题的反事实扰动，并且还旨在解决所有其他上述挑战。", "elapsed_ms": 1055.305}
+{"index": 392, "provider": "openai", "model": "gpt-audio-mini", "prediction": "AGF 的核心直觉是，生成扰动所需的必要背景信息可能存在于问答模型所犯的接近错误中。", "elapsed_ms": 937.877}
+{"index": 393, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，最先进的模型 Realm 给出了以下关于“谁是里士满足球俱乐部队长？”的前几个答案。", "elapsed_ms": 829.288}
+{"index": 394, "provider": "openai", "model": "gpt-audio-mini", "prediction": "好的，它确实恢复了原始参考段落和答案，特伦特·科特金是排名最高的。", "elapsed_ms": 811.991}
+{"index": 395, "provider": "openai", "model": "gpt-audio-mini", "prediction": "它还会检索额外的段落和答案，这些可以用来引导问题的动机。", "elapsed_ms": 1399.888}
+{"index": 396, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，它还会收集对应同一俱乐部的预备队队长和女子队队长的另外两个答案，这可能会导致有趣的编辑。", "elapsed_ms": 1152.334}
+{"index": 397, "provider": "openai", "model": "gpt-audio-mini", "prediction": "总结一下，RAGF 首先检索出与参考答案和上下文不匹配的最相关的前 K 个答案和上下文。", "elapsed_ms": 1514.061}
+{"index": 398, "provider": "openai", "model": "gpt-audio-mini", "prediction": "接下来，问题生成模型会根据这些替代答案来生成一个与之对应的问题。", "elapsed_ms": 857.558}
+{"index": 399, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最后，我们可以根据最小性或我们希望引入的语义扰动类型来筛选生成的问题。", "elapsed_ms": 810.625}
+{"index": 400, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们将逐步深入讲解每个步骤。对于检索，我们使用一种“先检索后阅读”的模型，比如 RAG，它以原始问题和一个大型语料库（如维基百科）作为输入。", "elapsed_ms": 2329.544}
+{"index": 401, "provider": "openai", "model": "gpt-audio-mini", "prediction": "它由两个模块组成。", "elapsed_ms": 702.122}
+{"index": 402, "provider": "openai", "model": "gpt-audio-mini", "prediction": "检索模块对密集索引中的段落执行相似性搜索，以检索与问题最相关的前 K 个段落。", "elapsed_ms": 1017.12}
+{"index": 403, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然后阅读模块从每个段落中提取一个片段作为潜在答案。", "elapsed_ms": 770.245}
+{"index": 404, "provider": "openai", "model": "gpt-audio-mini", "prediction": "领域在大多数情况下会检索到黄金通道答案。", "elapsed_ms": 737.027}
+{"index": 405, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然而，在这项工作中，我们更感兴趣的是它在后续过程中所提供的答案和背景。", "elapsed_ms": 1215.166}
+{"index": 406, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在下一步“问题生成”中，我们使用这些替代答案和上下文来生成与这些替代答案相对应的新问题。", "elapsed_ms": 1039.29}
+{"index": 407, "provider": "openai", "model": "gpt-audio-mini", "prediction": "问题生成模型是一个预训练的文本到文本转换器，它在NQ数据上进行了微调，以生成与上下文中标记的答案相对应的问题。", "elapsed_ms": 1140.841}
+{"index": 408, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在推理过程中，我们将之前步骤中检索到的备选答案和上下文提供给问题生成模型。", "elapsed_ms": 1852.179}
+{"index": 409, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，对于这个查询：“谁是里士满足球俱乐部的队长”，RAG 检索到了关于俱乐部女子队的信息，该队由杰斯·肯尼迪担任队长，而问题生成模型则生成了这个查询：“谁是里士满足球俱乐部首支女子队的队长？”", "elapsed_ms": 1938.973}
+{"index": 410, "provider": "openai", "model": "gpt-audio-mini", "prediction": "抱歉，我无法识别或转录音频中的内容。如果您能提供音频中的文字内容，我可以帮助翻译成简体中文。", "elapsed_ms": 856.069}
+{"index": 411, "provider": "openai", "model": "gpt-audio-mini", "prediction": "类似地，我们也会收到类似的问题，比如谁是里士满队的 VFL 预备队队长。", "elapsed_ms": 835.59}
+{"index": 412, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们在去年赢得了总决赛。", "elapsed_ms": 807.262}
+{"index": 413, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最后，我们根据一些期望的特征筛选出生成查询的一个子集。", "elapsed_ms": 859.715}
+{"index": 414, "provider": "openai", "model": "gpt-audio-mini", "prediction": "正如之前所强调的，我们希望确保新问题在语义上仍然与原始问题保持接近。", "elapsed_ms": 888.445}
+{"index": 415, "provider": "openai", "model": "gpt-audio-mini", "prediction": "对于一种不需要额外监督的筛选技术，我们只保留与原始问题在词元级编辑距离较小的新问题。", "elapsed_ms": 933.896}
+{"index": 416, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，我们去掉了“去年格兰德决赛中格兰姆击败了谁？”这个问题。", "elapsed_ms": 898.038}
+{"index": 417, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因为它与原始问题的编辑距离更长。", "elapsed_ms": 815.987}
+{"index": 418, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在我们的实验中，我们证明了这种简单的启发式方法可以用来增强和扩充训练数据。", "elapsed_ms": 864.717}
+{"index": 419, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们还尝试了一种基于语义扰动类型的过滤策略。", "elapsed_ms": 938.601}
+{"index": 420, "provider": "openai", "model": "gpt-audio-mini", "prediction": "为此，我们使用一个通用的查询分解框架，称为 QED。", "elapsed_ms": 903.692}
+{"index": 421, "provider": "openai", "model": "gpt-audio-mini", "prediction": "QED 将问题分为两个部分：一个谓词和一个指称。", "elapsed_ms": 1316.458}
+{"index": 422, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't listen to or process audio. If you provide the text of the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 949.782}
+{"index": 423, "provider": "openai", "model": "gpt-audio-mini", "prediction": "谓词基本上就是句子的剩余部分。", "elapsed_ms": 731.431}
+{"index": 424, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，我们能够将查询“谁是里士满队史上第一支女子队的队长”分解为两个参考：里士满足球俱乐部女子队，以及谓词“谁是队长”。", "elapsed_ms": 1529.344}
+{"index": 425, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在参考谓词标注上训练的模型为我们提供了这个问题的分解。", "elapsed_ms": 804.049}
+{"index": 426, "provider": "openai", "model": "gpt-audio-mini", "prediction": "将原始问题和生成的问题都进行 QED 分解，使我们能够对生成的反事实进行分类，以便评估。", "elapsed_ms": 1040.425}
+{"index": 427, "provider": "openai", "model": "gpt-audio-mini", "prediction": "具体来说，我们获得了两组问题。", "elapsed_ms": 824.278}
+{"index": 428, "provider": "openai", "model": "gpt-audio-mini", "prediction": "那些在保持谓词的同时发生引用变化的，以及那些发生谓词变化并可选地添加引用的。", "elapsed_ms": 1099.292}
+{"index": 429, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，谁是里士满VFL预备队的队长，这是一个参考点。", "elapsed_ms": 1211.259}
+{"index": 430, "provider": "openai", "model": "gpt-audio-mini", "prediction": "当俱乐部的9号球衣归属变动时，这是一种前提的改变。", "elapsed_ms": 1086.461}
+{"index": 431, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们现在评估将 RGF 扰动增强到训练数据时的有效性。", "elapsed_ms": 878.697}
+{"index": 432, "provider": "openai", "model": "gpt-audio-mini", "prediction": "因此，为了有效评估反事实增强的有效性，我们特别尝试了两种强大的数据增强基线。", "elapsed_ms": 931.964}
+{"index": 433, "provider": "openai", "model": "gpt-audio-mini", "prediction": "第一个基线称为随机答案和问题生成，它添加了与原始问题无关的数据。", "elapsed_ms": 924.448}
+{"index": 434, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些段落和答案只是从维基百科中随机抽取的。", "elapsed_ms": 797.784}
+{"index": 435, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这个基线基本上增加了更多看起来像 NQ 的数据。", "elapsed_ms": 1126.089}
+{"index": 436, "provider": "openai", "model": "gpt-audio-mini", "prediction": "在第二个基线中，我们具体应用了我们方法的检索部分来生成答案。", "elapsed_ms": 821.932}
+{"index": 437, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这里，备选答案只是从包含正确答案的同一段落中选出的。", "elapsed_ms": 946.408}
+{"index": 438, "provider": "openai", "model": "gpt-audio-mini", "prediction": "基线和RAG增强在阅读理解方面表现如何，当模型可以访问问题和上下文时？", "elapsed_ms": 902.879}
+{"index": 439, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们在六个域外数据集上进行了实验，并在这里展示结果，其中训练数据通过增强翻倍。", "elapsed_ms": 1567.836}
+{"index": 440, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们发现这两个数据增强基线都无法提升跨领域泛化能力。", "elapsed_ms": 861.171}
+{"index": 441, "provider": "openai", "model": "gpt-audio-mini", "prediction": "事实上，在原始数据上训练的六个模型的集成似乎是最具竞争力的基线。", "elapsed_ms": 905.092}
+{"index": 442, "provider": "openai", "model": "gpt-audio-mini", "prediction": "与基线相比，我们发现 RGF 反事实能够在保持域内性能的同时提升域外性能。", "elapsed_ms": 869.591}
+{"index": 443, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这表明，通过反事实增强来填补模型的推理空白，比从训练分布中添加更多数据更有效。", "elapsed_ms": 1024.54}
+{"index": 444, "provider": "openai", "model": "gpt-audio-mini", "prediction": "此外，我们发现使用检索来获取替代结果或答案对于有效性很重要。", "elapsed_ms": 827.421}
+{"index": 445, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们还在开放域问答设置中进行实验，在这种情况下模型只看到问题，然后我们再次在四个域外数据集上进行评估。", "elapsed_ms": 943.161}
+{"index": 446, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们发现基线模型在跨领域泛化方面并不那么有效。", "elapsed_ms": 1010.827}
+{"index": 447, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然而，使用 RGF 进行数据增强显示出更显著的提升。", "elapsed_ms": 882.575}
+{"index": 448, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们甚至在领域内的准确率上有所提升。", "elapsed_ms": 735.993}
+{"index": 449, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们假设反事实数据增强有助于模型学习更好的查询编码，以应对非常相似的查询。", "elapsed_ms": 2015.331}
+{"index": 450, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最后，我们还评估了模型在原始问题的局部邻域中提高一致性的能力。", "elapsed_ms": 846.733}
+{"index": 451, "provider": "openai", "model": "gpt-audio-mini", "prediction": "一致性衡量的是模型正确回答的问题比例，其中原始查询和反事实查询都被正确回答。", "elapsed_ms": 1343.657}
+{"index": 452, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这明确帮助我们衡量模型对原始输入邻域中微小扰动的鲁棒性。", "elapsed_ms": 813.895}
+{"index": 453, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们使用了五个数据集进行实验，这些数据集包含语义上相近的问题对。", "elapsed_ms": 1007.48}
+{"index": 454, "provider": "openai", "model": "gpt-audio-mini", "prediction": "除了已经提供的三个数据集：AQA、AmbigQA 和 Coref-Contrast Set，我们还在 RGF 反事实上进行评估，这些反事实与原始的 NQ 问题配对，基于它们是否经历了谓词变化或参考变化。", "elapsed_ms": 1484.726}
+{"index": 455, "provider": "openai", "model": "gpt-audio-mini", "prediction": "这些子集是在内部标注的，以消除噪音，并作为资源提供。", "elapsed_ms": 1020.257}
+{"index": 456, "provider": "openai", "model": "gpt-audio-mini", "prediction": "所有基线模型都无法显著提高一致性，而集成模型则通过一个较小的幅度提高了一致性。", "elapsed_ms": 961.81}
+{"index": 457, "provider": "openai", "model": "gpt-audio-mini", "prediction": "然而，我们的反事实增强方法在一致性方面取得了令人印象深刻的提升，无论是在先前的数据集上，还是在我们为参考和谓词扰动精心挑选的两个子集上。", "elapsed_ms": 1016.671}
+{"index": 458, "provider": "openai", "model": "gpt-audio-mini", "prediction": "注意，增强的RGB数据不会因扰动类型而产生偏差，只有评估集存在偏差。", "elapsed_ms": 858.711}
+{"index": 459, "provider": "openai", "model": "gpt-audio-mini", "prediction": "事实上，对所生成的反事实类型进行定性检查表明，生成的问题包含了几种不同的扰动。", "elapsed_ms": 895.849}
+{"index": 460, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，这个关于明尼苏达州核桃林镇人口的原始问题在不同的维度上被扰动，比如城镇、州、国家，以及在不同的谓词上，比如位置、贫困、学校数量。", "elapsed_ms": 1300.401}
+{"index": 461, "provider": "openai", "model": "gpt-audio-mini", "prediction": "今天的扰动是有上下文的。", "elapsed_ms": 737.723}
+{"index": 462, "provider": "openai", "model": "gpt-audio-mini", "prediction": "例如，对于关于温布尔登单打锦标赛的这个问题，扰动是关于比赛类型、锦标赛类型还是比赛结果？", "elapsed_ms": 907.078}
+{"index": 463, "provider": "openai", "model": "gpt-audio-mini", "prediction": "最终要点：我们通过逆转生成方法来解决信息检索查询的反事实数据增强和扰动任务，并应对其独特挑战。具体做法是：利用模型的接近错误生成过量数据，然后根据扰动类型或最小性进行筛选。", "elapsed_ms": 1979.19}
+{"index": 464, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们发现这种技术不需要额外的监督，并且示例已经标注用于增强。", "elapsed_ms": 912.581}
+{"index": 465, "provider": "openai", "model": "gpt-audio-mini", "prediction": "增强提高了域外泛化能力和邻域一致性。", "elapsed_ms": 770.964}
+{"index": 466, "provider": "openai", "model": "gpt-audio-mini", "prediction": "我们发现，反事实的语义多样性得到了保持，同时在增强过程中没有引入偏差。", "elapsed_ms": 1029.156}
+{"index": 467, "provider": "openai", "model": "gpt-audio-mini", "prediction": "I'm sorry, but I can't listen to or process audio. If you provide the text of the speech, I can translate it into Simplified Chinese for you.", "elapsed_ms": 772.672}
