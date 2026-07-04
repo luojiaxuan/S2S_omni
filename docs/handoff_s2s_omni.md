@@ -283,7 +283,50 @@ The downloaded script originally contained hard-coded credentials. Those were
 removed before committing to the public repo. Credentials must be passed
 explicitly via CLI arguments.
 
-2026-07-04 ACL6060 EN->ZH dev reproduction:
+2026-07-04 ACL6060 EN->ZH dev reproduction correction:
+
+The correct ACL6060 main-result input is streaming over 5 full wavs from the
+RASST release data, not 468 independent segmented sentence wavs. The release
+data is:
+
+```text
+https://huggingface.co/datasets/gavinlaw/rasst-main-result-data
+```
+
+Use the new full-wav streaming runner:
+
+```text
+projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py
+```
+
+It downloads/reads:
+
+```text
+main_result/audio/acl6060/2022.acl-long.{110,117,268,367,590}.wav
+main_result/inputs/acl_zh/source.list
+main_result/inputs/acl_zh/target.list
+main_result/inputs/acl_zh/ref.txt
+main_result/inputs/acl_zh/source_text.txt
+main_result/inputs/acl_zh/audio.yaml
+```
+
+and writes a 5-row RASST-style `instances.log` where each row corresponds to a
+full talk wav. `offline_streamlaal_eval.py` is still the right scorer; despite
+the name, it reads a pre-generated streaming log and computes StreamLAAL/BLEU.
+
+Local validation on 2026-07-04:
+
+```text
+/tmp/rasst_main_result_data        # HF ACL6060 subset, 107 MB
+/tmp/acl6060_stream_dry_run        # dry-run log structure check
+```
+
+The 5 full wavs total about 57.4 minutes. A paced OpenAI/Gemini live run should
+therefore take about an hour; `--no-pace` is only a fast protocol/debug mode.
+No OpenAI/Gemini key file was present locally during this correction pass, so a
+real GPT/Gemini streaming run is still pending.
+
+Previous segmented diagnostic, kept only for tokenizer/scorer context:
 
 ```text
 old Infinisst/RAG zh log: BLEU 51.316, LAAL 6639.597, AP 1.034
@@ -299,10 +342,12 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_dev_enzh_openai_gpt_audio_mi
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_dev_enzh_gemini_audio/
 ```
 
-The high ACL6060 zh BLEU is expected under the old scoring setup: it is text
-prediction vs text reference with `sacrebleu-tokenizer=zh`, not target-speech
-ASR BLEU. The same old log scores 51.316 with tokenizer `zh` but only 3.479
-with default `13a`.
+Those 468-row artifacts are not valid evidence for streaming input because they
+use independent segmented wav API calls and end-of-sentence delays. They are
+still useful for the tokenizer question: ACL6060 zh BLEU is text prediction vs
+text reference with `sacrebleu-tokenizer=zh`, not target-speech ASR BLEU. The
+same old log scores 51.316 with tokenizer `zh` but only 3.479 with default
+`13a`.
 
 ## Major Remote Artifacts
 
