@@ -1,0 +1,36 @@
+AS-WER (automatic segmentation mWER): 53.4169
+AS-WER (automatic segmentation mWER): 46.9559
+AS-WER (automatic segmentation mWER): 57.3877
+AS-WER (automatic segmentation mWER): 54.3349
+AS-WER (automatic segmentation mWER): 56.8188
+Instance 66 has no delay information. Skipped
+Instance 327 has no delay information. Skipped
+Instance 422 has no delay information. Skipped
+Instance 423 has no delay information. Skipped
+Instance 424 has no delay information. Skipped
+Instance 427 has no delay information. Skipped
+Instance 428 has no delay information. Skipped
+Instance 429 has no delay information. Skipped
+Instance 430 has no delay information. Skipped
+Instance 431 has no delay information. Skipped
+Instance 433 has no delay information. Skipped
+Instance 434 has no delay information. Skipped
+Instance 435 has no delay information. Skipped
+Instance 66 has no delay information. Skipped
+Instance 327 has no delay information. Skipped
+Instance 422 has no delay information. Skipped
+Instance 423 has no delay information. Skipped
+Instance 424 has no delay information. Skipped
+Instance 427 has no delay information. Skipped
+Instance 428 has no delay information. Skipped
+Instance 429 has no delay information. Skipped
+Instance 430 has no delay information. Skipped
+Instance 431 has no delay information. Skipped
+Instance 433 has no delay information. Skipped
+Instance 434 has no delay information. Skipped
+Instance 435 has no delay information. Skipped
+StreamLAAL v2.2.
+BLEU	StreamLAAL	StreamLAAL_CA
+32.5537600136997	-2619.639998552451	-2624.5338439304887
+TERM_ACC	0.6427	CORRECT_TERMS	572	TOTAL_TERMS	890
+TERM_FCR	0.0016	FALSE_COPY	137	NEG_TOTAL	87878

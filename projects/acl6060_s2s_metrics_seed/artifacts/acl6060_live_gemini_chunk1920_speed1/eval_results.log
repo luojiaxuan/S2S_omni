@@ -1,0 +1,12 @@
+AS-WER (automatic segmentation mWER): 52.7335
+AS-WER (automatic segmentation mWER): 52.0548
+AS-WER (automatic segmentation mWER): 59.1941
+AS-WER (automatic segmentation mWER): 49.6714
+AS-WER (automatic segmentation mWER): 51.7782
+Instance 72 has no delay information. Skipped
+Instance 72 has no delay information. Skipped
+StreamLAAL v2.2.
+BLEU	StreamLAAL	StreamLAAL_CA
+47.487892403904425	34963.07044716767	35119.30578975009
+TERM_ACC	0.7461	CORRECT_TERMS	664	TOTAL_TERMS	890
+TERM_FCR	0.0013	FALSE_COPY	116	NEG_TOTAL	87878

@@ -1,0 +1,10 @@
+AS-WER (automatic segmentation mWER): 49.1743
+AS-WER (automatic segmentation mWER): 45.0533
+AS-WER (automatic segmentation mWER): 51.5053
+AS-WER (automatic segmentation mWER): 45.7277
+AS-WER (automatic segmentation mWER): 44.0773
+StreamLAAL v2.2.
+BLEU	StreamLAAL	StreamLAAL_CA
+48.76679613347596	-2879.6560749164255	-2880.975392054523
+TERM_ACC	0.7584	CORRECT_TERMS	675	TOTAL_TERMS	890
+TERM_FCR	0.0012	FALSE_COPY	106	NEG_TOTAL	87878

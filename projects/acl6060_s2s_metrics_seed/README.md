@@ -173,27 +173,49 @@ Validated locally on 2026-07-04:
 Do not pass API keys through environment variables. Use a local key file and do
 not commit it.
 
-### 2026-07-04 ACL6060 EN->ZH Live Results
+### 2026-07-04 ACL6060 EN->ZH Live Sweep
 
-These rows use the corrected 5-full-wav streaming input protocol, `chunk_ms=960`,
-HF/RASST release data, and RASST `offline_streamlaal_eval.py` scoring with
-`lang_code=zh`.
+These rows use the corrected 5-full-wav streaming input protocol, HF/RASST
+release data, and RASST `offline_streamlaal_eval.py` scoring with
+`lang_code=zh`. The sweep covers `chunk_ms=960,1920` and
+`speed_factor=1.0,1.5`.
 
-| run | rows | BLEU | masked BLEU | StreamLAAL | StreamLAAL_CA | TERM_ACC | TERM_ADOPTION | notes |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| OpenAI `gpt-realtime-translate` | 5 | 35.600 | 29.701 | 4403.721 | 4414.628 | 0.7404 | 0.4767 | full paced run, 0 API errors |
-| Gemini `gemini-3.5-live-translate-preview` | 5 | 48.230 | 42.656 | 2428.819 | 2531.411 | 0.7472 | 0.5867 | full paced run, 480s session split, 0 API errors |
+| provider | chunk_ms | speed | BLEU | masked BLEU | StreamLAAL | StreamLAAL_CA | TERM_ACC | TERM_ADOPTION | API errors |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| OpenAI `gpt-realtime-translate` | 960 | 1.0 | 35.600 | 29.701 | 4403.721 | 4414.628 | 0.7404 | 0.4767 | 0 |
+| OpenAI `gpt-realtime-translate` | 960 | 1.5 | 33.138 | 27.616 | -2649.876 | -2651.592 | 0.6764 | 0.4367 | 0 |
+| OpenAI `gpt-realtime-translate` | 1920 | 1.0 | 35.104 | 29.484 | 4695.663 | 4690.100 | 0.7090 | 0.5667 | 0 |
+| OpenAI `gpt-realtime-translate` | 1920 | 1.5 | 32.554 | 27.759 | -2619.640 | -2624.534 | 0.6427 | 0.4867 | 0 |
+| Gemini `gemini-3.5-live-translate-preview` | 960 | 1.0 | 48.230 | 42.656 | 2428.819 | 2531.411 | 0.7472 | 0.5867 | 0 |
+| Gemini `gemini-3.5-live-translate-preview` | 960 | 1.5 | 48.767 | 44.503 | -2879.656 | -2880.975 | 0.7584 | 0.4867 | 0 |
+| Gemini `gemini-3.5-live-translate-preview` | 1920 | 1.0 | 47.488 | 41.642 | 34963.070 | 35119.306 | 0.7461 | 0.6667 | 0 |
+| Gemini `gemini-3.5-live-translate-preview` | 1920 | 1.5 | 47.151 | 42.975 | -2850.625 | -2852.580 | 0.7258 | 0.4367 | 0 |
+
+The `speed_factor=1.5` rows use compressed source-clock audio, so their
+StreamLAAL values are not directly comparable with `speed_factor=1.0` rows.
+Gemini had two transient WebSocket 1011 service-unavailable disconnects during
+the sweep; both affected incomplete samples before row write and were rerun with
+`--resume`, so all final rows have 0 API errors.
 
 Tracked small artifacts:
 
 ```text
-projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk960/
-projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_sweep_summary.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_sweep_summary.jsonl
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk960_speed1/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk960_speed1p5/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk1920_speed1/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk1920_speed1p5/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960_speed1/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960_speed1p5/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk1920_speed1/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk1920_speed1p5/
 ```
 
 Large local raw event/audio directories were not committed:
 
 ```text
+/tmp/acl6060_live_sweep
 /tmp/acl6060_stream_openai_full_chunk960
 /tmp/acl6060_stream_gemini_full_chunk960
 ```
@@ -201,6 +223,7 @@ Large local raw event/audio directories were not committed:
 Taurus scorer work dirs:
 
 ```text
+/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_live_sweep_20260704
 /mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_openai_chunk960_20260704
 /mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_gemini_chunk960_20260704
 ```

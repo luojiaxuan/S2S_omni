@@ -346,24 +346,45 @@ The sweep script runs the same live streaming runner, then copies complete
 `speed_factor=1.5`, and the first 6 seconds succeeded for both providers with
 `source_length≈4009ms`, confirming the speed factor is applied before streaming.
 
-Full ACL6060 EN->ZH live results on 2026-07-04, using 5 full wavs and
-`chunk_ms=960`:
+Full ACL6060 EN->ZH live sweep results on 2026-07-04, using 5 full wavs:
 
 ```text
-OpenAI gpt-realtime-translate: BLEU 35.600, StreamLAAL 4403.721, StreamLAAL_CA 4414.628, TERM_ACC 0.7404
-Gemini 3.5 Live Translate:    BLEU 48.230, StreamLAAL 2428.819, StreamLAAL_CA 2531.411, TERM_ACC 0.7472
+provider  chunk  speed  BLEU    masked  StreamLAAL  StreamLAAL_CA  TERM_ACC  api_errors
+openai    960    1.0    35.600  29.701    4403.721      4414.628    0.7404    0
+openai    960    1.5    33.138  27.616   -2649.876     -2651.592    0.6764    0
+openai    1920   1.0    35.104  29.484    4695.663      4690.100    0.7090    0
+openai    1920   1.5    32.554  27.759   -2619.640     -2624.534    0.6427    0
+gemini    960    1.0    48.230  42.656    2428.819      2531.411    0.7472    0
+gemini    960    1.5    48.767  44.503   -2879.656     -2880.975    0.7584    0
+gemini    1920   1.0    47.488  41.642   34963.070     35119.306    0.7461    0
+gemini    1920   1.5    47.151  42.975   -2850.625     -2852.580    0.7258    0
 ```
+
+The `speed_factor=1.5` rows use compressed source-clock audio, so their
+StreamLAAL values are not directly comparable with `speed_factor=1.0` rows.
+Gemini had two transient WebSocket 1011 service-unavailable disconnects during
+the sweep; both affected incomplete samples before row write and were rerun with
+`--resume`, so the final scored rows have 0 API errors.
 
 Tracked small artifacts:
 
 ```text
-projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk960/
-projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_sweep_summary.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_sweep_summary.jsonl
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk960_speed1/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk960_speed1p5/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk1920_speed1/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_openai_chunk1920_speed1p5/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960_speed1/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960_speed1p5/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk1920_speed1/
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk1920_speed1p5/
 ```
 
 Large raw event/audio dirs are local-only:
 
 ```text
+/tmp/acl6060_live_sweep
 /tmp/acl6060_stream_openai_full_chunk960
 /tmp/acl6060_stream_gemini_full_chunk960
 ```
@@ -371,6 +392,7 @@ Large raw event/audio dirs are local-only:
 Taurus scorer dirs:
 
 ```text
+/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_live_sweep_20260704
 /mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_openai_chunk960_20260704
 /mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_gemini_chunk960_20260704
 ```
