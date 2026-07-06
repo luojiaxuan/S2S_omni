@@ -258,13 +258,13 @@ chunk=960,  speed=1.5: BLEU 21.13, chrF 21.65, CER 0.805, wall delay 24.40s, max
 chunk=1920, speed=1.5: BLEU 21.30, chrF 21.46, CER 0.818, wall delay 2.13s, max backlog 203.37s
 ```
 
-KIT Lecture Translator has only exploratory coverage so far. The tracked 60s
-dashboard compares GPT/Gemini target-speech ASR, KIT captured web-event TTS
-text, and Seed full-run prefix proxies. BLEU is recomputed with sacreBLEU
-`tokenize=zh`; the stored hypothesis/reference strings preserve punctuation.
-The dashboard includes a `BLEU default` column showing the old default-tokenizer
-BLEU 0.0 result next to the corrected Chinese-tokenized BLEU. Treat this as a
-smoke/debug artifact, not a formal KIT product comparison.
+KIT Lecture Translator has exploratory 60s coverage so far. The tracked 60s
+dashboard compares GPT/Gemini target-speech ASR, earlier KIT captured
+web-event TTS text, and Seed full-run prefix proxies. BLEU is recomputed with
+sacreBLEU `tokenize=zh`; the stored hypothesis/reference strings preserve
+punctuation. The dashboard includes a `BLEU default` column showing the old
+default-tokenizer BLEU 0.0 result next to the corrected Chinese-tokenized BLEU.
+Treat this as a smoke/debug artifact, not a formal KIT product comparison.
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
@@ -287,10 +287,36 @@ availability=private
 Do not report that interrupted capture as a KIT full-run score. Before running
 full KIT again, inspect or sweep the product settings: TTS quality/latency mode,
 presentation/profile selection, postproduction, shortening, smart chaptering,
-pause/mute handling, and target speech audio retrieval. If target wav retrieval
-becomes possible, score KIT the same way as Seed/GPT/Gemini: target speech
-through `gpt-4o-mini-transcribe`, then BLEU/chrF/CER with punctuation preserved.
-If only web-event TTS text is available, label the row as text-only.
+and pause/mute handling.
+
+KIT target speech audio retrieval is now verified for captured sessions. The
+`tts:0` messages store linked data keys such as
+`Data/{session_id}/{chunk_id}` rather than direct audio URLs. Resolve them with
+`https://lt2srv.iar.kit.edu/webapi/stream/data?name=Data/{session_id}/{chunk_id}`,
+decode the returned base64 PCM s16le, concatenate chunks in `message_id` order,
+then score KIT the same way as Seed/GPT/Gemini: target speech through
+`gpt-4o-mini-transcribe`, then BLEU/chrF/CER with punctuation preserved. If
+only web-event TTS text is available, label the row as text-only.
+
+The 2026-07-06 60s KIT setting smoke used 1.92s source-audio input chunks. KIT
+does not emit one target TTS chunk per input chunk: `low_latency` produced 14
+shorter TTS chunks, while `high_quality`/`mixed high_quality` merged the first
+large stable segment and produced 6 chunks. Target-wav and ASR artifacts are
+local-only staging outputs:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/target_tts_asr_gpt4o_mini.jsonl
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/target_tts_asr_metrics.jsonl
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/target_tts_asr_summary.json
+```
+
+Target-speech-ASR summary on the selected FLORAS 60s EN->ZH clip:
+
+```text
+mixed_high_quality_no_post:   BLEU 25.94, chrF 22.72, CER 0.717, target 52.08s, 6 TTS chunks
+online_low_latency_no_post:   BLEU 24.94, chrF 22.60, CER 0.717, target 70.20s, 14 TTS chunks
+online_high_quality_no_post:  BLEU 23.97, chrF 21.17, CER 0.721, target 52.58s, 6 TTS chunks
+```
 
 ### ACL6060 / Seed AST S2S Metrics Script
 
