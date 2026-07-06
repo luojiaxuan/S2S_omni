@@ -6,12 +6,40 @@ tracked in Git. The current Seed AST chunk sweep has 1,308 local wav/window
 files in the Git worktree, totaling about 721 MB, plus raw Seed run outputs
 under the local artifact root.
 
+## KIT Full-Source Debug Capture
+
+This is not a formal KIT result. The 2026-07-06 run used the default
+low-latency online configuration before the KIT settings were inspected and was
+interrupted after 330.0s of the 1072.63s FLORAS source.
+
+KIT session:
+
+```text
+https://lecture-translator.kit.edu/present/99976397598743707754867175416840867729
+```
+
+Local debug JSON:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_enzh/kit_live_enzh_full_realtime_run.json
+```
+
+Local partial dashboard generated only for extractor sanity checking:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_enzh/partial_dashboard_check/index.html
+```
+
+The cookie file in the same directory is local credential material and must not
+be copied into Git. Do not rank this debug capture against full FLORAS results.
+
 ## KIT/GPT/Gemini/Seed 60s Compare
 
 Same first 60s FLORAS EN->ZH source clip. GPT/Gemini rows use target-speech
 ASR. KIT rows use captured web-event TTS text because target wav retrieval is
 not available yet. Seed rows are marked as full-run prefix proxies, not exact
-60s Seed reruns.
+60s Seed reruns. This is a smoke/debug dashboard, not a formal KIT product
+score.
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html

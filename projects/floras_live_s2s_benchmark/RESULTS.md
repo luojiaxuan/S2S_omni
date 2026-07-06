@@ -19,6 +19,29 @@ Seed AST rows use ASR over the generated target speech with
 `gpt-4o-mini-transcribe`; the AST backend translation subtitle is not used for
 BLEU/chrF/CER.
 
+## KIT Lecture Translator Status
+
+KIT is still exploratory and should not be ranked against the full
+OpenAI/Gemini/Seed rows yet. The 60s dashboard below is useful for validating
+the web-event text extractor and the Chinese BLEU tokenizer issue, but it was
+not run after selecting the best KIT product configuration.
+
+The 2026-07-06 full-source KIT attempt used a default online low-latency setup
+with `language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
+`ttsQualityMode=low_latency`, `smartChaptering=online_dynamic`, and private
+availability. It was interrupted after 330.0 seconds of the 1072.63-second
+FLORAS source and paused on the server. The local JSON capture is debug-only:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_enzh/kit_live_enzh_full_realtime_run.json
+```
+
+Before a formal full KIT comparison, sweep or inspect the relevant KIT settings
+first: TTS quality/latency mode, presentation/profile selection,
+postproduction, shortening, smart chaptering, pause/mute handling, and whether
+target speech audio can be retrieved and ASR-scored like the Seed/GPT/Gemini
+rows.
+
 ## FLORAS 60s KIT Smoke Compare
 
 Dashboard:

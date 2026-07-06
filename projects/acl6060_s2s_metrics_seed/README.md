@@ -309,3 +309,29 @@ Tokenizer diagnostic on the same old `instances.log`:
 This explains why ACL6060 EN->ZH BLEU can look much higher than FLORAS scores:
 the old ACL6060 number is text prediction vs text reference with Chinese
 tokenization/character-like segmentation. It is not target-speech-ASR BLEU.
+
+## Related KIT Lecture Translator Work
+
+KIT Lecture Translator is being explored under the FLORAS live benchmark, not
+as part of this ACL6060 Seed metrics bundle. Do not compare a KIT web-event text
+capture directly with the ACL6060 segmented diagnostic or the ACL6060 5-full-wav
+RASST scorer rows.
+
+Current KIT status on 2026-07-06:
+
+- The tracked KIT/GPT/Gemini/Seed dashboard is a 60s smoke/debug artifact for
+  text extraction and Chinese BLEU tokenization.
+- A full-source KIT attempt on the FLORAS EN->ZH sample used a default
+  low-latency online configuration and was interrupted after 330.0s of the
+  1072.63s source, then paused. It is not a formal score.
+- Before a formal KIT comparison, inspect or sweep the KIT product settings and
+  decide whether KIT can be scored from target speech ASR. If only web-event TTS
+  text is available, label it as text-only.
+
+See:
+
+```text
+projects/floras_live_s2s_benchmark/README.md
+projects/floras_live_s2s_benchmark/RESULTS.md
+docs/handoff_s2s_omni.md
+```

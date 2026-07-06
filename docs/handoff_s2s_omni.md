@@ -1,6 +1,6 @@
 # S2S_omni Handoff
 
-Last updated: 2026-07-04
+Last updated: 2026-07-06
 
 Repository:
 
@@ -258,17 +258,39 @@ chunk=960,  speed=1.5: BLEU 21.13, chrF 21.65, CER 0.805, wall delay 24.40s, max
 chunk=1920, speed=1.5: BLEU 21.30, chrF 21.46, CER 0.818, wall delay 2.13s, max backlog 203.37s
 ```
 
-KIT Lecture Translator was also tested on the first 60s FLORAS EN->ZH source
-clip. The tracked dashboard compares GPT/Gemini target-speech ASR, KIT captured
-web-event TTS text, and Seed full-run prefix proxies. BLEU is recomputed with
-sacreBLEU `tokenize=zh`; the stored hypothesis/reference strings preserve
-punctuation. The dashboard includes a `BLEU default` column showing the old
-default-tokenizer BLEU 0.0 result next to the corrected Chinese-tokenized BLEU.
+KIT Lecture Translator has only exploratory coverage so far. The tracked 60s
+dashboard compares GPT/Gemini target-speech ASR, KIT captured web-event TTS
+text, and Seed full-run prefix proxies. BLEU is recomputed with sacreBLEU
+`tokenize=zh`; the stored hypothesis/reference strings preserve punctuation.
+The dashboard includes a `BLEU default` column showing the old default-tokenizer
+BLEU 0.0 result next to the corrected Chinese-tokenized BLEU. Treat this as a
+smoke/debug artifact, not a formal KIT product comparison.
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
 scripts/build_floras_kit_60s_compare.py
 ```
+
+On 2026-07-06, a full-source KIT run was started on the same FLORAS EN->ZH
+sample but stopped after 330.0s of the 1072.63s source and paused on the KIT
+server. It used a default online low-latency setup:
+
+```text
+language=en
+mtLanguage=zh
+audioLanguage=zh
+ttsQualityMode=low_latency
+smartChaptering=online_dynamic
+availability=private
+```
+
+Do not report that interrupted capture as a KIT full-run score. Before running
+full KIT again, inspect or sweep the product settings: TTS quality/latency mode,
+presentation/profile selection, postproduction, shortening, smart chaptering,
+pause/mute handling, and target speech audio retrieval. If target wav retrieval
+becomes possible, score KIT the same way as Seed/GPT/Gemini: target speech
+through `gpt-4o-mini-transcribe`, then BLEU/chrF/CER with punctuation preserved.
+If only web-event TTS text is available, label the row as text-only.
 
 ### ACL6060 / Seed AST S2S Metrics Script
 
@@ -636,7 +658,16 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
    sizes and two speed settings. Add ZH->EN and more FLORAS samples before
    drawing benchmark-level conclusions.
 
-5. Keep eval semantics clear.
+5. Configure KIT before any full run.
+
+   Do not launch another full KIT Lecture Translator run until the product
+   settings have been inspected. Start with short clips and compare
+   TTS-quality/latency mode, profile, postproduction, shortening, smart
+   chaptering, pause/mute behavior, and whether target audio can be retrieved.
+   Only then run full FLORAS and mark clearly whether the hypothesis is target
+   speech ASR or KIT web-event text.
+
+6. Keep eval semantics clear.
 
    Always report wall-clock delay and max backlog, not only duration lag. For
    semantic quality, BLEU/chrF/CER are useful but insufficient; use human

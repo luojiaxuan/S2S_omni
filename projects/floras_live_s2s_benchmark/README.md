@@ -6,8 +6,10 @@ for EN->ZH long-form streaming translation.
 ## Scope
 
 - Source data: FLORAS long-form EN monolingual ASR test sample.
-- Backends: OpenAI Realtime, Gemini Live, Seed AST, and a KIT Lecture
-  Translator 60s text-only smoke comparison.
+- Backends: OpenAI Realtime, Gemini Live, Seed AST, and exploratory KIT
+  Lecture Translator captures. KIT results are not yet a formal full-run
+  comparison because the product has multiple quality/latency/profile settings
+  that must be selected deliberately before scoring.
 - Chunk sizes: 960 ms and 1920 ms.
 - Speeds: 1.0x and 1.5x.
 - Evaluation: target speech ASR, BLEU/chrF/CER, window-level backlog, wall-clock
@@ -33,8 +35,10 @@ for EN->ZH long-form streaming translation.
   chunks and 1.0x/1.5x speed.
 - `artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl`:
   metric rows for the full Seed AST chunk/speed dashboard.
-- `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html`: 60s dashboard
-  comparing OpenAI, Gemini, KIT Lecture Translator, and Seed AST proxy rows.
+- `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html`: 60s smoke
+  dashboard comparing OpenAI, Gemini, KIT Lecture Translator, and Seed AST
+  proxy rows. This is a debug/tokenizer artifact, not the formal KIT product
+  comparison.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/compare_metrics.jsonl`:
   metric rows for the 60s dashboard. Hypothesis/reference punctuation is
   preserved and both default-tokenizer BLEU and `tokenize=zh` BLEU are stored.
@@ -69,6 +73,10 @@ dashboard and audio paths.
 
 The KIT Lecture Translator smoke output is text-only in the tracked dashboard:
 the web-event TTS text was captured, but the target wav was not retrieved.
+The 2026-07-06 full-source KIT attempt used a default low-latency online
+configuration and was interrupted after 330 seconds of the 1072.63-second source
+because the configuration had not been optimized. Treat that capture as local
+debug data only.
 
 ## Metric Definitions
 
@@ -97,7 +105,7 @@ Seed AST live outputs are produced by:
 scripts/run_floras_seed_ast.py
 ```
 
-The KIT/GPT/Gemini/Seed 60s comparison dashboard is rebuilt with:
+The KIT/GPT/Gemini/Seed 60s smoke dashboard is rebuilt with:
 
 ```bash
 python3 scripts/build_floras_kit_60s_compare.py \
@@ -115,4 +123,6 @@ length is close to the source but the live system returned audio far too late.
 For the 60s KIT smoke comparison, the earlier BLEU 0.0 reading was an eval
 artifact: the same hypotheses score 0.00 with sacreBLEU's default tokenizer but
 20-26 BLEU with `tokenize=zh`, while preserving the original
-hypothesis/reference punctuation.
+hypothesis/reference punctuation. Do not rank KIT from this 60s smoke result;
+the product configuration still needs a controlled sweep before a full FLORAS
+comparison.
