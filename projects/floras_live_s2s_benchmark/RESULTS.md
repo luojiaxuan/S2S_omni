@@ -1,25 +1,33 @@
 ## Full 1072s Sample
 
-| run | backend | chunk_ms | speed | BLEU | chrF | CER | duration_lag_s | wall_delay_s | max_backlog_s |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| en-zh_mono_asr_test__0__speed_1 | chatgpt | 960 | 1.00 | 24.10 | 25.96 | 0.875 | 19.57 | 63.52 | 40.20 |
-| en-zh_mono_asr_test__0__speed_1 | gemini | 960 | 1.00 | 17.30 | 18.90 | 0.914 | 5.62 | 185.97 | 114.00 |
-| en-zh_mono_asr_test__0__speed_1 | seed_ast | 960 | 1.00 | 21.48 | 21.85 | 0.836 | -313.22 | 1.75 | 314.53 |
-| en-zh_mono_asr_test__0__speed_1 | chatgpt | 1920 | 1.00 | 19.56 | 20.58 | 0.844 | 21.27 | 46.20 | 23.53 |
-| en-zh_mono_asr_test__0__speed_1 | gemini | 1920 | 1.00 | 14.03 | 18.20 | 0.863 | 132.37 | 160.32 | 16.25 |
-| en-zh_mono_asr_test__0__speed_1 | seed_ast | 1920 | 1.00 | 20.81 | 21.53 | 0.812 | -287.35 | 1.58 | 288.37 |
-| en-zh_mono_asr_test__0__speed_1 | kit | 1920 | 1.00 | 18.29 | 19.37 | 0.822 | -112.76 | 16.98 | 119.16 |
-| en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 960 | 1.50 | 19.74 | 20.72 | 0.807 | 27.70 | 94.63 | 65.53 |
-| en-zh_mono_asr_test__0__speed_1.5 | gemini | 960 | 1.50 | 20.42 | 21.35 | 0.865 | 5.15 | 75.30 | 69.84 |
-| en-zh_mono_asr_test__0__speed_1.5 | seed_ast | 960 | 1.50 | 21.13 | 21.65 | 0.805 | -221.05 | 24.40 | 241.92 |
-| en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 1920 | 1.50 | 16.96 | 18.31 | 0.891 | 22.70 | 40.04 | 16.09 |
-| en-zh_mono_asr_test__0__speed_1.5 | gemini | 1920 | 1.50 | 20.38 | 21.44 | 0.867 | 94.40 | 109.81 | 15.09 |
-| en-zh_mono_asr_test__0__speed_1.5 | seed_ast | 1920 | 1.50 | 21.30 | 21.46 | 0.818 | -202.16 | 2.13 | 203.37 |
-| en-zh_mono_asr_test__0__speed_1.5 | kit | 1920 | 1.50 | 17.46 | 18.63 | 0.844 | -106.73 | 130.70 | 231.84 |
+| run | backend | chunk_ms | speed | xCOMET-QE | MetricX-QE | MetricX err | BLEU | chrF | CER | duration_lag_s | wall_delay_s | max_backlog_s |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| en-zh_mono_asr_test__0__speed_1 | chatgpt | 960 | 1.00 | 0.0416 | 9.966 | 15.034 | 24.10 | 25.96 | 0.875 | 19.57 | 63.52 | 40.20 |
+| en-zh_mono_asr_test__0__speed_1 | chatgpt | 1920 | 1.00 | 0.0362 | 7.781 | 17.219 | 19.56 | 20.58 | 0.844 | 21.27 | 46.20 | 23.53 |
+| en-zh_mono_asr_test__0__speed_1 | gemini | 960 | 1.00 | 0.0318 | 8.686 | 16.314 | 17.30 | 18.90 | 0.914 | 5.62 | 185.97 | 114.00 |
+| en-zh_mono_asr_test__0__speed_1 | gemini | 1920 | 1.00 | 0.0218 | 8.305 | 16.695 | 14.03 | 18.20 | 0.863 | 132.37 | 160.32 | 16.25 |
+| en-zh_mono_asr_test__0__speed_1 | seed | 960 | 1.00 | 0.0398 | 9.939 | 15.061 | 21.48 | 21.85 | 0.836 | -313.22 | 1.75 | 314.53 |
+| en-zh_mono_asr_test__0__speed_1 | seed | 1920 | 1.00 | 0.0501 | 8.381 | 16.619 | 20.81 | 21.53 | 0.812 | -287.35 | 1.58 | 288.37 |
+| en-zh_mono_asr_test__0__speed_1 | kit | 1920 | 1.00 | 0.0350 | 8.558 | 16.442 | 18.29 | 19.37 | 0.822 | -112.76 | 16.98 | 119.16 |
+| en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 960 | 1.50 | 0.0428 | 8.098 | 16.902 | 19.74 | 20.72 | 0.807 | 27.70 | 94.63 | 65.53 |
+| en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 1920 | 1.50 | 0.0367 | 7.752 | 17.248 | 16.96 | 18.31 | 0.891 | 22.70 | 40.04 | 16.09 |
+| en-zh_mono_asr_test__0__speed_1.5 | gemini | 960 | 1.50 | 0.0342 | 8.645 | 16.355 | 20.42 | 21.35 | 0.865 | 5.15 | 75.30 | 69.84 |
+| en-zh_mono_asr_test__0__speed_1.5 | gemini | 1920 | 1.50 | 0.0412 | 9.110 | 15.890 | 20.38 | 21.44 | 0.867 | 94.40 | 109.81 | 15.09 |
+| en-zh_mono_asr_test__0__speed_1.5 | seed | 960 | 1.50 | 0.0431 | 9.171 | 15.829 | 21.13 | 21.65 | 0.805 | -221.05 | 24.40 | 241.92 |
+| en-zh_mono_asr_test__0__speed_1.5 | seed | 1920 | 1.50 | 0.0509 | 9.404 | 15.596 | 21.30 | 21.46 | 0.818 | -202.16 | 2.13 | 203.37 |
+| en-zh_mono_asr_test__0__speed_1.5 | kit | 1920 | 1.50 | 0.0357 | 8.390 | 16.610 | 17.46 | 18.63 | 0.844 | -106.73 | 130.70 | 231.84 |
 
 Seed AST rows use ASR over the generated target speech with
 `gpt-4o-mini-transcribe`; the AST backend translation subtitle is not used for
 BLEU/chrF/CER.
+
+`xCOMET-QE` and `MetricX-QE` are reference-free source+hypothesis scores over
+proportional text chunks. MetricX's native output is a lower-is-better error on
+a 0-25 scale; `MetricX-QE` is reported as `25 - MetricX err` so higher is
+better in the dashboards. The proportional chunks are an approximate
+document-level workaround for model context limits, not sentence- or
+time-aligned segments; interpret QE cautiously for rows with large backlog,
+truncation, or strong compression.
 
 ## KIT Lecture Translator Status
 

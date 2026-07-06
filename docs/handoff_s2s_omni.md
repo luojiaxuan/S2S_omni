@@ -218,6 +218,12 @@ projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/compare_metrics.jsonl
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/compare_metrics.jsonl
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl
+projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_scores.jsonl
+projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_segments.jsonl
+projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_xcomet_qe_segments.jsonl
+projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_metricx_qe_segments.jsonl
 ```
 
 Large wav artifacts are local only:
@@ -822,8 +828,13 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
 6. Keep eval semantics clear.
 
    Always report wall-clock delay and max backlog, not only duration lag. For
-   semantic quality, BLEU/chrF/CER are useful but insufficient; use human
-   listening and LLM-as-judge for missed or compressed sentence judgments.
+   semantic quality, BLEU/chrF/CER are pseudo-reference-based and useful but
+   insufficient. The full-wav dashboards now also include reference-free
+   xCOMET-lite QE and MetricX-24 QE over source transcript plus target-speech
+   ASR hypothesis. QE uses proportional text chunks as an approximate
+   document-level workaround for model context limits, not strict time or
+   sentence alignment. Use human listening and LLM-as-judge for missed or
+   compressed sentence judgments.
 
 ## Quick Orientation Commands
 
@@ -835,6 +846,11 @@ git log --oneline -10
 python3 -m py_compile \
   scripts/evaluate_floras_live_s2s.py \
   scripts/render_floras_compare_dashboard.py \
+  scripts/build_floras_qe_inputs.py \
+  scripts/run_floras_qe_xcomet.py \
+  scripts/run_floras_qe_metricx.py \
+  scripts/aggregate_floras_qe_scores.py \
+  scripts/build_floras_kit_full_compare.py \
   scripts/package_floras_live_project.py \
   projects/acl6060_s2s_metrics_seed/vendor/seed/generate.py
 

@@ -12,8 +12,9 @@ for EN->ZH long-form streaming translation.
   than a full KIT configuration sweep.
 - Chunk sizes: 960 ms and 1920 ms.
 - Speeds: 1.0x and 1.5x.
-- Evaluation: target speech ASR, BLEU/chrF/CER, window-level backlog, wall-clock
-  playback delay, sentence/window coverage artifacts for manual inspection.
+- Evaluation: target speech ASR, reference-based BLEU/chrF/CER, reference-free
+  xCOMET-lite QE and MetricX-24 QE, window-level backlog, wall-clock playback
+  delay, sentence/window coverage artifacts for manual inspection.
 
 ## Tracked Artifacts
 
@@ -40,6 +41,14 @@ for EN->ZH long-form streaming translation.
   only the 1.92s chunk row in this full dashboard. KIT uses
   `format=mixed`, `ttsQualityMode=high_quality`, 1.92s input chunks, retrieved
   target speech, and `gpt-4o-mini-transcribe`.
+- `artifacts/qe/full_enzh_qe_scores.jsonl`: per-full-run reference-free QE
+  rows. xCOMET-QE uses `myyycroft/XCOMET-lite`; MetricX-QE uses
+  `google/metricx-24-hybrid-large-v2p6-bfloat16`. Inputs are source transcript
+  plus target-speech ASR hypothesis, split into proportional text chunks.
+- `artifacts/qe/full_enzh_qe_segments.jsonl`,
+  `artifacts/qe/full_enzh_xcomet_qe_segments.jsonl`, and
+  `artifacts/qe/full_enzh_metricx_qe_segments.jsonl`: segment-level QE inputs
+  and model outputs used to build the aggregate rows.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html`: 60s smoke
   dashboard comparing OpenAI, Gemini, KIT Lecture Translator, and Seed AST
   proxy rows. This is a debug/tokenizer artifact, not the formal KIT product
@@ -109,8 +118,20 @@ debug data only.
   source stream end time.
 - `max_backlog_s`: maximum window-level emitted-target deficit during streaming.
 - `max_playback_queue_s`: maximum target-audio queue ahead of the live source.
-- `BLEU`, `chrF`, `CER`: computed from ASR transcript against the target
-  reference text.
+- `BLEU`, `chrF`, `CER`: reference-based metrics computed from target-speech
+  ASR transcript against the current GPT-generated target reference text.
+- `xCOMET-QE`: reference-free quality estimate from
+  `myyycroft/XCOMET-lite`, using source transcript plus target-speech ASR
+  hypothesis only. Higher is better.
+- `MetricX-QE`: reference-free score derived from
+  `google/metricx-24-hybrid-large-v2p6-bfloat16`, using source transcript plus
+  target-speech ASR hypothesis only. The model's raw `MetricX err` is
+  lower-is-better on a 0-25 scale; the dashboard reports `25 - err` as
+  higher-is-better `MetricX-QE` and keeps the raw error column.
+- QE is computed on proportional text chunks because the full 1072s transcript
+  is too long for these learned metrics. This is an approximate document-level
+  segmentation, not a time-aligned or sentence-aligned comparison; interpret QE
+  carefully for high-backlog, truncated, or heavily compressed runs.
 
 ## Refresh Command
 
@@ -147,14 +168,46 @@ run id, the script loads local `full_first60_target_asr/speed1p5/*/target_first6
 crops for GPT/Gemini/Seed when present; those wav/ASR artifacts are local
 staging files and are intentionally not committed.
 
-The full-source KIT comparison dashboard is rebuilt after running KIT and ASR
-with:
+Reference-free QE inputs are built from the full KIT/GPT/Gemini/Seed
+`compare_metrics.jsonl`, then scored with xCOMET-lite and MetricX-24:
+
+```bash
+python3 scripts/build_floras_qe_inputs.py \
+  --manifest projects/floras_live_s2s_benchmark/artifacts/root_metadata/live_runs.jsonl \
+  --compare-metrics projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl \
+  --output-segments projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_segments.jsonl \
+  --output-runs projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_runs.jsonl
+
+python3 scripts/run_floras_qe_xcomet.py \
+  --input-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_segments.jsonl \
+  --output-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_xcomet_qe_segments.jsonl \
+  --model-name myyycroft/XCOMET-lite \
+  --xcomet-code-dir /path/to/xCOMET-lite
+
+python3 scripts/run_floras_qe_metricx.py \
+  --input-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_segments.jsonl \
+  --output-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_metricx_qe_segments.jsonl \
+  --model-name google/metricx-24-hybrid-large-v2p6-bfloat16 \
+  --tokenizer google/mt5-large \
+  --metricx-code-dir /path/to/metricx
+
+python3 scripts/aggregate_floras_qe_scores.py \
+  --segments-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_segments.jsonl \
+  --runs-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_runs.jsonl \
+  --xcomet-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_xcomet_qe_segments.jsonl \
+  --metricx-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_metricx_qe_segments.jsonl \
+  --output-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_scores.jsonl
+```
+
+Then rebuild the full-source dashboard with:
 
 ```bash
 python3 scripts/build_floras_kit_full_compare.py \
   --manifest /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/live_runs.jsonl \
   --output-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full \
   --run-id-prefix en-zh_mono_asr_test__0__speed_ \
+  --qe-scores-jsonl /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_scores.jsonl \
+  --require-qe \
   --eval openai_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr \
   --eval openai_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr \
   --eval gemini_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk960_trim_asr \

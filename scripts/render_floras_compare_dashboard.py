@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from s2s_omni.floras_live import esc, rel
+from s2s_omni.floras_qe import attach_qe_scores, load_qe_scores
 
 
 def parse_args() -> argparse.Namespace:
@@ -27,6 +28,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--run-id-prefix", default="")
     parser.add_argument("--run-id-regex", default="")
+    parser.add_argument("--qe-scores-jsonl", default="")
+    parser.add_argument("--require-qe", action="store_true")
     return parser.parse_args()
 
 
@@ -42,6 +45,8 @@ def parse_eval_arg(raw: str) -> tuple[str, Path]:
 
 def infer_backend(label: str, row: dict[str, Any]) -> str:
     text = label.lower()
+    if "seed" in text:
+        return "seed"
     if "gemini" in text:
         return "gemini"
     if "openai" in text or "chatgpt" in text or "gpt" in text:
@@ -169,6 +174,9 @@ def render_rows(rows: list[dict[str, Any]], out_dir: Path) -> str:
             f"<td>{num(row.get('wall_clock_end_delay_s'), 2)}</td>"
             f"<td>{num(row.get('max_backlog_s'), 2)}</td>"
             f"<td>{num(row.get('max_playback_queue_s'), 2)}</td>"
+            f"<td>{num(row.get('xcomet_qe_score'), 4)}</td>"
+            f"<td>{num(row.get('metricx_qe_score'), 3)}</td>"
+            f"<td>{num(row.get('metricx_qe_error'), 3)}</td>"
             f"<td>{num(row.get('bleu'), 2)}</td>"
             f"<td>{num(row.get('chrf'), 2)}</td>"
             f"<td>{num(row.get('cer'), 3)}</td>"
@@ -193,6 +201,23 @@ def main() -> None:
             for row in load_metrics(label, eval_dir)
             if keep_row(row, args.run_id_prefix, pattern)
         )
+    qe_scores = load_qe_scores(args.qe_scores_jsonl)
+    rows = [attach_qe_scores(row, qe_scores) for row in rows]
+    if args.require_qe:
+        missing_qe = [
+            row
+            for row in rows
+            if row.get("xcomet_qe_score") is None
+            or row.get("metricx_qe_score") is None
+            or row.get("xcomet_qe_segments") != row.get("qe_segment_count")
+            or row.get("metricx_qe_segments") != row.get("qe_segment_count")
+            or row.get("qe_hypothesis_chars_mismatch") is not None
+        ]
+        if missing_qe:
+            labels = ", ".join(
+                f"{row.get('run_id')}:{row.get('eval_label')}" for row in missing_qe[:8]
+            )
+            raise SystemExit(f"--require-qe found {len(missing_qe)} rows without QE scores: {labels}")
 
     (out_dir / "compare_metrics.jsonl").write_text(
         "\n".join(json.dumps(row, ensure_ascii=False) for row in sorted(rows, key=sort_key)) + "\n",
@@ -213,12 +238,14 @@ audio{{width:220px}}.meta{{color:#667085;margin:8px 0 16px}}
 <div class="meta">
 {len(rows)} runs · source audio is the selected source clip · target audio is backend output
 <br>duration lag = target audio duration - source stream duration · wall delay = simulated target playback end wall-clock - source stream end · max backlog = max window-level emitted-target deficit
+<br>QE columns are reference-free source+hypothesis scores over proportional text chunks; xCOMET-QE and MetricX-QE are higher-is-better, while MetricX err is lower-is-better.
 </div>
 <table>
 <thead>
 <tr>
 <th>run</th><th>backend</th><th>chunk</th><th>speed</th><th>stream s</th>
 <th>target s</th><th>RTF</th><th>duration lag</th><th>wall delay</th><th>max backlog</th><th>max queue</th>
+<th>xCOMET-QE ↑</th><th>MetricX-QE ↑</th><th>MetricX err ↓</th>
 <th>BLEU</th><th>chrF</th><th>CER</th><th>detail</th><th>streamed source</th><th>target</th>
 </tr>
 </thead>

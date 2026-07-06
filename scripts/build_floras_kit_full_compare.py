@@ -5,8 +5,15 @@ import argparse
 import hashlib
 import html
 import json
+import sys
 from pathlib import Path
 from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from s2s_omni.floras_qe import attach_qe_scores, load_qe_scores
 
 
 def parse_args() -> argparse.Namespace:
@@ -15,6 +22,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--eval", action="append", required=True, help="label=eval_dir")
     parser.add_argument("--run-id-prefix", default="en-zh_mono_asr_test__0__speed_")
+    parser.add_argument("--qe-scores-jsonl", default="")
+    parser.add_argument("--require-qe", action="store_true")
     return parser.parse_args()
 
 
@@ -171,6 +180,14 @@ def row_dict(row: dict[str, Any]) -> dict[str, Any]:
         "bleu",
         "chrf",
         "cer",
+        "xcomet_qe_score",
+        "metricx_qe_score",
+        "metricx_qe_error",
+        "xcomet_qe_model",
+        "metricx_qe_model",
+        "qe_segment_count",
+        "qe_reference_free",
+        "qe_segmentation",
         "candidate_text_source",
         "generated_audio_path",
         "source_stream_audio_path",
@@ -190,7 +207,7 @@ def render_table(rows: list[dict[str, Any]], out_dir: Path) -> str:
     for row in sorted(rows, key=sort_key):
         speed = f"{row_speed(row):g}"
         if speed != last_speed:
-            pieces.append(f'<tr class="speed-group"><td colspan="18">speed={esc(speed)}</td></tr>')
+            pieces.append(f'<tr class="speed-group"><td colspan="21">speed={esc(speed)}</td></tr>')
             last_speed = speed
         pieces.append(
             "<tr>"
@@ -198,6 +215,9 @@ def render_table(rows: list[dict[str, Any]], out_dir: Path) -> str:
             f"<td>{esc(row.get('display_model'))}</td>"
             f"<td>{esc(row.get('display_chunk'))}</td>"
             f"<td>{esc(row.get('display_variant'))}</td>"
+            f"<td>{num(row.get('xcomet_qe_score'), 4)}</td>"
+            f"<td>{num(row.get('metricx_qe_score'), 3)}</td>"
+            f"<td>{num(row.get('metricx_qe_error'), 3)}</td>"
             f"<td>{num(row.get('bleu'))}</td>"
             f"<td>{num(row.get('chrf'))}</td>"
             f"<td>{num(row.get('cer'), 3)}</td>"
@@ -245,6 +265,23 @@ def main() -> None:
     for raw in args.eval:
         label, eval_dir = parse_eval(raw)
         rows.extend(row for row in load_metrics(label, eval_dir, reference_by_run) if str(row.get("run_id", "")).startswith(args.run_id_prefix))
+    qe_scores = load_qe_scores(args.qe_scores_jsonl)
+    rows = [attach_qe_scores(row, qe_scores) for row in rows]
+    if args.require_qe:
+        missing_qe = [
+            row
+            for row in rows
+            if row.get("xcomet_qe_score") is None
+            or row.get("metricx_qe_score") is None
+            or row.get("xcomet_qe_segments") != row.get("qe_segment_count")
+            or row.get("metricx_qe_segments") != row.get("qe_segment_count")
+            or row.get("qe_hypothesis_chars_mismatch") is not None
+        ]
+        if missing_qe:
+            labels = ", ".join(
+                f"{row.get('run_id')}:{row.get('eval_label')}" for row in missing_qe[:8]
+            )
+            raise SystemExit(f"--require-qe found {len(missing_qe)} rows without QE scores: {labels}")
     rows = sorted(rows, key=sort_key)
     summary = {
         "rows": [row_dict(row) for row in rows],
@@ -281,10 +318,12 @@ Observed text sources: {esc(metric_rows_text_sources(rows))}.
 </p>
 <p class="meta">
 Timing metrics are read from each eval run's audio chunk timeline. KIT timing uses retrieved <code>tts:0</code> target-audio chunk arrival times, then the same FLORAS evaluator computes duration lag, wall delay, backlog, and playback queue.
+QE columns are reference-free source+hypothesis scores over proportional text chunks; xCOMET-QE and MetricX-QE are higher-is-better, while MetricX err is lower-is-better.
 </p>
 <table>
 <thead><tr>
-<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>speed</th><th>model</th><th>chunk</th><th>variant</th>
+<th>xCOMET-QE ↑</th><th>MetricX-QE ↑</th><th>MetricX err ↓</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
 <th>stream s</th><th>target s</th><th>RTF</th><th>duration lag</th><th>wall delay</th><th>max backlog</th><th>max queue</th>
 <th>text source</th><th>detail</th><th>source audio</th><th>target audio</th>
 </tr></thead>

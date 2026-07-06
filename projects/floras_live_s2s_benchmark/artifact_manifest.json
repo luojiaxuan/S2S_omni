@@ -4,23 +4,23 @@
   "copied_files": [
     {
       "path": "artifacts/compare_openai_gemini_enzh_full_chunks/index.html",
-      "bytes": 9615
+      "bytes": 10328
     },
     {
       "path": "artifacts/compare_openai_gemini_enzh_full_chunks/compare_metrics.jsonl",
-      "bytes": 81980
+      "bytes": 87317
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html",
-      "bytes": 273668
+      "bytes": 274525
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl",
-      "bytes": 291417
+      "bytes": 300712
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/summary.json",
-      "bytes": 18451
+      "bytes": 23318
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html",
@@ -208,11 +208,11 @@
     },
     {
       "path": "artifacts/compare_openai_gemini_seed_enzh_full_chunks/index.html",
-      "bytes": 13817
+      "bytes": 14510
     },
     {
       "path": "artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl",
-      "bytes": 122643
+      "bytes": 131090
     },
     {
       "path": "artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr/en-zh_mono_asr_test__0__speed_1/index.html",
@@ -317,6 +317,26 @@
     {
       "path": "artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr/timeline.jsonl",
       "bytes": 481545
+    },
+    {
+      "path": "artifacts/qe/full_enzh_qe_segments.jsonl",
+      "bytes": 386630
+    },
+    {
+      "path": "artifacts/qe/full_enzh_qe_runs.jsonl",
+      "bytes": 6004
+    },
+    {
+      "path": "artifacts/qe/full_enzh_xcomet_qe_segments.jsonl",
+      "bytes": 76654
+    },
+    {
+      "path": "artifacts/qe/full_enzh_metricx_qe_segments.jsonl",
+      "bytes": 418564
+    },
+    {
+      "path": "artifacts/qe/full_enzh_qe_scores.jsonl",
+      "bytes": 10633
     }
   ],
   "large_audio_policy": "Audio and per-window wav files are not checked into Git; use source_dir or regenerate.",
