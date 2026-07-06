@@ -55,29 +55,29 @@ These rows use the same first 60s FLORAS source clip and the same 60s target
 reference. The script verifies each 60s eval directory has the same
 `sentence_coverage.jsonl` reference before scoring. BLEU is recomputed with
 sacreBLEU `tokenize=zh`; hypothesis and reference punctuation is preserved in
-`compare_metrics.jsonl` and the HTML detail panes. The `BLEU default` column
-shows the old/default tokenizer path that produced BLEU 0.0.
+`compare_metrics.jsonl` and the HTML detail panes. The old/default tokenizer
+BLEU diagnostic remains in JSON, but is not shown in the dashboard.
 
-| speed | model | chunk | variant | scope | BLEU default | BLEU zh | chrF | CER |
-| ---: | --- | ---: | --- | --- | ---: | ---: | ---: | ---: |
-| 1 | chatgpt | 0.96s | 60s-smoke-target-asr | exact_60s_source_clip | 0.00 | 26.24 | 25.38 | 0.704 |
-| 1 | chatgpt | 1.92s | 60s-smoke-target-asr | exact_60s_source_clip | 0.00 | 21.21 | 21.60 | 0.729 |
-| 1 | gemini | 0.96s | 60s-smoke-target-asr | exact_60s_source_clip | 0.00 | 26.24 | 29.01 | 0.729 |
-| 1 | gemini | 1.92s | 60s-smoke-target-asr | exact_60s_source_clip | 0.00 | 25.34 | 27.74 | 0.696 |
-| 1 | kit | 1.92s | mixed-high-quality-target-asr | exact_60s_source_clip | 0.00 | 25.94 | 22.72 | 0.717 |
-| 1 | kit | 1.92s | online-low-latency-target-asr | exact_60s_source_clip | 0.00 | 24.94 | 22.60 | 0.717 |
-| 1 | kit | 1.92s | online-high-quality-target-asr | exact_60s_source_clip | 0.00 | 23.97 | 21.17 | 0.721 |
-| 1 | kit | 1.92s | online-high-quality-enonly-target-asr | exact_60s_source_clip | 0.00 | 20.47 | 19.83 | 0.767 |
-| 1 | kit | n/a | debug-web-tts-text | debug_text_only_exact_60s_source_clip | 0.00 | 20.94 | 19.12 | 0.738 |
-| 1 | kit | n/a | debug-web-tts-text | debug_text_only_exact_60s_source_clip | 0.00 | 22.99 | 21.94 | 0.767 |
+| speed | model | chunk | variant | scope | BLEU zh | chrF | CER |
+| ---: | --- | ---: | --- | --- | ---: | ---: | ---: |
+| 1 | chatgpt | 0.96s | 60s-smoke-target-asr | exact_60s_source_clip | 26.24 | 25.38 | 0.704 |
+| 1 | chatgpt | 1.92s | 60s-smoke-target-asr | exact_60s_source_clip | 21.21 | 21.60 | 0.729 |
+| 1 | gemini | 0.96s | 60s-smoke-target-asr | exact_60s_source_clip | 26.24 | 29.01 | 0.729 |
+| 1 | gemini | 1.92s | 60s-smoke-target-asr | exact_60s_source_clip | 25.34 | 27.74 | 0.696 |
+| 1 | kit | 1.92s | mixed-high-quality-target-asr | exact_60s_source_clip | 25.94 | 22.72 | 0.717 |
+| 1 | kit | 1.92s | online-low-latency-target-asr | exact_60s_source_clip | 24.94 | 22.60 | 0.717 |
+| 1 | kit | 1.92s | online-high-quality-target-asr | exact_60s_source_clip | 23.97 | 21.17 | 0.721 |
+| 1 | kit | 1.92s | online-high-quality-enonly-target-asr | exact_60s_source_clip | 20.47 | 19.83 | 0.767 |
+| 1 | kit | n/a | debug-web-tts-text | debug_text_only_exact_60s_source_clip | 20.94 | 19.12 | 0.738 |
+| 1 | kit | n/a | debug-web-tts-text | debug_text_only_exact_60s_source_clip | 22.99 | 21.94 | 0.767 |
 
 Proxy rows are separated in the HTML dashboard and should not be ranked against
 the exact 60s measurements:
 
-| speed | model | chunk | variant | scope | BLEU default | BLEU zh | chrF | CER |
-| ---: | --- | ---: | --- | --- | ---: | ---: | ---: | ---: |
-| 1 | seed | 0.96s | full-run-prefix-proxy | proxy_prefix_from_full_1072s_seed_run | 0.00 | 28.58 | 23.99 | 0.625 |
-| 1 | seed | 1.92s | full-run-prefix-proxy | proxy_prefix_from_full_1072s_seed_run | 0.00 | 25.98 | 24.51 | 0.596 |
+| speed | model | chunk | variant | scope | BLEU zh | chrF | CER |
+| ---: | --- | ---: | --- | --- | ---: | ---: | ---: |
+| 1 | seed | 0.96s | full-run-prefix-proxy | proxy_prefix_from_full_1072s_seed_run | 28.58 | 23.99 | 0.625 |
+| 1 | seed | 1.92s | full-run-prefix-proxy | proxy_prefix_from_full_1072s_seed_run | 25.98 | 24.51 | 0.596 |
 
 KIT `*_target_asr` rows use retrieved target speech scored through
 `gpt-4o-mini-transcribe`; KIT `*_tts_text` rows are debug-only web-event text.
@@ -100,15 +100,15 @@ rows: they use existing full-run generated target wavs cropped to their first
 `format=mixed`, `ttsQualityMode=high_quality`, 1.92s input chunks, and target
 speech ASR.
 
-| speed | model | chunk | variant | scope | BLEU default | BLEU zh | chrF | CER | source stream s | target s | dur lag s |
-| ---: | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1.5 | chatgpt | 0.96s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 0.00 | 18.25 | 22.99 | 1.054 | 40.03 | 60.00 |  |
-| 1.5 | chatgpt | 1.92s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 0.00 | 18.74 | 25.43 | 1.071 | 40.03 | 60.00 |  |
-| 1.5 | gemini | 0.96s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 0.00 | 19.98 | 26.59 | 1.083 | 40.03 | 60.00 |  |
-| 1.5 | gemini | 1.92s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 0.00 | 20.05 | 18.62 | 1.025 | 40.03 | 60.00 |  |
-| 1.5 | seed | 0.96s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 0.00 | 15.76 | 23.29 | 1.642 | 40.03 | 60.00 |  |
-| 1.5 | seed | 1.92s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 0.00 | 15.36 | 25.36 | 1.700 | 40.03 | 60.00 |  |
-| 1.5 | kit | 1.92s | mixed-high-quality-target-asr | exact_60s_source_clip | 0.00 | 23.26 | 21.49 | 0.717 | 40.03 | 69.58 | 29.55 |
+| speed | model | chunk | variant | scope | BLEU zh | chrF | CER | source stream s | target s | dur lag s |
+| ---: | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1.5 | chatgpt | 0.96s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 18.25 | 22.99 | 1.054 | 40.03 | 60.00 |  |
+| 1.5 | chatgpt | 1.92s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 18.74 | 25.43 | 1.071 | 40.03 | 60.00 |  |
+| 1.5 | gemini | 0.96s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 19.98 | 26.59 | 1.083 | 40.03 | 60.00 |  |
+| 1.5 | gemini | 1.92s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 20.05 | 18.62 | 1.025 | 40.03 | 60.00 |  |
+| 1.5 | seed | 0.96s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 15.76 | 23.29 | 1.642 | 40.03 | 60.00 |  |
+| 1.5 | seed | 1.92s | full-run-target-wav-first60-asr | full_run_target_wav_first60s | 15.36 | 25.36 | 1.700 | 40.03 | 60.00 |  |
+| 1.5 | kit | 1.92s | mixed-high-quality-target-asr | exact_60s_source_clip | 23.26 | 21.49 | 0.717 | 40.03 | 69.58 | 29.55 |
 
 Because full-run target-wav first-60s crops can include target content beyond
 the first-source-60s reference, CER can exceed 1.0 and duration lag is not

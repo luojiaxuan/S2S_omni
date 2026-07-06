@@ -12,7 +12,7 @@
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html",
-      "bytes": 33092
+      "bytes": 32873
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/compare_metrics.jsonl",
@@ -24,7 +24,7 @@
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html",
-      "bytes": 22249
+      "bytes": 22137
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/compare_metrics.jsonl",

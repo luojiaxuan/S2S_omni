@@ -714,7 +714,6 @@ def render_table(rows: list[dict[str, Any]], out_dir: Path) -> str:
             f"<td>{esc(row.get('display_chunk') or chunk_display(row.get('compare_chunk_ms')))}</td>"
             f"<td>{esc(row.get('display_variant') or row.get('eval_label'))}</td>"
             f"<td>{esc(row.get('comparison_scope'))}</td>"
-            f"<td>{num(row.get('bleu_default_tokenizer'))}</td>"
             f"<td>{num(row.get('bleu'))}</td>"
             f"<td>{num(row.get('chrf'))}</td>"
             f"<td>{num(row.get('cer'), 3)}</td>"
@@ -769,7 +768,7 @@ Rows here are not main emitted target-speech metrics. KIT web-event TTS text is 
 </p>
 <table>
 <thead><tr>
-<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
 <th>source s</th><th>target s</th><th>duration lag</th><th>wall delay</th><th>max backlog</th>
 <th>text source</th><th>detail</th><th>source audio</th><th>target audio</th><th>note</th>
 </tr></thead>
@@ -785,7 +784,7 @@ Rows here are not main emitted target-speech metrics. KIT web-event TTS text is 
 <p class="meta">These rows are not exact 60s reruns; they are full-run target-speech ASR prefixes cut by the 60s reference CJK unit count.</p>
 <table>
 <thead><tr>
-<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
 <th>source s</th><th>target s</th><th>duration lag</th><th>wall delay</th><th>max backlog</th>
 <th>text source</th><th>detail</th><th>source audio</th><th>target audio</th><th>note</th>
 </tr></thead>
@@ -817,7 +816,7 @@ Seed prefix rows, when present, are marked as proxy prefixes from full 1072s run
 <h2>Main Target-Audio Measurements</h2>
 <table>
 <thead><tr>
-<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
 <th>source s</th><th>target s</th><th>duration lag</th><th>wall delay</th><th>max backlog</th>
 <th>text source</th><th>detail</th><th>source audio</th><th>target audio</th><th>note</th>
 </tr></thead>

@@ -41,7 +41,8 @@ for EN->ZH long-form streaming translation.
   comparison.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/compare_metrics.jsonl`:
   metric rows for the 60s dashboard. Hypothesis/reference punctuation is
-  preserved and both default-tokenizer BLEU and `tokenize=zh` BLEU are stored.
+  preserved and both default-tokenizer BLEU and `tokenize=zh` BLEU are stored;
+  the dashboard table only displays the `tokenize=zh` BLEU.
   The script verifies the exact 60s eval rows share the same
   `sentence_coverage.jsonl` reference. KIT main rows use retrieved target
   speech scored through ASR; KIT web-event TTS text rows are debug-only. Seed

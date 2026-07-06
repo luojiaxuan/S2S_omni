@@ -265,9 +265,9 @@ dashboard compares GPT/Gemini target-speech ASR, KIT target-speech ASR for
 retrieved `format=online` and `format=mixed` rows, KIT debug-only text rows,
 and Seed full-run prefix proxies. BLEU is recomputed with sacreBLEU
 `tokenize=zh`; the stored hypothesis/reference strings preserve punctuation.
-The dashboard includes a `BLEU default` column showing the old default-tokenizer
-BLEU 0.0 result next to the corrected Chinese-tokenized BLEU. Treat this as a
-smoke/debug artifact, not a formal KIT product comparison.
+The old default-tokenizer BLEU 0.0 diagnostic is kept in JSON but hidden from
+the dashboard table. Treat this as a smoke/debug artifact, not a formal KIT
+product comparison.
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
