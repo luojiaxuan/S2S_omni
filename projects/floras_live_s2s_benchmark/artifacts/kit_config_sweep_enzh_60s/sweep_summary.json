@@ -3,7 +3,7 @@
   "reference_chars": 243,
   "rows": [
     {
-      "label": "high_quality",
+      "label": "hq_chunk960",
       "run_json": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_hq_run.json",
       "session_url": "https://lecture-translator.kit.edu/present/20270111686176561374963236932599176328",
       "source_duration_s": 60.0,
@@ -21,7 +21,7 @@
       "duration_lag_s": 3.3
     },
     {
-      "label": "low_latency",
+      "label": "ll_chunk960",
       "run_json": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_ll_run.json",
       "session_url": "https://lecture-translator.kit.edu/present/224437060847455244713309833435414875517",
       "source_duration_s": 60.0,
@@ -37,6 +37,42 @@
       "target_wav": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_ll_target.wav",
       "target_duration_s": 69.45,
       "duration_lag_s": 9.45
+    },
+    {
+      "label": "hq_chunk1920",
+      "run_json": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_hq_c1920_run.json",
+      "session_url": "https://lecture-translator.kit.edu/present/327785165074105457587123466205275062672",
+      "source_duration_s": 60.0,
+      "bleu_zh": 20.91,
+      "chrf": 19.39,
+      "cer": 0.7417,
+      "candidate_units": 223,
+      "reference_units": 204,
+      "candidate_chars": 284,
+      "tts_first_content_rel_s": 20.97,
+      "tts_last_content_rel_s": 79.8,
+      "tts_content_msgs": 8,
+      "target_wav": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_hq_c1920_target.wav",
+      "target_duration_s": 61.625,
+      "duration_lag_s": 1.62
+    },
+    {
+      "label": "ll_chunk1920",
+      "run_json": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_ll_c1920_run.json",
+      "session_url": "https://lecture-translator.kit.edu/present/286019015040472712303406701351327362785",
+      "source_duration_s": 60.0,
+      "bleu_zh": 22.75,
+      "chrf": 20.73,
+      "cer": 0.7208,
+      "candidate_units": 222,
+      "reference_units": 204,
+      "candidate_chars": 276,
+      "tts_first_content_rel_s": 18.15,
+      "tts_last_content_rel_s": 79.06,
+      "tts_content_msgs": 12,
+      "target_wav": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_ll_c1920_target.wav",
+      "target_duration_s": 66.65,
+      "duration_lag_s": 6.65
     }
   ]
 }
