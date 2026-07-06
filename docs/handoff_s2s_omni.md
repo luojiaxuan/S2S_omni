@@ -308,6 +308,7 @@ local-only staging outputs:
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/target_tts_asr_gpt4o_mini.jsonl
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/target_tts_asr_metrics.jsonl
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/target_tts_asr_summary.json
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/kit_vs_gpt_gemini_60s_target_asr_summary.json
 ```
 
 Target-speech-ASR summary on the selected FLORAS 60s EN->ZH clip:
@@ -316,6 +317,21 @@ Target-speech-ASR summary on the selected FLORAS 60s EN->ZH clip:
 mixed_high_quality_no_post:   BLEU 25.94, chrF 22.72, CER 0.717, target 52.08s, 6 TTS chunks
 online_low_latency_no_post:   BLEU 24.94, chrF 22.60, CER 0.717, target 70.20s, 14 TTS chunks
 online_high_quality_no_post:  BLEU 23.97, chrF 21.17, CER 0.721, target 52.58s, 6 TTS chunks
+```
+
+Against existing GPT/Gemini target-speech-ASR 60s runs on the same clip and
+same metric settings, KIT mixed high-quality is slightly below the 960ms GPT
+and Gemini BLEU rows, but is above the 1.92s GPT/Gemini BLEU rows. Gemini
+chunk1920 still has higher chrF and lower CER than KIT mixed.
+
+```text
+chatgpt_default_960ms:        BLEU 26.24, chrF 25.38, CER 0.704, target 90.40s
+gemini_default_960ms:         BLEU 26.24, chrF 29.01, CER 0.729, target 60.25s
+kit_mixed_high_quality:       BLEU 25.94, chrF 22.72, CER 0.717, target 52.08s
+gemini_chunk1920:             BLEU 25.34, chrF 27.74, CER 0.696, target 60.75s
+kit_online_low_latency:       BLEU 24.94, chrF 22.60, CER 0.717, target 70.20s
+kit_online_high_quality:      BLEU 23.97, chrF 21.17, CER 0.721, target 52.58s
+chatgpt_chunk1920:            BLEU 21.21, chrF 21.60, CER 0.729, target 89.60s
 ```
 
 ### ACL6060 / Seed AST S2S Metrics Script
