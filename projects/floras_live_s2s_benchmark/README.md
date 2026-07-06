@@ -7,9 +7,9 @@ for EN->ZH long-form streaming translation.
 
 - Source data: FLORAS long-form EN monolingual ASR test sample.
 - Backends: OpenAI Realtime, Gemini Live, Seed AST, and exploratory KIT
-  Lecture Translator captures. The current full-source KIT rows are diagnostic
-  only because they were later found to use `language=en` without the required
-  bilingual KIT input-language setting.
+  Lecture Translator captures. The current full-source KIT rows use the
+  corrected bilingual KIT source-language setting, while the older only-en KIT
+  rows are retained only as historical diagnostics in local staging.
 - Chunk sizes: 960 ms and 1920 ms.
 - Speeds: 1.0x and 1.5x.
 - Evaluation: target speech ASR, reference-based BLEU/chrF/CER, reference-free
@@ -38,13 +38,16 @@ for EN->ZH long-form streaming translation.
   metric rows for the full Seed AST chunk/speed dashboard.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html`: full-source
   dashboard comparing GPT/Gemini/Seed/KIT at 1.0x and 1.5x. KIT currently has
-  only the 1.92s chunk row in this full dashboard, but those KIT rows are
-  diagnostic only: the capture used `language=en` instead of the bilingual
-  `language=zh&language=en` / `language=en&language=zh` input-language setting.
+  only the 1.92s chunk row in this full dashboard. The active KIT rows use
+  repeated `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
+  `format=mixed`, `ttsQualityMode=high_quality`, no postproduction parameter,
+  and target-speech ASR.
 - `artifacts/qe/full_enzh_qe_scores.jsonl`: per-full-run reference-free QE
   rows. xCOMET-QE uses `myyycroft/XCOMET-lite`; MetricX-QE uses
   `google/metricx-24-hybrid-large-v2p6-bfloat16`. Inputs are source transcript
-  plus target-speech ASR hypothesis, split into proportional text chunks.
+  plus target-speech ASR hypothesis, split into proportional text chunks. The
+  current static QE file predates the corrected KIT bilingual full run, so KIT
+  QE cells are blank in the current full dashboard until QE is rerun.
 - `artifacts/qe/full_enzh_qe_segments.jsonl`,
   `artifacts/qe/full_enzh_xcomet_qe_segments.jsonl`, and
   `artifacts/qe/full_enzh_metricx_qe_segments.jsonl`: segment-level QE inputs
@@ -96,10 +99,25 @@ KIT Lecture Translator target-speech retrieval is verified for smoke and full
 sessions: `tts:0` linked audio chunks are resolved into target wavs and scored
 through the same ASR path as GPT/Gemini/Seed. KIT web-event TTS text is still
 shown only as debug text, because it can reflect product-side rewrite behavior
-rather than the actual emitted target speech. The 2026-07-06 full-source
-mixed/high-quality KIT rows below are now diagnostic only because the session
-creation used `language=en` rather than the bilingual KIT input-language
-setting:
+rather than the actual emitted target speech. The corrected 2026-07-06
+full-source KIT run used repeated `language=zh&language=en`, `mtLanguage=zh`,
+`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, no
+postproduction parameter, private availability, and 1.92s input chunks:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920_bilang_no_post
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_bilang_no_post_asr
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920_bilang_no_post.jsonl
+```
+
+Those corrected full rows scored BLEU 18.37 / chrF 19.12 / CER 0.827 at
+speed=1.0 and BLEU 18.90 / chrF 19.24 / CER 0.843 at speed=1.5. The 60s smoke
+advantage did not carry over to the full wav; inspect the dashboard detail text
+and local audio before treating KIT as competitive on the full sample.
+
+The earlier full-source mixed/high-quality KIT rows below are diagnostic only
+because the session creation used `language=en` rather than the bilingual KIT
+input-language setting:
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920
@@ -223,18 +241,17 @@ Then rebuild the full-source dashboard with:
 
 ```bash
 python3 scripts/build_floras_kit_full_compare.py \
-  --manifest /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/live_runs.jsonl \
+  --manifest /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/root_metadata/live_runs.jsonl \
   --output-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full \
   --run-id-prefix en-zh_mono_asr_test__0__speed_ \
   --qe-scores-jsonl /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_scores.jsonl \
-  --require-qe \
   --eval openai_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr \
   --eval openai_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr \
   --eval gemini_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk960_trim_asr \
   --eval gemini_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk1920_trim_asr \
   --eval seed_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr \
   --eval seed_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr \
-  --eval kit_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_asr
+  --eval kit_1920_bilang_no_post=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_bilang_no_post_asr
 ```
 
 ## Current Takeaway
@@ -254,9 +271,9 @@ not exact 60s source replays; the crop can include content beyond the first-60s
 reference and should be interpreted as the requested target-audio crop view.
 Seed crop rows are especially vulnerable to this windowing artifact and should
 not be read as a source-time-aligned quality ranking.
-The full-source KIT mixed/high-quality rows in the current dashboard should be
-treated as invalid diagnostics, not as KIT product-level results, because the
-session was created with `language=en` only. The measured rows were BLEU 18.29
-at speed=1.0 and BLEU 17.46 at speed=1.5, with target wavs about 107-113
-seconds shorter than the streamed source audio. Re-run full KIT only after
-choosing the intended bilingual/no-postproduction profile.
+The current full-source KIT rows are corrected bilingual/no-post runs:
+`language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
+`ttsQualityMode=high_quality`, and target-speech ASR. They scored BLEU 18.37 at
+speed=1.0 and BLEU 18.90 at speed=1.5, so the earlier 60s smoke advantage did
+not hold on the full wav. The new KIT rows do not yet have refreshed
+xCOMET/MetricX QE; blank QE cells in the dashboard mean pending, not zero.

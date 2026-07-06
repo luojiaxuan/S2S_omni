@@ -43,6 +43,8 @@ def request_json_or_text(
     cookie_header: str,
     payload: Any | None = None,
     timeout_s: float = 30.0,
+    retries: int = 5,
+    retry_sleep_s: float = 3.0,
 ) -> tuple[int, bool, str]:
     data = None
     headers = {"Cookie": cookie_header}
@@ -50,13 +52,21 @@ def request_json_or_text(
         data = json.dumps(json.dumps(payload)).encode("utf-8")
         headers.update({"Accept": "application/json", "Content-Type": "application/json"})
     request = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_s) as response:
-            text = response.read().decode("utf-8", errors="replace")
-            return int(response.status), 200 <= int(response.status) < 300, text
-    except urllib.error.HTTPError as exc:
-        text = exc.read().decode("utf-8", errors="replace")
-        return int(exc.code), False, text
+    last_error = ""
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout_s) as response:
+                text = response.read().decode("utf-8", errors="replace")
+                return int(response.status), 200 <= int(response.status) < 300, text
+        except urllib.error.HTTPError as exc:
+            text = exc.read().decode("utf-8", errors="replace")
+            return int(exc.code), False, text
+        except (urllib.error.URLError, OSError, TimeoutError) as exc:
+            last_error = repr(exc)
+            if attempt >= retries:
+                break
+            time.sleep(retry_sleep_s)
+    return 0, False, last_error
 
 
 def load_pcm16le_mono_16k(path: Path) -> tuple[bytes, float]:

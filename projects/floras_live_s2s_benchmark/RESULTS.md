@@ -8,14 +8,14 @@
 | en-zh_mono_asr_test__0__speed_1 | gemini | 1920 | 1.00 | 0.0218 | 8.305 | 16.695 | 14.03 | 18.20 | 0.863 | 132.37 | 160.32 | 16.25 |
 | en-zh_mono_asr_test__0__speed_1 | seed | 960 | 1.00 | 0.0398 | 9.939 | 15.061 | 21.48 | 21.85 | 0.836 | -313.22 | 1.75 | 314.53 |
 | en-zh_mono_asr_test__0__speed_1 | seed | 1920 | 1.00 | 0.0501 | 8.381 | 16.619 | 20.81 | 21.53 | 0.812 | -287.35 | 1.58 | 288.37 |
-| en-zh_mono_asr_test__0__speed_1 | kit | 1920 | 1.00 | 0.0350 | 8.558 | 16.442 | 18.29 | 19.37 | 0.822 | -112.76 | 16.98 | 119.16 |
+| en-zh_mono_asr_test__0__speed_1 | kit | 1920 | 1.00 |  |  |  | 18.37 | 19.12 | 0.827 | -120.18 | 132.20 | 239.36 |
 | en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 960 | 1.50 | 0.0428 | 8.098 | 16.902 | 19.74 | 20.72 | 0.807 | 27.70 | 94.63 | 65.53 |
 | en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 1920 | 1.50 | 0.0367 | 7.752 | 17.248 | 16.96 | 18.31 | 0.891 | 22.70 | 40.04 | 16.09 |
 | en-zh_mono_asr_test__0__speed_1.5 | gemini | 960 | 1.50 | 0.0342 | 8.645 | 16.355 | 20.42 | 21.35 | 0.865 | 5.15 | 75.30 | 69.84 |
 | en-zh_mono_asr_test__0__speed_1.5 | gemini | 1920 | 1.50 | 0.0412 | 9.110 | 15.890 | 20.38 | 21.44 | 0.867 | 94.40 | 109.81 | 15.09 |
 | en-zh_mono_asr_test__0__speed_1.5 | seed | 960 | 1.50 | 0.0431 | 9.171 | 15.829 | 21.13 | 21.65 | 0.805 | -221.05 | 24.40 | 241.92 |
 | en-zh_mono_asr_test__0__speed_1.5 | seed | 1920 | 1.50 | 0.0509 | 9.404 | 15.596 | 21.30 | 21.46 | 0.818 | -202.16 | 2.13 | 203.37 |
-| en-zh_mono_asr_test__0__speed_1.5 | kit | 1920 | 1.50 | 0.0357 | 8.390 | 16.610 | 17.46 | 18.63 | 0.844 | -106.73 | 130.70 | 231.84 |
+| en-zh_mono_asr_test__0__speed_1.5 | kit | 1920 | 1.50 |  |  |  | 18.90 | 19.24 | 0.843 | -45.55 | 166.02 | 201.45 |
 
 Seed AST rows use ASR over the generated target speech with
 `gpt-4o-mini-transcribe`; the AST backend translation subtitle is not used for
@@ -29,33 +29,34 @@ document-level workaround for model context limits, not sentence- or
 time-aligned segments; interpret QE cautiously for rows with large backlog,
 truncation, or strong compression.
 
-The two KIT rows in the full table are retained only as diagnostics. They were
-created with `language=en` only, but KIT's live profile/form supports
-multilingual source language selection and the intended EN->ZH test should use
-both `language=zh` and `language=en`. Do not rank the current full KIT rows
-against GPT/Gemini/Seed.
+The KIT rows in the full table are corrected bilingual no-post runs using
+repeated `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
+`format=mixed`, `ttsQualityMode=high_quality`, and target-speech ASR. Their QE
+cells are blank because the static xCOMET/MetricX QE file has not yet been
+rerun for these replacement rows.
 
 ## KIT Lecture Translator Status
 
-KIT is still exploratory. The current full-source dashboard is useful for
-GPT/Gemini/Seed and for inspecting local audio/detail links, but its KIT rows
-are not product-level results:
+KIT is still exploratory. The current full-source dashboard now uses the
+corrected bilingual no-post KIT full run and includes local audio/detail links:
 
 ```text
 artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
 ```
 
-The invalid full KIT captures used `language=en`, `mtLanguage=zh`,
+The active full KIT captures used `language=zh&language=en`, `mtLanguage=zh`,
 `audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, private
-availability, `smartChaptering=online_dynamic`, and 1.92s input chunks. The
-hypothesis was correctly derived from retrieved target speech transcribed by
-`gpt-4o-mini-transcribe`; KIT displayed text was not used. The problem is the
-session configuration, not the target-audio extraction path.
+availability, no postproduction parameter, and 1.92s input chunks. The
+hypothesis was derived from retrieved target speech transcribed by
+`gpt-4o-mini-transcribe`; KIT displayed text was not used.
 
-Those invalid full rows scored BLEU 18.29 / chrF 19.37 / CER 0.822 at
-speed=1.0 and BLEU 17.46 / chrF 18.63 / CER 0.844 at speed=1.5, with target
-wavs about 107-113s shorter than the streamed source. Treat them only as
-only-en diagnostics.
+Those corrected full rows scored BLEU 18.37 / chrF 19.12 / CER 0.827 at
+speed=1.0 and BLEU 18.90 / chrF 19.24 / CER 0.843 at speed=1.5. This is close
+to the old only-en full result, so the earlier 60s smoke advantage did not
+hold on the full wav. xCOMET/MetricX QE for these replacement rows is pending.
+
+The older only-en full rows scored BLEU 18.29 at speed=1.0 and BLEU 17.46 at
+speed=1.5; keep them only as local historical diagnostics.
 
 Follow-up 60s configuration checks confirmed KIT needs repeated `language`
 query parameters for source language coverage. `scripts/create_kit_session.py`
@@ -85,12 +86,11 @@ FLORAS source and paused on the server. The local JSON capture is debug-only:
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_enzh/kit_live_enzh_full_realtime_run.json
 ```
 
-Before treating KIT as a product-level result, sweep or inspect the relevant
-settings first: TTS quality/latency mode, presentation/profile selection,
-postproduction, shortening, smart chaptering, pause/mute handling, and whether
-other settings reproduce the same target-speech-ASR behavior. The next full KIT
-run should explicitly use both source languages, for example
-`--language zh --language en`, and should record whether postproduction is on.
+Before treating KIT as a product-level product claim, sweep or inspect the
+remaining relevant settings: presentation/profile selection, postproduction,
+shortening, smart chaptering, pause/mute handling, and whether other settings
+reproduce the same target-speech-ASR behavior. The next metric maintenance step
+is to rerun xCOMET/MetricX QE for the replacement KIT rows.
 
 ## FLORAS 60s KIT Smoke Compare
 
@@ -140,8 +140,9 @@ yet part of the tracked 60s dashboard table. The no-post bilingual
 `format=mixed` rows scored BLEU 21.74 for `language=en&language=zh` and BLEU
 20.96 for `language=zh&language=en`; the current saved profile with
 `postproduction=50` produced an overlong 247.20s target and BLEU 7.12. These
-results explain why the old full only-en rows should be discarded, but they do
-not yet replace a proper full KIT run.
+results explain why the old full only-en rows should be discarded. The
+corrected full run has now been added to the main full dashboard, and its
+quality is lower than the 60s smoke suggested.
 
 ## FLORAS 60s Combined Speed Compare
 

@@ -12,15 +12,15 @@
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html",
-      "bytes": 274525
+      "bytes": 275501
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl",
-      "bytes": 300712
+      "bytes": 300100
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/summary.json",
-      "bytes": 23318
+      "bytes": 23274
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html",

@@ -37,16 +37,25 @@ be copied into Git. Do not rank this debug capture against full FLORAS results.
 
 This dashboard contains the aligned full-wav comparison on the selected
 1072.63s FLORAS EN->ZH sample. GPT/Gemini/Seed use valid full-run
-target-speech-ASR evals. The KIT rows are now diagnostic only: the captures used
-`language=en` instead of the required bilingual KIT source-language setting
-(`language=zh&language=en` or `language=en&language=zh`). Do not use the current
-KIT rows for ranking.
+target-speech-ASR evals. The current KIT rows use the corrected bilingual
+no-post setup: repeated `language=zh&language=en`, `mtLanguage=zh`,
+`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, 1.92s input
+chunks, and target-speech ASR. The new KIT rows have BLEU/chrF/CER and audio
+detail now; xCOMET/MetricX QE is pending for those replacement rows.
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
 ```
 
-Local KIT full-run staging for the invalid only-en diagnostic rows:
+Local KIT full-run staging for the corrected bilingual no-post rows:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920_bilang_no_post/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_bilang_no_post_asr/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920_bilang_no_post.jsonl
+```
+
+Local KIT full-run staging for the superseded only-en diagnostic rows:
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920/

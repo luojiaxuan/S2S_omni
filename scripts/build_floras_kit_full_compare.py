@@ -108,6 +108,13 @@ def display_chunk(chunk_ms: int | None) -> str:
     return "n/a" if chunk_ms is None else f"{chunk_ms / 1000.0:.2f}s"
 
 
+def display_variant(label: str, row: dict[str, Any]) -> str:
+    label_lower = label.lower()
+    if "kit" in label_lower and ("bilang" in label_lower or "bilingual" in label_lower):
+        return "mixed-hq-bilingual-no-post-target-asr"
+    return str(row.get("display_variant") or "full-target-audio-asr")
+
+
 def load_metrics(label: str, eval_dir: Path, reference_by_run: dict[str, str]) -> list[dict[str, Any]]:
     paths = [eval_dir / "metrics.jsonl"] if (eval_dir / "metrics.jsonl").exists() else sorted(eval_dir.glob("*/metrics.json"))
     rows: list[dict[str, Any]] = []
@@ -134,7 +141,7 @@ def load_metrics(label: str, eval_dir: Path, reference_by_run: dict[str, str]) -
                     "eval_label": label,
                     "display_model": model,
                     "display_chunk": display_chunk(chunk_ms),
-                    "display_variant": "full-target-audio-asr",
+                    "display_variant": display_variant(label, row),
                     "compare_chunk_ms": chunk_ms,
                     "run_dir": str(run_dir),
                     "run_page_path": str(row.get("run_page") or row.get("run_page_path") or run_dir / "index.html"),
@@ -319,6 +326,7 @@ Observed text sources: {esc(metric_rows_text_sources(rows))}.
 <p class="meta">
 Timing metrics are read from each eval run's audio chunk timeline. KIT timing uses retrieved <code>tts:0</code> target-audio chunk arrival times, then the same FLORAS evaluator computes duration lag, wall delay, backlog, and playback queue.
 QE columns are reference-free source+hypothesis scores over proportional text chunks; xCOMET-QE and MetricX-QE are higher-is-better, while MetricX err is lower-is-better.
+Blank QE cells mean that row is not present in the current static QE score file; the corrected KIT bilingual full rows have ASR/BLEU/chrF/CER and audio detail now, with QE pending.
 </p>
 <table>
 <thead><tr>

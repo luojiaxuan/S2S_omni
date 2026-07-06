@@ -266,33 +266,54 @@ chunk=960,  speed=1.5: BLEU 21.13, chrF 21.65, CER 0.805, wall delay 24.40s, max
 chunk=1920, speed=1.5: BLEU 21.30, chrF 21.46, CER 0.818, wall delay 2.13s, max backlog 203.37s
 ```
 
-KIT Lecture Translator now has exploratory 60s coverage and a diagnostic
-full-source capture. The tracked full-source dashboard compares GPT/Gemini,
-Seed, and KIT on the same 1072.63s FLORAS EN->ZH sample, with all hypotheses
-coming from target speech ASR rather than backend subtitle text, but the current
-KIT full rows must not be treated as product-level KIT results:
+KIT Lecture Translator now has exploratory 60s coverage and a corrected
+full-source bilingual/no-post capture. The tracked full-source dashboard
+compares GPT/Gemini, Seed, and KIT on the same 1072.63s FLORAS EN->ZH sample,
+with all hypotheses coming from target speech ASR rather than backend subtitle
+text:
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full
 scripts/build_floras_kit_full_compare.py
 ```
 
-The 2026-07-06 full-source KIT run used `language=en`, `mtLanguage=zh`,
-`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`,
-`smartChaptering=online_dynamic`, private availability, and 1.92s input chunks.
-That was later found to be the wrong KIT source-language setup. The KIT live
-form/profile supports multiple source languages, and the intended EN->ZH test
-should include both `language=zh` and `language=en`, encoded as repeated query
-parameters. KIT target speech was still retrieved correctly from `tts:0` linked
-PCM data and transcribed with `gpt-4o-mini-transcribe`; the invalid part is the
-session configuration. Keep these rows only as only-en diagnostics:
+The active 2026-07-06 full-source KIT rows use repeated
+`language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
+`ttsQualityMode=high_quality`, private availability, no postproduction
+parameter, and 1.92s input chunks. KIT target speech is retrieved from `tts:0`
+linked PCM data and transcribed with `gpt-4o-mini-transcribe`; KIT web text is
+not used as the hypothesis.
 
 ```text
-kit chunk=1.92s speed=1.0: BLEU 18.29, chrF 19.37, CER 0.822, target 959.88s, duration lag -112.76s, wall delay 16.98s, max backlog 119.16s
-kit chunk=1.92s speed=1.5: BLEU 17.46, chrF 18.63, CER 0.844, target 608.38s, duration lag -106.73s, wall delay 130.70s, max backlog 231.84s
+kit bilingual/no-post chunk=1.92s speed=1.0: BLEU 18.37, chrF 19.12, CER 0.827, target 952.45s, duration lag -120.18s, wall delay 132.20s, max backlog 239.36s
+kit bilingual/no-post chunk=1.92s speed=1.5: BLEU 18.90, chrF 19.24, CER 0.843, target 669.55s, duration lag -45.55s, wall delay 166.02s, max backlog 201.45s
 ```
 
-Local-only KIT full-run staging for those invalid only-en diagnostic rows:
+The corrected full run did not reproduce the earlier 60s KIT smoke advantage;
+inspect the dashboard detail text and local audio before treating KIT as
+competitive on the full sample. xCOMET/MetricX QE for these replacement KIT rows
+is pending, so the current full dashboard leaves KIT QE cells blank.
+
+Local-only KIT full-run staging for the corrected bilingual/no-post rows:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920_bilang_no_post/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_bilang_no_post_asr/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920_bilang_no_post.jsonl
+```
+
+The superseded 2026-07-06 full-source KIT run used only `language=en`,
+`mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
+`ttsQualityMode=high_quality`, private availability, and 1.92s input chunks.
+That was the wrong KIT source-language setup. Keep those rows only as only-en
+diagnostics:
+
+```text
+kit only-en chunk=1.92s speed=1.0: BLEU 18.29, chrF 19.37, CER 0.822, target 959.88s, duration lag -112.76s, wall delay 16.98s, max backlog 119.16s
+kit only-en chunk=1.92s speed=1.5: BLEU 17.46, chrF 18.63, CER 0.844, target 608.38s, duration lag -106.73s, wall delay 130.70s, max backlog 231.84s
+```
+
+Local-only KIT full-run staging for those superseded only-en diagnostic rows:
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920/
@@ -358,8 +379,8 @@ smartChaptering=online_dynamic
 availability=private
 ```
 
-Do not report that interrupted capture as a KIT full-run score. Before running
-full KIT again, inspect or sweep the product settings: TTS quality/latency mode,
+Do not report that interrupted capture as a KIT full-run score. Before making a
+strong product-level claim, inspect or sweep the remaining product settings:
 presentation/profile selection, postproduction, shortening, smart chaptering,
 pause/mute handling, and source-language selection. The source-language query
 must include both `language=zh` and `language=en`, not just `language=en`.
@@ -851,20 +872,15 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
    sizes and two speed settings. Add ZH->EN and more FLORAS samples before
    drawing benchmark-level conclusions.
 
-5. Configure KIT before any full run.
+5. Continue KIT analysis from the corrected full run.
 
-   Do not launch another full KIT Lecture Translator run until the product
-   settings have been inspected. Start with short clips and compare
-   TTS-quality/latency mode, profile, postproduction, shortening, smart
-   chaptering, pause/mute behavior, source-language selection, and whether
-   target audio can be retrieved. The corrected create path should explicitly
-   pass both source languages, for example `--language zh --language en`, and
-   record whether the resolved URL contains repeated `language=` parameters.
-   For main S2S target-audio metrics, use retrieved target speech plus ASR;
-   `format=mixed` is acceptable there, but KIT web-event text should stay
-   debug-only because it can reflect rewritten displayed sentences.
-   Only then run full FLORAS and mark clearly whether the hypothesis is target
-   speech ASR or KIT web-event text.
+   The corrected bilingual/no-post full KIT run is now in the main dashboard.
+   Follow-up work should inspect why the 60s smoke advantage disappeared on the
+   full wav, rerun xCOMET/MetricX QE for the replacement KIT rows, and compare
+   remaining product settings such as profile, postproduction, shortening,
+   smart chaptering, and pause/mute behavior. The source-language query must
+   keep both `language=zh` and `language=en`. For main S2S metrics, keep using
+   retrieved target speech plus ASR; KIT web-event text should stay debug-only.
 
 6. Keep eval semantics clear.
 

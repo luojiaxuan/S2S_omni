@@ -19,6 +19,7 @@ import argparse
 import base64
 import binascii
 import json
+import time
 import urllib.error
 import urllib.request
 import wave
@@ -39,6 +40,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default=BASE_URL)
     parser.add_argument("--component", default="tts:0")
     parser.add_argument("--timeout-s", type=float, default=30.0)
+    parser.add_argument("--retries", type=int, default=5)
+    parser.add_argument("--retry-sleep-s", type=float, default=3.0)
     return parser.parse_args()
 
 
@@ -46,17 +49,32 @@ def read_cookie_header(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-def http_get(url: str, cookie_header: str, timeout_s: float) -> tuple[int, str, bytes]:
+def http_get(
+    url: str,
+    cookie_header: str,
+    timeout_s: float,
+    *,
+    retries: int,
+    retry_sleep_s: float,
+) -> tuple[int, str, bytes]:
     request = urllib.request.Request(
         url,
         headers={"Cookie": cookie_header, "User-Agent": "Mozilla/5.0"},
         method="GET",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_s) as response:
-            return int(response.status), response.headers.get_content_type(), response.read()
-    except urllib.error.HTTPError as exc:
-        return int(exc.code), "error", exc.read()
+    last_error = b""
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout_s) as response:
+                return int(response.status), response.headers.get_content_type(), response.read()
+        except urllib.error.HTTPError as exc:
+            return int(exc.code), "error", exc.read()
+        except (urllib.error.URLError, OSError, TimeoutError) as exc:
+            last_error = repr(exc).encode("utf-8", errors="replace")
+            if attempt >= retries:
+                break
+            time.sleep(retry_sleep_s)
+    return 0, "error", last_error
 
 
 def resolve_url(base_url: str, link: str) -> str:
@@ -147,7 +165,13 @@ def main() -> None:
         if not link:
             continue
         url = resolve_url(args.base_url, link)
-        status, _ctype, body = http_get(url, cookie_header, args.timeout_s)
+        status, _ctype, body = http_get(
+            url,
+            cookie_header,
+            args.timeout_s,
+            retries=args.retries,
+            retry_sleep_s=args.retry_sleep_s,
+        )
         chunk_pcm = decode_pcm(body) if status == 200 else None
         if chunk_pcm is None:
             print(f"  chunk {index} ({link}) unresolved [HTTP {status}]")
@@ -172,6 +196,8 @@ def main() -> None:
             }
         )
         resolved += 1
+        if resolved == 1 or resolved == len(messages) or resolved % 20 == 0:
+            print(f"  resolved {resolved}/{len(messages)} chunks", flush=True)
 
     if not pcm_parts:
         raise SystemExit("No audio chunks resolved; the session data may have expired.")
