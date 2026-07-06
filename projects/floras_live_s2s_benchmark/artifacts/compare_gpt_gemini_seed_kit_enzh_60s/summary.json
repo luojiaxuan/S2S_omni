@@ -1,5 +1,8 @@
 {
   "run_id": "en-zh_mono_asr_test__0__speed_1",
+  "run_ids": [
+    "en-zh_mono_asr_test__0__speed_1"
+  ],
   "reference_units": 204,
   "reference_chars": 243,
   "reference_sha256": "21d1fe834d147a9efd9b82b20e1c3da979f44ff89785b1dcc6a4924fcdffae1c",

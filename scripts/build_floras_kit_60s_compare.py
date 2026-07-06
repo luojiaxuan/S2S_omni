@@ -32,6 +32,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--project-dir", required=True, help="projects/floras_live_s2s_benchmark directory.")
     parser.add_argument("--run-id", default=RUN_ID, help="FLORAS run id to compare.")
     parser.add_argument(
+        "--include-run-id",
+        action="append",
+        default=[],
+        help="Additional FLORAS run id to include in the same dashboard; repeat for multiple runs.",
+    )
+    parser.add_argument(
         "--output-name",
         default="compare_gpt_gemini_seed_kit_enzh_60s",
         help="Artifact subdirectory name under projects/floras_live_s2s_benchmark/artifacts.",
@@ -690,7 +696,17 @@ def num(value: Any, digits: int = 2) -> str:
         return str(value)
 
 
-def sort_key(row: dict[str, Any]) -> tuple[int, int, str]:
+def row_speed(row: dict[str, Any]) -> float:
+    speed = row.get("speed_factor")
+    if speed is None:
+        speed = row.get("display_speed")
+    try:
+        return float(speed if speed is not None else 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def sort_key(row: dict[str, Any]) -> tuple[float, int, int, str]:
     backend_order = {
         "chatgpt": 0,
         "gemini": 1,
@@ -698,6 +714,7 @@ def sort_key(row: dict[str, Any]) -> tuple[int, int, str]:
         "kit_lecture_translator": 3,
     }
     return (
+        row_speed(row),
         backend_order.get(str(row.get("compare_backend")), 99),
         int(row.get("compare_chunk_ms") or 999999),
         str(row.get("eval_label")),
@@ -706,10 +723,17 @@ def sort_key(row: dict[str, Any]) -> tuple[int, int, str]:
 
 def render_table(rows: list[dict[str, Any]], out_dir: Path) -> str:
     table_rows = []
+    last_speed: str | None = None
     for row in sorted(rows, key=sort_key):
+        display_speed = str(row.get("display_speed") or speed_display())
+        if display_speed != last_speed:
+            table_rows.append(
+                f'<tr class="speed-group"><td colspan="18">speed={esc(display_speed)}</td></tr>'
+            )
+            last_speed = display_speed
         table_rows.append(
             "<tr>"
-            f"<td>{esc(row.get('display_speed') or speed_display())}</td>"
+            f"<td>{esc(display_speed)}</td>"
             f"<td>{esc(row.get('display_model') or backend_to_model(str(row.get('compare_backend') or '')))}</td>"
             f"<td>{esc(row.get('display_chunk') or chunk_display(row.get('compare_chunk_ms')))}</td>"
             f"<td>{esc(row.get('display_variant') or row.get('eval_label'))}</td>"
@@ -801,12 +825,13 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:
 h1{{font-size:22px;margin:0 0 8px}}.meta{{color:#667085;margin:0 0 18px;line-height:1.45}}
 table{{border-collapse:collapse;width:100%;background:white}}th,td{{border-top:1px solid #d6d9de;padding:8px;text-align:left;font-size:12px;vertical-align:top}}
 th{{background:#f2f4f7;font-weight:600}}audio{{width:210px}}details{{margin:14px 0;padding:12px;background:white;border:1px solid #d6d9de;border-radius:6px}}
-summary{{cursor:pointer;font-weight:600}}.textgrid{{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}}pre{{white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.45;background:#f8fafc;padding:10px;border-radius:6px}}
+summary{{cursor:pointer;font-weight:600}}.speed-group td{{background:#e8eef7;font-weight:700;color:#344054;border-top:2px solid #aeb8c7}}
+.textgrid{{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}}pre{{white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.45;background:#f8fafc;padding:10px;border-radius:6px}}
 h3{{font-size:13px;margin:0 0 6px}}@media(max-width:900px){{.textgrid{{grid-template-columns:1fr}}table{{display:block;overflow-x:auto}}}}
 </style>
 <h1>FLORAS EN-ZH 60s Live S2S Compare</h1>
 <p class="meta">
-{len(rows)} rows over the same first 60s FLORAS EN-&gt;ZH source clip. BLEU uses sacreBLEU tokenize=zh.
+{len(rows)} rows over the same first 60s FLORAS EN-&gt;ZH source content. BLEU uses sacreBLEU tokenize=zh.
 Hypothesis/reference strings are stored and displayed with punctuation preserved. CER ignores whitespace only and keeps punctuation.
 Main KIT rows use retrieved target speech scored through gpt-4o-mini-transcribe, including `format=mixed` rows when the hypothesis comes from emitted audio.
 KIT text-only rows are separated as debug rows.
@@ -831,16 +856,7 @@ Seed prefix rows, when present, are marked as proxy prefixes from full 1072s run
 """
 
 
-def main() -> None:
-    global RUN_ID
-    args = parse_args()
-    RUN_ID = args.run_id
-    if args.sacrebleu_path:
-        sys.path.insert(0, str(Path(args.sacrebleu_path).expanduser()))
-    source_root = Path(args.source_root).expanduser().resolve()
-    project_dir = Path(args.project_dir).expanduser().resolve()
-    out_dir = project_dir / "artifacts" / args.output_name
-    out_dir.mkdir(parents=True, exist_ok=True)
+def build_rows_for_current_run(source_root: Path, project_dir: Path) -> tuple[list[dict[str, Any]], str]:
     reference = load_reference(source_root)
     full_first60_root = source_root / "full_first60_target_asr" / speed_path_label()
     use_full_first60 = is_speed(1.5) and full_first60_root.exists()
@@ -958,16 +974,56 @@ def main() -> None:
                 ),
             ]
         )
+    return rows, reference
+
+
+def unique_run_ids(run_ids: list[str]) -> list[str]:
+    seen = set()
+    out = []
+    for run_id in run_ids:
+        if run_id in seen:
+            continue
+        seen.add(run_id)
+        out.append(run_id)
+    return out
+
+
+def main() -> None:
+    global RUN_ID
+    args = parse_args()
+    if args.sacrebleu_path:
+        sys.path.insert(0, str(Path(args.sacrebleu_path).expanduser()))
+    source_root = Path(args.source_root).expanduser().resolve()
+    project_dir = Path(args.project_dir).expanduser().resolve()
+    out_dir = project_dir / "artifacts" / args.output_name
+    out_dir.mkdir(parents=True, exist_ok=True)
+    run_ids = unique_run_ids([args.run_id, *args.include_run_id])
+    rows: list[dict[str, Any]] = []
+    references: list[str] = []
+    for run_id in run_ids:
+        RUN_ID = run_id
+        run_rows, reference = build_rows_for_current_run(source_root, project_dir)
+        rows.extend(run_rows)
+        references.append(reference)
+    RUN_ID = args.run_id
+    primary_reference = references[0] if references else ""
+    for run_id, reference in zip(run_ids[1:], references[1:], strict=False):
+        if reference != primary_reference:
+            raise ValueError(
+                f"reference mismatch while combining {run_id}: "
+                f"{sha256_text(reference)} != {sha256_text(primary_reference)}"
+            )
     sorted_rows = sorted(rows, key=sort_key)
     (out_dir / "compare_metrics.jsonl").write_text(
         "\n".join(json.dumps(row, ensure_ascii=False) for row in sorted_rows) + "\n",
         encoding="utf-8",
     )
     summary = {
-        "run_id": RUN_ID,
-        "reference_units": unit_count(reference, "zh"),
-        "reference_chars": len(reference),
-        "reference_sha256": sha256_text(reference),
+        "run_id": args.run_id,
+        "run_ids": run_ids,
+        "reference_units": unit_count(primary_reference, "zh"),
+        "reference_chars": len(primary_reference),
+        "reference_sha256": sha256_text(primary_reference),
         "bleu_tokenizer": "zh",
         "metric_inputs": "punctuation preserved in hypothesis/reference",
         "rows": [

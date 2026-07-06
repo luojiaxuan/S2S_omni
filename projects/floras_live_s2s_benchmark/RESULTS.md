@@ -85,7 +85,7 @@ Seed rows are not exact 60s reruns; they are prefix proxies cut from full-run
 generated-target ASR using the 60s reference CJK unit count, with punctuation
 kept.
 
-## FLORAS 60s Speed=1.5 KIT Smoke Compare
+## FLORAS 60s Combined Speed Compare
 
 Dashboard:
 
@@ -93,12 +93,17 @@ Dashboard:
 artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html
 ```
 
-The source content is the same first 60s EN->ZH clip, but the streamed source
-speech is sped to about 40.03s. GPT/Gemini/Seed rows are not the old 60s smoke
-rows: they use existing full-run generated target wavs cropped to their first
-60s and re-transcribed. KIT was run on the 60s source clip with
-`format=mixed`, `ttsQualityMode=high_quality`, 1.92s input chunks, and target
-speech ASR.
+This dashboard now contains both speed=1.0 rows from the 60s smoke table above
+and speed=1.5 rows, grouped by speed in the HTML table. For speed=1.5, the
+source content is the same first 60s EN->ZH clip, but the streamed source
+speech is sped to about 40.03s.
+GPT/Gemini/Seed speed=1.5 rows are not the old 60s smoke rows: they use
+existing full-run generated target wavs cropped to their first 60s and
+re-transcribed. KIT was run on the 60s source clip with `format=mixed`,
+`ttsQualityMode=high_quality`, 1.92s input chunks, and target speech ASR.
+
+The table below lists only the speed=1.5 subset; the speed=1.0 rows are the
+60s smoke rows shown above and are included in the combined HTML dashboard.
 
 | speed | model | chunk | variant | scope | BLEU zh | chrF | CER | source stream s | target s | dur lag s |
 | ---: | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |

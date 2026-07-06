@@ -47,11 +47,12 @@ for EN->ZH long-form streaming translation.
   `sentence_coverage.jsonl` reference. KIT main rows use retrieved target
   speech scored through ASR; KIT web-event TTS text rows are debug-only. Seed
   rows are prefix proxies from the full 1072s run, not exact 60s Seed reruns.
-- `artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html`: the same
-  60s EN->ZH source content with source speech sped to 1.5x. GPT/Gemini/Seed
-  rows use the first 60s cropped from existing full-run generated target wavs
-  and re-transcribed with `gpt-4o-mini-transcribe`; KIT uses the 60s source
-  smoke with `format=mixed`, `ttsQualityMode=high_quality`, and 1.92s chunks.
+- `artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html`:
+  combined speed=1.0 and speed=1.5 dashboard over the same 60s EN->ZH source
+  content. Speed=1.5 GPT/Gemini/Seed rows use the first 60s cropped from
+  existing full-run generated target wavs and re-transcribed with
+  `gpt-4o-mini-transcribe`; KIT uses the 60s source smoke with `format=mixed`,
+  `ttsQualityMode=high_quality`, and 1.92s chunks.
 - `artifacts/eval_runs/*`: per-backend/chunk `summary.json`, `metrics.jsonl`,
   `timeline.jsonl`, `sentence_coverage.jsonl`, and small HTML index files.
 - `artifacts/root_metadata/*`: selected sample metadata, run manifest, ASR
@@ -125,12 +126,13 @@ python3 scripts/build_floras_kit_60s_compare.py \
   --sacrebleu-path /path/to/sacrebleu/site-packages
 ```
 
-The speed=1.5 smoke dashboard is rebuilt by changing `--run-id` to
-`en-zh_mono_asr_test__0__speed_1.5` and `--output-name` to
-`compare_gpt_gemini_seed_kit_enzh_60s_speed15`. For this run id, the script
-loads local `full_first60_target_asr/speed1p5/*/target_first60.wav` crops for
-GPT/Gemini/Seed when present; those wav/ASR artifacts are local staging files
-and are intentionally not committed.
+The combined speed=1.0/1.5 dashboard is rebuilt by changing `--run-id` to
+`en-zh_mono_asr_test__0__speed_1.5`, adding
+`--include-run-id en-zh_mono_asr_test__0__speed_1`, and setting
+`--output-name compare_gpt_gemini_seed_kit_enzh_60s_speed15`. For the speed=1.5
+run id, the script loads local `full_first60_target_asr/speed1p5/*/target_first60.wav`
+crops for GPT/Gemini/Seed when present; those wav/ASR artifacts are local
+staging files and are intentionally not committed.
 
 ## Current Takeaway
 

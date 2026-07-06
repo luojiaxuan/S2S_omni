@@ -372,14 +372,15 @@ kit_online_high_quality_enonly: BLEU 20.47, chrF 19.83, CER 0.767, target 69.95s
 The 2026-07-06 speed=1.5 KIT smoke reused the same 60s source content but sped
 source speech to a 40.03s stream. KIT used `format=mixed`,
 `ttsQualityMode=high_quality`, and 1.92s chunks; the hypothesis is target speech
-ASR, not KIT text. The companion speed=1.5 dashboard no longer uses the old
-GPT/Gemini 60s smoke rows or Seed prefix proxies. GPT/Gemini/Seed are loaded
-from existing full-run generated target wavs cropped to their first 60s and
-re-transcribed with `gpt-4o-mini-transcribe`. This makes the table a target-audio
-crop view rather than a fully source-aligned formal ranking; the crops can
-include content beyond the first-source-60s reference, so CER can exceed 1.0.
-Seed crop rows are especially sensitive to this windowing artifact and should
-not be read as a direct Seed translation-quality drop.
+ASR, not KIT text. The companion speed dashboard now includes both speed=1.0
+and speed=1.5 rows in one table. Its speed=1.5 GPT/Gemini/Seed rows no longer
+use the old 60s smoke rows or Seed prefix proxies; they are loaded from
+existing full-run generated target wavs cropped to their first 60s and
+re-transcribed with `gpt-4o-mini-transcribe`. This makes the speed=1.5 rows a
+target-audio crop view rather than a fully source-aligned formal ranking; the
+crops can include content beyond the first-source-60s reference, so CER can
+exceed 1.0. Seed crop rows are especially sensitive to this windowing artifact
+and should not be read as a direct Seed translation-quality drop.
 
 ```text
 chatgpt chunk=0.96s full-run-target-wav-first60-asr: BLEU 18.25, chrF 22.99, CER 1.054, target crop 60.00s

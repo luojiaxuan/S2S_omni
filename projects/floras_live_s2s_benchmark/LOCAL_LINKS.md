@@ -41,9 +41,10 @@ web-event TTS text rows are debug-only. Seed rows are marked as full-run prefix
 proxies, not exact 60s Seed reruns. This is a smoke/debug dashboard, not a
 formal KIT product score.
 
-For the speed=1.5 dashboard, GPT/Gemini/Seed rows use local crops from the first
-60s of existing full-run generated target wavs, then `gpt-4o-mini-transcribe`.
-KIT uses the 60s source smoke run with `format=mixed` and target-speech ASR.
+The `*_speed15` dashboard also includes the speed=1.0 rows. Its speed=1.5
+GPT/Gemini/Seed rows use local crops from the first 60s of existing full-run
+generated target wavs, then `gpt-4o-mini-transcribe`. KIT uses the 60s source
+smoke run with `format=mixed` and target-speech ASR.
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html
