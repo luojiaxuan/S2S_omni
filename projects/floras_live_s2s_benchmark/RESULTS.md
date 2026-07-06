@@ -29,30 +29,51 @@ document-level workaround for model context limits, not sentence- or
 time-aligned segments; interpret QE cautiously for rows with large backlog,
 truncation, or strong compression.
 
+The two KIT rows in the full table are retained only as diagnostics. They were
+created with `language=en` only, but KIT's live profile/form supports
+multilingual source language selection and the intended EN->ZH test should use
+both `language=zh` and `language=en`. Do not rank the current full KIT rows
+against GPT/Gemini/Seed.
+
 ## KIT Lecture Translator Status
 
-KIT is still exploratory, but it now has a full-source mixed/high-quality
-target-speech-ASR run on the same FLORAS sample. The new full dashboard is:
+KIT is still exploratory. The current full-source dashboard is useful for
+GPT/Gemini/Seed and for inspecting local audio/detail links, but its KIT rows
+are not product-level results:
 
 ```text
 artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
 ```
 
-KIT used `language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
-`ttsQualityMode=high_quality`, private availability, `smartChaptering=online_dynamic`,
-and 1.92s input chunks. KIT currently has only the 1.92s chunk row in this full
-dashboard. The hypothesis is the retrieved target speech
-transcribed by `gpt-4o-mini-transcribe`; KIT displayed text is not used for
-BLEU/chrF/CER. Timing metrics use the same FLORAS evaluator as the other
-backends, with KIT target-audio chunk timing read from resolved `tts:0` audio
-chunks.
+The invalid full KIT captures used `language=en`, `mtLanguage=zh`,
+`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, private
+availability, `smartChaptering=online_dynamic`, and 1.92s input chunks. The
+hypothesis was correctly derived from retrieved target speech transcribed by
+`gpt-4o-mini-transcribe`; KIT displayed text was not used. The problem is the
+session configuration, not the target-audio extraction path.
 
-On the full 1072.63s sample, the 60s smoke/crop impression does not hold:
-KIT speed=1.0 scores BLEU 18.29 / chrF 19.37 / CER 0.822, and KIT speed=1.5
-scores BLEU 17.46 / chrF 18.63 / CER 0.844. The target wav is also shorter
-than the streamed source audio by about 112.76s at speed=1.0 and 106.73s at
-speed=1.5. This is a single KIT setting, not a complete KIT configuration
-sweep.
+Those invalid full rows scored BLEU 18.29 / chrF 19.37 / CER 0.822 at
+speed=1.0 and BLEU 17.46 / chrF 18.63 / CER 0.844 at speed=1.5, with target
+wavs about 107-113s shorter than the streamed source. Treat them only as
+only-en diagnostics.
+
+Follow-up 60s configuration checks confirmed KIT needs repeated `language`
+query parameters for source language coverage. `scripts/create_kit_session.py`
+now accepts repeated or comma-separated `--language` values and sends them with
+`urlencode(..., doseq=True)`. On the same first-60s FLORAS clip, no-post
+`format=mixed`, `ttsQualityMode=high_quality`, `audioLanguage=zh` smokes gave:
+
+```text
+language=en&language=zh: BLEU 21.74, chrF 20.69, CER 0.758, target 69.95s, 13 TTS chunks
+language=zh&language=en: BLEU 20.96, chrF 20.55, CER 0.775, target 72.63s, 14 TTS chunks
+```
+
+The saved `profile_1` behind the current shorten link expands to
+`language=zh,en`, `mtLanguage=zh,en`, `audioLanguage=zh`, `format=mixed`,
+`ttsQualityMode=high_quality`, and `postproduction=50`. That is the product
+profile, but it is not the no-compression S2S main setting; its 60s target
+speech was 247.20s and scored BLEU 7.12 / chrF 15.16 / CER 3.517 against the
+60s reference.
 
 The 2026-07-06 full-source KIT attempt used a default online low-latency setup
 with `language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
@@ -67,7 +88,9 @@ FLORAS source and paused on the server. The local JSON capture is debug-only:
 Before treating KIT as a product-level result, sweep or inspect the relevant
 settings first: TTS quality/latency mode, presentation/profile selection,
 postproduction, shortening, smart chaptering, pause/mute handling, and whether
-other settings reproduce the same target-speech-ASR behavior.
+other settings reproduce the same target-speech-ASR behavior. The next full KIT
+run should explicitly use both source languages, for example
+`--language zh --language en`, and should record whether postproduction is on.
 
 ## FLORAS 60s KIT Smoke Compare
 
@@ -111,6 +134,14 @@ KIT `*_target_asr` rows use retrieved target speech scored through
 Seed rows are not exact 60s reruns; they are prefix proxies cut from full-run
 generated-target ASR using the 60s reference CJK unit count, with punctuation
 kept.
+
+Additional 2026-07-06 KIT smokes after the source-language correction are not
+yet part of the tracked 60s dashboard table. The no-post bilingual
+`format=mixed` rows scored BLEU 21.74 for `language=en&language=zh` and BLEU
+20.96 for `language=zh&language=en`; the current saved profile with
+`postproduction=50` produced an overlong 247.20s target and BLEU 7.12. These
+results explain why the old full only-en rows should be discarded, but they do
+not yet replace a proper full KIT run.
 
 ## FLORAS 60s Combined Speed Compare
 

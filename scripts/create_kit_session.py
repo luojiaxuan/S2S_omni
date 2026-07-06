@@ -17,7 +17,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-json", required=True)
     parser.add_argument("--base-url", default="https://lt2srv.iar.kit.edu")
     parser.add_argument("--name", required=True)
-    parser.add_argument("--language", default="en")
+    parser.add_argument(
+        "--language",
+        action="append",
+        default=[],
+        help="Source language code. Pass multiple times, or comma-separate values, for KIT multi-language ASR.",
+    )
     parser.add_argument("--mt-language", default="zh")
     parser.add_argument("--audio-language", default="zh")
     parser.add_argument("--tts-quality-mode", default="high_quality")
@@ -39,11 +44,22 @@ def read_cookie_header(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
+def normalize_languages(values: list[str]) -> list[str]:
+    languages: list[str] = []
+    for value in values:
+        for item in str(value).split(","):
+            item = item.strip()
+            if item and item not in languages:
+                languages.append(item)
+    return languages or ["en"]
+
+
 def create_url(args: argparse.Namespace) -> str:
+    languages = normalize_languages(args.language)
     params = {
         "name": args.name,
         "legals": "1",
-        "language": args.language,
+        "language": languages,
         "mtLanguage": args.mt_language,
         "audioLanguage": args.audio_language,
         "ttsQualityMode": args.tts_quality_mode,
@@ -55,7 +71,7 @@ def create_url(args: argparse.Namespace) -> str:
         "filter_music": args.filter_music,
         "type": args.type,
     }
-    return f"{args.base_url.rstrip('/')}/create?{urllib.parse.urlencode(params)}"
+    return f"{args.base_url.rstrip('/')}/create?{urllib.parse.urlencode(params, doseq=True)}"
 
 
 def session_id_from_url(url: str) -> str:
@@ -85,7 +101,7 @@ def main() -> None:
             "session_id": session_id_from_url(final_url),
             "body_start": body,
             "config": {
-                "language": args.language,
+                "language": normalize_languages(args.language),
                 "mtLanguage": args.mt_language,
                 "audioLanguage": args.audio_language,
                 "ttsQualityMode": args.tts_quality_mode,

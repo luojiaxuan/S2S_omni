@@ -35,17 +35,18 @@ be copied into Git. Do not rank this debug capture against full FLORAS results.
 
 ## KIT/GPT/Gemini/Seed Full-Source Compare
 
-This is the aligned full-wav comparison on the selected 1072.63s FLORAS EN->ZH
-sample. GPT/Gemini/Seed use the existing full-run target-speech-ASR evals.
-KIT uses a fresh full-source run with `format=mixed`,
-`ttsQualityMode=high_quality`, 1.92s input chunks, retrieved target speech, and
-`gpt-4o-mini-transcribe`.
+This dashboard contains the aligned full-wav comparison on the selected
+1072.63s FLORAS EN->ZH sample. GPT/Gemini/Seed use valid full-run
+target-speech-ASR evals. The KIT rows are now diagnostic only: the captures used
+`language=en` instead of the required bilingual KIT source-language setting
+(`language=zh&language=en` or `language=en&language=zh`). Do not use the current
+KIT rows for ranking.
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
 ```
 
-Local KIT full-run staging:
+Local KIT full-run staging for the invalid only-en diagnostic rows:
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920/
@@ -71,6 +72,20 @@ The 2026-07-06 QE model execution used Taurus staging under:
 The private KIT session IDs and create responses are kept only in the local
 staging directories above. Do not copy live `present/` URLs or cookie material
 into Git.
+
+Additional 2026-07-06 KIT configuration smokes after discovering the
+source-language issue:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_mixed_hq_multilang_60s_chunk1920/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_mixed_hq_multilang_zhfirst_60s_chunk1920/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_shorten_profile_60s_chunk1920/
+```
+
+The first two are no-post `format=mixed`, `ttsQualityMode=high_quality`,
+`audioLanguage=zh` checks with repeated `language` query parameters. The third
+uses the saved shorten/profile path, which currently includes
+`postproduction=50` and produced an overlong target wav on the 60s clip.
 
 ## KIT/GPT/Gemini/Seed 60s Compare
 

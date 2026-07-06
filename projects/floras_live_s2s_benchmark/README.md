@@ -7,9 +7,9 @@ for EN->ZH long-form streaming translation.
 
 - Source data: FLORAS long-form EN monolingual ASR test sample.
 - Backends: OpenAI Realtime, Gemini Live, Seed AST, and exploratory KIT
-  Lecture Translator captures. KIT now has a full-source mixed/high-quality
-  target-speech-ASR comparison, but it is still a single product setting rather
-  than a full KIT configuration sweep.
+  Lecture Translator captures. The current full-source KIT rows are diagnostic
+  only because they were later found to use `language=en` without the required
+  bilingual KIT input-language setting.
 - Chunk sizes: 960 ms and 1920 ms.
 - Speeds: 1.0x and 1.5x.
 - Evaluation: target speech ASR, reference-based BLEU/chrF/CER, reference-free
@@ -38,9 +38,9 @@ for EN->ZH long-form streaming translation.
   metric rows for the full Seed AST chunk/speed dashboard.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html`: full-source
   dashboard comparing GPT/Gemini/Seed/KIT at 1.0x and 1.5x. KIT currently has
-  only the 1.92s chunk row in this full dashboard. KIT uses
-  `format=mixed`, `ttsQualityMode=high_quality`, 1.92s input chunks, retrieved
-  target speech, and `gpt-4o-mini-transcribe`.
+  only the 1.92s chunk row in this full dashboard, but those KIT rows are
+  diagnostic only: the capture used `language=en` instead of the bilingual
+  `language=zh&language=en` / `language=en&language=zh` input-language setting.
 - `artifacts/qe/full_enzh_qe_scores.jsonl`: per-full-run reference-free QE
   rows. xCOMET-QE uses `myyycroft/XCOMET-lite`; MetricX-QE uses
   `google/metricx-24-hybrid-large-v2p6-bfloat16`. Inputs are source transcript
@@ -97,13 +97,33 @@ sessions: `tts:0` linked audio chunks are resolved into target wavs and scored
 through the same ASR path as GPT/Gemini/Seed. KIT web-event TTS text is still
 shown only as debug text, because it can reflect product-side rewrite behavior
 rather than the actual emitted target speech. The 2026-07-06 full-source
-mixed/high-quality KIT runs are local staging artifacts under:
+mixed/high-quality KIT rows below are now diagnostic only because the session
+creation used `language=en` rather than the bilingual KIT input-language
+setting:
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_asr
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920.jsonl
 ```
+
+Follow-up 60s KIT configuration checks on 2026-07-06 showed that this was not
+just an HTML label issue. `scripts/create_kit_session.py` now supports repeated
+`--language` arguments and encodes them as repeated query parameters. No-post
+`format=mixed`, `ttsQualityMode=high_quality`, `audioLanguage=zh` smokes scored
+as follows on the same first-60s FLORAS clip:
+
+```text
+language=en&language=zh: BLEU 21.74, chrF 20.69, CER 0.758, target 69.95s, 13 TTS audio chunks
+language=zh&language=en: BLEU 20.96, chrF 20.55, CER 0.775, target 72.63s, 14 TTS audio chunks
+```
+
+The current saved KIT `profile_1` expands to `language=zh,en`,
+`mtLanguage=zh,en`, `audioLanguage=zh`, `format=mixed`,
+`ttsQualityMode=high_quality`, and `postproduction=50` with the permanent
+shorten name `siqiouyaandrewcmuedu`. That profile is not the no-compression S2S
+main setting; the 60s target speech was 247.20s and scored BLEU 7.12 / chrF
+15.16 / CER 3.517 against the 60s reference.
 
 The 2026-07-06 full-source KIT attempt used a default low-latency online
 configuration and was interrupted after 330 seconds of the 1072.63-second source
@@ -234,10 +254,9 @@ not exact 60s source replays; the crop can include content beyond the first-60s
 reference and should be interpreted as the requested target-audio crop view.
 Seed crop rows are especially vulnerable to this windowing artifact and should
 not be read as a source-time-aligned quality ranking.
-The full-source KIT mixed/high-quality run is more comparable than the 60s
-smoke/crop dashboard. On this sample it scores below the best GPT/Gemini/Seed
-full-run rows: KIT 1.92s gets BLEU 18.29 at speed=1.0 and BLEU 17.46 at
-speed=1.5, with target wavs about 107-113 seconds shorter than the streamed
-source audio. The same evaluator computes KIT timing metrics from retrieved
-`tts:0` audio chunk arrival times. Treat this as an exploratory single-setting
-KIT result, not a complete KIT product sweep.
+The full-source KIT mixed/high-quality rows in the current dashboard should be
+treated as invalid diagnostics, not as KIT product-level results, because the
+session was created with `language=en` only. The measured rows were BLEU 18.29
+at speed=1.0 and BLEU 17.46 at speed=1.5, with target wavs about 107-113
+seconds shorter than the streamed source audio. Re-run full KIT only after
+choosing the intended bilingual/no-postproduction profile.
