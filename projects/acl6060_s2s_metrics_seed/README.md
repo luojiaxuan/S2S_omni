@@ -324,6 +324,15 @@ Current KIT status on 2026-07-06:
 - A full-source KIT attempt on the FLORAS EN->ZH sample used a default
   low-latency online configuration and was interrupted after 330.0s of the
   1072.63s source, then paused. It is not a formal score.
+- KIT `format=mixed` rows are revision-mode debug artifacts, not main S2S
+  target-audio metrics, because KIT can edit already emitted sentences in that
+  mode. Use `format=online` rows when comparing emitted target speech.
+- The current 60s target-speech-ASR KIT smoke best valid `online` row is
+  `online_low_latency_no_post`: BLEU 24.94, chrF 22.60, CER 0.717 on the
+  selected FLORAS EN->ZH clip. The explicit minimal
+  `language=en, mtLanguage=zh, audioLanguage=zh, format=online,
+  ttsQualityMode=high_quality` run scored lower: BLEU 20.47, chrF 19.83,
+  CER 0.767.
 - Before a formal KIT comparison, inspect or sweep the KIT product settings and
   decide whether KIT can be scored from target speech ASR. If only web-event TTS
   text is available, label it as text-only.
