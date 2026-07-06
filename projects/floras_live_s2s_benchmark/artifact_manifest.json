@@ -11,6 +11,18 @@
       "bytes": 81980
     },
     {
+      "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html",
+      "bytes": 273668
+    },
+    {
+      "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl",
+      "bytes": 291417
+    },
+    {
+      "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/summary.json",
+      "bytes": 18451
+    },
+    {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html",
       "bytes": 33148
     },

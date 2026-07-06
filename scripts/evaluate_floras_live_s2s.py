@@ -507,9 +507,14 @@ def main() -> None:
         if window_candidate_text:
             candidate_text = window_candidate_text
             candidate_text_source = "window_asr_concat"
-        else:
-            candidate_text = candidate_by_id.get(run_id) or str(run.get("output_transcript") or "")
+        elif candidate_by_id.get(run_id, "").strip():
+            candidate_text = candidate_by_id[run_id].strip()
             candidate_text_source = "full_target_asr"
+        elif args.asr_jsonl or args.asr_model:
+            raise SystemExit(f"missing ASR transcript for {run_id}; refusing to fall back to output_transcript")
+        else:
+            candidate_text = str(run.get("output_transcript") or "")
+            candidate_text_source = "output_transcript"
         timeline = build_timeline(
             run,
             run_eval_dir,

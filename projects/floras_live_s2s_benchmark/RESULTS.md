@@ -8,12 +8,14 @@
 | en-zh_mono_asr_test__0__speed_1 | chatgpt | 1920 | 1.00 | 19.56 | 20.58 | 0.844 | 21.27 | 46.20 | 23.53 |
 | en-zh_mono_asr_test__0__speed_1 | gemini | 1920 | 1.00 | 14.03 | 18.20 | 0.863 | 132.37 | 160.32 | 16.25 |
 | en-zh_mono_asr_test__0__speed_1 | seed_ast | 1920 | 1.00 | 20.81 | 21.53 | 0.812 | -287.35 | 1.58 | 288.37 |
+| en-zh_mono_asr_test__0__speed_1 | kit | 1920 | 1.00 | 18.29 | 19.37 | 0.822 | -112.76 | 16.98 | 119.16 |
 | en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 960 | 1.50 | 19.74 | 20.72 | 0.807 | 27.70 | 94.63 | 65.53 |
 | en-zh_mono_asr_test__0__speed_1.5 | gemini | 960 | 1.50 | 20.42 | 21.35 | 0.865 | 5.15 | 75.30 | 69.84 |
 | en-zh_mono_asr_test__0__speed_1.5 | seed_ast | 960 | 1.50 | 21.13 | 21.65 | 0.805 | -221.05 | 24.40 | 241.92 |
 | en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 1920 | 1.50 | 16.96 | 18.31 | 0.891 | 22.70 | 40.04 | 16.09 |
 | en-zh_mono_asr_test__0__speed_1.5 | gemini | 1920 | 1.50 | 20.38 | 21.44 | 0.867 | 94.40 | 109.81 | 15.09 |
 | en-zh_mono_asr_test__0__speed_1.5 | seed_ast | 1920 | 1.50 | 21.30 | 21.46 | 0.818 | -202.16 | 2.13 | 203.37 |
+| en-zh_mono_asr_test__0__speed_1.5 | kit | 1920 | 1.50 | 17.46 | 18.63 | 0.844 | -106.73 | 130.70 | 231.84 |
 
 Seed AST rows use ASR over the generated target speech with
 `gpt-4o-mini-transcribe`; the AST backend translation subtitle is not used for
@@ -21,10 +23,28 @@ BLEU/chrF/CER.
 
 ## KIT Lecture Translator Status
 
-KIT is still exploratory and should not be ranked against the full
-OpenAI/Gemini/Seed rows yet. The 60s dashboard below is useful for validating
-the web-event text extractor and the Chinese BLEU tokenizer issue, but it was
-not run after selecting the best KIT product configuration.
+KIT is still exploratory, but it now has a full-source mixed/high-quality
+target-speech-ASR run on the same FLORAS sample. The new full dashboard is:
+
+```text
+artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
+```
+
+KIT used `language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
+`ttsQualityMode=high_quality`, private availability, `smartChaptering=online_dynamic`,
+and 1.92s input chunks. KIT currently has only the 1.92s chunk row in this full
+dashboard. The hypothesis is the retrieved target speech
+transcribed by `gpt-4o-mini-transcribe`; KIT displayed text is not used for
+BLEU/chrF/CER. Timing metrics use the same FLORAS evaluator as the other
+backends, with KIT target-audio chunk timing read from resolved `tts:0` audio
+chunks.
+
+On the full 1072.63s sample, the 60s smoke/crop impression does not hold:
+KIT speed=1.0 scores BLEU 18.29 / chrF 19.37 / CER 0.822, and KIT speed=1.5
+scores BLEU 17.46 / chrF 18.63 / CER 0.844. The target wav is also shorter
+than the streamed source audio by about 112.76s at speed=1.0 and 106.73s at
+speed=1.5. This is a single KIT setting, not a complete KIT configuration
+sweep.
 
 The 2026-07-06 full-source KIT attempt used a default online low-latency setup
 with `language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
@@ -36,11 +56,10 @@ FLORAS source and paused on the server. The local JSON capture is debug-only:
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_enzh/kit_live_enzh_full_realtime_run.json
 ```
 
-Before a formal full KIT comparison, sweep or inspect the relevant KIT settings
-first: TTS quality/latency mode, presentation/profile selection,
+Before treating KIT as a product-level result, sweep or inspect the relevant
+settings first: TTS quality/latency mode, presentation/profile selection,
 postproduction, shortening, smart chaptering, pause/mute handling, and whether
-target speech audio can be retrieved and ASR-scored like the Seed/GPT/Gemini
-rows.
+other settings reproduce the same target-speech-ASR behavior.
 
 ## FLORAS 60s KIT Smoke Compare
 

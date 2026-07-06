@@ -7,9 +7,9 @@ for EN->ZH long-form streaming translation.
 
 - Source data: FLORAS long-form EN monolingual ASR test sample.
 - Backends: OpenAI Realtime, Gemini Live, Seed AST, and exploratory KIT
-  Lecture Translator captures. KIT results are not yet a formal full-run
-  comparison because the product has multiple quality/latency/profile settings
-  that must be selected deliberately before scoring.
+  Lecture Translator captures. KIT now has a full-source mixed/high-quality
+  target-speech-ASR comparison, but it is still a single product setting rather
+  than a full KIT configuration sweep.
 - Chunk sizes: 960 ms and 1920 ms.
 - Speeds: 1.0x and 1.5x.
 - Evaluation: target speech ASR, BLEU/chrF/CER, window-level backlog, wall-clock
@@ -35,6 +35,11 @@ for EN->ZH long-form streaming translation.
   chunks and 1.0x/1.5x speed.
 - `artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl`:
   metric rows for the full Seed AST chunk/speed dashboard.
+- `artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html`: full-source
+  dashboard comparing GPT/Gemini/Seed/KIT at 1.0x and 1.5x. KIT currently has
+  only the 1.92s chunk row in this full dashboard. KIT uses
+  `format=mixed`, `ttsQualityMode=high_quality`, 1.92s input chunks, retrieved
+  target speech, and `gpt-4o-mini-transcribe`.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html`: 60s smoke
   dashboard comparing OpenAI, Gemini, KIT Lecture Translator, and Seed AST
   proxy rows. This is a debug/tokenizer artifact, not the formal KIT product
@@ -78,11 +83,19 @@ lightweight HTML/JSON metadata is tracked in Git, while the wavs remain local
 and are ignored by `.gitignore`. Use `LOCAL_LINKS.md` for the full local
 dashboard and audio paths.
 
-KIT Lecture Translator target-speech retrieval is verified for smoke sessions:
-`tts:0` linked audio chunks are resolved into target wavs and scored through the
-same ASR path as GPT/Gemini/Seed. KIT web-event TTS text is still shown only as
-debug text, because it can reflect product-side rewrite behavior rather than the
-actual emitted target speech.
+KIT Lecture Translator target-speech retrieval is verified for smoke and full
+sessions: `tts:0` linked audio chunks are resolved into target wavs and scored
+through the same ASR path as GPT/Gemini/Seed. KIT web-event TTS text is still
+shown only as debug text, because it can reflect product-side rewrite behavior
+rather than the actual emitted target speech. The 2026-07-06 full-source
+mixed/high-quality KIT runs are local staging artifacts under:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_asr
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920.jsonl
+```
+
 The 2026-07-06 full-source KIT attempt used a default low-latency online
 configuration and was interrupted after 330 seconds of the 1072.63-second source
 because the configuration had not been optimized. Treat that capture as local
@@ -134,6 +147,23 @@ run id, the script loads local `full_first60_target_asr/speed1p5/*/target_first6
 crops for GPT/Gemini/Seed when present; those wav/ASR artifacts are local
 staging files and are intentionally not committed.
 
+The full-source KIT comparison dashboard is rebuilt after running KIT and ASR
+with:
+
+```bash
+python3 scripts/build_floras_kit_full_compare.py \
+  --manifest /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/live_runs.jsonl \
+  --output-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full \
+  --run-id-prefix en-zh_mono_asr_test__0__speed_ \
+  --eval openai_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr \
+  --eval openai_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr \
+  --eval gemini_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk960_trim_asr \
+  --eval gemini_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk1920_trim_asr \
+  --eval seed_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr \
+  --eval seed_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr \
+  --eval kit_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_asr
+```
+
 ## Current Takeaway
 
 The dashboard separates duration-level lag from wall-clock delay. For example,
@@ -151,5 +181,10 @@ not exact 60s source replays; the crop can include content beyond the first-60s
 reference and should be interpreted as the requested target-audio crop view.
 Seed crop rows are especially vulnerable to this windowing artifact and should
 not be read as a source-time-aligned quality ranking.
-Do not rank KIT from this single 60s smoke result; the product configuration
-still needs broader clips before a full FLORAS comparison.
+The full-source KIT mixed/high-quality run is more comparable than the 60s
+smoke/crop dashboard. On this sample it scores below the best GPT/Gemini/Seed
+full-run rows: KIT 1.92s gets BLEU 18.29 at speed=1.0 and BLEU 17.46 at
+speed=1.5, with target wavs about 107-113 seconds shorter than the streamed
+source audio. The same evaluator computes KIT timing metrics from retrieved
+`tts:0` audio chunk arrival times. Treat this as an exploratory single-setting
+KIT result, not a complete KIT product sweep.

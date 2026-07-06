@@ -33,6 +33,30 @@ Local partial dashboard generated only for extractor sanity checking:
 The cookie file in the same directory is local credential material and must not
 be copied into Git. Do not rank this debug capture against full FLORAS results.
 
+## KIT/GPT/Gemini/Seed Full-Source Compare
+
+This is the aligned full-wav comparison on the selected 1072.63s FLORAS EN->ZH
+sample. GPT/Gemini/Seed use the existing full-run target-speech-ASR evals.
+KIT uses a fresh full-source run with `format=mixed`,
+`ttsQualityMode=high_quality`, 1.92s input chunks, retrieved target speech, and
+`gpt-4o-mini-transcribe`.
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
+```
+
+Local KIT full-run staging:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_asr/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920.jsonl
+```
+
+The private KIT session IDs and create responses are kept only in the local
+staging directories above. Do not copy live `present/` URLs or cookie material
+into Git.
+
 ## KIT/GPT/Gemini/Seed 60s Compare
 
 Same first 60s FLORAS EN->ZH source clip. GPT/Gemini rows use target-speech
@@ -129,6 +153,7 @@ The corresponding JSON/HTML metadata tracked in Git is under:
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_speed1
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15
 projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr

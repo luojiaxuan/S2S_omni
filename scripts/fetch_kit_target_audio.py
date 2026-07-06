@@ -22,6 +22,7 @@ import json
 import urllib.error
 import urllib.request
 import wave
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-json", required=True, help="run_kit_live_floras.py output JSON.")
     parser.add_argument("--cookie-header-file", required=True)
     parser.add_argument("--output-wav", required=True)
+    parser.add_argument("--output-chunks-jsonl", default="")
     parser.add_argument("--base-url", default=BASE_URL)
     parser.add_argument("--component", default="tts:0")
     parser.add_argument("--timeout-s", type=float, default=30.0)
@@ -108,19 +110,38 @@ def load_tts_messages(run: dict[str, Any], component: str) -> list[dict[str, Any
     return sorted(audio_msgs, key=lambda m: int(m.get("message_id") or 0))
 
 
+def started_epoch_s(run: dict[str, Any]) -> float | None:
+    started = run.get("startedAt")
+    if not started:
+        return None
+    return datetime.fromisoformat(str(started).replace("Z", "+00:00")).timestamp()
+
+
+def message_arrival_s(msg: dict[str, Any], base_epoch_s: float | None) -> float | None:
+    try:
+        arrival = float(msg.get("time_arrive_mediator"))
+    except (TypeError, ValueError):
+        return None
+    return round(arrival - base_epoch_s, 6) if base_epoch_s is not None else round(arrival, 6)
+
+
 def main() -> None:
     args = parse_args()
     run = json.loads(Path(args.run_json).expanduser().read_text(encoding="utf-8"))
     cookie_header = read_cookie_header(Path(args.cookie_header_file).expanduser())
     session_id = str(run.get("sessionId") or "")
+    component_messages_total = len(run.get("collection", {}).get("messagesByComponent", {}).get(args.component, []))
     messages = load_tts_messages(run, args.component)
+    base_epoch_s = started_epoch_s(run)
     if not messages:
         raise SystemExit(f"No {args.component} audio messages in {args.run_json}")
     if any(m.get("b64_enc_opus") for m in messages):
         print("WARNING: b64_enc_opus chunks present; this resolver handles PCM only.")
 
     pcm_parts: list[bytes] = []
+    chunk_rows: list[dict[str, Any]] = []
     resolved = 0
+    cumulative_s = 0.0
     for index, msg in enumerate(messages):
         link = str(msg.get("b64_enc_pcm_s16le") or "")
         if not link:
@@ -132,6 +153,24 @@ def main() -> None:
             print(f"  chunk {index} ({link}) unresolved [HTTP {status}]")
             continue
         pcm_parts.append(chunk_pcm)
+        duration_s = len(chunk_pcm) / 2 / SAMPLE_RATE
+        cumulative_s += duration_s
+        chunk_rows.append(
+            {
+                "component": args.component,
+                "message_index": index,
+                "message_id": msg.get("message_id"),
+                "arrival_s": message_arrival_s(msg, base_epoch_s),
+                "audio_duration_s": round(duration_s, 6),
+                "cumulative_audio_duration_s": round(cumulative_s, 6),
+                "start": msg.get("start"),
+                "end": msg.get("end"),
+                "seq": msg.get("seq"),
+                "unstable": msg.get("unstable"),
+                "link": link,
+                "bytes": len(chunk_pcm),
+            }
+        )
         resolved += 1
 
     if not pcm_parts:
@@ -145,12 +184,23 @@ def main() -> None:
         wav.setsampwidth(2)
         wav.setframerate(SAMPLE_RATE)
         wav.writeframes(pcm)
+    chunks_path = ""
+    if args.output_chunks_jsonl:
+        chunks_out = Path(args.output_chunks_jsonl).expanduser()
+        chunks_out.parent.mkdir(parents=True, exist_ok=True)
+        chunks_out.write_text(
+            "\n".join(json.dumps(row, ensure_ascii=False) for row in chunk_rows) + "\n",
+            encoding="utf-8",
+        )
+        chunks_path = str(chunks_out)
     duration_s = len(pcm) / 2 / SAMPLE_RATE
     print(
         json.dumps(
             {
                 "output_wav": str(out_path),
-                "chunks_total": len(messages),
+                "output_chunks_jsonl": chunks_path,
+                "component_messages_total": component_messages_total,
+                "audio_messages_total": len(messages),
                 "chunks_resolved": resolved,
                 "target_duration_s": round(duration_s, 3),
             },

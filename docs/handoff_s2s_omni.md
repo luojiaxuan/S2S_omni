@@ -260,14 +260,47 @@ chunk=960,  speed=1.5: BLEU 21.13, chrF 21.65, CER 0.805, wall delay 24.40s, max
 chunk=1920, speed=1.5: BLEU 21.30, chrF 21.46, CER 0.818, wall delay 2.13s, max backlog 203.37s
 ```
 
-KIT Lecture Translator has exploratory 60s coverage so far. The tracked 60s
-dashboard compares GPT/Gemini target-speech ASR, KIT target-speech ASR for
-retrieved `format=online` and `format=mixed` rows, KIT debug-only text rows,
-and Seed full-run prefix proxies. BLEU is recomputed with sacreBLEU
-`tokenize=zh`; the stored hypothesis/reference strings preserve punctuation.
-The old default-tokenizer BLEU 0.0 diagnostic is kept in JSON but hidden from
-the dashboard table. Treat this as a smoke/debug artifact, not a formal KIT
-product comparison.
+KIT Lecture Translator now has both exploratory 60s coverage and one full-source
+mixed/high-quality run. The tracked full-source dashboard compares GPT/Gemini,
+Seed, and KIT on the same 1072.63s FLORAS EN->ZH sample, with all hypotheses
+coming from target speech ASR rather than backend subtitle text:
+
+```text
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full
+scripts/build_floras_kit_full_compare.py
+```
+
+The 2026-07-06 full-source KIT run used `language=en`, `mtLanguage=zh`,
+`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`,
+`smartChaptering=online_dynamic`, private availability, and 1.92s input chunks.
+KIT target speech was retrieved from `tts:0` linked PCM data and transcribed
+with `gpt-4o-mini-transcribe`. The fresh full-wav result does not support the
+earlier 60s impression that KIT was better than GPT/Gemini/Seed:
+
+```text
+kit chunk=1.92s speed=1.0: BLEU 18.29, chrF 19.37, CER 0.822, target 959.88s, duration lag -112.76s, wall delay 16.98s, max backlog 119.16s
+kit chunk=1.92s speed=1.5: BLEU 17.46, chrF 18.63, CER 0.844, target 608.38s, duration lag -106.73s, wall delay 130.70s, max backlog 231.84s
+```
+
+Local-only KIT full-run staging:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_asr/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920.jsonl
+```
+
+The private KIT session IDs and create responses are kept only under the local
+staging directory above. Do not copy live `present/` URLs or cookie material
+into Git.
+
+The tracked 60s dashboard compares GPT/Gemini target-speech ASR, KIT
+target-speech ASR for retrieved `format=online` and `format=mixed` rows, KIT
+debug-only text rows, and Seed full-run prefix proxies. BLEU is recomputed with
+sacreBLEU `tokenize=zh`; the stored hypothesis/reference strings preserve
+punctuation. The old default-tokenizer BLEU 0.0 diagnostic is kept in JSON but
+hidden from the dashboard table. Treat this as a smoke/debug artifact, not a
+formal KIT product comparison.
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
