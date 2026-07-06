@@ -6,6 +6,25 @@ tracked in Git. The current Seed AST chunk sweep has 1,308 local wav/window
 files in the Git worktree, totaling about 721 MB, plus raw Seed run outputs
 under the local artifact root.
 
+## KIT/GPT/Gemini/Seed 60s Compare
+
+Same first 60s FLORAS EN->ZH source clip. GPT/Gemini rows use target-speech
+ASR. KIT rows use captured web-event TTS text because target wav retrieval is
+not available yet. Seed rows are marked as full-run prefix proxies, not exact
+60s Seed reruns.
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html
+```
+
+Local KIT raw web-event captures:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_upload_smoke/kit_live_enzh_run.json
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_upload_smoke/kit_live_enzh_realtime_run.json
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_upload_smoke/kit_extractor_diagnosis.json
+```
+
 ## Seed AST Full Chunk/Speed Compare
 
 Combined dashboard with OpenAI, Gemini, and Seed AST at 0.96s/1.92s chunks and
@@ -73,6 +92,7 @@ The corresponding JSON/HTML metadata tracked in Git is under:
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_speed1
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
 projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr
 projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chunks

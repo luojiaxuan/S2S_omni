@@ -214,6 +214,8 @@ projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chu
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chunks/compare_metrics.jsonl
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks/index.html
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/compare_metrics.jsonl
 ```
 
 Large wav artifacts are local only:
@@ -254,6 +256,18 @@ chunk=960,  speed=1.0: BLEU 21.48, chrF 21.85, CER 0.836, wall delay 1.75s, max 
 chunk=1920, speed=1.0: BLEU 20.81, chrF 21.53, CER 0.812, wall delay 1.58s, max backlog 288.37s
 chunk=960,  speed=1.5: BLEU 21.13, chrF 21.65, CER 0.805, wall delay 24.40s, max backlog 241.92s
 chunk=1920, speed=1.5: BLEU 21.30, chrF 21.46, CER 0.818, wall delay 2.13s, max backlog 203.37s
+```
+
+KIT Lecture Translator was also tested on the first 60s FLORAS EN->ZH source
+clip. The tracked dashboard compares GPT/Gemini target-speech ASR, KIT captured
+web-event TTS text, and Seed full-run prefix proxies. BLEU is recomputed with
+sacreBLEU `tokenize=zh`; the stored hypothesis/reference strings preserve
+punctuation. The dashboard includes a `BLEU default` column showing the old
+default-tokenizer BLEU 0.0 result next to the corrected Chinese-tokenized BLEU.
+
+```text
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
+scripts/build_floras_kit_60s_compare.py
 ```
 
 ### ACL6060 / Seed AST S2S Metrics Script

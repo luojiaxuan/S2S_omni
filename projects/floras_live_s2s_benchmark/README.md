@@ -6,8 +6,8 @@ for EN->ZH long-form streaming translation.
 ## Scope
 
 - Source data: FLORAS long-form EN monolingual ASR test sample.
-- Backends: OpenAI Realtime, Gemini Live, and Seed AST for source-to-speech
-  comparison.
+- Backends: OpenAI Realtime, Gemini Live, Seed AST, and a KIT Lecture
+  Translator 60s text-only smoke comparison.
 - Chunk sizes: 960 ms and 1920 ms.
 - Speeds: 1.0x and 1.5x.
 - Evaluation: target speech ASR, BLEU/chrF/CER, window-level backlog, wall-clock
@@ -33,6 +33,15 @@ for EN->ZH long-form streaming translation.
   chunks and 1.0x/1.5x speed.
 - `artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl`:
   metric rows for the full Seed AST chunk/speed dashboard.
+- `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html`: 60s dashboard
+  comparing OpenAI, Gemini, KIT Lecture Translator, and Seed AST proxy rows.
+- `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/compare_metrics.jsonl`:
+  metric rows for the 60s dashboard. Hypothesis/reference punctuation is
+  preserved and both default-tokenizer BLEU and `tokenize=zh` BLEU are stored.
+  The script verifies the exact 60s eval rows share the same
+  `sentence_coverage.jsonl` reference. KIT rows use captured web-event TTS text
+  because target wav retrieval is not available yet. Seed rows are prefix
+  proxies from the full 1072s run, not exact 60s Seed reruns.
 - `artifacts/eval_runs/*`: per-backend/chunk `summary.json`, `metrics.jsonl`,
   `timeline.jsonl`, `sentence_coverage.jsonl`, and small HTML index files.
 - `artifacts/root_metadata/*`: selected sample metadata, run manifest, ASR
@@ -57,6 +66,9 @@ The Seed AST detail pages contain local wav/window references. Their
 lightweight HTML/JSON metadata is tracked in Git, while the wavs remain local
 and are ignored by `.gitignore`. Use `LOCAL_LINKS.md` for the full local
 dashboard and audio paths.
+
+The KIT Lecture Translator smoke output is text-only in the tracked dashboard:
+the web-event TTS text was captured, but the target wav was not retrieved.
 
 ## Metric Definitions
 
@@ -85,9 +97,22 @@ Seed AST live outputs are produced by:
 scripts/run_floras_seed_ast.py
 ```
 
+The KIT/GPT/Gemini/Seed 60s comparison dashboard is rebuilt with:
+
+```bash
+python3 scripts/build_floras_kit_60s_compare.py \
+  --source-root /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs \
+  --project-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark \
+  --sacrebleu-path /path/to/sacrebleu/site-packages
+```
+
 ## Current Takeaway
 
 The dashboard separates duration-level lag from wall-clock delay. For example,
 Gemini at 960 ms chunks and 1.0x source speed has only 5.62 s duration lag, but
 185.97 s wall-clock delay and 114.00 s max backlog, meaning the final audio
 length is close to the source but the live system returned audio far too late.
+For the 60s KIT smoke comparison, the earlier BLEU 0.0 reading was an eval
+artifact: the same hypotheses score 0.00 with sacreBLEU's default tokenizer but
+20-26 BLEU with `tokenize=zh`, while preserving the original
+hypothesis/reference punctuation.

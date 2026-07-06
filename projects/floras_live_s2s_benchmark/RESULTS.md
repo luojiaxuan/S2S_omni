@@ -1,3 +1,5 @@
+## Full 1072s Sample
+
 | run | backend | chunk_ms | speed | BLEU | chrF | CER | duration_lag_s | wall_delay_s | max_backlog_s |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | en-zh_mono_asr_test__0__speed_1 | chatgpt | 960 | 1.00 | 24.10 | 25.96 | 0.875 | 19.57 | 63.52 | 40.20 |
@@ -16,3 +18,40 @@
 Seed AST rows use ASR over the generated target speech with
 `gpt-4o-mini-transcribe`; the AST backend translation subtitle is not used for
 BLEU/chrF/CER.
+
+## FLORAS 60s KIT Smoke Compare
+
+Dashboard:
+
+```text
+artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html
+```
+
+These rows use the same first 60s FLORAS source clip and the same 60s target
+reference. The script verifies each 60s eval directory has the same
+`sentence_coverage.jsonl` reference before scoring. BLEU is recomputed with
+sacreBLEU `tokenize=zh`; hypothesis and reference punctuation is preserved in
+`compare_metrics.jsonl` and the HTML detail panes. The `BLEU default` column
+shows the old/default tokenizer path that produced BLEU 0.0.
+
+| label | backend | chunk_ms | scope | BLEU default | BLEU zh | chrF | CER |
+| --- | --- | ---: | --- | ---: | ---: | ---: | ---: |
+| chatgpt_default_60s_asr | chatgpt | 960 | exact 60s, target-speech ASR | 0.00 | 26.24 | 25.38 | 0.704 |
+| gemini_default_60s_asr | gemini | 960 | exact 60s, target-speech ASR | 0.00 | 26.24 | 29.01 | 0.729 |
+| chatgpt_chunk1920_60s_asr | chatgpt | 1920 | exact 60s, target-speech ASR | 0.00 | 21.21 | 21.60 | 0.729 |
+| gemini_chunk1920_60s_asr | gemini | 1920 | exact 60s, target-speech ASR | 0.00 | 25.34 | 27.74 | 0.696 |
+| kit_fast_60s_tts_text | kit_lecture_translator | n/a | exact 60s, text-only accelerated upload | 0.00 | 20.94 | 19.12 | 0.738 |
+| kit_realtime_60s_tts_text | kit_lecture_translator | n/a | exact 60s, text-only realtime upload | 0.00 | 22.99 | 21.94 | 0.767 |
+
+Proxy rows are separated in the HTML dashboard and should not be ranked against
+the exact 60s measurements:
+
+| label | backend | chunk_ms | scope | BLEU default | BLEU zh | chrF | CER |
+| --- | --- | ---: | --- | ---: | ---: | ---: | ---: |
+| seed_ast_chunk960_prefix_proxy | seed_ast | 960 | proxy prefix from full 1072s target-speech ASR | 0.00 | 28.58 | 23.99 | 0.625 |
+| seed_ast_chunk1920_prefix_proxy | seed_ast | 1920 | proxy prefix from full 1072s target-speech ASR | 0.00 | 25.98 | 24.51 | 0.596 |
+
+KIT rows use captured web-event TTS text because the target wav was not
+retrieved from the product. Seed rows are not exact 60s reruns; they are prefix
+proxies cut from full-run generated-target ASR using the 60s reference CJK unit
+count, with punctuation kept.
