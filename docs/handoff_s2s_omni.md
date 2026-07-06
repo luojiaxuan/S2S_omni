@@ -319,6 +319,25 @@ online_low_latency_no_post:   BLEU 24.94, chrF 22.60, CER 0.717, target 70.20s, 
 online_high_quality_no_post:  BLEU 23.97, chrF 21.17, CER 0.721, target 52.58s, 6 TTS chunks
 ```
 
+A follow-up smoke explicitly created a minimal EN->ZH session with
+`language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
+`ttsQualityMode=high_quality`, and no `summarization` or `postproduction`.
+This was intended to test whether profile_1's broader source-language preset
+was hurting performance. It did not improve this clip: KIT switched to a graph
+with `textstructurer:0_en` and `textstructurer:0_zh` messages, emitted 13 TTS
+audio chunks, and produced a longer target wav.
+
+```text
+old mixed_high_quality profile-derived:  BLEU 25.94, chrF 22.72, CER 0.717, target 52.08s, 6 TTS chunks
+minimal language=en only session:        BLEU 21.77, chrF 20.81, CER 0.758, target 69.95s, 13 TTS chunks
+```
+
+Local-only artifact:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_profile_minimal_60s_chunk1920/mixed_high_quality_en_only_no_summarization/compare_old_profile_vs_en_only_metrics.json
+```
+
 Against existing GPT/Gemini target-speech-ASR 60s runs on the same clip and
 same metric settings, KIT mixed high-quality is slightly below the 960ms GPT
 and Gemini BLEU rows, but is above the 1.92s GPT/Gemini BLEU rows. Gemini
