@@ -291,8 +291,9 @@ kit bilingual/no-post chunk=1.92s speed=1.5: BLEU 18.90, chrF 19.24, CER 0.843, 
 
 The corrected full run did not reproduce the earlier 60s KIT smoke advantage;
 inspect the dashboard detail text and local audio before treating KIT as
-competitive on the full sample. xCOMET/MetricX QE for these replacement KIT rows
-is pending, so the current full dashboard leaves KIT QE cells blank.
+competitive on the full sample. xCOMET/MetricX QE has been rerun for all 14
+full-dashboard rows. KIT scored xCOMET 0.0284 / MetricX-QE 8.277 at speed=1.0
+and xCOMET 0.0389 / MetricX-QE 8.075 at speed=1.5.
 
 Local-only KIT full-run staging for the corrected bilingual/no-post rows:
 
@@ -874,13 +875,14 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
 
 5. Continue KIT analysis from the corrected full run.
 
-   The corrected bilingual/no-post full KIT run is now in the main dashboard.
-   Follow-up work should inspect why the 60s smoke advantage disappeared on the
-   full wav, rerun xCOMET/MetricX QE for the replacement KIT rows, and compare
-   remaining product settings such as profile, postproduction, shortening,
-   smart chaptering, and pause/mute behavior. The source-language query must
-   keep both `language=zh` and `language=en`. For main S2S metrics, keep using
-   retrieved target speech plus ASR; KIT web-event text should stay debug-only.
+   The corrected bilingual/no-post full KIT run is now in the main dashboard,
+   and xCOMET/MetricX QE has been refreshed for all 14 full rows. Follow-up
+   work should inspect why the 60s smoke advantage disappeared on the full wav
+   and compare remaining product settings such as profile, postproduction,
+   shortening, smart chaptering, and pause/mute behavior. The source-language
+   query must keep both `language=zh` and `language=en`. For main S2S metrics,
+   keep using retrieved target speech plus ASR; KIT web-event text should stay
+   debug-only.
 
 6. Keep eval semantics clear.
 

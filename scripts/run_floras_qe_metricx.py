@@ -65,7 +65,7 @@ def main() -> None:
             batch_rows = rows[start : start + args.batch_size]
             batch = tokenize_batch(tokenizer, [make_input(row) for row in batch_rows], args.max_input_length)
             batch = {key: value.to(device) for key, value in batch.items()}
-            predictions = model(**batch).predictions.detach().cpu().tolist()
+            predictions = model(**batch, use_cache=False).predictions.detach().cpu().tolist()
             for row, prediction in zip(batch_rows, predictions):
                 out = dict(row)
                 out["prediction"] = float(prediction)

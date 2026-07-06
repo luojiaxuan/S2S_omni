@@ -41,7 +41,7 @@ target-speech-ASR evals. The current KIT rows use the corrected bilingual
 no-post setup: repeated `language=zh&language=en`, `mtLanguage=zh`,
 `audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, 1.92s input
 chunks, and target-speech ASR. The new KIT rows have BLEU/chrF/CER and audio
-detail now; xCOMET/MetricX QE is pending for those replacement rows.
+detail plus refreshed xCOMET/MetricX QE for all 14 full-dashboard rows.
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html

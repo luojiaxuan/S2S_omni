@@ -12,15 +12,15 @@
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html",
-      "bytes": 275501
+      "bytes": 275489
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl",
-      "bytes": 300100
+      "bytes": 301448
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/summary.json",
-      "bytes": 23274
+      "bytes": 23462
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html",
@@ -320,23 +320,23 @@
     },
     {
       "path": "artifacts/qe/full_enzh_qe_segments.jsonl",
-      "bytes": 386630
+      "bytes": 388782
     },
     {
       "path": "artifacts/qe/full_enzh_qe_runs.jsonl",
-      "bytes": 6004
+      "bytes": 6064
     },
     {
       "path": "artifacts/qe/full_enzh_xcomet_qe_segments.jsonl",
-      "bytes": 76654
+      "bytes": 77617
     },
     {
       "path": "artifacts/qe/full_enzh_metricx_qe_segments.jsonl",
-      "bytes": 418564
+      "bytes": 420722
     },
     {
       "path": "artifacts/qe/full_enzh_qe_scores.jsonl",
-      "bytes": 10633
+      "bytes": 10693
     }
   ],
   "large_audio_policy": "Audio and per-window wav files are not checked into Git; use source_dir or regenerate.",

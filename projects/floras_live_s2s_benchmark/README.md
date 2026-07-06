@@ -46,8 +46,7 @@ for EN->ZH long-form streaming translation.
   rows. xCOMET-QE uses `myyycroft/XCOMET-lite`; MetricX-QE uses
   `google/metricx-24-hybrid-large-v2p6-bfloat16`. Inputs are source transcript
   plus target-speech ASR hypothesis, split into proportional text chunks. The
-  current static QE file predates the corrected KIT bilingual full run, so KIT
-  QE cells are blank in the current full dashboard until QE is rerun.
+  current QE file covers all 14 rows in the GPT/Gemini/Seed/KIT full dashboard.
 - `artifacts/qe/full_enzh_qe_segments.jsonl`,
   `artifacts/qe/full_enzh_xcomet_qe_segments.jsonl`, and
   `artifacts/qe/full_enzh_metricx_qe_segments.jsonl`: segment-level QE inputs
@@ -114,6 +113,8 @@ Those corrected full rows scored BLEU 18.37 / chrF 19.12 / CER 0.827 at
 speed=1.0 and BLEU 18.90 / chrF 19.24 / CER 0.843 at speed=1.5. The 60s smoke
 advantage did not carry over to the full wav; inspect the dashboard detail text
 and local audio before treating KIT as competitive on the full sample.
+Reference-free QE for the same rows is xCOMET 0.0284 / MetricX-QE 8.277 at
+speed=1.0 and xCOMET 0.0389 / MetricX-QE 8.075 at speed=1.5.
 
 The earlier full-source mixed/high-quality KIT rows below are diagnostic only
 because the session creation used `language=en` rather than the bilingual KIT
@@ -245,6 +246,7 @@ python3 scripts/build_floras_kit_full_compare.py \
   --output-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full \
   --run-id-prefix en-zh_mono_asr_test__0__speed_ \
   --qe-scores-jsonl /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_scores.jsonl \
+  --require-qe \
   --eval openai_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk960_asr \
   --eval openai_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/openai_eval_full_enzh_chunk1920_asr \
   --eval gemini_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk960_trim_asr \
@@ -275,5 +277,6 @@ The current full-source KIT rows are corrected bilingual/no-post runs:
 `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
 `ttsQualityMode=high_quality`, and target-speech ASR. They scored BLEU 18.37 at
 speed=1.0 and BLEU 18.90 at speed=1.5, so the earlier 60s smoke advantage did
-not hold on the full wav. The new KIT rows do not yet have refreshed
-xCOMET/MetricX QE; blank QE cells in the dashboard mean pending, not zero.
+not hold on the full wav. QE has been rerun for all 14 dashboard rows; KIT
+scores are xCOMET 0.0284 / MetricX-QE 8.277 at speed=1.0 and xCOMET 0.0389 /
+MetricX-QE 8.075 at speed=1.5.
