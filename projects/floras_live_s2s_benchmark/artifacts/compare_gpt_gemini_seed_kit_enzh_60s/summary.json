@@ -65,12 +65,12 @@
       "label": "kit_mixed_high_quality_target_asr",
       "backend": "kit_lecture_translator",
       "chunk_ms": 1920,
-      "scope": "debug_revision_mode_exact_60s_source_clip",
+      "scope": "exact_60s_source_clip",
       "bleu_default_tokenizer": 0.0,
       "bleu": 25.940576,
       "chrf": 22.724512,
       "cer": 0.7166666666666667,
-      "valid_for_main_s2s_target_audio": false
+      "valid_for_main_s2s_target_audio": true
     },
     {
       "label": "kit_online_high_quality_enonly_target_asr",

@@ -260,15 +260,16 @@ chunk=1920, speed=1.5: BLEU 21.30, chrF 21.46, CER 0.818, wall delay 2.13s, max 
 
 KIT Lecture Translator has exploratory 60s coverage so far. The tracked 60s
 dashboard compares GPT/Gemini target-speech ASR, KIT target-speech ASR for
-retrieved `format=online` rows, KIT debug-only text/revision rows, and Seed
-full-run prefix proxies. BLEU is recomputed with sacreBLEU `tokenize=zh`; the
-stored hypothesis/reference strings preserve punctuation. The dashboard
-includes a `BLEU default` column showing the old default-tokenizer BLEU 0.0
-result next to the corrected Chinese-tokenized BLEU. Treat this as a
+retrieved `format=online` and `format=mixed` rows, KIT debug-only text rows,
+and Seed full-run prefix proxies. BLEU is recomputed with sacreBLEU
+`tokenize=zh`; the stored hypothesis/reference strings preserve punctuation.
+The dashboard includes a `BLEU default` column showing the old default-tokenizer
+BLEU 0.0 result next to the corrected Chinese-tokenized BLEU. Treat this as a
 smoke/debug artifact, not a formal KIT product comparison.
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15
 scripts/build_floras_kit_60s_compare.py
 ```
 
@@ -302,11 +303,12 @@ only web-event TTS text is available, label the row as text-only.
 The 2026-07-06 60s KIT setting smoke used 1.92s source-audio input chunks. KIT
 does not emit one target TTS chunk per input chunk: `low_latency` produced 14
 shorter TTS chunks, the profile-derived `online high_quality` run produced 6
-chunks, and explicit minimal `online high_quality` produced 13 chunks. Do not
-use `format=mixed` as the main S2S target-audio metric: `mixed` is a revision
-mode that can edit already emitted sentences, so those rows are useful only for
-debugging KIT product/subtitle behavior. Target-wav and ASR artifacts are
-local-only staging outputs:
+chunks, and explicit minimal `online high_quality` produced 13 chunks. KIT
+`format=mixed` can revise its displayed text, so do not use KIT text output as
+the main hypothesis. If the hypothesis is the emitted target speech retrieved
+from `tts:0` and transcribed with the same ASR path, `format=mixed` is valid as
+a production S2S smoke row. Target-wav and ASR artifacts are local-only staging
+outputs:
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/target_tts_asr_gpt4o_mini.jsonl
@@ -320,23 +322,25 @@ Target-speech-ASR summary on the selected FLORAS 60s EN->ZH clip:
 ```text
 online_low_latency_no_post:   BLEU 24.94, chrF 22.60, CER 0.717, target 70.20s, 14 TTS chunks
 online_high_quality_no_post:  BLEU 23.97, chrF 21.17, CER 0.721, target 52.58s, 6 TTS chunks
-mixed_high_quality_no_post:   BLEU 25.94, chrF 22.72, CER 0.717, target 52.08s, 6 TTS chunks [revision-mode debug only]
+mixed_high_quality_no_post:   BLEU 25.94, chrF 22.72, CER 0.717, target 52.08s, 6 TTS chunks
 ```
 
 A follow-up smoke first created a minimal EN->ZH session with
 `language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
 `ttsQualityMode=high_quality`, and no `summarization` or `postproduction`.
-That run is now marked invalid for the main S2S comparison because `mixed` can
-revise already emitted text. The valid follow-up repeated the minimal setup
-with `format=online`; it switched to a graph with `textstructurer:0_en` and
-`textstructurer:0_zh` messages, emitted 13 TTS audio chunks, produced a 69.95s
-target wav, and scored worse than the profile-derived online runs.
+If KIT text is used directly, this can be misleading because `mixed` revises
+displayed text. For target-speech ASR it remains a valid S2S row; on this clip
+it still scored worse than the profile-derived mixed row. A follow-up repeated
+the minimal setup with `format=online`; it switched to a graph with
+`textstructurer:0_en` and `textstructurer:0_zh` messages, emitted 13 TTS audio
+chunks, produced a 69.95s target wav, and scored worse than the profile-derived
+online runs.
 
 ```text
 profile-derived online low_latency:      BLEU 24.94, chrF 22.60, CER 0.717, target 70.20s, 14 TTS chunks
 profile-derived online high_quality:     BLEU 23.97, chrF 21.17, CER 0.721, target 52.58s, 6 TTS chunks
 minimal online language=en only:         BLEU 20.47, chrF 19.83, CER 0.767, target 69.95s, 13 TTS chunks
-minimal mixed language=en only:          BLEU 21.77, chrF 20.81, CER 0.758, target 69.95s, 13 TTS chunks [revision-mode debug only]
+minimal mixed language=en only:          BLEU 21.77, chrF 20.81, CER 0.758, target 69.95s, 13 TTS chunks
 ```
 
 Local-only artifacts:
@@ -347,20 +351,33 @@ Local-only artifacts:
 ```
 
 Against existing GPT/Gemini target-speech-ASR 60s runs on the same clip and
-same metric settings, only `format=online` KIT rows should be used for main S2S
-target-audio comparison. The best currently valid KIT smoke row is
-`online_low_latency_no_post`; it is below GPT/Gemini 960ms BLEU and below
-Gemini chunk1920 BLEU, but above the current GPT chunk1920 BLEU.
+same metric settings, KIT `format=mixed` is comparable when scored from target
+speech ASR rather than KIT text. The best current KIT smoke row is
+`mixed_high_quality_no_post`; it is just below GPT/Gemini 960ms BLEU, above
+Gemini chunk1920 by BLEU, and below Gemini chunk1920 by chrF/CER.
 
 ```text
 chatgpt_default_960ms:        BLEU 26.24, chrF 25.38, CER 0.704, target 90.40s
 gemini_default_960ms:         BLEU 26.24, chrF 29.01, CER 0.729, target 60.25s
+kit_mixed_high_quality:       BLEU 25.94, chrF 22.72, CER 0.717, target 52.08s
 gemini_chunk1920:             BLEU 25.34, chrF 27.74, CER 0.696, target 60.75s
 kit_online_low_latency:       BLEU 24.94, chrF 22.60, CER 0.717, target 70.20s
 kit_online_high_quality:      BLEU 23.97, chrF 21.17, CER 0.721, target 52.58s
 chatgpt_chunk1920:            BLEU 21.21, chrF 21.60, CER 0.729, target 89.60s
 kit_online_high_quality_enonly: BLEU 20.47, chrF 19.83, CER 0.767, target 69.95s
-kit_mixed_high_quality:       BLEU 25.94, chrF 22.72, CER 0.717, target 52.08s [revision-mode debug only]
+```
+
+The 2026-07-06 speed=1.5 KIT smoke reused the same 60s source content but sped
+source speech to a 40.03s stream. KIT used `format=mixed`,
+`ttsQualityMode=high_quality`, and 1.92s chunks; the hypothesis is target speech
+ASR, not KIT text.
+
+```text
+chatgpt_default_960ms_speed1.5:  BLEU 28.54, chrF 26.47, CER 0.671, target 70.20s
+gemini_default_960ms_speed1.5:   BLEU 24.09, chrF 23.92, CER 0.654, target 40.25s
+chatgpt_chunk1920_speed1.5:      BLEU 24.90, chrF 24.09, CER 0.675, target 69.80s
+gemini_chunk1920_speed1.5:       BLEU 27.71, chrF 28.13, CER 0.654, target 41.00s
+kit_mixed_high_quality_speed1.5: BLEU 23.26, chrF 21.49, CER 0.717, target 69.58s
 ```
 
 ### ACL6060 / Seed AST S2S Metrics Script
@@ -745,8 +762,9 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
    settings have been inspected. Start with short clips and compare
    TTS-quality/latency mode, profile, postproduction, shortening, smart
    chaptering, pause/mute behavior, and whether target audio can be retrieved.
-   For main S2S target-audio metrics, use `format=online`; `format=mixed` may
-   revise already emitted sentences and should stay a debug-only product mode.
+   For main S2S target-audio metrics, use retrieved target speech plus ASR;
+   `format=mixed` is acceptable there, but KIT web-event text should stay
+   debug-only because it can reflect rewritten displayed sentences.
    Only then run full FLORAS and mark clearly whether the hypothesis is target
    speech ASR or KIT web-event text.
 

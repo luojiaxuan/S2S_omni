@@ -36,21 +36,24 @@ be copied into Git. Do not rank this debug capture against full FLORAS results.
 ## KIT/GPT/Gemini/Seed 60s Compare
 
 Same first 60s FLORAS EN->ZH source clip. GPT/Gemini rows use target-speech
-ASR. KIT rows use captured web-event TTS text because target wav retrieval is
-not available yet. Seed rows are marked as full-run prefix proxies, not exact
-60s Seed reruns. This is a smoke/debug dashboard, not a formal KIT product
-score.
+ASR. KIT main rows use retrieved target speech scored through ASR; KIT
+web-event TTS text rows are debug-only. Seed rows are marked as full-run prefix
+proxies, not exact 60s Seed reruns. This is a smoke/debug dashboard, not a
+formal KIT product score.
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html
 ```
 
-Local KIT raw web-event captures:
+Local KIT target-audio and raw captures:
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_upload_smoke/kit_live_enzh_run.json
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_upload_smoke/kit_live_enzh_realtime_run.json
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_upload_smoke/kit_extractor_diagnosis.json
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_speed15_60s_chunk1920/mixed_high_quality_no_post/
 ```
 
 ## Seed AST Full Chunk/Speed Compare

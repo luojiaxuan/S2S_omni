@@ -48,6 +48,7 @@ Dashboard:
 
 ```text
 artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html
+artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html
 ```
 
 These rows use the same first 60s FLORAS source clip and the same 60s target
@@ -63,6 +64,10 @@ shows the old/default tokenizer path that produced BLEU 0.0.
 | gemini_default_60s_asr | gemini | 960 | exact 60s, target-speech ASR | 0.00 | 26.24 | 29.01 | 0.729 |
 | chatgpt_chunk1920_60s_asr | chatgpt | 1920 | exact 60s, target-speech ASR | 0.00 | 21.21 | 21.60 | 0.729 |
 | gemini_chunk1920_60s_asr | gemini | 1920 | exact 60s, target-speech ASR | 0.00 | 25.34 | 27.74 | 0.696 |
+| kit_mixed_high_quality_target_asr | kit_lecture_translator | 1920 | exact 60s, target-speech ASR | 0.00 | 25.94 | 22.72 | 0.717 |
+| kit_online_low_latency_target_asr | kit_lecture_translator | 1920 | exact 60s, target-speech ASR | 0.00 | 24.94 | 22.60 | 0.717 |
+| kit_online_high_quality_target_asr | kit_lecture_translator | 1920 | exact 60s, target-speech ASR | 0.00 | 23.97 | 21.17 | 0.721 |
+| kit_online_high_quality_enonly_target_asr | kit_lecture_translator | 1920 | exact 60s, target-speech ASR | 0.00 | 20.47 | 19.83 | 0.767 |
 | kit_fast_60s_tts_text | kit_lecture_translator | n/a | exact 60s, text-only accelerated upload | 0.00 | 20.94 | 19.12 | 0.738 |
 | kit_realtime_60s_tts_text | kit_lecture_translator | n/a | exact 60s, text-only realtime upload | 0.00 | 22.99 | 21.94 | 0.767 |
 
@@ -74,7 +79,32 @@ the exact 60s measurements:
 | seed_ast_chunk960_prefix_proxy | seed_ast | 960 | proxy prefix from full 1072s target-speech ASR | 0.00 | 28.58 | 23.99 | 0.625 |
 | seed_ast_chunk1920_prefix_proxy | seed_ast | 1920 | proxy prefix from full 1072s target-speech ASR | 0.00 | 25.98 | 24.51 | 0.596 |
 
-KIT rows use captured web-event TTS text because the target wav was not
-retrieved from the product. Seed rows are not exact 60s reruns; they are prefix
-proxies cut from full-run generated-target ASR using the 60s reference CJK unit
-count, with punctuation kept.
+KIT `*_target_asr` rows use retrieved target speech scored through
+`gpt-4o-mini-transcribe`; KIT `*_tts_text` rows are debug-only web-event text.
+Seed rows are not exact 60s reruns; they are prefix proxies cut from full-run
+generated-target ASR using the 60s reference CJK unit count, with punctuation
+kept.
+
+## FLORAS 60s Speed=1.5 KIT Smoke Compare
+
+Dashboard:
+
+```text
+artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html
+```
+
+The source content is the same first 60s EN->ZH clip, but the streamed source
+speech is sped to about 40.03s. KIT was run with `format=mixed`,
+`ttsQualityMode=high_quality`, 1.92s input chunks, and target speech ASR.
+
+| label | backend | chunk_ms | BLEU zh | chrF | CER | source stream s | target s | dur lag s |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| chatgpt_default_60s_asr | chatgpt | 960 | 28.54 | 26.47 | 0.671 | 40.03 | 70.20 | 30.17 |
+| gemini_default_60s_asr | gemini | 960 | 24.09 | 23.92 | 0.654 | 40.03 | 40.25 | 0.22 |
+| chatgpt_chunk1920_60s_asr | chatgpt | 1920 | 24.90 | 24.09 | 0.675 | 40.03 | 69.80 | 29.77 |
+| gemini_chunk1920_60s_asr | gemini | 1920 | 27.71 | 28.13 | 0.654 | 40.03 | 41.00 | 0.97 |
+| kit_mixed_high_quality_speed1p5_target_asr | kit_lecture_translator | 1920 | 23.26 | 21.49 | 0.717 | 40.03 | 69.58 | 29.55 |
+
+On this one clip, speeding source speech to 1.5x reduced KIT mixed/high-quality
+BLEU from 25.94 to 23.26 and removed its speed=1.0 duration advantage: target
+audio grew from 52.08s to 69.58s while the source stream was only 40.03s.

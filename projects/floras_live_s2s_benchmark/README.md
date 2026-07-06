@@ -43,9 +43,13 @@ for EN->ZH long-form streaming translation.
   metric rows for the 60s dashboard. Hypothesis/reference punctuation is
   preserved and both default-tokenizer BLEU and `tokenize=zh` BLEU are stored.
   The script verifies the exact 60s eval rows share the same
-  `sentence_coverage.jsonl` reference. KIT rows use captured web-event TTS text
-  because target wav retrieval is not available yet. Seed rows are prefix
-  proxies from the full 1072s run, not exact 60s Seed reruns.
+  `sentence_coverage.jsonl` reference. KIT main rows use retrieved target
+  speech scored through ASR; KIT web-event TTS text rows are debug-only. Seed
+  rows are prefix proxies from the full 1072s run, not exact 60s Seed reruns.
+- `artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html`: the same
+  60s EN->ZH source content with source speech sped to 1.5x. This adds a KIT
+  `format=mixed`, `ttsQualityMode=high_quality`, 1.92s chunk target-speech-ASR
+  row next to existing GPT/Gemini/Seed speed=1.5 rows.
 - `artifacts/eval_runs/*`: per-backend/chunk `summary.json`, `metrics.jsonl`,
   `timeline.jsonl`, `sentence_coverage.jsonl`, and small HTML index files.
 - `artifacts/root_metadata/*`: selected sample metadata, run manifest, ASR
@@ -71,8 +75,11 @@ lightweight HTML/JSON metadata is tracked in Git, while the wavs remain local
 and are ignored by `.gitignore`. Use `LOCAL_LINKS.md` for the full local
 dashboard and audio paths.
 
-The KIT Lecture Translator smoke output is text-only in the tracked dashboard:
-the web-event TTS text was captured, but the target wav was not retrieved.
+KIT Lecture Translator target-speech retrieval is verified for smoke sessions:
+`tts:0` linked audio chunks are resolved into target wavs and scored through the
+same ASR path as GPT/Gemini/Seed. KIT web-event TTS text is still shown only as
+debug text, because it can reflect product-side rewrite behavior rather than the
+actual emitted target speech.
 The 2026-07-06 full-source KIT attempt used a default low-latency online
 configuration and was interrupted after 330 seconds of the 1072.63-second source
 because the configuration had not been optimized. Treat that capture as local
@@ -111,8 +118,14 @@ The KIT/GPT/Gemini/Seed 60s smoke dashboard is rebuilt with:
 python3 scripts/build_floras_kit_60s_compare.py \
   --source-root /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs \
   --project-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark \
+  --run-id en-zh_mono_asr_test__0__speed_1 \
+  --output-name compare_gpt_gemini_seed_kit_enzh_60s \
   --sacrebleu-path /path/to/sacrebleu/site-packages
 ```
+
+The speed=1.5 smoke dashboard is rebuilt by changing `--run-id` to
+`en-zh_mono_asr_test__0__speed_1.5` and `--output-name` to
+`compare_gpt_gemini_seed_kit_enzh_60s_speed15`.
 
 ## Current Takeaway
 
@@ -123,6 +136,8 @@ length is close to the source but the live system returned audio far too late.
 For the 60s KIT smoke comparison, the earlier BLEU 0.0 reading was an eval
 artifact: the same hypotheses score 0.00 with sacreBLEU's default tokenizer but
 20-26 BLEU with `tokenize=zh`, while preserving the original
-hypothesis/reference punctuation. Do not rank KIT from this 60s smoke result;
-the product configuration still needs a controlled sweep before a full FLORAS
-comparison.
+hypothesis/reference punctuation. Do not use KIT web-event TTS text as the main
+S2S hypothesis. `format=mixed` is acceptable when the hypothesis comes from the
+retrieved target speech and is scored through ASR. Do not rank KIT from this
+single 60s smoke result; the product configuration still needs broader clips
+before a full FLORAS comparison.

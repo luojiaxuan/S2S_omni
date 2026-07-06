@@ -30,6 +30,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--source-root", required=True, help="Local floras_live_pilot_refs output root.")
     parser.add_argument("--project-dir", required=True, help="projects/floras_live_s2s_benchmark directory.")
+    parser.add_argument("--run-id", default=RUN_ID, help="FLORAS run id to compare.")
+    parser.add_argument(
+        "--output-name",
+        default="compare_gpt_gemini_seed_kit_enzh_60s",
+        help="Artifact subdirectory name under projects/floras_live_s2s_benchmark/artifacts.",
+    )
     parser.add_argument("--sacrebleu-path", default="", help="Optional directory containing sacrebleu.")
     return parser.parse_args()
 
@@ -49,6 +55,13 @@ def reference_from_coverage(coverage_path: Path) -> str:
 
 def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def run_speed_factor() -> float:
+    marker = "__speed_"
+    if marker not in RUN_ID:
+        return 1.0
+    return float(RUN_ID.rsplit(marker, 1)[1])
 
 
 def cer(reference: str, candidate: str) -> float | None:
@@ -90,12 +103,16 @@ def assert_same_reference(run_dir: Path, expected: str) -> str:
 
 
 def assert_60s_window(row: dict[str, Any], eval_dir: Path) -> None:
-    for key in ["source_eval_duration_s", "source_stream_duration_s"]:
+    expected = {
+        "source_eval_duration_s": 60.0,
+        "source_stream_duration_s": 60.0 / run_speed_factor(),
+    }
+    for key, expected_value in expected.items():
         value = row.get(key)
         if value is None:
             raise ValueError(f"{eval_dir} missing {key}")
-        if abs(float(value) - 60.0) > 0.01:
-            raise ValueError(f"{eval_dir} {key} is {value}, expected 60.0")
+        if abs(float(value) - expected_value) > 0.05:
+            raise ValueError(f"{eval_dir} {key} is {value}, expected {expected_value}")
 
 
 def resolve_source_path(source_root: Path, value: Any) -> str:
@@ -177,7 +194,7 @@ def metric_row(
             "compare_chunk_ms": chunk_ms,
             "run_id": RUN_ID,
             "direction": "en-zh",
-            "speed_factor": 1.0,
+            "speed_factor": run_speed_factor(),
             "candidate_text_source": source,
             "comparison_scope": comparison_scope,
             "note": note,
@@ -254,9 +271,6 @@ def metrics_file_row(
 
 
 def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
-    diagnosis = read_json(source_root / "kit_upload_smoke" / "kit_extractor_diagnosis.json")
-    fast_run = read_json(source_root / "kit_upload_smoke" / "kit_live_enzh_run.json")
-    realtime_run = read_json(source_root / "kit_upload_smoke" / "kit_live_enzh_realtime_run.json")
     source_audio = first_existing(
         [
             source_root / "kit_upload_smoke" / "source_60s.wav",
@@ -271,32 +285,36 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
         "source_stream_audio_path": source_audio,
     }
     rows = []
-    for mode, run in [("fast", fast_run), ("realtime", realtime_run)]:
-        tts_text = str(diagnosis["runs"][mode]["tts_text"])
-        session_url = str(run.get("sessionUrl") or "")
-        base = dict(common)
-        base["valid_for_main_s2s_target_audio"] = False
-        base["run_page_path"] = session_url
-        base["kit_session_url"] = session_url
-        if mode == "fast":
-            base["kit_feed_mode"] = "accelerated_1s_audio_every_120ms"
-            note = "Debug only: KIT web-event TTS text from accelerated upload, not target-speech ASR."
-        else:
-            base["kit_feed_mode"] = "realtime_1s_audio_every_1s"
-            note = "Debug only: KIT web-event TTS text from realtime-paced upload, not target-speech ASR."
-        rows.append(
-            metric_row(
-                label=f"kit_{mode}_60s_tts_text",
-                backend="kit_lecture_translator",
-                chunk_ms=None,
-                source="kit_websocket_tts_text",
-                candidate=tts_text,
-                reference=reference,
-                comparison_scope="debug_text_only_exact_60s_source_clip",
-                note=note,
-                base=base,
+    if RUN_ID.endswith("__speed_1"):
+        diagnosis = read_json(source_root / "kit_upload_smoke" / "kit_extractor_diagnosis.json")
+        fast_run = read_json(source_root / "kit_upload_smoke" / "kit_live_enzh_run.json")
+        realtime_run = read_json(source_root / "kit_upload_smoke" / "kit_live_enzh_realtime_run.json")
+        for mode, run in [("fast", fast_run), ("realtime", realtime_run)]:
+            tts_text = str(diagnosis["runs"][mode]["tts_text"])
+            session_url = str(run.get("sessionUrl") or "")
+            base = dict(common)
+            base["valid_for_main_s2s_target_audio"] = False
+            base["run_page_path"] = session_url
+            base["kit_session_url"] = session_url
+            if mode == "fast":
+                base["kit_feed_mode"] = "accelerated_1s_audio_every_120ms"
+                note = "Debug only: KIT web-event TTS text from accelerated upload, not target-speech ASR."
+            else:
+                base["kit_feed_mode"] = "realtime_1s_audio_every_1s"
+                note = "Debug only: KIT web-event TTS text from realtime-paced upload, not target-speech ASR."
+            rows.append(
+                metric_row(
+                    label=f"kit_{mode}_60s_tts_text",
+                    backend="kit_lecture_translator",
+                    chunk_ms=None,
+                    source="kit_websocket_tts_text",
+                    candidate=tts_text,
+                    reference=reference,
+                    comparison_scope="debug_text_only_exact_60s_source_clip",
+                    note=note,
+                    base=base,
+                )
             )
-        )
 
     target_asr_metrics = source_root / "kit_config_smoke_60s_chunk1920" / "target_tts_asr_metrics.jsonl"
     if target_asr_metrics.exists():
@@ -309,6 +327,8 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
             config = str(row.get("config") or "")
             if config not in label_map:
                 continue
+            if str(row.get("run_id") or "en-zh_mono_asr_test__0__speed_1") != RUN_ID:
+                continue
             audio_path = str(row.get("target_audio_path") or "")
             duration = wav_duration_s(audio_path)
             base = dict(common)
@@ -317,17 +337,17 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
                     "generated_audio_path": audio_path,
                     "reference_validation": "matched_60s_reference_text",
                     "kit_config": config,
-                    "valid_for_main_s2s_target_audio": not config.startswith("mixed_"),
+                    "valid_for_main_s2s_target_audio": True,
                 }
             )
             if duration is not None:
                 base["generated_duration_s"] = round(duration, 6)
                 base["end_lag_s"] = round(duration - 60.0, 6)
             if config.startswith("mixed_"):
-                scope = "debug_revision_mode_exact_60s_source_clip"
+                scope = "exact_60s_source_clip"
                 note = (
-                    "Debug only: KIT format=mixed may revise already emitted sentences; "
-                    "do not use as the main S2S target-audio metric."
+                    "KIT format=mixed target-speech row; score uses emitted target audio ASR, "
+                    "not KIT's rewritten text."
                 )
             else:
                 scope = "exact_60s_source_clip"
@@ -352,7 +372,7 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
         / "online_high_quality_en_only_no_summarization"
         / "compare_online_en_only_vs_prior_metrics.json"
     )
-    if en_only_metrics.exists():
+    if en_only_metrics.exists() and RUN_ID.endswith("__speed_1"):
         row = read_json(en_only_metrics)["new_row"]
         audio_path = str(row.get("target_audio_path") or "")
         base = dict(common)
@@ -387,6 +407,52 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
                 base=base,
             )
         )
+    speed15_metrics = (
+        source_root
+        / "kit_speed15_60s_chunk1920"
+        / "mixed_high_quality_no_post"
+        / "metrics.json"
+    )
+    if speed15_metrics.exists():
+        row = read_json(speed15_metrics)
+        if str(row.get("run_id") or "") == RUN_ID:
+            audio_path = str(row.get("target_audio_path") or row.get("generated_audio_path") or "")
+            source_path = str(row.get("source_stream_audio_path") or "")
+            base = dict(common)
+            base.update(
+                {
+                    "source_stream_audio_path": source_path or common["source_stream_audio_path"],
+                    "source_stream_duration_s": row.get("source_stream_duration_s"),
+                    "generated_audio_path": audio_path,
+                    "generated_duration_s": row.get("generated_duration_s"),
+                    "end_lag_s": row.get("duration_end_lag_s"),
+                    "duration_end_lag_s": row.get("duration_end_lag_s"),
+                    "full_s2s_rtf": row.get("full_s2s_rtf"),
+                    "reference_validation": "matched_60s_reference_text",
+                    "kit_config": row.get("config"),
+                    "kit_tts_quality_mode": row.get("ttsQualityMode"),
+                    "kit_format": row.get("format"),
+                    "kit_tts_audio_chunks": row.get("tts_audio_chunks"),
+                    "kit_session_url": row.get("kit_session_url"),
+                    "valid_for_main_s2s_target_audio": True,
+                }
+            )
+            rows.append(
+                metric_row(
+                    label="kit_mixed_high_quality_speed1p5_target_asr",
+                    backend="kit_lecture_translator",
+                    chunk_ms=1920,
+                    source="target_speech_asr_gpt4o_mini_transcribe",
+                    candidate=str(row.get("hypothesis_text") or ""),
+                    reference=reference,
+                    comparison_scope="exact_60s_source_clip",
+                    note=(
+                        "KIT format=mixed, ttsQualityMode=high_quality, source speech sped "
+                        "to 1.5x; score uses target speech ASR."
+                    ),
+                    base=base,
+                )
+            )
     return rows
 
 
@@ -576,8 +642,7 @@ def render_html(rows: list[dict[str, Any]], out_dir: Path) -> str:
         debug_section = f"""
 <h2>Debug / Non-Main Rows</h2>
 <p class="meta">
-Rows here are not main emitted target-speech metrics. KIT `format=mixed` may revise already emitted sentences;
-KIT web-event TTS text is not target-speech ASR.
+Rows here are not main emitted target-speech metrics. KIT web-event TTS text is not target-speech ASR.
 </p>
 <table>
 <thead><tr>
@@ -605,7 +670,8 @@ h3{{font-size:13px;margin:0 0 6px}}@media(max-width:900px){{.textgrid{{grid-temp
 <p class="meta">
 {len(rows)} rows over the same first 60s FLORAS EN-&gt;ZH source clip. BLEU uses sacreBLEU tokenize=zh.
 Hypothesis/reference strings are stored and displayed with punctuation preserved. CER ignores whitespace only and keeps punctuation.
-Main KIT rows use retrieved target speech scored through gpt-4o-mini-transcribe. KIT mixed-mode/text-only rows are separated as debug rows.
+Main KIT rows use retrieved target speech scored through gpt-4o-mini-transcribe, including `format=mixed` rows when the hypothesis comes from emitted audio.
+KIT text-only rows are separated as debug rows.
 Seed rows are marked as proxy prefixes from full 1072s runs.
 </p>
 <h2>Main Exact 60s Measurements</h2>
@@ -638,12 +704,14 @@ Seed rows are marked as proxy prefixes from full 1072s runs.
 
 
 def main() -> None:
+    global RUN_ID
     args = parse_args()
+    RUN_ID = args.run_id
     if args.sacrebleu_path:
         sys.path.insert(0, str(Path(args.sacrebleu_path).expanduser()))
     source_root = Path(args.source_root).expanduser().resolve()
     project_dir = Path(args.project_dir).expanduser().resolve()
-    out_dir = project_dir / "artifacts" / "compare_gpt_gemini_seed_kit_enzh_60s"
+    out_dir = project_dir / "artifacts" / args.output_name
     out_dir.mkdir(parents=True, exist_ok=True)
     reference = load_reference(source_root)
     rows = [

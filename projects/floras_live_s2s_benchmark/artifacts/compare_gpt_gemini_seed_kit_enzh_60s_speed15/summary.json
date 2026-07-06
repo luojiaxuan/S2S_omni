@@ -1,0 +1,87 @@
+{
+  "run_id": "en-zh_mono_asr_test__0__speed_1.5",
+  "reference_units": 204,
+  "reference_chars": 243,
+  "reference_sha256": "21d1fe834d147a9efd9b82b20e1c3da979f44ff89785b1dcc6a4924fcdffae1c",
+  "bleu_tokenizer": "zh",
+  "metric_inputs": "punctuation preserved in hypothesis/reference",
+  "rows": [
+    {
+      "label": "chatgpt_default_60s_asr",
+      "backend": "chatgpt",
+      "chunk_ms": 960,
+      "scope": "exact_60s_source_clip",
+      "bleu_default_tokenizer": 0.0,
+      "bleu": 28.543897,
+      "chrf": 26.465615,
+      "cer": 0.6708333333333333,
+      "valid_for_main_s2s_target_audio": true
+    },
+    {
+      "label": "gemini_default_60s_asr",
+      "backend": "gemini",
+      "chunk_ms": 960,
+      "scope": "exact_60s_source_clip",
+      "bleu_default_tokenizer": 0.0,
+      "bleu": 24.088755,
+      "chrf": 23.924228,
+      "cer": 0.6541666666666667,
+      "valid_for_main_s2s_target_audio": true
+    },
+    {
+      "label": "seed_ast_chunk960_prefix_proxy",
+      "backend": "seed_ast",
+      "chunk_ms": 960,
+      "scope": "proxy_prefix_from_full_1072s_seed_run",
+      "bleu_default_tokenizer": 0.0,
+      "bleu": 32.299113,
+      "chrf": 26.94984,
+      "cer": 0.6291666666666667,
+      "valid_for_main_s2s_target_audio": true
+    },
+    {
+      "label": "chatgpt_chunk1920_60s_asr",
+      "backend": "chatgpt",
+      "chunk_ms": 1920,
+      "scope": "exact_60s_source_clip",
+      "bleu_default_tokenizer": 0.0,
+      "bleu": 24.895263,
+      "chrf": 24.090896,
+      "cer": 0.675,
+      "valid_for_main_s2s_target_audio": true
+    },
+    {
+      "label": "gemini_chunk1920_60s_asr",
+      "backend": "gemini",
+      "chunk_ms": 1920,
+      "scope": "exact_60s_source_clip",
+      "bleu_default_tokenizer": 0.0,
+      "bleu": 27.712173,
+      "chrf": 28.12791,
+      "cer": 0.6541666666666667,
+      "valid_for_main_s2s_target_audio": true
+    },
+    {
+      "label": "kit_mixed_high_quality_speed1p5_target_asr",
+      "backend": "kit_lecture_translator",
+      "chunk_ms": 1920,
+      "scope": "exact_60s_source_clip",
+      "bleu_default_tokenizer": 0.0,
+      "bleu": 23.257484,
+      "chrf": 21.489615,
+      "cer": 0.7166666666666667,
+      "valid_for_main_s2s_target_audio": true
+    },
+    {
+      "label": "seed_ast_chunk1920_prefix_proxy",
+      "backend": "seed_ast",
+      "chunk_ms": 1920,
+      "scope": "proxy_prefix_from_full_1072s_seed_run",
+      "bleu_default_tokenizer": 0.0,
+      "bleu": 29.619815,
+      "chrf": 25.704556,
+      "cer": 0.6041666666666666,
+      "valid_for_main_s2s_target_audio": true
+    }
+  ]
+}
