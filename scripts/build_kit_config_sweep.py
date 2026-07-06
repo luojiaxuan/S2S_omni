@@ -36,7 +36,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reference-file", required=True, help="UTF-8 reference target text.")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--sacrebleu-path", default="", help="Directory containing sacrebleu.")
+    parser.add_argument(
+        "--api-key-file",
+        default="",
+        help="OpenAI API key file. If set, the target wav is transcribed and BLEU "
+        "is scored on that ASR transcript (the proper S2S metric) instead of the "
+        "KIT tts subtitle text.",
+    )
+    parser.add_argument("--asr-model", default="gpt-4o-mini-transcribe")
+    parser.add_argument("--asr-base-url", default="https://api.openai.com/v1")
     return parser.parse_args()
+
+
+def asr_transcribe(wav_path: "Path", api_key: str, base_url: str, model: str) -> str:
+    import tempfile
+
+    from s2s_omni.openai_asr import transcode_for_upload, transcribe_openai
+
+    with tempfile.TemporaryDirectory() as tmp:
+        upload = transcode_for_upload(wav_path, Path(tmp), 25 * 1024 * 1024)
+        return transcribe_openai(api_key, base_url, model, upload)
 
 
 def stable_text(messages: list[dict[str, Any]], key: str = "text") -> str:
@@ -126,21 +145,29 @@ def main() -> None:
     out_dir = Path(args.out_dir).expanduser()
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    api_key = ""
+    if args.api_key_file:
+        api_key = Path(args.api_key_file).expanduser().read_text(encoding="utf-8").strip()
+
     rows: list[dict[str, Any]] = []
     for spec in args.run:
         label, run_json, target_wav = parse_run_spec(spec)
         run = json.loads(run_json.read_text(encoding="utf-8"))
         components = run.get("collection", {}).get("messagesByComponent", {})
         tts_messages = components.get("tts:0", [])
-        candidate = stable_text(tts_messages, "text")
+        tts_text = stable_text(tts_messages, "text")
         row: dict[str, Any] = {
             "label": label,
             "run_json": str(run_json),
             "session_url": run.get("sessionUrl"),
             "source_duration_s": run.get("sourceDurationS"),
-            "hypothesis_text": candidate,
+            "tts_text": tts_text,
         }
-        row.update(compute_metrics(candidate, reference))
+        # KIT subtitle text metrics (a proxy), always computed for transparency.
+        tts_metrics = compute_metrics(tts_text, reference)
+        row["tts_text_bleu_zh"] = tts_metrics["bleu_zh"]
+        row["tts_text_chrf"] = tts_metrics["chrf"]
+        row["tts_text_cer"] = tts_metrics["cer"]
         row.update(tts_timing(run, tts_messages))
         if target_wav is not None:
             dur = wav_duration_s(target_wav)
@@ -149,12 +176,27 @@ def main() -> None:
             src = run.get("sourceDurationS")
             if dur is not None and src:
                 row["duration_lag_s"] = round(dur - float(src), 2)
+        # Primary metric: ASR of the retrieved target audio when a key is given.
+        if target_wav is not None and api_key:
+            asr_text = asr_transcribe(target_wav, api_key, args.asr_base_url, args.asr_model)
+            row["metric_source"] = "asr_of_target_audio"
+            row["asr_model"] = args.asr_model
+            row["asr_text"] = asr_text
+            row["hypothesis_text"] = asr_text
+            row.update(compute_metrics(asr_text, reference))
+        else:
+            row["metric_source"] = "kit_tts_subtitle_text"
+            row["hypothesis_text"] = tts_text
+            row.update(tts_metrics)
         rows.append(row)
 
     summary = {
         "reference_file": str(Path(args.reference_file).expanduser()),
         "reference_chars": len(reference),
-        "rows": [{k: v for k, v in r.items() if k != "hypothesis_text"} for r in rows],
+        "rows": [
+            {k: v for k, v in r.items() if k not in ("hypothesis_text", "tts_text", "asr_text")}
+            for r in rows
+        ],
     }
     (out_dir / "sweep_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -162,12 +204,12 @@ def main() -> None:
 
     cols = [
         ("label", "config"),
+        ("metric_source", "metric src"),
         ("bleu_zh", "BLEU(zh)"),
         ("chrf", "chrF"),
         ("cer", "CER"),
-        ("candidate_chars", "hyp chars"),
+        ("tts_text_bleu_zh", "BLEU tts-text"),
         ("tts_first_content_rel_s", "1st tts s"),
-        ("tts_last_content_rel_s", "last tts s"),
         ("target_duration_s", "target s"),
         ("duration_lag_s", "dur lag s"),
     ]
