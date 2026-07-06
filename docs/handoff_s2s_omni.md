@@ -367,6 +367,16 @@ deltas with 0 API errors, so the key files and live API paths are valid. Gemini
 full runs should use `--max-session-input-s 480`, matching the FLORAS live
 runner's service-sized session split.
 
+Local API key files used for the ACL6060 live sweep on this machine:
+
+```text
+/tmp/acl6060_keys/openai.key
+/tmp/acl6060_keys/gemini.key
+```
+
+The scripts read these paths with `--api-key-file`,
+`--openai-key-file`, or `--gemini-key-file`. Keep the key contents out of Git.
+
 For the FLORAS-dashboard-style ACL6060 sweep over provider, chunk size, and
 input speed, use:
 
