@@ -6,6 +6,7 @@ import hashlib
 import html
 import json
 import sys
+import wave
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +14,6 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s2s_omni.floras_live import cer
 from s2s_omni.metrics import optional_sacrebleu, unit_count
 
 
@@ -49,6 +49,24 @@ def reference_from_coverage(coverage_path: Path) -> str:
 
 def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def cer(reference: str, candidate: str) -> float | None:
+    ref = list("".join((reference or "").split()))
+    hyp = list("".join((candidate or "").split()))
+    if not ref:
+        return None if not hyp else 1.0
+    return edit_distance(ref, hyp) / len(ref)
+
+
+def edit_distance(ref: list[str], hyp: list[str]) -> int:
+    prev = list(range(len(hyp) + 1))
+    for i, item in enumerate(ref, start=1):
+        cur = [i]
+        for j, cand in enumerate(hyp, start=1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (item != cand)))
+        prev = cur
+    return int(prev[-1])
 
 
 def load_reference(source_root: Path) -> str:
@@ -102,6 +120,16 @@ def first_existing(paths: list[Path]) -> str:
         if path.exists():
             return str(path)
     return ""
+
+
+def wav_duration_s(path: str) -> float | None:
+    if not path:
+        return None
+    wav_path = Path(path)
+    if not wav_path.exists():
+        return None
+    with wave.open(str(wav_path), "rb") as handle:
+        return handle.getnframes() / handle.getframerate()
 
 
 def compute_text_metrics(candidate: str, reference: str) -> dict[str, Any]:
@@ -247,14 +275,15 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
         tts_text = str(diagnosis["runs"][mode]["tts_text"])
         session_url = str(run.get("sessionUrl") or "")
         base = dict(common)
+        base["valid_for_main_s2s_target_audio"] = False
         base["run_page_path"] = session_url
         base["kit_session_url"] = session_url
         if mode == "fast":
             base["kit_feed_mode"] = "accelerated_1s_audio_every_120ms"
-            note = "KIT web-event tts_text from accelerated upload; target wav was not retrieved."
+            note = "Debug only: KIT web-event TTS text from accelerated upload, not target-speech ASR."
         else:
             base["kit_feed_mode"] = "realtime_1s_audio_every_1s"
-            note = "KIT web-event tts_text from realtime-paced upload; target wav was not retrieved."
+            note = "Debug only: KIT web-event TTS text from realtime-paced upload, not target-speech ASR."
         rows.append(
             metric_row(
                 label=f"kit_{mode}_60s_tts_text",
@@ -263,8 +292,98 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
                 source="kit_websocket_tts_text",
                 candidate=tts_text,
                 reference=reference,
-                comparison_scope="exact_60s_source_clip_text_only",
+                comparison_scope="debug_text_only_exact_60s_source_clip",
                 note=note,
+                base=base,
+            )
+        )
+
+    target_asr_metrics = source_root / "kit_config_smoke_60s_chunk1920" / "target_tts_asr_metrics.jsonl"
+    if target_asr_metrics.exists():
+        label_map = {
+            "online_low_latency_no_post": "kit_online_low_latency_target_asr",
+            "online_high_quality_no_post": "kit_online_high_quality_target_asr",
+            "mixed_high_quality_no_post": "kit_mixed_high_quality_target_asr",
+        }
+        for row in read_jsonl(target_asr_metrics):
+            config = str(row.get("config") or "")
+            if config not in label_map:
+                continue
+            audio_path = str(row.get("target_audio_path") or "")
+            duration = wav_duration_s(audio_path)
+            base = dict(common)
+            base.update(
+                {
+                    "generated_audio_path": audio_path,
+                    "reference_validation": "matched_60s_reference_text",
+                    "kit_config": config,
+                    "valid_for_main_s2s_target_audio": not config.startswith("mixed_"),
+                }
+            )
+            if duration is not None:
+                base["generated_duration_s"] = round(duration, 6)
+                base["end_lag_s"] = round(duration - 60.0, 6)
+            if config.startswith("mixed_"):
+                scope = "debug_revision_mode_exact_60s_source_clip"
+                note = (
+                    "Debug only: KIT format=mixed may revise already emitted sentences; "
+                    "do not use as the main S2S target-audio metric."
+                )
+            else:
+                scope = "exact_60s_source_clip"
+                note = "KIT target speech retrieved from linked tts:0 data and scored through gpt-4o-mini-transcribe."
+            rows.append(
+                metric_row(
+                    label=label_map[config],
+                    backend="kit_lecture_translator",
+                    chunk_ms=1920,
+                    source="target_speech_asr_gpt4o_mini_transcribe",
+                    candidate=str(row.get("hypothesis_text") or row.get("asr_text") or ""),
+                    reference=reference,
+                    comparison_scope=scope,
+                    note=note,
+                    base=base,
+                )
+            )
+
+    en_only_metrics = (
+        source_root
+        / "kit_profile_minimal_60s_chunk1920"
+        / "online_high_quality_en_only_no_summarization"
+        / "compare_online_en_only_vs_prior_metrics.json"
+    )
+    if en_only_metrics.exists():
+        row = read_json(en_only_metrics)["new_row"]
+        audio_path = str(row.get("target_audio_path") or "")
+        base = dict(common)
+        base.update(
+            {
+                "generated_audio_path": audio_path,
+                "generated_duration_s": row.get("target_duration_s"),
+                "end_lag_s": round(float(row.get("target_duration_s") or 60.0) - 60.0, 6),
+                "reference_validation": "matched_60s_reference_text",
+                "kit_config": row.get("config"),
+                "kit_language": "en",
+                "kit_mt_language": "zh",
+                "kit_audio_language": "zh",
+                "kit_tts_quality_mode": "high_quality",
+                "valid_for_main_s2s_target_audio": True,
+                "kit_tts_audio_chunks": row.get("tts_audio_chunks"),
+            }
+        )
+        rows.append(
+            metric_row(
+                label="kit_online_high_quality_enonly_target_asr",
+                backend="kit_lecture_translator",
+                chunk_ms=1920,
+                source="target_speech_asr_gpt4o_mini_transcribe",
+                candidate=str(row.get("hypothesis_text") or row.get("asr_text") or ""),
+                reference=reference,
+                comparison_scope="exact_60s_source_clip",
+                note=(
+                    "KIT explicit minimal online run: language=en, mtLanguage=zh, "
+                    "audioLanguage=zh, ttsQualityMode=high_quality."
+                ),
                 base=base,
             )
         )
@@ -439,8 +558,38 @@ def render_details(rows: list[dict[str, Any]]) -> str:
 
 
 def render_html(rows: list[dict[str, Any]], out_dir: Path) -> str:
-    measured_rows = [row for row in rows if not str(row.get("comparison_scope") or "").startswith("proxy_")]
+    measured_rows = [
+        row
+        for row in rows
+        if not str(row.get("comparison_scope") or "").startswith(("proxy_", "debug_"))
+        and row.get("valid_for_main_s2s_target_audio") is not False
+    ]
+    debug_rows = [
+        row
+        for row in rows
+        if str(row.get("comparison_scope") or "").startswith("debug_")
+        or row.get("valid_for_main_s2s_target_audio") is False
+    ]
     proxy_rows = [row for row in rows if str(row.get("comparison_scope") or "").startswith("proxy_")]
+    debug_section = ""
+    if debug_rows:
+        debug_section = f"""
+<h2>Debug / Non-Main Rows</h2>
+<p class="meta">
+Rows here are not main emitted target-speech metrics. KIT `format=mixed` may revise already emitted sentences;
+KIT web-event TTS text is not target-speech ASR.
+</p>
+<table>
+<thead><tr>
+<th>label</th><th>backend</th><th>chunk</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>source s</th><th>target s</th><th>duration lag</th><th>wall delay</th><th>max backlog</th>
+<th>text source</th><th>detail</th><th>source audio</th><th>target audio</th><th>note</th>
+</tr></thead>
+<tbody>
+{render_table(debug_rows, out_dir)}
+</tbody>
+</table>
+"""
     return f"""<!doctype html>
 <meta charset="utf-8">
 <title>FLORAS EN-ZH 60s Live S2S Compare</title>
@@ -456,9 +605,10 @@ h3{{font-size:13px;margin:0 0 6px}}@media(max-width:900px){{.textgrid{{grid-temp
 <p class="meta">
 {len(rows)} rows over the same first 60s FLORAS EN-&gt;ZH source clip. BLEU uses sacreBLEU tokenize=zh.
 Hypothesis/reference strings are stored and displayed with punctuation preserved. CER ignores whitespace only and keeps punctuation.
-KIT rows use captured web-event TTS text because target wav retrieval is not available yet. Seed rows are marked as proxy prefixes from full 1072s runs.
+Main KIT rows use retrieved target speech scored through gpt-4o-mini-transcribe. KIT mixed-mode/text-only rows are separated as debug rows.
+Seed rows are marked as proxy prefixes from full 1072s runs.
 </p>
-<h2>Exact 60s Measurements</h2>
+<h2>Main Exact 60s Measurements</h2>
 <table>
 <thead><tr>
 <th>label</th><th>backend</th><th>chunk</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
@@ -469,6 +619,7 @@ KIT rows use captured web-event TTS text because target wav retrieval is not ava
 {render_table(measured_rows, out_dir)}
 </tbody>
 </table>
+{debug_section}
 <h2>Seed Proxy Rows</h2>
 <p class="meta">These rows are not exact 60s reruns; they are full-run target-speech ASR prefixes cut by the 60s reference CJK unit count.</p>
 <table>
@@ -574,6 +725,7 @@ def main() -> None:
                 "bleu": row["bleu"],
                 "chrf": row["chrf"],
                 "cer": row["cer"],
+                "valid_for_main_s2s_target_audio": row.get("valid_for_main_s2s_target_audio", True),
             }
             for row in sorted_rows
         ],

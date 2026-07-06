@@ -259,12 +259,13 @@ chunk=1920, speed=1.5: BLEU 21.30, chrF 21.46, CER 0.818, wall delay 2.13s, max 
 ```
 
 KIT Lecture Translator has exploratory 60s coverage so far. The tracked 60s
-dashboard compares GPT/Gemini target-speech ASR, earlier KIT captured
-web-event TTS text, and Seed full-run prefix proxies. BLEU is recomputed with
-sacreBLEU `tokenize=zh`; the stored hypothesis/reference strings preserve
-punctuation. The dashboard includes a `BLEU default` column showing the old
-default-tokenizer BLEU 0.0 result next to the corrected Chinese-tokenized BLEU.
-Treat this as a smoke/debug artifact, not a formal KIT product comparison.
+dashboard compares GPT/Gemini target-speech ASR, KIT target-speech ASR for
+retrieved `format=online` rows, KIT debug-only text/revision rows, and Seed
+full-run prefix proxies. BLEU is recomputed with sacreBLEU `tokenize=zh`; the
+stored hypothesis/reference strings preserve punctuation. The dashboard
+includes a `BLEU default` column showing the old default-tokenizer BLEU 0.0
+result next to the corrected Chinese-tokenized BLEU. Treat this as a
+smoke/debug artifact, not a formal KIT product comparison.
 
 ```text
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
