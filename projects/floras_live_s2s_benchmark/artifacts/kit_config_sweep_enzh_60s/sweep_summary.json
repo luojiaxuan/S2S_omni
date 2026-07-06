@@ -1,0 +1,42 @@
+{
+  "reference_file": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/ref_60s.txt",
+  "reference_chars": 243,
+  "rows": [
+    {
+      "label": "high_quality",
+      "run_json": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_hq_run.json",
+      "session_url": "https://lecture-translator.kit.edu/present/20270111686176561374963236932599176328",
+      "source_duration_s": 60.0,
+      "bleu_zh": 22.83,
+      "chrf": 21.28,
+      "cer": 0.7042,
+      "candidate_units": 226,
+      "reference_units": 204,
+      "candidate_chars": 295,
+      "tts_first_content_rel_s": 25.66,
+      "tts_last_content_rel_s": 86.23,
+      "tts_content_msgs": 9,
+      "target_wav": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_hq_target.wav",
+      "target_duration_s": 63.3,
+      "duration_lag_s": 3.3
+    },
+    {
+      "label": "low_latency",
+      "run_json": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_ll_run.json",
+      "session_url": "https://lecture-translator.kit.edu/present/224437060847455244713309833435414875517",
+      "source_duration_s": 60.0,
+      "bleu_zh": 20.75,
+      "chrf": 19.65,
+      "cer": 0.7333,
+      "candidate_units": 227,
+      "reference_units": 204,
+      "candidate_chars": 283,
+      "tts_first_content_rel_s": 18.51,
+      "tts_last_content_rel_s": 86.92,
+      "tts_content_msgs": 13,
+      "target_wav": "/private/tmp/claude-501/-Users-luojiaxuan-Downloads-S2S-omni/d713c197-6a6f-4490-a894-b1d286d55df4/scratchpad/kit_ll_target.wav",
+      "target_duration_s": 69.45,
+      "duration_lag_s": 9.45
+    }
+  ]
+}

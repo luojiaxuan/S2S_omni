@@ -57,51 +57,44 @@ def http_get(url: str, cookie_header: str, timeout_s: float) -> tuple[int, str, 
         return int(exc.code), "error", exc.read()
 
 
-def candidate_urls(base_url: str, session_id: str, link: str) -> list[str]:
-    """Return candidate absolute URLs for a stored audio link.
+def resolve_url(base_url: str, link: str) -> str:
+    """Turn a tts:0 audio reference into the download URL.
 
-    Observed stored form is ``Data/{session}/{N}``; the live form embeds
-    ``/ltapi/...`` which the client rewrites to ``/webapi/...``.
+    The live SSE payload is ``/ltapi/stream/data?name=Data/{session}/{N}`` and
+    the client rewrites ``/ltapi`` -> ``/webapi``. ``get_previous_messages``
+    stores only the short ``Data/{session}/{N}`` key, which we wrap ourselves.
     """
     link = link.strip().strip('"')
-    tail = link
     if "/ltapi" in link:
-        tail = link[link.index("/ltapi") + len("/ltapi"):].lstrip("/")
-    elif link.startswith("/webapi/"):
-        tail = link[len("/webapi/"):]
-    tail = tail.lstrip("/")
-    # ``tail`` is expected to look like ``Data/{session}/{N}`` or ``{session}/{N}``.
-    suffix = tail[len("Data/"):] if tail.startswith("Data/") else tail
-    return [
-        f"{base_url}/webapi/{tail}",
-        f"{base_url}/webapi/Data/{suffix}",
-        f"{base_url}/webapi/{session_id}/getData/{suffix.split('/')[-1]}",
-        f"{base_url}/webapi/getData/{tail}",
-        f"{base_url}/ltapi/{tail}",
-        f"{base_url}/{tail}",
-    ]
+        return base_url + link[link.index("/ltapi"):].replace("/ltapi", "/webapi", 1)
+    if link.startswith("/webapi/"):
+        return base_url + link
+    return f"{base_url}/webapi/stream/data?name={link}"
 
 
 def decode_pcm(body: bytes) -> bytes | None:
     """Interpret a fetched chunk body as PCM s16le bytes.
 
-    The client fetches text and ``atob``s it, so the body is normally base64
-    text. Fall back to treating the body as raw PCM if it is not base64.
+    KIT returns the audio as a JSON string of base64 (``"AAAA...=="``). Unwrap
+    the JSON string, then base64-decode. Fall back to raw bytes if needed.
     """
     text = body.strip()
-    if not text:
-        return None
-    if text[:1] in (b"<", b"{"):
-        return None  # HTML/JSON error, not audio
+    if not text or text[:1] == b"<":
+        return None  # empty or HTML error page
     try:
-        decoded = base64.b64decode(text, validate=True)
+        parsed = json.loads(text.decode("utf-8", "ignore"))
+        if isinstance(parsed, str):
+            decoded = base64.b64decode(parsed)
+            return decoded if decoded and len(decoded) % 2 == 0 else None
+    except (ValueError, binascii.Error):
+        pass
+    try:
+        decoded = base64.b64decode(text)
         if decoded and len(decoded) % 2 == 0:
             return decoded
     except (binascii.Error, ValueError):
         pass
-    if len(body) % 2 == 0 and len(body) > 0:
-        return body
-    return None
+    return body if body and len(body) % 2 == 0 else None
 
 
 def load_tts_messages(run: dict[str, Any], component: str) -> list[dict[str, Any]]:
@@ -126,36 +119,17 @@ def main() -> None:
     if any(m.get("b64_enc_opus") for m in messages):
         print("WARNING: b64_enc_opus chunks present; this resolver handles PCM only.")
 
-    working_template: str | None = None
     pcm_parts: list[bytes] = []
     resolved = 0
     for index, msg in enumerate(messages):
         link = str(msg.get("b64_enc_pcm_s16le") or "")
         if not link:
             continue
-        # Inline base64 (no path separators) is used directly.
-        inline = decode_pcm(link.encode("ascii", "ignore")) if "/" not in link else None
-        if inline is not None:
-            pcm_parts.append(inline)
-            resolved += 1
-            continue
-        urls = (
-            [working_template.format(link=link, session=session_id)]
-            if working_template
-            else candidate_urls(args.base_url, session_id, link)
-        )
-        chunk_pcm: bytes | None = None
-        for url in urls:
-            status, ctype, body = http_get(url, cookie_header, args.timeout_s)
-            if status == 200:
-                chunk_pcm = decode_pcm(body)
-                if chunk_pcm is not None:
-                    if working_template is None:
-                        print(f"Locked audio URL shape via: {url}")
-                    chunk_pcm = chunk_pcm
-                    break
+        url = resolve_url(args.base_url, link)
+        status, _ctype, body = http_get(url, cookie_header, args.timeout_s)
+        chunk_pcm = decode_pcm(body) if status == 200 else None
         if chunk_pcm is None:
-            print(f"  chunk {index} ({link}) unresolved")
+            print(f"  chunk {index} ({link}) unresolved [HTTP {status}]")
             continue
         pcm_parts.append(chunk_pcm)
         resolved += 1

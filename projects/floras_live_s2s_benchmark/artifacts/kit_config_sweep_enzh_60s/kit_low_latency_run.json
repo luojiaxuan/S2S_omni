@@ -1,0 +1,3332 @@
+{
+  "sessionId": "224437060847455244713309833435414875517",
+  "sessionUrl": "https://lecture-translator.kit.edu/present/224437060847455244713309833435414875517",
+  "sessionName": "codex_kit_sweep_ll",
+  "wavPath": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/eval_real_60s/en-zh_mono_asr_test__0__speed_1/source_eval.wav",
+  "pacing": "realtime",
+  "chunkS": 1.0,
+  "sourceDurationS": 60.0,
+  "startedAt": "2026-07-06T05:54:32.101102Z",
+  "postStats": [
+    {
+      "offset": 0,
+      "bytes": 32000,
+      "audio_end_s": 1.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1034,
+      "text_start": "OK"
+    },
+    {
+      "offset": 32000,
+      "bytes": 32000,
+      "audio_end_s": 2.0,
+      "status": 200,
+      "ok": true,
+      "ms": 928,
+      "text_start": "OK"
+    },
+    {
+      "offset": 64000,
+      "bytes": 32000,
+      "audio_end_s": 3.0,
+      "status": 200,
+      "ok": true,
+      "ms": 937,
+      "text_start": "OK"
+    },
+    {
+      "offset": 96000,
+      "bytes": 32000,
+      "audio_end_s": 4.0,
+      "status": 200,
+      "ok": true,
+      "ms": 907,
+      "text_start": "OK"
+    },
+    {
+      "offset": 128000,
+      "bytes": 32000,
+      "audio_end_s": 5.0,
+      "status": 200,
+      "ok": true,
+      "ms": 915,
+      "text_start": "OK"
+    },
+    {
+      "offset": 160000,
+      "bytes": 32000,
+      "audio_end_s": 6.0,
+      "status": 200,
+      "ok": true,
+      "ms": 940,
+      "text_start": "OK"
+    },
+    {
+      "offset": 192000,
+      "bytes": 32000,
+      "audio_end_s": 7.0,
+      "status": 200,
+      "ok": true,
+      "ms": 927,
+      "text_start": "OK"
+    },
+    {
+      "offset": 224000,
+      "bytes": 32000,
+      "audio_end_s": 8.0,
+      "status": 200,
+      "ok": true,
+      "ms": 945,
+      "text_start": "OK"
+    },
+    {
+      "offset": 256000,
+      "bytes": 32000,
+      "audio_end_s": 9.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1007,
+      "text_start": "OK"
+    },
+    {
+      "offset": 288000,
+      "bytes": 32000,
+      "audio_end_s": 10.0,
+      "status": 200,
+      "ok": true,
+      "ms": 917,
+      "text_start": "OK"
+    },
+    {
+      "offset": 320000,
+      "bytes": 32000,
+      "audio_end_s": 11.0,
+      "status": 200,
+      "ok": true,
+      "ms": 920,
+      "text_start": "OK"
+    },
+    {
+      "offset": 352000,
+      "bytes": 32000,
+      "audio_end_s": 12.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1015,
+      "text_start": "OK"
+    },
+    {
+      "offset": 384000,
+      "bytes": 32000,
+      "audio_end_s": 13.0,
+      "status": 200,
+      "ok": true,
+      "ms": 965,
+      "text_start": "OK"
+    },
+    {
+      "offset": 416000,
+      "bytes": 32000,
+      "audio_end_s": 14.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1146,
+      "text_start": "OK"
+    },
+    {
+      "offset": 448000,
+      "bytes": 32000,
+      "audio_end_s": 15.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1018,
+      "text_start": "OK"
+    },
+    {
+      "offset": 480000,
+      "bytes": 32000,
+      "audio_end_s": 16.0,
+      "status": 200,
+      "ok": true,
+      "ms": 959,
+      "text_start": "OK"
+    },
+    {
+      "offset": 512000,
+      "bytes": 32000,
+      "audio_end_s": 17.0,
+      "status": 200,
+      "ok": true,
+      "ms": 930,
+      "text_start": "OK"
+    },
+    {
+      "offset": 544000,
+      "bytes": 32000,
+      "audio_end_s": 18.0,
+      "status": 200,
+      "ok": true,
+      "ms": 934,
+      "text_start": "OK"
+    },
+    {
+      "offset": 576000,
+      "bytes": 32000,
+      "audio_end_s": 19.0,
+      "status": 200,
+      "ok": true,
+      "ms": 939,
+      "text_start": "OK"
+    },
+    {
+      "offset": 608000,
+      "bytes": 32000,
+      "audio_end_s": 20.0,
+      "status": 200,
+      "ok": true,
+      "ms": 948,
+      "text_start": "OK"
+    },
+    {
+      "offset": 640000,
+      "bytes": 32000,
+      "audio_end_s": 21.0,
+      "status": 200,
+      "ok": true,
+      "ms": 909,
+      "text_start": "OK"
+    },
+    {
+      "offset": 672000,
+      "bytes": 32000,
+      "audio_end_s": 22.0,
+      "status": 200,
+      "ok": true,
+      "ms": 951,
+      "text_start": "OK"
+    },
+    {
+      "offset": 704000,
+      "bytes": 32000,
+      "audio_end_s": 23.0,
+      "status": 200,
+      "ok": true,
+      "ms": 987,
+      "text_start": "OK"
+    },
+    {
+      "offset": 736000,
+      "bytes": 32000,
+      "audio_end_s": 24.0,
+      "status": 200,
+      "ok": true,
+      "ms": 937,
+      "text_start": "OK"
+    },
+    {
+      "offset": 768000,
+      "bytes": 32000,
+      "audio_end_s": 25.0,
+      "status": 200,
+      "ok": true,
+      "ms": 946,
+      "text_start": "OK"
+    },
+    {
+      "offset": 800000,
+      "bytes": 32000,
+      "audio_end_s": 26.0,
+      "status": 200,
+      "ok": true,
+      "ms": 919,
+      "text_start": "OK"
+    },
+    {
+      "offset": 832000,
+      "bytes": 32000,
+      "audio_end_s": 27.0,
+      "status": 200,
+      "ok": true,
+      "ms": 935,
+      "text_start": "OK"
+    },
+    {
+      "offset": 864000,
+      "bytes": 32000,
+      "audio_end_s": 28.0,
+      "status": 200,
+      "ok": true,
+      "ms": 918,
+      "text_start": "OK"
+    },
+    {
+      "offset": 896000,
+      "bytes": 32000,
+      "audio_end_s": 29.0,
+      "status": 200,
+      "ok": true,
+      "ms": 942,
+      "text_start": "OK"
+    },
+    {
+      "offset": 928000,
+      "bytes": 32000,
+      "audio_end_s": 30.0,
+      "status": 200,
+      "ok": true,
+      "ms": 922,
+      "text_start": "OK"
+    },
+    {
+      "offset": 960000,
+      "bytes": 32000,
+      "audio_end_s": 31.0,
+      "status": 200,
+      "ok": true,
+      "ms": 944,
+      "text_start": "OK"
+    },
+    {
+      "offset": 992000,
+      "bytes": 32000,
+      "audio_end_s": 32.0,
+      "status": 200,
+      "ok": true,
+      "ms": 915,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1024000,
+      "bytes": 32000,
+      "audio_end_s": 33.0,
+      "status": 200,
+      "ok": true,
+      "ms": 928,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1056000,
+      "bytes": 32000,
+      "audio_end_s": 34.0,
+      "status": 200,
+      "ok": true,
+      "ms": 948,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1088000,
+      "bytes": 32000,
+      "audio_end_s": 35.0,
+      "status": 200,
+      "ok": true,
+      "ms": 929,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1120000,
+      "bytes": 32000,
+      "audio_end_s": 36.0,
+      "status": 200,
+      "ok": true,
+      "ms": 971,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1152000,
+      "bytes": 32000,
+      "audio_end_s": 37.0,
+      "status": 200,
+      "ok": true,
+      "ms": 992,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1184000,
+      "bytes": 32000,
+      "audio_end_s": 38.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1076,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1216000,
+      "bytes": 32000,
+      "audio_end_s": 39.0,
+      "status": 200,
+      "ok": true,
+      "ms": 940,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1248000,
+      "bytes": 32000,
+      "audio_end_s": 40.0,
+      "status": 200,
+      "ok": true,
+      "ms": 938,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1280000,
+      "bytes": 32000,
+      "audio_end_s": 41.0,
+      "status": 200,
+      "ok": true,
+      "ms": 921,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1312000,
+      "bytes": 32000,
+      "audio_end_s": 42.0,
+      "status": 200,
+      "ok": true,
+      "ms": 942,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1344000,
+      "bytes": 32000,
+      "audio_end_s": 43.0,
+      "status": 200,
+      "ok": true,
+      "ms": 938,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1376000,
+      "bytes": 32000,
+      "audio_end_s": 44.0,
+      "status": 200,
+      "ok": true,
+      "ms": 932,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1408000,
+      "bytes": 32000,
+      "audio_end_s": 45.0,
+      "status": 200,
+      "ok": true,
+      "ms": 949,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1440000,
+      "bytes": 32000,
+      "audio_end_s": 46.0,
+      "status": 200,
+      "ok": true,
+      "ms": 915,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1472000,
+      "bytes": 32000,
+      "audio_end_s": 47.0,
+      "status": 200,
+      "ok": true,
+      "ms": 903,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1504000,
+      "bytes": 32000,
+      "audio_end_s": 48.0,
+      "status": 200,
+      "ok": true,
+      "ms": 985,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1536000,
+      "bytes": 32000,
+      "audio_end_s": 49.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1017,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1568000,
+      "bytes": 32000,
+      "audio_end_s": 50.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1540,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1600000,
+      "bytes": 32000,
+      "audio_end_s": 51.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1061,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1632000,
+      "bytes": 32000,
+      "audio_end_s": 52.0,
+      "status": 200,
+      "ok": true,
+      "ms": 914,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1664000,
+      "bytes": 32000,
+      "audio_end_s": 53.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1156,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1696000,
+      "bytes": 32000,
+      "audio_end_s": 54.0,
+      "status": 200,
+      "ok": true,
+      "ms": 910,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1728000,
+      "bytes": 32000,
+      "audio_end_s": 55.0,
+      "status": 200,
+      "ok": true,
+      "ms": 1043,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1760000,
+      "bytes": 32000,
+      "audio_end_s": 56.0,
+      "status": 200,
+      "ok": true,
+      "ms": 958,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1792000,
+      "bytes": 32000,
+      "audio_end_s": 57.0,
+      "status": 200,
+      "ok": true,
+      "ms": 932,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1824000,
+      "bytes": 32000,
+      "audio_end_s": 58.0,
+      "status": 200,
+      "ok": true,
+      "ms": 951,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1856000,
+      "bytes": 32000,
+      "audio_end_s": 59.0,
+      "status": 200,
+      "ok": true,
+      "ms": 958,
+      "text_start": "OK"
+    },
+    {
+      "offset": 1888000,
+      "bytes": 32000,
+      "audio_end_s": 60.0,
+      "status": 200,
+      "ok": true,
+      "ms": 947,
+      "text_start": "OK"
+    }
+  ],
+  "pollStats": [
+    {
+      "at": "2026-07-06T05:54:42.376454Z",
+      "audioEndS": 1.0,
+      "counts": {
+        "asr:0": 2,
+        "mt:0": 1,
+        "postproduction:_en": 1,
+        "postproduction:_zh": 1,
+        "textstructurer:0_en": 1,
+        "textstructurer:0_zh": 1,
+        "tts:0": 1
+      }
+    },
+    {
+      "at": "2026-07-06T05:55:18.395734Z",
+      "audioEndS": 30.0,
+      "counts": {
+        "asr:0": 20,
+        "mt:0": 12,
+        "postproduction:_en": 1,
+        "postproduction:_zh": 1,
+        "textstructurer:0_en": 1,
+        "textstructurer:0_zh": 1,
+        "tts:0": 6
+      }
+    },
+    {
+      "at": "2026-07-06T05:55:56.702006Z",
+      "audioEndS": 60.0,
+      "counts": {
+        "asr:0": 42,
+        "mt:0": 21,
+        "postproduction:_en": 1,
+        "postproduction:_zh": 1,
+        "textstructurer:0_en": 2,
+        "textstructurer:0_zh": 2,
+        "tts:0": 13
+      }
+    },
+    {
+      "at": "2026-07-06T05:56:06.333558Z",
+      "audioEndS": 60.0,
+      "counts": {
+        "asr:0": 45,
+        "mt:0": 23,
+        "postproduction:_en": 1,
+        "postproduction:_zh": 1,
+        "textstructurer:0_en": 2,
+        "textstructurer:0_zh": 2,
+        "tts:0": 15
+      }
+    },
+    {
+      "at": "2026-07-06T05:56:27.514203Z",
+      "audioEndS": 60.0,
+      "counts": {
+        "asr:0": 45,
+        "mt:0": 23,
+        "postproduction:_en": 1,
+        "postproduction:_zh": 1,
+        "textstructurer:0_en": 2,
+        "textstructurer:0_zh": 2,
+        "tts:0": 15
+      }
+    },
+    {
+      "at": "2026-07-06T05:56:48.577979Z",
+      "audioEndS": 60.0,
+      "counts": {
+        "asr:0": 45,
+        "mt:0": 23,
+        "postproduction:_en": 1,
+        "postproduction:_zh": 1,
+        "textstructurer:0_en": 2,
+        "textstructurer:0_zh": 2,
+        "tts:0": 15
+      }
+    },
+    {
+      "at": "2026-07-06T05:57:09.510407Z",
+      "audioEndS": 60.0,
+      "counts": {
+        "asr:0": 45,
+        "mt:0": 23,
+        "postproduction:_en": 1,
+        "postproduction:_zh": 1,
+        "textstructurer:0_en": 2,
+        "textstructurer:0_zh": 2,
+        "tts:0": 15
+      }
+    }
+  ],
+  "collection": {
+    "graphStatus": 200,
+    "graph": {
+      "user:0": [
+        "asr:0",
+        "tts:0"
+      ],
+      "asr:0": [
+        "textstructurer:0",
+        "api",
+        "postproduction:_en",
+        "mt:0"
+      ],
+      "textstructurer:0_en": [
+        "api"
+      ],
+      "postproduction:_en": [
+        "api"
+      ],
+      "mt:0": [
+        "textstructurer:0",
+        "api",
+        "postproduction:_zh",
+        "tts:0"
+      ],
+      "textstructurer:0_zh": [
+        "api"
+      ],
+      "postproduction:_zh": [
+        "api"
+      ],
+      "tts:0": [
+        "api"
+      ]
+    },
+    "senderMap": {
+      "asr:0": "English",
+      "mt:0": "Chinese",
+      "postproduction:_en": "English",
+      "postproduction:_zh": "Chinese",
+      "textstructurer:0_en": "English",
+      "textstructurer:0_zh": "Chinese",
+      "tts:0": "Chinese Audio"
+    },
+    "messagesByComponent": {
+      "asr:0": [
+        {
+          "controll": "START",
+          "name": "codex_kit_sweep_ll_1783317148",
+          "host": "siqiouya@andrew.cmu.edu",
+          "access": "private",
+          "meta": "{\"title\":\"codex_kit_sweep_ll_1783317148\", \"presenter\": \"siqiouya@andrew.cmu.edu",
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "message_id": 0,
+          "time_arrive_mediator": 1783317149.7580318,
+          "tag": "0"
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "signal": "speech_segment_start",
+          "message_id": 1,
+          "time_arrive_mediator": 1783317273.0917766
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 0.064,
+          "end": 1.984,
+          "seq": " Welcome on in, today",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": true,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            "Welcome",
+            " on",
+            " in,",
+            " today"
+          ],
+          "word_id": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "message_id": 2,
+          "time_arrive_mediator": 1783317286.1756642
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 1.984,
+          "end": 4.0,
+          "seq": " we have some wild video from the homie Bizarre",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " we",
+            " have",
+            " some",
+            " wild",
+            " video",
+            " from",
+            " the",
+            " homie",
+            " Bizarre"
+          ],
+          "word_id": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "message_id": 3,
+          "time_arrive_mediator": 1783317287.185301
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 4.0,
+          "end": 5.024,
+          "seq": " Bob, something",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Bob,",
+            " something"
+          ],
+          "word_id": [
+            13,
+            14
+          ],
+          "message_id": 4,
+          "time_arrive_mediator": 1783317288.0397959
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 5.024,
+          "end": 6.048,
+          "seq": " that if you've ever",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " that",
+            " if",
+            " you've",
+            " ever"
+          ],
+          "word_id": [
+            15,
+            16,
+            17,
+            18
+          ],
+          "message_id": 5,
+          "time_arrive_mediator": 1783317289.0749576
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 6.048,
+          "end": 7.072,
+          "seq": " seen the show",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " seen",
+            " the",
+            " show"
+          ],
+          "word_id": [
+            19,
+            20,
+            21
+          ],
+          "message_id": 6,
+          "time_arrive_mediator": 1783317290.1079528
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 7.072,
+          "end": 10.144,
+          "seq": " Cops, drop a thumbs up, subscribe if you're",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Cops,",
+            " drop",
+            " a",
+            " thumbs",
+            " up,",
+            " subscribe",
+            " if",
+            " you're"
+          ],
+          "word_id": [
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29
+          ],
+          "message_id": 7,
+          "time_arrive_mediator": 1783317293.4837496
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 10.144,
+          "end": 11.168,
+          "seq": " new, then you know how suspenseful the show could",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " new,",
+            " then",
+            " you",
+            " know",
+            " how",
+            " suspenseful",
+            " the",
+            " show",
+            " could"
+          ],
+          "word_id": [
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38
+          ],
+          "message_id": 8,
+          "time_arrive_mediator": 1783317294.5314815
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 11.168,
+          "end": 12.192,
+          "seq": " be",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " be"
+          ],
+          "word_id": [
+            39
+          ],
+          "message_id": 9,
+          "time_arrive_mediator": 1783317295.7705467
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 12.192,
+          "end": 12.293333333333333,
+          "seq": ".",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            "."
+          ],
+          "word_id": [
+            40
+          ],
+          "message_id": 10,
+          "time_arrive_mediator": 1783317298.978078
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 12.293333333333333,
+          "end": 15.232,
+          "seq": " Whether it's the suspense or",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Whether",
+            " it's",
+            " the",
+            " suspense",
+            " or"
+          ],
+          "word_id": [
+            41,
+            42,
+            43,
+            44,
+            45
+          ],
+          "message_id": 11,
+          "time_arrive_mediator": 1783317298.991028
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 15.232,
+          "end": 17.216,
+          "seq": " the authentic non-scripted events that take place in the",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " the",
+            " authentic",
+            " non-scripted",
+            " events",
+            " that",
+            " take",
+            " place",
+            " in",
+            " the"
+          ],
+          "word_id": [
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54
+          ],
+          "message_id": 12,
+          "time_arrive_mediator": 1783317300.202825
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 17.216,
+          "end": 18.24,
+          "seq": " show",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " show"
+          ],
+          "word_id": [
+            55
+          ],
+          "message_id": 13,
+          "time_arrive_mediator": 1783317301.6457138
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 18.24,
+          "end": 19.264,
+          "seq": ", there's something about",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            ",",
+            " there's",
+            " something",
+            " about"
+          ],
+          "word_id": [
+            56,
+            57,
+            58,
+            59
+          ],
+          "message_id": 14,
+          "time_arrive_mediator": 1783317303.3447728
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 19.264,
+          "end": 21.28,
+          "seq": " it that has us on the edge of our seat.",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " it",
+            " that",
+            " has",
+            " us",
+            " on",
+            " the",
+            " edge",
+            " of",
+            " our",
+            " seat."
+          ],
+          "word_id": [
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69
+          ],
+          "message_id": 15,
+          "time_arrive_mediator": 1783317304.6772456
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 21.28,
+          "end": 24.288,
+          "seq": " However",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " However"
+          ],
+          "word_id": [
+            70
+          ],
+          "message_id": 16,
+          "time_arrive_mediator": 1783317307.764757
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 24.288,
+          "end": 25.312,
+          "seq": ", what I find really",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            ",",
+            " what",
+            " I",
+            " find",
+            " really"
+          ],
+          "word_id": [
+            71,
+            72,
+            73,
+            74,
+            75
+          ],
+          "message_id": 17,
+          "time_arrive_mediator": 1783317309.0218396
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 25.312,
+          "end": 27.328,
+          "seq": " interesting about the show is the",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " interesting",
+            " about",
+            " the",
+            " show",
+            " is",
+            " the"
+          ],
+          "word_id": [
+            76,
+            77,
+            78,
+            79,
+            80,
+            81
+          ],
+          "message_id": 18,
+          "time_arrive_mediator": 1783317310.221946
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 27.328,
+          "end": 29.312,
+          "seq": " fact that some episodes",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " fact",
+            " that",
+            " some",
+            " episodes"
+          ],
+          "word_id": [
+            82,
+            83,
+            84,
+            85
+          ],
+          "message_id": 19,
+          "time_arrive_mediator": 1783317311.254927
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 29.312,
+          "end": 30.336,
+          "seq": " are heavily",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " are",
+            " heavily"
+          ],
+          "word_id": [
+            86,
+            87
+          ],
+          "message_id": 20,
+          "time_arrive_mediator": 1783317321.3137012
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 30.336,
+          "end": 31.36,
+          "seq": " edited.",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " edited."
+          ],
+          "word_id": [
+            88
+          ],
+          "message_id": 21,
+          "time_arrive_mediator": 1783317322.411971
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 31.36,
+          "end": 33.376,
+          "seq": " Most things that happen in the show are cut out",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Most",
+            " things",
+            " that",
+            " happen",
+            " in",
+            " the",
+            " show",
+            " are",
+            " cut",
+            " out"
+          ],
+          "word_id": [
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98
+          ],
+          "message_id": 22,
+          "time_arrive_mediator": 1783317324.1510212
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 33.376,
+          "end": 34.1824,
+          "seq": ".",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            "."
+          ],
+          "word_id": [
+            99
+          ],
+          "message_id": 23,
+          "time_arrive_mediator": 1783317327.3466341
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 34.1824,
+          "end": 37.408,
+          "seq": " But",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " But"
+          ],
+          "word_id": [
+            100
+          ],
+          "message_id": 24,
+          "time_arrive_mediator": 1783317327.356044
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 37.408,
+          "end": 38.432,
+          "seq": " it makes me wonder, what exactly are they cutting out?",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " it",
+            " makes",
+            " me",
+            " wonder,",
+            " what",
+            " exactly",
+            " are",
+            " they",
+            " cutting",
+            " out?"
+          ],
+          "word_id": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110
+          ],
+          "message_id": 25,
+          "time_arrive_mediator": 1783317329.1274347
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 38.432,
+          "end": 39.456,
+          "seq": " Could it",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Could",
+            " it"
+          ],
+          "word_id": [
+            111,
+            112
+          ],
+          "message_id": 26,
+          "time_arrive_mediator": 1783317330.1595852
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 39.456,
+          "end": 41.472,
+          "seq": " be incidents that are not suitable for audiences?",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " be",
+            " incidents",
+            " that",
+            " are",
+            " not",
+            " suitable",
+            " for",
+            " audiences?"
+          ],
+          "word_id": [
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120
+          ],
+          "message_id": 27,
+          "time_arrive_mediator": 1783317331.8294141
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 41.472,
+          "end": 43.456,
+          "seq": " Incidents that are",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Incidents",
+            " that",
+            " are"
+          ],
+          "word_id": [
+            121,
+            122,
+            123
+          ],
+          "message_id": 28,
+          "time_arrive_mediator": 1783317332.8492846
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 43.456,
+          "end": 44.48,
+          "seq": " too",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " too"
+          ],
+          "word_id": [
+            124
+          ],
+          "message_id": 29,
+          "time_arrive_mediator": 1783317333.886701
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 44.48,
+          "end": 45.504,
+          "seq": " disturbing?",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " disturbing?"
+          ],
+          "word_id": [
+            125
+          ],
+          "message_id": 30,
+          "time_arrive_mediator": 1783317334.9682052
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 45.504,
+          "end": 46.528,
+          "seq": " Or is it",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Or",
+            " is",
+            " it"
+          ],
+          "word_id": [
+            126,
+            127,
+            128
+          ],
+          "message_id": 31,
+          "time_arrive_mediator": 1783317336.6570017
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 46.528,
+          "end": 47.552,
+          "seq": " something",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " something"
+          ],
+          "word_id": [
+            129
+          ],
+          "message_id": 32,
+          "time_arrive_mediator": 1783317337.914527
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 47.552,
+          "end": 51.552,
+          "seq": " else?",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " else?"
+          ],
+          "word_id": [
+            130
+          ],
+          "message_id": 33,
+          "time_arrive_mediator": 1783317340.887249
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 51.552,
+          "end": 52.576,
+          "seq": " The reason why I say this is",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " The",
+            " reason",
+            " why",
+            " I",
+            " say",
+            " this",
+            " is"
+          ],
+          "word_id": [
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137
+          ],
+          "message_id": 34,
+          "time_arrive_mediator": 1783317342.1781487
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 52.576,
+          "end": 53.6,
+          "seq": " because there have been",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " because",
+            " there",
+            " have",
+            " been"
+          ],
+          "word_id": [
+            138,
+            139,
+            140,
+            141
+          ],
+          "message_id": 35,
+          "time_arrive_mediator": 1783317343.1929207
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 53.6,
+          "end": 54.624,
+          "seq": " cases in which",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " cases",
+            " in",
+            " which"
+          ],
+          "word_id": [
+            142,
+            143,
+            144
+          ],
+          "message_id": 36,
+          "time_arrive_mediator": 1783317344.4740748
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 54.624,
+          "end": 55.648,
+          "seq": " officers have",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " officers",
+            " have"
+          ],
+          "word_id": [
+            145,
+            146
+          ],
+          "message_id": 37,
+          "time_arrive_mediator": 1783317345.5530648
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 55.648,
+          "end": 56.672,
+          "seq": " dealt with",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " dealt",
+            " with"
+          ],
+          "word_id": [
+            147,
+            148
+          ],
+          "message_id": 38,
+          "time_arrive_mediator": 1783317346.5101256
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 56.672,
+          "end": 57.696,
+          "seq": " situations that weren't crime",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " situations",
+            " that",
+            " weren't",
+            " crime"
+          ],
+          "word_id": [
+            149,
+            150,
+            151,
+            152
+          ],
+          "message_id": 39,
+          "time_arrive_mediator": 1783317347.4423711
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 57.696,
+          "end": 58.72,
+          "seq": " related",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " related"
+          ],
+          "word_id": [
+            153
+          ],
+          "message_id": 40,
+          "time_arrive_mediator": 1783317348.657775
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 58.72,
+          "end": 59.744,
+          "seq": ", but rather something beyond",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            ",",
+            " but",
+            " rather",
+            " something",
+            " beyond"
+          ],
+          "word_id": [
+            154,
+            155,
+            156,
+            157,
+            158
+          ],
+          "message_id": 41,
+          "time_arrive_mediator": 1783317349.5107887
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "signal": "speech_segment_end",
+          "message_id": 42,
+          "time_arrive_mediator": 1783317357.2259607
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "asr:0",
+          "start": 59.744,
+          "end": 60.768,
+          "seq": " that. ",
+          "unstable": false,
+          "speech_segment_ends": true,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " that."
+          ],
+          "word_id": [
+            159
+          ],
+          "message_id": 43,
+          "time_arrive_mediator": 1783317358.501051
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "controll": "PAUSE",
+          "sender": "asr:0",
+          "message_id": 44,
+          "time_arrive_mediator": 1783317358.5129495
+        }
+      ],
+      "mt:0": [
+        {
+          "controll": "START",
+          "name": "codex_kit_sweep_ll_1783317148",
+          "host": "siqiouya@andrew.cmu.edu",
+          "access": "private",
+          "meta": "{\"title\":\"codex_kit_sweep_ll_1783317148\", \"presenter\": \"siqiouya@andrew.cmu.edu",
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "message_id": 0,
+          "time_arrive_mediator": 1783317149.8117998,
+          "tag": "0"
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "0.064",
+          "end": 0.8512,
+          "seq": " 欢迎进入",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " we",
+            " have",
+            " some",
+            " wild",
+            " video",
+            " from",
+            " the",
+            " homie",
+            " Bizarre"
+          ],
+          "word_id": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "message_id": 1,
+          "time_arrive_mediator": 1783317287.4423642,
+          "tag": "0",
+          "sourceTokens": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "0.8512",
+          "end": 2.1972645161290325,
+          "seq": " , 今天我们有一些",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Bob,",
+            " something"
+          ],
+          "word_id": [
+            13,
+            14
+          ],
+          "message_id": 2,
+          "time_arrive_mediator": 1783317288.2439969,
+          "tag": "0",
+          "sourceTokens": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "2.1972645161290325",
+          "end": 2.5370352941176475,
+          "seq": "来自怪",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " that",
+            " if",
+            " you've",
+            " ever"
+          ],
+          "word_id": [
+            15,
+            16,
+            17,
+            18
+          ],
+          "message_id": 3,
+          "time_arrive_mediator": 1783317289.3098862,
+          "tag": "0",
+          "sourceTokens": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "2.5370352941176475",
+          "end": 4.1242729411764705,
+          "seq": "人鲍勃的野生视频 , 如果你",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " seen",
+            " the",
+            " show"
+          ],
+          "word_id": [
+            19,
+            20,
+            21
+          ],
+          "message_id": 4,
+          "time_arrive_mediator": 1783317290.386365,
+          "tag": "0",
+          "sourceTokens": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "4.1242729411764705",
+          "end": 4.347225795206971,
+          "seq": "看过",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " Cops,",
+            " drop",
+            " a",
+            " thumbs",
+            " up,",
+            " subscribe",
+            " if",
+            " you're"
+          ],
+          "word_id": [
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29
+          ],
+          "message_id": 5,
+          "time_arrive_mediator": 1783317293.775136,
+          "tag": "0",
+          "sourceTokens": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "4.347225795206971",
+          "end": 6.01424031372549,
+          "seq": "《警察》的节目 , 请举起拇指 ,",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " be"
+          ],
+          "word_id": [
+            39
+          ],
+          "message_id": 6,
+          "time_arrive_mediator": 1783317296.2086377,
+          "tag": "0",
+          "sourceTokens": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "6.01424031372549",
+          "end": "12.293333333333333",
+          "seq": " 如果你是新手 , 订阅 , 那么你就知道这个节目会是多么的悬疑。",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            "."
+          ],
+          "word_id": [
+            40
+          ],
+          "message_id": 7,
+          "time_arrive_mediator": 1783317299.4628217,
+          "tag": "0",
+          "sourceTokens": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "12.293333333333333",
+          "end": 13.934222222222223,
+          "seq": " 无论是悬念还是",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " the",
+            " authentic",
+            " non-scripted",
+            " events",
+            " that",
+            " take",
+            " place",
+            " in",
+            " the"
+          ],
+          "word_id": [
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54
+          ],
+          "message_id": 8,
+          "time_arrive_mediator": 1783317300.3757365,
+          "tag": "0",
+          "sourceTokens": [
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "13.934222222222223",
+          "end": "21.28",
+          "seq": "在节目中发生的真实非剧本事件 , 总有一些东西会让我们处于边缘。",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " it",
+            " that",
+            " has",
+            " us",
+            " on",
+            " the",
+            " edge",
+            " of",
+            " our",
+            " seat."
+          ],
+          "word_id": [
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69
+          ],
+          "message_id": 9,
+          "time_arrive_mediator": 1783317305.0424397,
+          "tag": "0",
+          "sourceTokens": [
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "21.28",
+          "end": 23.50821052631579,
+          "seq": " 然而 , 我",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " interesting",
+            " about",
+            " the",
+            " show",
+            " is",
+            " the"
+          ],
+          "word_id": [
+            76,
+            77,
+            78,
+            79,
+            80,
+            81
+          ],
+          "message_id": 10,
+          "time_arrive_mediator": 1783317310.432544,
+          "tag": "0",
+          "sourceTokens": [
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79,
+            80,
+            81
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "23.50821052631579",
+          "end": 25.99554887218045,
+          "seq": "发现这个节目真正有趣的是",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " fact",
+            " that",
+            " some",
+            " episodes"
+          ],
+          "word_id": [
+            82,
+            83,
+            84,
+            85
+          ],
+          "message_id": 11,
+          "time_arrive_mediator": 1783317311.5407252,
+          "tag": "0",
+          "sourceTokens": [
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79,
+            80,
+            81,
+            82,
+            83,
+            84,
+            85
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "25.99554887218045",
+          "end": 27.297684210526313,
+          "seq": " , 其中一些情节",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " are",
+            " heavily"
+          ],
+          "word_id": [
+            86,
+            87
+          ],
+          "message_id": 12,
+          "time_arrive_mediator": 1783317321.5556934,
+          "tag": "0",
+          "sourceTokens": [
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79,
+            80,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86,
+            87
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "27.297684210526313",
+          "end": "31.36",
+          "seq": "进行了大量编辑。",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " edited."
+          ],
+          "word_id": [
+            88
+          ],
+          "message_id": 13,
+          "time_arrive_mediator": 1783317322.5808623,
+          "tag": "0",
+          "sourceTokens": [
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            79,
+            80,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86,
+            87,
+            88
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "31.36",
+          "end": "34.1824",
+          "seq": " 在节目中发生的大部分事情都被剪掉。",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            "."
+          ],
+          "word_id": [
+            99
+          ],
+          "message_id": 14,
+          "time_arrive_mediator": 1783317327.5346618,
+          "tag": "0",
+          "sourceTokens": [
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "34.1824",
+          "end": "38.432",
+          "seq": " 但是这让我好奇 , 他们到底要削减什么呢 ?",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " it",
+            " makes",
+            " me",
+            " wonder,",
+            " what",
+            " exactly",
+            " are",
+            " they",
+            " cutting",
+            " out?"
+          ],
+          "word_id": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110
+          ],
+          "message_id": 15,
+          "time_arrive_mediator": 1783317329.3689904,
+          "tag": "0",
+          "sourceTokens": [
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "38.432",
+          "end": "41.472",
+          "seq": " 可能是那些不适合观众的事件吗 ?",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " be",
+            " incidents",
+            " that",
+            " are",
+            " not",
+            " suitable",
+            " for",
+            " audiences?"
+          ],
+          "word_id": [
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120
+          ],
+          "message_id": 16,
+          "time_arrive_mediator": 1783317332.3589544,
+          "tag": "0",
+          "sourceTokens": [
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "41.472",
+          "end": "45.504",
+          "seq": " 那些太令人不安的事件 ?",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " disturbing?"
+          ],
+          "word_id": [
+            125
+          ],
+          "message_id": 17,
+          "time_arrive_mediator": 1783317335.1138651,
+          "tag": "0",
+          "sourceTokens": [
+            121,
+            122,
+            123,
+            124,
+            125
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "45.504",
+          "end": "51.552",
+          "seq": " 还是其他东西 ?",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " else?"
+          ],
+          "word_id": [
+            130
+          ],
+          "message_id": 18,
+          "time_arrive_mediator": 1783317341.0415537,
+          "tag": "0",
+          "sourceTokens": [
+            126,
+            127,
+            128,
+            129,
+            130
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "51.552",
+          "end": 53.04145454545455,
+          "seq": " 我这么说的原因",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " because",
+            " there",
+            " have",
+            " been"
+          ],
+          "word_id": [
+            138,
+            139,
+            140,
+            141
+          ],
+          "message_id": 19,
+          "time_arrive_mediator": 1783317343.322152,
+          "tag": "0",
+          "sourceTokens": [
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "53.04145454545455",
+          "end": 53.30521212121212,
+          "seq": "是因为",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " cases",
+            " in",
+            " which"
+          ],
+          "word_id": [
+            142,
+            143,
+            144
+          ],
+          "message_id": 20,
+          "time_arrive_mediator": 1783317344.65796,
+          "tag": "0",
+          "sourceTokens": [
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143,
+            144
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "mt:0",
+          "start": "53.30521212121212",
+          "end": "60.768",
+          "seq": "在一些案件中 , 警察们处理了与犯罪无关的案件 , 而是超出犯罪的案件。",
+          "unstable": false,
+          "speech_segment_ends": true,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": [
+            null,
+            null
+          ],
+          "lid": "en",
+          "words": [
+            " that."
+          ],
+          "word_id": [
+            159
+          ],
+          "message_id": 21,
+          "time_arrive_mediator": 1783317358.7461944,
+          "tag": "0",
+          "sourceTokens": [
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143,
+            144,
+            145,
+            146,
+            147,
+            148,
+            149,
+            150,
+            151,
+            152,
+            153,
+            154,
+            155,
+            156,
+            157,
+            158,
+            159
+          ]
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "controll": "PAUSE",
+          "sender": "mt:0",
+          "message_id": 22,
+          "time_arrive_mediator": 1783317358.7975023,
+          "tag": "0"
+        }
+      ],
+      "postproduction:_en": [
+        {
+          "controll": "START",
+          "name": "codex_kit_sweep_ll_1783317148",
+          "host": "siqiouya@andrew.cmu.edu",
+          "access": "private",
+          "meta": "{\"title\":\"codex_kit_sweep_ll_1783317148\", \"presenter\": \"siqiouya@andrew.cmu.edu",
+          "session": "224437060847455244713309833435414875517",
+          "sender": "postproduction:_en",
+          "message_id": 0,
+          "time_arrive_mediator": 1783317149.8036284,
+          "tag": "_en"
+        }
+      ],
+      "postproduction:_zh": [
+        {
+          "controll": "START",
+          "name": "codex_kit_sweep_ll_1783317148",
+          "host": "siqiouya@andrew.cmu.edu",
+          "access": "private",
+          "meta": "{\"title\":\"codex_kit_sweep_ll_1783317148\", \"presenter\": \"siqiouya@andrew.cmu.edu",
+          "session": "224437060847455244713309833435414875517",
+          "sender": "postproduction:_zh",
+          "message_id": 0,
+          "time_arrive_mediator": 1783317149.835254,
+          "tag": "_zh"
+        }
+      ],
+      "textstructurer:0_en": [
+        {
+          "controll": "START",
+          "name": "codex_kit_sweep_ll_1783317148",
+          "host": "siqiouya@andrew.cmu.edu",
+          "access": "private",
+          "meta": "{\"title\":\"codex_kit_sweep_ll_1783317148\", \"presenter\": \"siqiouya@andrew.cmu.edu",
+          "session": "224437060847455244713309833435414875517",
+          "sender": "textstructurer:0_en",
+          "message_id": 0,
+          "time_arrive_mediator": 1783317149.7836864,
+          "tag": "0",
+          "mode": "online_model"
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "mode": "online_model",
+          "sender": "textstructurer:0_en",
+          "start": "12.273333333333333",
+          "end": "12.283333333333333",
+          "seq": "<br /><br />",
+          "markup": "paragraphBreak",
+          "unstable": false,
+          "message_id": 1,
+          "time_arrive_mediator": 1783317337.0990682
+        }
+      ],
+      "textstructurer:0_zh": [
+        {
+          "controll": "START",
+          "name": "codex_kit_sweep_ll_1783317148",
+          "host": "siqiouya@andrew.cmu.edu",
+          "access": "private",
+          "meta": "{\"title\":\"codex_kit_sweep_ll_1783317148\", \"presenter\": \"siqiouya@andrew.cmu.edu",
+          "session": "224437060847455244713309833435414875517",
+          "sender": "textstructurer:0_zh",
+          "message_id": 0,
+          "time_arrive_mediator": 1783317149.8296423,
+          "tag": "0",
+          "mode": "online_model"
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "mode": "online_model",
+          "sender": "textstructurer:0_zh",
+          "start": "12.273333333333333",
+          "end": "12.283333333333333",
+          "seq": "<br /><br />",
+          "markup": "paragraphBreak",
+          "unstable": false,
+          "message_id": 1,
+          "time_arrive_mediator": 1783317337.1022687
+        }
+      ],
+      "tts:0": [
+        {
+          "controll": "START",
+          "name": "codex_kit_sweep_ll_1783317148",
+          "host": "siqiouya@andrew.cmu.edu",
+          "access": "private",
+          "meta": "{\"title\":\"codex_kit_sweep_ll_1783317148\", \"presenter\": \"siqiouya@andrew.cmu.edu",
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "message_id": 0,
+          "time_arrive_mediator": 1783317149.6640916,
+          "tag": "0"
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "欢迎进入 ,",
+          "min_message_id": 4,
+          "max_message_id": 4,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/1",
+          "linkedData": true,
+          "message_id": 1,
+          "time_arrive_mediator": 1783317290.6076803
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "今天我们有一些 来自怪 人鲍勃的野生视频 ,",
+          "min_message_id": 4,
+          "max_message_id": 4,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/2",
+          "linkedData": true,
+          "message_id": 2,
+          "time_arrive_mediator": 1783317290.834408
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "如果你 看过 《警察》的节目 ,",
+          "min_message_id": 6,
+          "max_message_id": 6,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/3",
+          "linkedData": true,
+          "message_id": 3,
+          "time_arrive_mediator": 1783317296.372184
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "请举起拇指 , 如果你是新手 , 订阅 , 那么你就知道这个节目会是多么的悬疑。",
+          "min_message_id": 7,
+          "max_message_id": 7,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/4",
+          "linkedData": true,
+          "message_id": 4,
+          "time_arrive_mediator": 1783317299.736175
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "无论是悬念还是 在节目中发生的真实非剧本事件 , 总有一些东西会让我们处于边缘。",
+          "min_message_id": 9,
+          "max_message_id": 9,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/5",
+          "linkedData": true,
+          "message_id": 5,
+          "time_arrive_mediator": 1783317305.4930189
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "然而 ,",
+          "min_message_id": 12,
+          "max_message_id": 12,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/6",
+          "linkedData": true,
+          "message_id": 6,
+          "time_arrive_mediator": 1783317321.7104502
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "我 发现这个节目真正有趣的是 , 其中一些情节 进行了大量编辑。",
+          "min_message_id": 13,
+          "max_message_id": 13,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/7",
+          "linkedData": true,
+          "message_id": 7,
+          "time_arrive_mediator": 1783317322.8724825
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "在节目中发生的大部分事情都被剪掉。",
+          "min_message_id": 14,
+          "max_message_id": 14,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/8",
+          "linkedData": true,
+          "message_id": 8,
+          "time_arrive_mediator": 1783317327.7358193
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "但是这让我好奇 , 他们到底要削减什么呢 ?",
+          "min_message_id": 15,
+          "max_message_id": 15,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/9",
+          "linkedData": true,
+          "message_id": 9,
+          "time_arrive_mediator": 1783317329.606405
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "可能是那些不适合观众的事件吗 ?",
+          "min_message_id": 16,
+          "max_message_id": 16,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/10",
+          "linkedData": true,
+          "message_id": 10,
+          "time_arrive_mediator": 1783317332.5479186
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "那些太令人不安的事件 ?",
+          "min_message_id": 17,
+          "max_message_id": 17,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/11",
+          "linkedData": true,
+          "message_id": 11,
+          "time_arrive_mediator": 1783317335.2738433
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "还是其他东西 ?",
+          "min_message_id": 18,
+          "max_message_id": 18,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/12",
+          "linkedData": true,
+          "message_id": 12,
+          "time_arrive_mediator": 1783317341.2047634
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "send_link": true,
+          "text": "我这么说的原因 是因为 在一些案件中 , 警察们处理了与犯罪无关的案件 , 而是超出犯罪的案件。",
+          "min_message_id": 21,
+          "max_message_id": 21,
+          "b64_enc_pcm_s16le": "Data/224437060847455244713309833435414875517/13",
+          "linkedData": true,
+          "message_id": 13,
+          "time_arrive_mediator": 1783317359.016653
+        },
+        {
+          "session": "224437060847455244713309833435414875517",
+          "sender": "tts:0",
+          "start": 0.0,
+          "end": 0.0,
+          "seq": "TTS-finish",
+          "unstable": false,
+          "speech_segment_ends": false,
+          "added_point": false,
+          "speech_segment_begins": false,
+          "confidence": null,
+          "message_id": 14,
+          "time_arrive_mediator": 1783317359.020893
+        }
+      ]
+    }
+  },
+  "pauseStatus": {
+    "status": 200,
+    "ok": true,
+    "text_start": "OK",
+    "at": "2026-07-06T05:55:57.281005Z"
+  },
+  "finishedSendingAt": "2026-07-06T05:55:57.281052Z",
+  "finishedAt": "2026-07-06T05:57:09.513239Z"
+}
