@@ -335,7 +335,11 @@ Current KIT status on 2026-07-06:
   CER 0.767.
 - A source-speech speed=1.5 smoke with `format=mixed`,
   `ttsQualityMode=high_quality`, and 1.92s chunks scored BLEU 23.26, chrF 21.49,
-  CER 0.717; target speech was 69.58s for a 40.03s source stream.
+  CER 0.717; target speech was 69.58s for a 40.03s source stream. The companion
+  FLORAS speed=1.5 dashboard compares this KIT exact-60s smoke row against
+  GPT/Gemini/Seed full-run generated target wavs cropped to their first 60s and
+  re-transcribed, so treat that table as a target-audio crop view rather than a
+  source-aligned formal ranking.
 - Before a formal KIT comparison, inspect or sweep the KIT product settings and
   decide whether KIT can be scored from target speech ASR. If only web-event TTS
   text is available, label it as text-only.

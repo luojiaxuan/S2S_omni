@@ -47,9 +47,10 @@ for EN->ZH long-form streaming translation.
   speech scored through ASR; KIT web-event TTS text rows are debug-only. Seed
   rows are prefix proxies from the full 1072s run, not exact 60s Seed reruns.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html`: the same
-  60s EN->ZH source content with source speech sped to 1.5x. This adds a KIT
-  `format=mixed`, `ttsQualityMode=high_quality`, 1.92s chunk target-speech-ASR
-  row next to existing GPT/Gemini/Seed speed=1.5 rows.
+  60s EN->ZH source content with source speech sped to 1.5x. GPT/Gemini/Seed
+  rows use the first 60s cropped from existing full-run generated target wavs
+  and re-transcribed with `gpt-4o-mini-transcribe`; KIT uses the 60s source
+  smoke with `format=mixed`, `ttsQualityMode=high_quality`, and 1.92s chunks.
 - `artifacts/eval_runs/*`: per-backend/chunk `summary.json`, `metrics.jsonl`,
   `timeline.jsonl`, `sentence_coverage.jsonl`, and small HTML index files.
 - `artifacts/root_metadata/*`: selected sample metadata, run manifest, ASR
@@ -125,7 +126,10 @@ python3 scripts/build_floras_kit_60s_compare.py \
 
 The speed=1.5 smoke dashboard is rebuilt by changing `--run-id` to
 `en-zh_mono_asr_test__0__speed_1.5` and `--output-name` to
-`compare_gpt_gemini_seed_kit_enzh_60s_speed15`.
+`compare_gpt_gemini_seed_kit_enzh_60s_speed15`. For this run id, the script
+loads local `full_first60_target_asr/speed1p5/*/target_first60.wav` crops for
+GPT/Gemini/Seed when present; those wav/ASR artifacts are local staging files
+and are intentionally not committed.
 
 ## Current Takeaway
 
@@ -138,6 +142,11 @@ artifact: the same hypotheses score 0.00 with sacreBLEU's default tokenizer but
 20-26 BLEU with `tokenize=zh`, while preserving the original
 hypothesis/reference punctuation. Do not use KIT web-event TTS text as the main
 S2S hypothesis. `format=mixed` is acceptable when the hypothesis comes from the
-retrieved target speech and is scored through ASR. Do not rank KIT from this
-single 60s smoke result; the product configuration still needs broader clips
-before a full FLORAS comparison.
+retrieved target speech and is scored through ASR. The speed=1.5 comparison now
+uses full-run target-wav first-60s crops for GPT/Gemini/Seed, so those rows are
+not exact 60s source replays; the crop can include content beyond the first-60s
+reference and should be interpreted as the requested target-audio crop view.
+Seed crop rows are especially vulnerable to this windowing artifact and should
+not be read as a source-time-aligned quality ranking.
+Do not rank KIT from this single 60s smoke result; the product configuration
+still needs broader clips before a full FLORAS comparison.

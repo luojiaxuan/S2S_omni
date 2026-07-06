@@ -12,15 +12,27 @@
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html",
-      "bytes": 22087
+      "bytes": 33092
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/compare_metrics.jsonl",
-      "bytes": 31660
+      "bytes": 49531
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/summary.json",
-      "bytes": 2500
+      "bytes": 6640
+    },
+    {
+      "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html",
+      "bytes": 22249
+    },
+    {
+      "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/compare_metrics.jsonl",
+      "bytes": 34945
+    },
+    {
+      "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/summary.json",
+      "bytes": 4228
     },
     {
       "path": "artifacts/root_metadata/live_runs.jsonl",

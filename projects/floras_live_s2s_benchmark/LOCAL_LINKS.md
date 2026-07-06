@@ -41,6 +41,10 @@ web-event TTS text rows are debug-only. Seed rows are marked as full-run prefix
 proxies, not exact 60s Seed reruns. This is a smoke/debug dashboard, not a
 formal KIT product score.
 
+For the speed=1.5 dashboard, GPT/Gemini/Seed rows use local crops from the first
+60s of existing full-run generated target wavs, then `gpt-4o-mini-transcribe`.
+KIT uses the 60s source smoke run with `format=mixed` and target-speech ASR.
+
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html
@@ -54,6 +58,7 @@ Local KIT target-audio and raw captures:
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_upload_smoke/kit_extractor_diagnosis.json
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_config_smoke_60s_chunk1920/
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_speed15_60s_chunk1920/mixed_high_quality_no_post/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/full_first60_target_asr/speed1p5/
 ```
 
 ## Seed AST Full Chunk/Speed Compare
@@ -124,6 +129,7 @@ The corresponding JSON/HTML metadata tracked in Git is under:
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_speed1
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15
 projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr
 projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_enzh_full_chunks

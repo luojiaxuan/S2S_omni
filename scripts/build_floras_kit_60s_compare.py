@@ -64,6 +64,31 @@ def run_speed_factor() -> float:
     return float(RUN_ID.rsplit(marker, 1)[1])
 
 
+def speed_display() -> str:
+    return f"{run_speed_factor():g}"
+
+
+def is_speed(value: float) -> bool:
+    return abs(run_speed_factor() - value) < 1e-9
+
+
+def speed_path_label() -> str:
+    return f"speed{speed_display().replace('.', 'p')}"
+
+
+def backend_to_model(backend: str) -> str:
+    return {
+        "kit_lecture_translator": "kit",
+        "seed_ast": "seed",
+    }.get(backend, backend)
+
+
+def chunk_display(chunk_ms: int | None) -> str:
+    if chunk_ms is None:
+        return "n/a"
+    return f"{float(chunk_ms) / 1000.0:.2f}s"
+
+
 def cer(reference: str, candidate: str) -> float | None:
     ref = list("".join((reference or "").split()))
     hyp = list("".join((candidate or "").split()))
@@ -173,6 +198,15 @@ def compute_text_metrics(candidate: str, reference: str) -> dict[str, Any]:
     return out
 
 
+def assert_target_asr_metadata(row: dict[str, Any], path: Path, *, require_source: bool = True) -> None:
+    source = row.get("candidate_text_source")
+    if require_source and source != "target_speech_asr_gpt4o_mini_transcribe":
+        raise ValueError(f"{path} candidate_text_source is {source!r}, expected target speech ASR")
+    asr_model = row.get("asr_model")
+    if asr_model is not None and asr_model != "gpt-4o-mini-transcribe":
+        raise ValueError(f"{path} asr_model is {asr_model!r}, expected gpt-4o-mini-transcribe")
+
+
 def metric_row(
     *,
     label: str,
@@ -184,8 +218,12 @@ def metric_row(
     comparison_scope: str,
     note: str,
     base: dict[str, Any] | None = None,
+    display_variant: str | None = None,
 ) -> dict[str, Any]:
     row = dict(base or {})
+    model = backend_to_model(backend)
+    chunk_label = chunk_display(chunk_ms)
+    variant = display_variant or label
     row.update(compute_text_metrics(candidate, reference))
     row.update(
         {
@@ -198,6 +236,11 @@ def metric_row(
             "candidate_text_source": source,
             "comparison_scope": comparison_scope,
             "note": note,
+            "display_speed": speed_display(),
+            "display_model": model,
+            "display_chunk": chunk_label,
+            "display_variant": variant,
+            "display_label": f"speed={speed_display()} / model={model} / chunk={chunk_label} / {variant}",
             "candidate_text": candidate,
             "hypothesis_text": candidate,
             "reference_text": reference,
@@ -215,6 +258,7 @@ def metrics_file_row(
     chunk_ms: int,
     reference: str,
     note: str,
+    display_variant: str,
 ) -> dict[str, Any]:
     eval_dir = source_root / rel_dir
     metrics_path = eval_dir / "metrics.jsonl"
@@ -267,6 +311,74 @@ def metrics_file_row(
         comparison_scope="exact_60s_source_clip",
         note=note,
         base=base,
+        display_variant=display_variant,
+    )
+
+
+def full_first60_asr_row(
+    *,
+    source_root: Path,
+    label: str,
+    asr_dir_label: str,
+    backend: str,
+    chunk_ms: int,
+    reference: str,
+) -> dict[str, Any]:
+    row_dir = source_root / "full_first60_target_asr" / speed_path_label() / asr_dir_label
+    asr_path = row_dir / "asr_gpt4o_mini.json"
+    data = read_json(asr_path)
+    if str(data.get("run_id") or "") != RUN_ID:
+        raise ValueError(f"{asr_path} run_id is {data.get('run_id')}, expected {RUN_ID}")
+    if data.get("chunk_ms") != chunk_ms:
+        raise ValueError(f"{asr_path} chunk_ms is {data.get('chunk_ms')}, expected {chunk_ms}")
+    if data.get("asr_model") != "gpt-4o-mini-transcribe":
+        raise ValueError(f"{asr_path} asr_model is {data.get('asr_model')!r}, expected gpt-4o-mini-transcribe")
+    target_wav = str(data.get("target_first60_wav") or row_dir / "target_first60.wav")
+    duration = wav_duration_s(target_wav)
+    if duration is None:
+        raise ValueError(f"{asr_path} target_first60_wav is missing or unreadable: {target_wav}")
+    if abs(duration - 60.0) > 0.05:
+        raise ValueError(f"{asr_path} target_first60_wav duration is {duration:.6f}s, expected 60.0s")
+    full_target_wav = str(data.get("source_full_target_wav") or "")
+    if not full_target_wav or not Path(full_target_wav).exists():
+        raise ValueError(f"{asr_path} source_full_target_wav is missing or unreadable: {full_target_wav}")
+    run_dir = source_root / "eval_real_60s" / RUN_ID
+    coverage_path = assert_same_reference(run_dir, reference)
+    source_stream = first_existing(
+        [
+            run_dir / "source_stream_24k.wav",
+            run_dir / "source_stream_16k.wav",
+            run_dir / "source_eval.wav",
+        ]
+    )
+    source_stream_duration = wav_duration_s(source_stream) or (60.0 / run_speed_factor())
+    base: dict[str, Any] = {
+        "source_eval_duration_s": 60.0,
+        "source_stream_duration_s": round(source_stream_duration, 6),
+        "source_stream_audio_path": source_stream,
+        "generated_audio_path": target_wav,
+        "full_generated_audio_path": full_target_wav,
+        "target_audio_crop_start_s": 0.0,
+        "target_audio_crop_duration_s": duration,
+        "reference_source_path": coverage_path,
+        "reference_validation": "scored_against_eval_real_60s_reference_text",
+        "valid_for_main_s2s_target_audio": True,
+    }
+    base["generated_duration_s"] = round(duration, 6)
+    return metric_row(
+        label=label,
+        backend=backend,
+        chunk_ms=chunk_ms,
+        source="full_run_target_wav_first60s_asr_gpt4o_mini_transcribe",
+        candidate=str(data.get("asr_text") or ""),
+        reference=reference,
+        comparison_scope="full_run_target_wav_first60s",
+        note=(
+            "Existing full-run generated target wav was cropped to its first 60s and re-transcribed; "
+            "this is not a fresh exact-60s source replay."
+        ),
+        base=base,
+        display_variant="full-run-target-wav-first60-asr",
     )
 
 
@@ -285,7 +397,7 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
         "source_stream_audio_path": source_audio,
     }
     rows = []
-    if RUN_ID.endswith("__speed_1"):
+    if is_speed(1.0):
         diagnosis = read_json(source_root / "kit_upload_smoke" / "kit_extractor_diagnosis.json")
         fast_run = read_json(source_root / "kit_upload_smoke" / "kit_live_enzh_run.json")
         realtime_run = read_json(source_root / "kit_upload_smoke" / "kit_live_enzh_realtime_run.json")
@@ -313,6 +425,7 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
                     comparison_scope="debug_text_only_exact_60s_source_clip",
                     note=note,
                     base=base,
+                    display_variant="debug-web-tts-text",
                 )
             )
 
@@ -329,6 +442,9 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
                 continue
             if str(row.get("run_id") or "en-zh_mono_asr_test__0__speed_1") != RUN_ID:
                 continue
+            assert_target_asr_metadata(row, target_asr_metrics)
+            if str(row.get("reference_text") or "") != reference:
+                raise ValueError(f"{target_asr_metrics} reference_text mismatch for {config}")
             audio_path = str(row.get("target_audio_path") or "")
             duration = wav_duration_s(audio_path)
             base = dict(common)
@@ -363,6 +479,7 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
                     comparison_scope=scope,
                     note=note,
                     base=base,
+                    display_variant=f"{config.replace('_no_post', '').replace('_', '-')}-target-asr",
                 )
             )
 
@@ -372,8 +489,11 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
         / "online_high_quality_en_only_no_summarization"
         / "compare_online_en_only_vs_prior_metrics.json"
     )
-    if en_only_metrics.exists() and RUN_ID.endswith("__speed_1"):
+    if en_only_metrics.exists() and is_speed(1.0):
         row = read_json(en_only_metrics)["new_row"]
+        assert_target_asr_metadata(row, en_only_metrics)
+        if str(row.get("reference_text") or "") != reference:
+            raise ValueError(f"{en_only_metrics} reference_text mismatch")
         audio_path = str(row.get("target_audio_path") or "")
         base = dict(common)
         base.update(
@@ -405,6 +525,7 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
                     "audioLanguage=zh, ttsQualityMode=high_quality."
                 ),
                 base=base,
+                display_variant="online-high-quality-enonly-target-asr",
             )
         )
     speed15_metrics = (
@@ -416,6 +537,9 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
     if speed15_metrics.exists():
         row = read_json(speed15_metrics)
         if str(row.get("run_id") or "") == RUN_ID:
+            assert_target_asr_metadata(row, speed15_metrics)
+            if str(row.get("reference_text") or "") != reference:
+                raise ValueError(f"{speed15_metrics} reference_text mismatch")
             audio_path = str(row.get("target_audio_path") or row.get("generated_audio_path") or "")
             source_path = str(row.get("source_stream_audio_path") or "")
             base = dict(common)
@@ -451,6 +575,7 @@ def load_kit_rows(source_root: Path, reference: str) -> list[dict[str, Any]]:
                         "to 1.5x; score uses target speech ASR."
                     ),
                     base=base,
+                    display_variant="mixed-high-quality-target-asr",
                 )
             )
     return rows
@@ -513,6 +638,7 @@ def seed_proxy_row(
         comparison_scope="proxy_prefix_from_full_1072s_seed_run",
         note="Proxy only: Seed was not rerun on the 60s clip; prefix was cut by CJK reference unit count with punctuation kept.",
         base=base,
+        display_variant="full-run-prefix-proxy",
     )
 
 
@@ -568,12 +694,12 @@ def sort_key(row: dict[str, Any]) -> tuple[int, int, str]:
     backend_order = {
         "chatgpt": 0,
         "gemini": 1,
-        "kit_lecture_translator": 2,
-        "seed_ast": 3,
+        "seed_ast": 2,
+        "kit_lecture_translator": 3,
     }
     return (
-        int(row.get("compare_chunk_ms") or 999999),
         backend_order.get(str(row.get("compare_backend")), 99),
+        int(row.get("compare_chunk_ms") or 999999),
         str(row.get("eval_label")),
     )
 
@@ -581,15 +707,12 @@ def sort_key(row: dict[str, Any]) -> tuple[int, int, str]:
 def render_table(rows: list[dict[str, Any]], out_dir: Path) -> str:
     table_rows = []
     for row in sorted(rows, key=sort_key):
-        backend = row.get("compare_backend")
-        chunk = row.get("compare_chunk_ms")
-        chunk_label = "" if chunk is None else f"{float(chunk) / 1000.0:.2f}s"
-        label = str(row.get("eval_label") or backend)
         table_rows.append(
             "<tr>"
-            f"<td>{esc(label)}</td>"
-            f"<td>{esc(backend)}</td>"
-            f"<td>{esc(chunk_label)}</td>"
+            f"<td>{esc(row.get('display_speed') or speed_display())}</td>"
+            f"<td>{esc(row.get('display_model') or backend_to_model(str(row.get('compare_backend') or '')))}</td>"
+            f"<td>{esc(row.get('display_chunk') or chunk_display(row.get('compare_chunk_ms')))}</td>"
+            f"<td>{esc(row.get('display_variant') or row.get('eval_label'))}</td>"
             f"<td>{esc(row.get('comparison_scope'))}</td>"
             f"<td>{num(row.get('bleu_default_tokenizer'))}</td>"
             f"<td>{num(row.get('bleu'))}</td>"
@@ -613,7 +736,7 @@ def render_table(rows: list[dict[str, Any]], out_dir: Path) -> str:
 def render_details(rows: list[dict[str, Any]]) -> str:
     detail_rows = []
     for row in sorted(rows, key=sort_key):
-        label = str(row.get("eval_label") or row.get("compare_backend"))
+        label = str(row.get("display_label") or row.get("eval_label") or row.get("compare_backend"))
         detail_rows.append(
             f"<details><summary>{esc(label)} · BLEU {num(row.get('bleu'))} · chrF {num(row.get('chrf'))}</summary>"
             f"<div class=\"textgrid\"><div><h3>Hypothesis</h3><pre>{esc(row.get('hypothesis_text'))}</pre></div>"
@@ -646,12 +769,28 @@ Rows here are not main emitted target-speech metrics. KIT web-event TTS text is 
 </p>
 <table>
 <thead><tr>
-<th>label</th><th>backend</th><th>chunk</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
 <th>source s</th><th>target s</th><th>duration lag</th><th>wall delay</th><th>max backlog</th>
 <th>text source</th><th>detail</th><th>source audio</th><th>target audio</th><th>note</th>
 </tr></thead>
 <tbody>
 {render_table(debug_rows, out_dir)}
+</tbody>
+</table>
+"""
+    proxy_section = ""
+    if proxy_rows:
+        proxy_section = f"""
+<h2>Seed Proxy Rows</h2>
+<p class="meta">These rows are not exact 60s reruns; they are full-run target-speech ASR prefixes cut by the 60s reference CJK unit count.</p>
+<table>
+<thead><tr>
+<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>source s</th><th>target s</th><th>duration lag</th><th>wall delay</th><th>max backlog</th>
+<th>text source</th><th>detail</th><th>source audio</th><th>target audio</th><th>note</th>
+</tr></thead>
+<tbody>
+{render_table(proxy_rows, out_dir)}
 </tbody>
 </table>
 """
@@ -672,12 +811,13 @@ h3{{font-size:13px;margin:0 0 6px}}@media(max-width:900px){{.textgrid{{grid-temp
 Hypothesis/reference strings are stored and displayed with punctuation preserved. CER ignores whitespace only and keeps punctuation.
 Main KIT rows use retrieved target speech scored through gpt-4o-mini-transcribe, including `format=mixed` rows when the hypothesis comes from emitted audio.
 KIT text-only rows are separated as debug rows.
-Seed rows are marked as proxy prefixes from full 1072s runs.
+Rows with scope=full_run_target_wav_first60s use the first 60s cropped from existing full-run generated target wavs and re-transcribed.
+Seed prefix rows, when present, are marked as proxy prefixes from full 1072s runs.
 </p>
-<h2>Main Exact 60s Measurements</h2>
+<h2>Main Target-Audio Measurements</h2>
 <table>
 <thead><tr>
-<th>label</th><th>backend</th><th>chunk</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>speed</th><th>model</th><th>chunk</th><th>variant</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
 <th>source s</th><th>target s</th><th>duration lag</th><th>wall delay</th><th>max backlog</th>
 <th>text source</th><th>detail</th><th>source audio</th><th>target audio</th><th>note</th>
 </tr></thead>
@@ -686,19 +826,8 @@ Seed rows are marked as proxy prefixes from full 1072s runs.
 </tbody>
 </table>
 {debug_section}
-<h2>Seed Proxy Rows</h2>
-<p class="meta">These rows are not exact 60s reruns; they are full-run target-speech ASR prefixes cut by the 60s reference CJK unit count.</p>
-<table>
-<thead><tr>
-<th>label</th><th>backend</th><th>chunk</th><th>scope</th><th>BLEU default</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
-<th>source s</th><th>target s</th><th>duration lag</th><th>wall delay</th><th>max backlog</th>
-<th>text source</th><th>detail</th><th>source audio</th><th>target audio</th><th>note</th>
-</tr></thead>
-<tbody>
-{render_table(proxy_rows, out_dir)}
-</tbody>
-</table>
-<h2>Hypothesis / Reference</h2>
+{proxy_section}
+<h2>Raw Hypothesis / Reference Text</h2>
 {render_details(rows)}
 """
 
@@ -714,63 +843,122 @@ def main() -> None:
     out_dir = project_dir / "artifacts" / args.output_name
     out_dir.mkdir(parents=True, exist_ok=True)
     reference = load_reference(source_root)
-    rows = [
-        metrics_file_row(
-            source_root=source_root,
-            rel_dir="eval_real_60s",
-            label="chatgpt_default_60s_asr",
-            backend="chatgpt",
-            chunk_ms=960,
-            reference=reference,
-            note="OpenAI Realtime 60s smoke result; BLEU recomputed with zh tokenizer over raw text.",
-        ),
-        metrics_file_row(
-            source_root=source_root,
-            rel_dir="openai_eval_enzh_60s_chunk1920_asr",
-            label="chatgpt_chunk1920_60s_asr",
-            backend="chatgpt",
-            chunk_ms=1920,
-            reference=reference,
-            note="OpenAI Realtime 60s chunk1920 result; BLEU recomputed with zh tokenizer over raw text.",
-        ),
-        metrics_file_row(
-            source_root=source_root,
-            rel_dir="gemini_eval_enzh_60s_trim_asr",
-            label="gemini_default_60s_asr",
-            backend="gemini",
-            chunk_ms=960,
-            reference=reference,
-            note="Gemini Live 60s trimmed result; BLEU recomputed with zh tokenizer over raw text.",
-        ),
-        metrics_file_row(
-            source_root=source_root,
-            rel_dir="gemini_eval_enzh_60s_chunk1920_trim_asr",
-            label="gemini_chunk1920_60s_asr",
-            backend="gemini",
-            chunk_ms=1920,
-            reference=reference,
-            note="Gemini Live 60s chunk1920 trimmed result; BLEU recomputed with zh tokenizer over raw text.",
-        ),
-    ]
-    rows.extend(load_kit_rows(source_root, reference))
-    rows.extend(
-        [
-            seed_proxy_row(
-                project_dir=project_dir,
-                seed_rel_dir="seed_ast_chunk960_gpt4o_mini_asr",
-                label="seed_ast_chunk960_prefix_proxy",
+    full_first60_root = source_root / "full_first60_target_asr" / speed_path_label()
+    use_full_first60 = is_speed(1.5) and full_first60_root.exists()
+    if use_full_first60:
+        rows = [
+            full_first60_asr_row(
+                source_root=source_root,
+                label="chatgpt_chunk960_speed1p5_full_target_first60_asr",
+                asr_dir_label="chatgpt_chunk960_full_wav_first60s",
+                backend="chatgpt",
                 chunk_ms=960,
                 reference=reference,
             ),
-            seed_proxy_row(
-                project_dir=project_dir,
-                seed_rel_dir="seed_ast_chunk1920_gpt4o_mini_asr",
-                label="seed_ast_chunk1920_prefix_proxy",
+            full_first60_asr_row(
+                source_root=source_root,
+                label="chatgpt_chunk1920_speed1p5_full_target_first60_asr",
+                asr_dir_label="chatgpt_chunk1920_full_wav_first60s",
+                backend="chatgpt",
+                chunk_ms=1920,
+                reference=reference,
+            ),
+            full_first60_asr_row(
+                source_root=source_root,
+                label="gemini_chunk960_speed1p5_full_target_first60_asr",
+                asr_dir_label="gemini_chunk960_full_wav_first60s",
+                backend="gemini",
+                chunk_ms=960,
+                reference=reference,
+            ),
+            full_first60_asr_row(
+                source_root=source_root,
+                label="gemini_chunk1920_speed1p5_full_target_first60_asr",
+                asr_dir_label="gemini_chunk1920_full_wav_first60s",
+                backend="gemini",
+                chunk_ms=1920,
+                reference=reference,
+            ),
+            full_first60_asr_row(
+                source_root=source_root,
+                label="seed_chunk960_speed1p5_full_target_first60_asr",
+                asr_dir_label="seed_chunk960_full_wav_first60s",
+                backend="seed_ast",
+                chunk_ms=960,
+                reference=reference,
+            ),
+            full_first60_asr_row(
+                source_root=source_root,
+                label="seed_chunk1920_speed1p5_full_target_first60_asr",
+                asr_dir_label="seed_chunk1920_full_wav_first60s",
+                backend="seed_ast",
                 chunk_ms=1920,
                 reference=reference,
             ),
         ]
-    )
+    else:
+        rows = [
+            metrics_file_row(
+                source_root=source_root,
+                rel_dir="eval_real_60s",
+                label="chatgpt_default_60s_asr",
+                backend="chatgpt",
+                chunk_ms=960,
+                reference=reference,
+                note="OpenAI Realtime 60s smoke result; BLEU recomputed with zh tokenizer over raw text.",
+                display_variant="60s-smoke-target-asr",
+            ),
+            metrics_file_row(
+                source_root=source_root,
+                rel_dir="openai_eval_enzh_60s_chunk1920_asr",
+                label="chatgpt_chunk1920_60s_asr",
+                backend="chatgpt",
+                chunk_ms=1920,
+                reference=reference,
+                note="OpenAI Realtime 60s chunk1920 result; BLEU recomputed with zh tokenizer over raw text.",
+                display_variant="60s-smoke-target-asr",
+            ),
+            metrics_file_row(
+                source_root=source_root,
+                rel_dir="gemini_eval_enzh_60s_trim_asr",
+                label="gemini_default_60s_asr",
+                backend="gemini",
+                chunk_ms=960,
+                reference=reference,
+                note="Gemini Live 60s trimmed result; BLEU recomputed with zh tokenizer over raw text.",
+                display_variant="60s-smoke-target-asr",
+            ),
+            metrics_file_row(
+                source_root=source_root,
+                rel_dir="gemini_eval_enzh_60s_chunk1920_trim_asr",
+                label="gemini_chunk1920_60s_asr",
+                backend="gemini",
+                chunk_ms=1920,
+                reference=reference,
+                note="Gemini Live 60s chunk1920 trimmed result; BLEU recomputed with zh tokenizer over raw text.",
+                display_variant="60s-smoke-target-asr",
+            ),
+        ]
+    rows.extend(load_kit_rows(source_root, reference))
+    if not use_full_first60:
+        rows.extend(
+            [
+                seed_proxy_row(
+                    project_dir=project_dir,
+                    seed_rel_dir="seed_ast_chunk960_gpt4o_mini_asr",
+                    label="seed_ast_chunk960_prefix_proxy",
+                    chunk_ms=960,
+                    reference=reference,
+                ),
+                seed_proxy_row(
+                    project_dir=project_dir,
+                    seed_rel_dir="seed_ast_chunk1920_gpt4o_mini_asr",
+                    label="seed_ast_chunk1920_prefix_proxy",
+                    chunk_ms=1920,
+                    reference=reference,
+                ),
+            ]
+        )
     sorted_rows = sorted(rows, key=sort_key)
     (out_dir / "compare_metrics.jsonl").write_text(
         "\n".join(json.dumps(row, ensure_ascii=False) for row in sorted_rows) + "\n",
@@ -786,6 +974,11 @@ def main() -> None:
         "rows": [
             {
                 "label": row["eval_label"],
+                "display_label": row.get("display_label"),
+                "speed": row.get("display_speed"),
+                "model": row.get("display_model"),
+                "chunk": row.get("display_chunk"),
+                "variant": row.get("display_variant"),
                 "backend": row["compare_backend"],
                 "chunk_ms": row["compare_chunk_ms"],
                 "scope": row["comparison_scope"],

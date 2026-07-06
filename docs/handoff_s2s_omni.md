@@ -216,6 +216,8 @@ projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_ful
 projects/floras_live_s2s_benchmark/artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html
 projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s/compare_metrics.jsonl
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/index.html
+projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_60s_speed15/compare_metrics.jsonl
 ```
 
 Large wav artifacts are local only:
@@ -370,14 +372,29 @@ kit_online_high_quality_enonly: BLEU 20.47, chrF 19.83, CER 0.767, target 69.95s
 The 2026-07-06 speed=1.5 KIT smoke reused the same 60s source content but sped
 source speech to a 40.03s stream. KIT used `format=mixed`,
 `ttsQualityMode=high_quality`, and 1.92s chunks; the hypothesis is target speech
-ASR, not KIT text.
+ASR, not KIT text. The companion speed=1.5 dashboard no longer uses the old
+GPT/Gemini 60s smoke rows or Seed prefix proxies. GPT/Gemini/Seed are loaded
+from existing full-run generated target wavs cropped to their first 60s and
+re-transcribed with `gpt-4o-mini-transcribe`. This makes the table a target-audio
+crop view rather than a fully source-aligned formal ranking; the crops can
+include content beyond the first-source-60s reference, so CER can exceed 1.0.
+Seed crop rows are especially sensitive to this windowing artifact and should
+not be read as a direct Seed translation-quality drop.
 
 ```text
-chatgpt_default_960ms_speed1.5:  BLEU 28.54, chrF 26.47, CER 0.671, target 70.20s
-gemini_default_960ms_speed1.5:   BLEU 24.09, chrF 23.92, CER 0.654, target 40.25s
-chatgpt_chunk1920_speed1.5:      BLEU 24.90, chrF 24.09, CER 0.675, target 69.80s
-gemini_chunk1920_speed1.5:       BLEU 27.71, chrF 28.13, CER 0.654, target 41.00s
-kit_mixed_high_quality_speed1.5: BLEU 23.26, chrF 21.49, CER 0.717, target 69.58s
+chatgpt chunk=0.96s full-run-target-wav-first60-asr: BLEU 18.25, chrF 22.99, CER 1.054, target crop 60.00s
+chatgpt chunk=1.92s full-run-target-wav-first60-asr: BLEU 18.74, chrF 25.43, CER 1.071, target crop 60.00s
+gemini  chunk=0.96s full-run-target-wav-first60-asr: BLEU 19.98, chrF 26.59, CER 1.083, target crop 60.00s
+gemini  chunk=1.92s full-run-target-wav-first60-asr: BLEU 20.05, chrF 18.62, CER 1.025, target crop 60.00s
+seed    chunk=0.96s full-run-target-wav-first60-asr: BLEU 15.76, chrF 23.29, CER 1.642, target crop 60.00s
+seed    chunk=1.92s full-run-target-wav-first60-asr: BLEU 15.36, chrF 25.36, CER 1.700, target crop 60.00s
+kit     chunk=1.92s mixed-high-quality-target-asr:    BLEU 23.26, chrF 21.49, CER 0.717, target 69.58s
+```
+
+Local-only full-run crop inputs live here:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/full_first60_target_asr/speed1p5/
 ```
 
 ### ACL6060 / Seed AST S2S Metrics Script
