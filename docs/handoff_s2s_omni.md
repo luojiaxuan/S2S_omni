@@ -285,21 +285,21 @@ linked PCM data and transcribed with `gpt-4o-mini-transcribe`; KIT web text is
 not used as the hypothesis.
 
 ```text
-kit bilingual/no-post chunk=0.96s speed=1.0: BLEU 18.32, chrF 19.30, CER 0.824, xCOMET 0.0397, MetricX-QE 9.101, target 959.17s, duration lag -113.46s, wall delay 191.25s, max backlog 259.38s
-kit bilingual/no-post chunk=1.92s speed=1.0: BLEU 18.37, chrF 19.12, CER 0.827, xCOMET 0.0284, MetricX-QE 8.277, target 952.45s, duration lag -120.18s, wall delay 132.20s, max backlog 239.36s
-kit bilingual/no-post chunk=0.96s speed=1.5: BLEU 18.92, chrF 19.82, CER 0.830, xCOMET 0.0781, MetricX-QE 10.323, target 838.85s, duration lag 123.75s, wall delay 197.61s, max backlog 71.62s
-kit bilingual/no-post chunk=1.92s speed=1.5: BLEU 18.90, chrF 19.24, CER 0.843, xCOMET 0.0389, MetricX-QE 8.075, target 669.55s, duration lag -45.55s, wall delay 166.02s, max backlog 201.45s
+kit bilingual/no-post chunk=0.96s speed=1.0: BLEU 18.32, chrF 19.30, CER 0.824, raw xCOMET 0.0685, MetricX-QE 9.343, target 959.17s, duration lag -113.46s, wall delay 191.25s, max backlog 259.38s
+kit bilingual/no-post chunk=1.92s speed=1.0: BLEU 18.37, chrF 19.12, CER 0.827, raw xCOMET 0.0579, MetricX-QE 8.468, target 952.45s, duration lag -120.18s, wall delay 132.20s, max backlog 239.36s
+kit bilingual/no-post chunk=0.96s speed=1.5: BLEU 18.92, chrF 19.82, CER 0.830, raw xCOMET 0.1632, MetricX-QE 11.891, target 838.85s, duration lag 123.75s, wall delay 197.61s, max backlog 71.62s
+kit bilingual/no-post chunk=1.92s speed=1.5: BLEU 18.90, chrF 19.24, CER 0.843, raw xCOMET 0.0665, MetricX-QE 9.808, target 669.55s, duration lag -45.55s, wall delay 166.02s, max backlog 201.45s
 ```
 
 The corrected full run did not reproduce the earlier 60s KIT smoke advantage;
 inspect the dashboard detail text and local audio before treating KIT as
 competitive on the full sample. xCOMET/MetricX QE has been rerun for all 16
-full-dashboard rows. The current xCOMET-lite path is diagnostic/uncalibrated:
-segment scores include negative values and system aggregates sit around
-0.02-0.08, so these are not normal calibrated 0-1 xCOMET quality scores. Treat
-MetricX-QE as the more interpretable QE column for now, and treat both QE
-columns as single-sample, proportional-chunk diagnostics rather than final
-ranking evidence.
+full-dashboard rows using short proportional chunks: 220 source chars and 160
+hypothesis chars per segment by default, 63 segments per full row. xCOMET-QE is
+the raw no-reference xCOMET-lite score, not an artificially rescaled value. The
+source-vs-GPT-reference short-segment anchor scored 0.351 weighted mean with no
+negative segments; use that as a scale sanity check, not as a normalization
+constant.
 
 Local-only KIT full-run staging for the corrected bilingual/no-post rows:
 
@@ -886,8 +886,7 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
 
    The corrected bilingual/no-post full KIT run is now in the main dashboard
    for both 0.96s and 1.92s chunks, and xCOMET/MetricX QE has been refreshed
-   for all 16 full rows. The current xCOMET-lite values are uncalibrated
-   diagnostics rather than normal calibrated xCOMET scores. Follow-up
+   for all 16 full rows using short proportional chunks. Follow-up
    work should inspect why the 60s smoke advantage disappeared on the full wav
    and compare remaining product settings such as profile, postproduction,
    shortening, smart chaptering, and pause/mute behavior. The source-language
@@ -901,8 +900,7 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
    semantic quality, BLEU/chrF/CER are pseudo-reference-based and useful but
    insufficient. The full-wav dashboards now also include reference-free
    xCOMET-lite QE and MetricX-24 QE over source transcript plus target-speech
-   ASR hypothesis. xCOMET-lite currently appears miscalibrated and should be
-   treated as diagnostic-only until fixed. QE uses proportional text chunks as an approximate
+   ASR hypothesis. QE uses short proportional text chunks as an approximate
    document-level workaround for model context limits, not strict time or
    sentence alignment. Use human listening and LLM-as-judge for missed or
    compressed sentence judgments.

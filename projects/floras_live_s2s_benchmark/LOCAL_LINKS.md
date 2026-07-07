@@ -39,9 +39,10 @@ This dashboard contains the aligned full-wav comparison on the selected
 1072.63s FLORAS EN->ZH sample. GPT/Gemini/Seed use valid full-run
 target-speech-ASR evals. The current KIT rows use the corrected bilingual
 no-post setup: repeated `language=zh&language=en`, `mtLanguage=zh`,
-`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, 0.96s/1.92s input
-chunks, and target-speech ASR. The new KIT rows have BLEU/chrF/CER and audio
-detail plus refreshed xCOMET/MetricX QE for all 16 full-dashboard rows.
+`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`,
+0.96s/1.92s input chunks, and target-speech ASR. The new KIT rows have
+BLEU/chrF/CER and audio detail plus refreshed short-segment xCOMET/MetricX QE
+for all 16 full-dashboard rows.
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
@@ -73,6 +74,8 @@ Reference-free QE JSONL artifacts:
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_segments.jsonl
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_xcomet_qe_segments.jsonl
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_metricx_qe_segments.jsonl
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/qe/floras_xcomet_ref_anchor_short_segments.jsonl
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/qe/floras_xcomet_ref_anchor_short_scores.jsonl
 ```
 
 The 2026-07-06 QE model execution used Taurus staging under:

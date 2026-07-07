@@ -238,14 +238,14 @@ audio{{width:220px}}.meta{{color:#667085;margin:8px 0 16px}}
 <div class="meta">
 {len(rows)} runs · source audio is the selected source clip · target audio is backend output
 <br>duration lag = target audio duration - source stream duration · wall delay = simulated target playback end wall-clock - source stream end · max backlog = max window-level emitted-target deficit
-<br>QE columns are reference-free source+hypothesis scores over proportional text chunks; xCOMET-QE and MetricX-QE are higher-is-better, while MetricX err is lower-is-better.
+<br>QE columns are reference-free source+hypothesis scores over short proportional text chunks; xCOMET-QE is the raw xCOMET-lite no-reference score without artificial rescaling, MetricX-QE is higher-is-better, and MetricX err is lower-is-better.
 </div>
 <table>
 <thead>
 <tr>
 <th>run</th><th>backend</th><th>chunk</th><th>speed</th><th>stream s</th>
 <th>target s</th><th>RTF</th><th>duration lag</th><th>wall delay</th><th>max backlog</th><th>max queue</th>
-<th>xCOMET-QE ↑</th><th>MetricX-QE ↑</th><th>MetricX err ↓</th>
+<th>xCOMET-QE raw ↑</th><th>MetricX-QE ↑</th><th>MetricX err ↓</th>
 <th>BLEU</th><th>chrF</th><th>CER</th><th>detail</th><th>streamed source</th><th>target</th>
 </tr>
 </thead>

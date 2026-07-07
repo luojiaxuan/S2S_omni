@@ -25,8 +25,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--compare-metrics", required=True)
     parser.add_argument("--output-segments", required=True)
     parser.add_argument("--output-runs", required=True)
-    parser.add_argument("--max-source-chars", type=int, default=900)
-    parser.add_argument("--max-hypothesis-chars", type=int, default=700)
+    parser.add_argument("--max-source-chars", type=int, default=220)
+    parser.add_argument("--max-hypothesis-chars", type=int, default=160)
     return parser.parse_args()
 
 
@@ -106,7 +106,7 @@ def main() -> None:
                 "source_chars": len(source_text),
                 "hypothesis_chars": len(hypothesis_text),
                 "qe_segment_count": parts,
-                "qe_segmentation": "proportional_text_chunks",
+                "qe_segmentation": "short_proportional_text_chunks",
                 "qe_max_source_chars": args.max_source_chars,
                 "qe_max_hypothesis_chars": args.max_hypothesis_chars,
             }

@@ -12,15 +12,15 @@
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html",
-      "bytes": 314716
+      "bytes": 314707
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl",
-      "bytes": 344651
+      "bytes": 344753
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/summary.json",
-      "bytes": 26811
+      "bytes": 26913
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html",
@@ -320,23 +320,31 @@
     },
     {
       "path": "artifacts/qe/full_enzh_qe_segments.jsonl",
-      "bytes": 445079
+      "bytes": 749993
     },
     {
       "path": "artifacts/qe/full_enzh_qe_runs.jsonl",
-      "bytes": 6960
+      "bytes": 7056
     },
     {
       "path": "artifacts/qe/full_enzh_xcomet_qe_segments.jsonl",
-      "bytes": 89182
+      "bytes": 350614
     },
     {
       "path": "artifacts/qe/full_enzh_metricx_qe_segments.jsonl",
-      "bytes": 481576
+      "bytes": 893843
     },
     {
       "path": "artifacts/qe/full_enzh_qe_scores.jsonl",
-      "bytes": 12252
+      "bytes": 12354
+    },
+    {
+      "path": "artifacts/qe/floras_xcomet_ref_anchor_short_segments.jsonl",
+      "bytes": 35936
+    },
+    {
+      "path": "artifacts/qe/floras_xcomet_ref_anchor_short_scores.jsonl",
+      "bytes": 16427
     }
   ],
   "large_audio_policy": "Audio and per-window wav files are not checked into Git; use source_dir or regenerate.",

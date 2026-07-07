@@ -64,7 +64,7 @@ def main() -> None:
         row = dict(run)
         row["qe_reference_free"] = True
         row["qe_inputs"] = "source_transcript+hypothesis_asr"
-        row["qe_segmentation"] = "proportional_text_chunks"
+        row["qe_segmentation"] = run.get("qe_segmentation") or "proportional_text_chunks"
         row["qe_segment_count"] = len(grouped.get(key, []))
         x_values: list[tuple[float, float]] = []
         m_values: list[tuple[float, float]] = []

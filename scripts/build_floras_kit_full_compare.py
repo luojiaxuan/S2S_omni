@@ -325,13 +325,13 @@ Observed text sources: {esc(metric_rows_text_sources(rows))}.
 </p>
 <p class="meta">
 Timing metrics are read from each eval run's audio chunk timeline. KIT timing uses retrieved <code>tts:0</code> target-audio chunk arrival times, then the same FLORAS evaluator computes duration lag, wall delay, backlog, and playback queue.
-QE columns are reference-free source+hypothesis scores over proportional text chunks. MetricX-QE is reported as higher-is-better, while MetricX err is lower-is-better. The current xCOMET-lite values are diagnostic/uncalibrated rather than calibrated 0-1 xCOMET scores; use them only for within-run inspection until the xCOMET inference path is fixed.
+QE columns are reference-free source+hypothesis scores over short proportional text chunks. xCOMET-QE is the raw xCOMET-lite no-reference score without artificial rescaling; a source-vs-GPT-reference short-segment anchor scored 0.351 weighted mean. MetricX-QE is reported as higher-is-better, while MetricX err is lower-is-better.
 The current QE score file covers all rows in this dashboard; rebuild with <code>--require-qe</code> to catch missing or stale QE rows.
 </p>
 <table>
 <thead><tr>
 <th>speed</th><th>model</th><th>chunk</th><th>variant</th>
-<th>xCOMET-QE ↑</th><th>MetricX-QE ↑</th><th>MetricX err ↓</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
+<th>xCOMET-QE raw ↑</th><th>MetricX-QE ↑</th><th>MetricX err ↓</th><th>BLEU zh</th><th>chrF</th><th>CER</th>
 <th>stream s</th><th>target s</th><th>RTF</th><th>duration lag</th><th>wall delay</th><th>max backlog</th><th>max queue</th>
 <th>text source</th><th>detail</th><th>source audio</th><th>target audio</th>
 </tr></thead>
