@@ -31,6 +31,8 @@ segmentation uses 220 source chars and 160 hypothesis chars per segment by
 default, producing 63 segments per full row. The source-vs-GPT-reference
 xCOMET sanity anchor scored 0.351 weighted mean with no negative segments. The
 dashboard keeps raw xCOMET scores and does not normalize by that anchor.
+System-row xCOMET segments still include negative values, so this is not a
+calibrated 0-1 quality score.
 
 The KIT rows in the full table are corrected bilingual no-post runs using
 repeated `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
@@ -59,8 +61,9 @@ chunks, KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with raw xCOMET 0.0579 /
 MetricX-QE 8.468 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
 raw xCOMET 0.0665 / MetricX-QE 9.808 at speed=1.5. The earlier 60s smoke
 advantage still did not carry over to the full wav. The 0.96s rows are higher
-on the current short-segment QE columns, especially at speed=1.5, but this is
-a single-sample result and BLEU/CER do not show a clear quality win.
+on the current short-segment QE columns, especially at speed=1.5, but this may
+be a proportional-alignment artifact. This is a single-sample result and
+BLEU/CER do not show a clear quality win.
 
 The older only-en full rows scored BLEU 18.29 at speed=1.0 and BLEU 17.46 at
 speed=1.5; keep them only as local historical diagnostics.

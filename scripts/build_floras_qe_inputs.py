@@ -25,6 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--compare-metrics", required=True)
     parser.add_argument("--output-segments", required=True)
     parser.add_argument("--output-runs", required=True)
+    parser.add_argument("--output-reference-anchor-segments", default="")
     parser.add_argument("--max-source-chars", type=int, default=220)
     parser.add_argument("--max-hypothesis-chars", type=int, default=160)
     return parser.parse_args()
@@ -64,6 +65,46 @@ def segment_count(source_text: str, hypothesis_text: str, max_source_chars: int,
     return max(1, source_parts, hypothesis_parts)
 
 
+def make_segment_rows(
+    *,
+    key: str,
+    run_id: str,
+    model: str,
+    chunk_ms: int | None,
+    eval_label: Any,
+    speed_factor: Any,
+    source_text: str,
+    hypothesis_text: str,
+    max_source_chars: int,
+    max_hypothesis_chars: int,
+) -> list[dict[str, Any]]:
+    parts = segment_count(source_text, hypothesis_text, max_source_chars, max_hypothesis_chars)
+    source_chunks = split_text(source_text, parts)
+    hypothesis_chunks = split_text(hypothesis_text, parts)
+    if len(source_chunks) != parts or len(hypothesis_chunks) != parts:
+        raise SystemExit(f"bad segmentation for {key}: {len(source_chunks)} vs {len(hypothesis_chunks)}")
+    rows: list[dict[str, Any]] = []
+    for idx, (source_chunk, hypothesis_chunk) in enumerate(zip(source_chunks, hypothesis_chunks)):
+        rows.append(
+            {
+                "qe_id": f"{key}||seg={idx:03d}",
+                "qe_row_key": key,
+                "run_id": run_id,
+                "model": model,
+                "chunk_ms": chunk_ms,
+                "eval_label": eval_label,
+                "speed_factor": speed_factor,
+                "segment_index": idx,
+                "segment_count": parts,
+                "source": source_chunk,
+                "hypothesis": hypothesis_chunk,
+                "reference": "",
+                "weight_chars": max(1, len(source_chunk) + len(hypothesis_chunk)),
+            }
+        )
+    return rows
+
+
 def main() -> None:
     args = parse_args()
     manifest_by_run: dict[str, dict[str, Any]] = {}
@@ -77,6 +118,7 @@ def main() -> None:
     seen: set[str] = set()
     run_rows: list[dict[str, Any]] = []
     segment_rows: list[dict[str, Any]] = []
+    reference_anchor_rows: list[dict[str, Any]] = []
     for row in read_jsonl(args.compare_metrics):
         key = row_key(row)
         if key in seen:
@@ -89,10 +131,6 @@ def main() -> None:
         if not source_text or not hypothesis_text:
             raise SystemExit(f"missing source or hypothesis for {key}")
         parts = segment_count(source_text, hypothesis_text, args.max_source_chars, args.max_hypothesis_chars)
-        source_chunks = split_text(source_text, parts)
-        hypothesis_chunks = split_text(hypothesis_text, parts)
-        if len(source_chunks) != parts or len(hypothesis_chunks) != parts:
-            raise SystemExit(f"bad segmentation for {key}: {len(source_chunks)} vs {len(hypothesis_chunks)}")
         run_rows.append(
             {
                 "qe_row_key": key,
@@ -111,27 +149,43 @@ def main() -> None:
                 "qe_max_hypothesis_chars": args.max_hypothesis_chars,
             }
         )
-        for idx, (source_chunk, hypothesis_chunk) in enumerate(zip(source_chunks, hypothesis_chunks)):
-            segment_rows.append(
-                {
-                    "qe_id": f"{key}||seg={idx:03d}",
-                    "qe_row_key": key,
-                    "run_id": run_id,
-                    "model": row_model(row),
-                    "chunk_ms": row_chunk_ms(row),
-                    "eval_label": row.get("eval_label"),
-                    "speed_factor": row.get("speed_factor"),
-                    "segment_index": idx,
-                    "segment_count": parts,
-                    "source": source_chunk,
-                    "hypothesis": hypothesis_chunk,
-                    "reference": "",
-                    "weight_chars": max(1, len(source_chunk) + len(hypothesis_chunk)),
-                }
+        segment_rows.extend(
+            make_segment_rows(
+                key=key,
+                run_id=run_id,
+                model=row_model(row),
+                chunk_ms=row_chunk_ms(row),
+                eval_label=row.get("eval_label"),
+                speed_factor=row.get("speed_factor"),
+                source_text=source_text,
+                hypothesis_text=hypothesis_text,
+                max_source_chars=args.max_source_chars,
+                max_hypothesis_chars=args.max_hypothesis_chars,
+            )
+        )
+        if args.output_reference_anchor_segments and not reference_anchor_rows:
+            reference_text = clean_text(row.get("reference_text"))
+            if not reference_text:
+                raise SystemExit(f"missing reference_text for reference anchor in {key}")
+            reference_anchor_rows = make_segment_rows(
+                key="ref_anchor_short",
+                run_id=run_id,
+                model="reference_anchor",
+                chunk_ms=None,
+                eval_label="gpt_reference_anchor",
+                speed_factor=row.get("speed_factor"),
+                source_text=source_text,
+                hypothesis_text=reference_text,
+                max_source_chars=args.max_source_chars,
+                max_hypothesis_chars=args.max_hypothesis_chars,
             )
     write_jsonl(args.output_runs, run_rows)
     write_jsonl(args.output_segments, segment_rows)
-    print(json.dumps({"runs": len(run_rows), "segments": len(segment_rows)}, ensure_ascii=False, indent=2))
+    result = {"runs": len(run_rows), "segments": len(segment_rows)}
+    if args.output_reference_anchor_segments:
+        write_jsonl(args.output_reference_anchor_segments, reference_anchor_rows)
+        result["reference_anchor_segments"] = len(reference_anchor_rows)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

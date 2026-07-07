@@ -50,7 +50,9 @@ for EN->ZH long-form streaming translation.
   QE file covers all 16 rows in the GPT/Gemini/Seed/KIT full dashboard.
   xCOMET-QE is the raw no-reference xCOMET-lite score without artificial
   rescaling; the source-vs-GPT-reference short-segment anchor scored 0.351
-  weighted mean with no negative segments.
+  weighted mean with no negative segments. System-row xCOMET segments still
+  include negative values, so do not read the raw xCOMET column as a calibrated
+  0-1 quality score.
 - `artifacts/qe/full_enzh_qe_segments.jsonl`,
   `artifacts/qe/full_enzh_xcomet_qe_segments.jsonl`, and
   `artifacts/qe/full_enzh_metricx_qe_segments.jsonl`: segment-level QE inputs
@@ -127,8 +129,9 @@ MetricX-QE 8.468 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
 raw xCOMET 0.0665 / MetricX-QE 9.808 at speed=1.5. The 60s smoke advantage did not
 carry over to the full wav; inspect the dashboard detail text and local audio
 before treating KIT as competitive on the full sample. The 0.96s rows are
-higher on the current short-segment QE columns, especially at speed=1.5, but
-this is a single-sample result and BLEU/CER do not show a clear quality win.
+numerically higher on the current short-segment QE columns, especially at
+speed=1.5, but this may be a proportional-alignment artifact; it is a
+single-sample result and BLEU/CER do not show a clear quality win.
 
 The earlier full-source mixed/high-quality KIT rows below are diagnostic only
 because the session creation used `language=en` rather than the bilingual KIT
@@ -178,7 +181,9 @@ debug data only.
   hypothesis only. The dashboard reports the raw no-reference score over short
   proportional text chunks and does not apply an artificial calibration curve.
   The source-vs-GPT-reference anchor scored 0.351 weighted mean, which is useful
-  for scale sanity but is not used to normalize system scores.
+  for scale sanity but is not used to normalize system scores. System-row
+  segment scores still include negatives after short segmentation, so this is
+  not a calibrated 0-1 quality score.
 - `MetricX-QE`: reference-free score derived from
   `google/metricx-24-hybrid-large-v2p6-bfloat16`, using source transcript plus
   target-speech ASR hypothesis only. The model's raw `MetricX err` is
@@ -232,11 +237,18 @@ python3 scripts/build_floras_qe_inputs.py \
   --manifest projects/floras_live_s2s_benchmark/artifacts/root_metadata/live_runs.jsonl \
   --compare-metrics projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl \
   --output-segments projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_segments.jsonl \
-  --output-runs projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_runs.jsonl
+  --output-runs projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_runs.jsonl \
+  --output-reference-anchor-segments projects/floras_live_s2s_benchmark/artifacts/qe/floras_xcomet_ref_anchor_short_segments.jsonl
 
 python3 scripts/run_floras_qe_xcomet.py \
   --input-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_qe_segments.jsonl \
   --output-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/full_enzh_xcomet_qe_segments.jsonl \
+  --model-name myyycroft/XCOMET-lite \
+  --xcomet-code-dir /path/to/xCOMET-lite
+
+python3 scripts/run_floras_qe_xcomet.py \
+  --input-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/floras_xcomet_ref_anchor_short_segments.jsonl \
+  --output-jsonl projects/floras_live_s2s_benchmark/artifacts/qe/floras_xcomet_ref_anchor_short_scores.jsonl \
   --model-name myyycroft/XCOMET-lite \
   --xcomet-code-dir /path/to/xCOMET-lite
 
@@ -296,5 +308,6 @@ The current full-source KIT rows are corrected bilingual/no-post runs:
 `ttsQualityMode=high_quality`, and target-speech ASR, now at both 0.96s and
 1.92s input chunks. The earlier 60s smoke advantage did not hold on the full
 wav. QE has been rerun for all 16 dashboard rows using short proportional
-segments; KIT 0.96s is higher than 1.92s on both QE columns, especially at
-speed=1.5, but BLEU remains around 18-19.
+segments; KIT 0.96s is numerically higher than 1.92s on both QE columns,
+especially at speed=1.5, but that may be an alignment artifact and BLEU remains
+around 18-19.

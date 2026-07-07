@@ -299,7 +299,8 @@ hypothesis chars per segment by default, 63 segments per full row. xCOMET-QE is
 the raw no-reference xCOMET-lite score, not an artificially rescaled value. The
 source-vs-GPT-reference short-segment anchor scored 0.351 weighted mean with no
 negative segments; use that as a scale sanity check, not as a normalization
-constant.
+constant. System-row xCOMET segments still include negative values, so do not
+treat the raw xCOMET column as a calibrated 0-1 quality score.
 
 Local-only KIT full-run staging for the corrected bilingual/no-post rows:
 

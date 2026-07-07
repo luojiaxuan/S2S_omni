@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.build_floras_qe_inputs import make_segment_rows
 from s2s_omni.floras_qe import attach_qe_scores, load_qe_scores, row_key
 
 
@@ -76,6 +77,25 @@ class FlorasQETest(unittest.TestCase):
         attached = attach_qe_scores(row, scores)
         self.assertEqual(attached["qe_hypothesis_chars_mismatch"]["expected"], 4)
         self.assertEqual(attached["qe_hypothesis_chars_mismatch"]["actual"], 12)
+
+    def test_reference_anchor_segment_builder(self) -> None:
+        rows = make_segment_rows(
+            key="ref_anchor_short",
+            run_id="run1",
+            model="reference_anchor",
+            chunk_ms=None,
+            eval_label="gpt_reference_anchor",
+            speed_factor=1.0,
+            source_text="one two three four five six",
+            hypothesis_text="一 二 三 四 五 六",
+            max_source_chars=8,
+            max_hypothesis_chars=4,
+        )
+        self.assertGreater(len(rows), 1)
+        self.assertEqual(rows[0]["qe_row_key"], "ref_anchor_short")
+        self.assertEqual(rows[0]["model"], "reference_anchor")
+        self.assertEqual(rows[0]["reference"], "")
+        self.assertEqual(rows[-1]["segment_count"], len(rows))
 
 
 if __name__ == "__main__":

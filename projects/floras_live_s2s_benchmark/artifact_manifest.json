@@ -12,7 +12,7 @@
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html",
-      "bytes": 314707
+      "bytes": 314848
     },
     {
       "path": "artifacts/compare_gpt_gemini_seed_kit_enzh_full/compare_metrics.jsonl",
@@ -340,7 +340,7 @@
     },
     {
       "path": "artifacts/qe/floras_xcomet_ref_anchor_short_segments.jsonl",
-      "bytes": 35936
+      "bytes": 45449
     },
     {
       "path": "artifacts/qe/floras_xcomet_ref_anchor_short_scores.jsonl",
