@@ -47,6 +47,9 @@ for EN->ZH long-form streaming translation.
   `google/metricx-24-hybrid-large-v2p6-bfloat16`. Inputs are source transcript
   plus target-speech ASR hypothesis, split into proportional text chunks. The
   current QE file covers all 16 rows in the GPT/Gemini/Seed/KIT full dashboard.
+  The current xCOMET-lite values are diagnostic/uncalibrated rather than
+  calibrated 0-1 xCOMET scores; do not use them as an absolute quality score
+  until the xCOMET inference path is fixed.
 - `artifacts/qe/full_enzh_qe_segments.jsonl`,
   `artifacts/qe/full_enzh_xcomet_qe_segments.jsonl`, and
   `artifacts/qe/full_enzh_metricx_qe_segments.jsonl`: segment-level QE inputs
@@ -119,7 +122,9 @@ KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with xCOMET 0.0284 /
 MetricX-QE 8.277 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
 xCOMET 0.0389 / MetricX-QE 8.075 at speed=1.5. The 60s smoke advantage did not
 carry over to the full wav; inspect the dashboard detail text and local audio
-before treating KIT as competitive on the full sample.
+before treating KIT as competitive on the full sample. The 0.96s rows are
+higher on the current diagnostic QE columns, especially at speed=1.5, but this
+is a single-sample result and BLEU/CER do not show a clear quality win.
 
 The earlier full-source mixed/high-quality KIT rows below are diagnostic only
 because the session creation used `language=en` rather than the bilingual KIT
@@ -166,7 +171,9 @@ debug data only.
   ASR transcript against the current GPT-generated target reference text.
 - `xCOMET-QE`: reference-free quality estimate from
   `myyycroft/XCOMET-lite`, using source transcript plus target-speech ASR
-  hypothesis only. Higher is better.
+  hypothesis only. The current run is diagnostic/uncalibrated: segment scores
+  include negative values and aggregates are near zero, so this should not be
+  read as a calibrated 0-1 xCOMET quality score.
 - `MetricX-QE`: reference-free score derived from
   `google/metricx-24-hybrid-large-v2p6-bfloat16`, using source transcript plus
   target-speech ASR hypothesis only. The model's raw `MetricX err` is
@@ -283,5 +290,6 @@ The current full-source KIT rows are corrected bilingual/no-post runs:
 `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
 `ttsQualityMode=high_quality`, and target-speech ASR, now at both 0.96s and
 1.92s input chunks. The earlier 60s smoke advantage did not hold on the full
-wav. QE has been rerun for all 16 dashboard rows; KIT 0.96s improves QE versus
-1.92s, especially at speed=1.5, but BLEU remains around 18-19.
+wav. QE has been rerun for all 16 dashboard rows. The current diagnostic QE
+columns are higher for KIT 0.96s than 1.92s, especially at speed=1.5, but
+xCOMET is uncalibrated here and BLEU remains around 18-19.

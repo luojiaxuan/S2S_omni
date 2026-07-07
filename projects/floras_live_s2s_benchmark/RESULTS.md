@@ -29,7 +29,10 @@ a 0-25 scale; `MetricX-QE` is reported as `25 - MetricX err` so higher is
 better in the dashboards. The proportional chunks are an approximate
 document-level workaround for model context limits, not sentence- or
 time-aligned segments; interpret QE cautiously for rows with large backlog,
-truncation, or strong compression.
+truncation, or strong compression. The current xCOMET-lite values are
+diagnostic/uncalibrated rather than calibrated 0-1 xCOMET scores, because
+segment values include negatives and aggregates are near zero; do not use them
+as absolute quality scores until the xCOMET inference path is fixed.
 
 The KIT rows in the full table are corrected bilingual no-post runs using
 repeated `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
@@ -57,8 +60,9 @@ At 0.96s chunks, KIT scored BLEU 18.32 / chrF 19.30 / CER 0.824 with xCOMET
 KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with xCOMET 0.0284 /
 MetricX-QE 8.277 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
 xCOMET 0.0389 / MetricX-QE 8.075 at speed=1.5. The earlier 60s smoke advantage
-still did not carry over to the full wav, but 0.96s improves KIT's QE scores,
-especially at speed=1.5.
+still did not carry over to the full wav. The 0.96s rows are higher on the
+current diagnostic QE columns, especially at speed=1.5, but this is a
+single-sample result and BLEU/CER do not show a clear quality win.
 
 The older only-en full rows scored BLEU 18.29 at speed=1.0 and BLEU 17.46 at
 speed=1.5; keep them only as local historical diagnostics.

@@ -294,10 +294,12 @@ kit bilingual/no-post chunk=1.92s speed=1.5: BLEU 18.90, chrF 19.24, CER 0.843, 
 The corrected full run did not reproduce the earlier 60s KIT smoke advantage;
 inspect the dashboard detail text and local audio before treating KIT as
 competitive on the full sample. xCOMET/MetricX QE has been rerun for all 16
-full-dashboard rows. For scale sanity, the same xCOMET-lite QE path scored the
-GPT pseudo-reference against the source at about 0.188 weighted mean, while
-system rows sit around 0.02-0.08; treat xCOMET as relative under this
-proportional document-chunk setup, not as a calibrated absolute 0-1 score.
+full-dashboard rows. The current xCOMET-lite path is diagnostic/uncalibrated:
+segment scores include negative values and system aggregates sit around
+0.02-0.08, so these are not normal calibrated 0-1 xCOMET quality scores. Treat
+MetricX-QE as the more interpretable QE column for now, and treat both QE
+columns as single-sample, proportional-chunk diagnostics rather than final
+ranking evidence.
 
 Local-only KIT full-run staging for the corrected bilingual/no-post rows:
 
@@ -884,7 +886,8 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
 
    The corrected bilingual/no-post full KIT run is now in the main dashboard
    for both 0.96s and 1.92s chunks, and xCOMET/MetricX QE has been refreshed
-   for all 16 full rows. Follow-up
+   for all 16 full rows. The current xCOMET-lite values are uncalibrated
+   diagnostics rather than normal calibrated xCOMET scores. Follow-up
    work should inspect why the 60s smoke advantage disappeared on the full wav
    and compare remaining product settings such as profile, postproduction,
    shortening, smart chaptering, and pause/mute behavior. The source-language
@@ -898,7 +901,8 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
    semantic quality, BLEU/chrF/CER are pseudo-reference-based and useful but
    insufficient. The full-wav dashboards now also include reference-free
    xCOMET-lite QE and MetricX-24 QE over source transcript plus target-speech
-   ASR hypothesis. QE uses proportional text chunks as an approximate
+   ASR hypothesis. xCOMET-lite currently appears miscalibrated and should be
+   treated as diagnostic-only until fixed. QE uses proportional text chunks as an approximate
    document-level workaround for model context limits, not strict time or
    sentence alignment. Use human listening and LLM-as-judge for missed or
    compressed sentence judgments.
