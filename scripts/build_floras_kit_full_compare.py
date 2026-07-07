@@ -320,7 +320,7 @@ h3{{font-size:13px;margin:0 0 6px}}@media(max-width:900px){{.textgrid{{grid-temp
 <p class="meta">
 {len(rows)} full-source rows over the same 1072.63s FLORAS EN-&gt;ZH source content. speed=1.5 streams the same source content in about 715s.
 The text source column records how each hypothesis was produced; KIT rows use target-speech ASR and not backend subtitle text.
-KIT currently has only the 1.92s chunk row in this full dashboard. BLEU uses the metrics already stored in each eval run, and hypothesis/reference text is shown with punctuation preserved.
+KIT rows use the corrected bilingual/no-post setup at the chunk sizes included in the table. BLEU uses the metrics already stored in each eval run, and hypothesis/reference text is shown with punctuation preserved.
 Observed text sources: {esc(metric_rows_text_sources(rows))}.
 </p>
 <p class="meta">

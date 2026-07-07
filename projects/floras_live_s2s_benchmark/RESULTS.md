@@ -8,6 +8,7 @@
 | en-zh_mono_asr_test__0__speed_1 | gemini | 1920 | 1.00 | 0.0218 | 8.320 | 16.680 | 14.03 | 18.20 | 0.863 | 132.37 | 160.32 | 16.25 |
 | en-zh_mono_asr_test__0__speed_1 | seed | 960 | 1.00 | 0.0398 | 9.943 | 15.057 | 21.48 | 21.85 | 0.836 | -313.22 | 1.75 | 314.53 |
 | en-zh_mono_asr_test__0__speed_1 | seed | 1920 | 1.00 | 0.0501 | 8.362 | 16.638 | 20.81 | 21.53 | 0.812 | -287.35 | 1.58 | 288.37 |
+| en-zh_mono_asr_test__0__speed_1 | kit | 960 | 1.00 | 0.0397 | 9.101 | 15.899 | 18.32 | 19.30 | 0.824 | -113.46 | 191.25 | 259.38 |
 | en-zh_mono_asr_test__0__speed_1 | kit | 1920 | 1.00 | 0.0284 | 8.277 | 16.723 | 18.37 | 19.12 | 0.827 | -120.18 | 132.20 | 239.36 |
 | en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 960 | 1.50 | 0.0428 | 8.125 | 16.875 | 19.74 | 20.72 | 0.807 | 27.70 | 94.63 | 65.53 |
 | en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 1920 | 1.50 | 0.0367 | 7.744 | 17.256 | 16.96 | 18.31 | 0.891 | 22.70 | 40.04 | 16.09 |
@@ -15,6 +16,7 @@
 | en-zh_mono_asr_test__0__speed_1.5 | gemini | 1920 | 1.50 | 0.0412 | 9.099 | 15.901 | 20.38 | 21.44 | 0.867 | 94.40 | 109.81 | 15.09 |
 | en-zh_mono_asr_test__0__speed_1.5 | seed | 960 | 1.50 | 0.0431 | 9.152 | 15.848 | 21.13 | 21.65 | 0.805 | -221.05 | 24.40 | 241.92 |
 | en-zh_mono_asr_test__0__speed_1.5 | seed | 1920 | 1.50 | 0.0509 | 9.432 | 15.568 | 21.30 | 21.46 | 0.818 | -202.16 | 2.13 | 203.37 |
+| en-zh_mono_asr_test__0__speed_1.5 | kit | 960 | 1.50 | 0.0781 | 10.323 | 14.677 | 18.92 | 19.82 | 0.830 | 123.75 | 197.61 | 71.62 |
 | en-zh_mono_asr_test__0__speed_1.5 | kit | 1920 | 1.50 | 0.0389 | 8.075 | 16.925 | 18.90 | 19.24 | 0.843 | -45.55 | 166.02 | 201.45 |
 
 Seed AST rows use ASR over the generated target speech with
@@ -32,7 +34,7 @@ truncation, or strong compression.
 The KIT rows in the full table are corrected bilingual no-post runs using
 repeated `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
 `format=mixed`, `ttsQualityMode=high_quality`, and target-speech ASR. QE has
-been rerun for all 14 rows in the full dashboard.
+been rerun for all 16 rows in the full dashboard.
 
 ## KIT Lecture Translator Status
 
@@ -45,16 +47,18 @@ artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
 
 The active full KIT captures used `language=zh&language=en`, `mtLanguage=zh`,
 `audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, private
-availability, no postproduction parameter, and 1.92s input chunks. The
+availability, no postproduction parameter, and 0.96s/1.92s input chunks. The
 hypothesis was derived from retrieved target speech transcribed by
 `gpt-4o-mini-transcribe`; KIT displayed text was not used.
 
-Those corrected full rows scored BLEU 18.37 / chrF 19.12 / CER 0.827 at
-speed=1.0 and BLEU 18.90 / chrF 19.24 / CER 0.843 at speed=1.5. This is close
-to the old only-en full result, so the earlier 60s smoke advantage did not
-hold on the full wav. Their reference-free QE scores are xCOMET 0.0284 /
-MetricX-QE 8.277 at speed=1.0 and xCOMET 0.0389 / MetricX-QE 8.075 at
-speed=1.5.
+At 0.96s chunks, KIT scored BLEU 18.32 / chrF 19.30 / CER 0.824 with xCOMET
+0.0397 / MetricX-QE 9.101 at speed=1.0, and BLEU 18.92 / chrF 19.82 / CER
+0.830 with xCOMET 0.0781 / MetricX-QE 10.323 at speed=1.5. At 1.92s chunks,
+KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with xCOMET 0.0284 /
+MetricX-QE 8.277 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
+xCOMET 0.0389 / MetricX-QE 8.075 at speed=1.5. The earlier 60s smoke advantage
+still did not carry over to the full wav, but 0.96s improves KIT's QE scores,
+especially at speed=1.5.
 
 The older only-en full rows scored BLEU 18.29 at speed=1.0 and BLEU 17.46 at
 speed=1.5; keep them only as local historical diagnostics.

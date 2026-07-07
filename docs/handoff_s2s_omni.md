@@ -280,24 +280,31 @@ scripts/build_floras_kit_full_compare.py
 The active 2026-07-06 full-source KIT rows use repeated
 `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
 `ttsQualityMode=high_quality`, private availability, no postproduction
-parameter, and 1.92s input chunks. KIT target speech is retrieved from `tts:0`
+parameter, and 0.96s/1.92s input chunks. KIT target speech is retrieved from `tts:0`
 linked PCM data and transcribed with `gpt-4o-mini-transcribe`; KIT web text is
 not used as the hypothesis.
 
 ```text
-kit bilingual/no-post chunk=1.92s speed=1.0: BLEU 18.37, chrF 19.12, CER 0.827, target 952.45s, duration lag -120.18s, wall delay 132.20s, max backlog 239.36s
-kit bilingual/no-post chunk=1.92s speed=1.5: BLEU 18.90, chrF 19.24, CER 0.843, target 669.55s, duration lag -45.55s, wall delay 166.02s, max backlog 201.45s
+kit bilingual/no-post chunk=0.96s speed=1.0: BLEU 18.32, chrF 19.30, CER 0.824, xCOMET 0.0397, MetricX-QE 9.101, target 959.17s, duration lag -113.46s, wall delay 191.25s, max backlog 259.38s
+kit bilingual/no-post chunk=1.92s speed=1.0: BLEU 18.37, chrF 19.12, CER 0.827, xCOMET 0.0284, MetricX-QE 8.277, target 952.45s, duration lag -120.18s, wall delay 132.20s, max backlog 239.36s
+kit bilingual/no-post chunk=0.96s speed=1.5: BLEU 18.92, chrF 19.82, CER 0.830, xCOMET 0.0781, MetricX-QE 10.323, target 838.85s, duration lag 123.75s, wall delay 197.61s, max backlog 71.62s
+kit bilingual/no-post chunk=1.92s speed=1.5: BLEU 18.90, chrF 19.24, CER 0.843, xCOMET 0.0389, MetricX-QE 8.075, target 669.55s, duration lag -45.55s, wall delay 166.02s, max backlog 201.45s
 ```
 
 The corrected full run did not reproduce the earlier 60s KIT smoke advantage;
 inspect the dashboard detail text and local audio before treating KIT as
-competitive on the full sample. xCOMET/MetricX QE has been rerun for all 14
-full-dashboard rows. KIT scored xCOMET 0.0284 / MetricX-QE 8.277 at speed=1.0
-and xCOMET 0.0389 / MetricX-QE 8.075 at speed=1.5.
+competitive on the full sample. xCOMET/MetricX QE has been rerun for all 16
+full-dashboard rows. For scale sanity, the same xCOMET-lite QE path scored the
+GPT pseudo-reference against the source at about 0.188 weighted mean, while
+system rows sit around 0.02-0.08; treat xCOMET as relative under this
+proportional document-chunk setup, not as a calibrated absolute 0-1 score.
 
 Local-only KIT full-run staging for the corrected bilingual/no-post rows:
 
 ```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk960_bilang_no_post/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk960_bilang_no_post_asr/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk960_bilang_no_post.jsonl
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920_bilang_no_post/
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_bilang_no_post_asr/
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920_bilang_no_post.jsonl
@@ -875,8 +882,9 @@ Local:  /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
 
 5. Continue KIT analysis from the corrected full run.
 
-   The corrected bilingual/no-post full KIT run is now in the main dashboard,
-   and xCOMET/MetricX QE has been refreshed for all 14 full rows. Follow-up
+   The corrected bilingual/no-post full KIT run is now in the main dashboard
+   for both 0.96s and 1.92s chunks, and xCOMET/MetricX QE has been refreshed
+   for all 16 full rows. Follow-up
    work should inspect why the 60s smoke advantage disappeared on the full wav
    and compare remaining product settings such as profile, postproduction,
    shortening, smart chaptering, and pause/mute behavior. The source-language

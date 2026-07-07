@@ -39,9 +39,9 @@ This dashboard contains the aligned full-wav comparison on the selected
 1072.63s FLORAS EN->ZH sample. GPT/Gemini/Seed use valid full-run
 target-speech-ASR evals. The current KIT rows use the corrected bilingual
 no-post setup: repeated `language=zh&language=en`, `mtLanguage=zh`,
-`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, 1.92s input
+`audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, 0.96s/1.92s input
 chunks, and target-speech ASR. The new KIT rows have BLEU/chrF/CER and audio
-detail plus refreshed xCOMET/MetricX QE for all 14 full-dashboard rows.
+detail plus refreshed xCOMET/MetricX QE for all 16 full-dashboard rows.
 
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html
@@ -50,6 +50,9 @@ detail plus refreshed xCOMET/MetricX QE for all 14 full-dashboard rows.
 Local KIT full-run staging for the corrected bilingual no-post rows:
 
 ```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk960_bilang_no_post/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk960_bilang_no_post_asr/
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk960_bilang_no_post.jsonl
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920_bilang_no_post/
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_bilang_no_post_asr/
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920_bilang_no_post.jsonl

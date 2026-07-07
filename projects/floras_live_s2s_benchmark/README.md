@@ -37,8 +37,8 @@ for EN->ZH long-form streaming translation.
 - `artifacts/compare_openai_gemini_seed_enzh_full_chunks/compare_metrics.jsonl`:
   metric rows for the full Seed AST chunk/speed dashboard.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_full/index.html`: full-source
-  dashboard comparing GPT/Gemini/Seed/KIT at 1.0x and 1.5x. KIT currently has
-  only the 1.92s chunk row in this full dashboard. The active KIT rows use
+  dashboard comparing GPT/Gemini/Seed/KIT at 1.0x and 1.5x. KIT now has
+  0.96s and 1.92s chunk rows in this full dashboard. The active KIT rows use
   repeated `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
   `format=mixed`, `ttsQualityMode=high_quality`, no postproduction parameter,
   and target-speech ASR.
@@ -46,7 +46,7 @@ for EN->ZH long-form streaming translation.
   rows. xCOMET-QE uses `myyycroft/XCOMET-lite`; MetricX-QE uses
   `google/metricx-24-hybrid-large-v2p6-bfloat16`. Inputs are source transcript
   plus target-speech ASR hypothesis, split into proportional text chunks. The
-  current QE file covers all 14 rows in the GPT/Gemini/Seed/KIT full dashboard.
+  current QE file covers all 16 rows in the GPT/Gemini/Seed/KIT full dashboard.
 - `artifacts/qe/full_enzh_qe_segments.jsonl`,
   `artifacts/qe/full_enzh_xcomet_qe_segments.jsonl`, and
   `artifacts/qe/full_enzh_metricx_qe_segments.jsonl`: segment-level QE inputs
@@ -101,20 +101,25 @@ shown only as debug text, because it can reflect product-side rewrite behavior
 rather than the actual emitted target speech. The corrected 2026-07-06
 full-source KIT run used repeated `language=zh&language=en`, `mtLanguage=zh`,
 `audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`, no
-postproduction parameter, private availability, and 1.92s input chunks:
+postproduction parameter, private availability, and 0.96s/1.92s input chunks:
 
 ```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk960_bilang_no_post
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk960_bilang_no_post_asr
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk960_bilang_no_post.jsonl
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_full_mixed_hq_chunk1920_bilang_no_post
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_bilang_no_post_asr
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_asr_full_mixed_hq_chunk1920_bilang_no_post.jsonl
 ```
 
-Those corrected full rows scored BLEU 18.37 / chrF 19.12 / CER 0.827 at
-speed=1.0 and BLEU 18.90 / chrF 19.24 / CER 0.843 at speed=1.5. The 60s smoke
-advantage did not carry over to the full wav; inspect the dashboard detail text
-and local audio before treating KIT as competitive on the full sample.
-Reference-free QE for the same rows is xCOMET 0.0284 / MetricX-QE 8.277 at
-speed=1.0 and xCOMET 0.0389 / MetricX-QE 8.075 at speed=1.5.
+At 0.96s chunks, KIT scored BLEU 18.32 / chrF 19.30 / CER 0.824 with xCOMET
+0.0397 / MetricX-QE 9.101 at speed=1.0, and BLEU 18.92 / chrF 19.82 / CER
+0.830 with xCOMET 0.0781 / MetricX-QE 10.323 at speed=1.5. At 1.92s chunks,
+KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with xCOMET 0.0284 /
+MetricX-QE 8.277 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
+xCOMET 0.0389 / MetricX-QE 8.075 at speed=1.5. The 60s smoke advantage did not
+carry over to the full wav; inspect the dashboard detail text and local audio
+before treating KIT as competitive on the full sample.
 
 The earlier full-source mixed/high-quality KIT rows below are diagnostic only
 because the session creation used `language=en` rather than the bilingual KIT
@@ -253,6 +258,7 @@ python3 scripts/build_floras_kit_full_compare.py \
   --eval gemini_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/gemini_eval_full_enzh_chunk1920_trim_asr \
   --eval seed_960=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk960_gpt4o_mini_asr \
   --eval seed_1920=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/floras_live_s2s_benchmark/artifacts/eval_runs/seed_ast_chunk1920_gpt4o_mini_asr \
+  --eval kit_960_bilang_no_post=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk960_bilang_no_post_asr \
   --eval kit_1920_bilang_no_post=/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/floras_live_pilot_refs/kit_eval_full_mixed_hq_chunk1920_bilang_no_post_asr
 ```
 
@@ -275,8 +281,7 @@ Seed crop rows are especially vulnerable to this windowing artifact and should
 not be read as a source-time-aligned quality ranking.
 The current full-source KIT rows are corrected bilingual/no-post runs:
 `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
-`ttsQualityMode=high_quality`, and target-speech ASR. They scored BLEU 18.37 at
-speed=1.0 and BLEU 18.90 at speed=1.5, so the earlier 60s smoke advantage did
-not hold on the full wav. QE has been rerun for all 14 dashboard rows; KIT
-scores are xCOMET 0.0284 / MetricX-QE 8.277 at speed=1.0 and xCOMET 0.0389 /
-MetricX-QE 8.075 at speed=1.5.
+`ttsQualityMode=high_quality`, and target-speech ASR, now at both 0.96s and
+1.92s input chunks. The earlier 60s smoke advantage did not hold on the full
+wav. QE has been rerun for all 16 dashboard rows; KIT 0.96s improves QE versus
+1.92s, especially at speed=1.5, but BLEU remains around 18-19.
