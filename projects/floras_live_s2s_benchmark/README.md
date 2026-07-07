@@ -45,20 +45,21 @@ for EN->ZH long-form streaming translation.
 - `artifacts/qe/full_enzh_qe_scores.jsonl`: per-full-run reference-free QE
   rows. xCOMET-QE uses `myyycroft/XCOMET-lite`; MetricX-QE uses
   `google/metricx-24-hybrid-large-v2p6-bfloat16`. Inputs are source transcript
-  plus target-speech ASR hypothesis, split into short proportional text chunks
-  with default limits of 220 source chars and 160 hypothesis chars. The current
-  QE file covers all 16 rows in the GPT/Gemini/Seed/KIT full dashboard.
-  xCOMET-QE is the raw no-reference xCOMET-lite score without artificial
-  rescaling; the source-vs-GPT-reference short-segment anchor scored 0.351
-  weighted mean with no negative segments. System-row xCOMET segments still
-  include negative values, so do not read the raw xCOMET column as a calibrated
-  0-1 quality score.
+  plus target-speech ASR hypothesis, evaluated over the 32 manifest
+  `target_sentences` slots. The source/reference anchor uses manifest sentence
+  pairs; system hypotheses are monotonic text splits into the same 32 slots,
+  not manually sentence-aligned. The current QE file covers all 16 rows in the
+  GPT/Gemini/Seed/KIT full dashboard. xCOMET-QE is the raw no-reference
+  xCOMET-lite score without artificial rescaling; the source-vs-GPT-reference
+  sentence anchor scored 0.476 weighted mean with no negative segments.
+  System-row xCOMET segments still include negative values, so do not read the
+  raw xCOMET column as a calibrated 0-1 quality score.
 - `artifacts/qe/full_enzh_qe_segments.jsonl`,
   `artifacts/qe/full_enzh_xcomet_qe_segments.jsonl`, and
   `artifacts/qe/full_enzh_metricx_qe_segments.jsonl`: segment-level QE inputs
   and model outputs used to build the aggregate rows.
 - `artifacts/qe/floras_xcomet_ref_anchor_short_segments.jsonl` and
-  `artifacts/qe/floras_xcomet_ref_anchor_short_scores.jsonl`: short-segment
+  `artifacts/qe/floras_xcomet_ref_anchor_short_scores.jsonl`: sentence-slot
   source-vs-GPT-reference xCOMET sanity anchor for the current QE segmentation.
 - `artifacts/compare_gpt_gemini_seed_kit_enzh_60s/index.html`: 60s smoke
   dashboard comparing OpenAI, Gemini, KIT Lecture Translator, and Seed AST
@@ -122,16 +123,16 @@ postproduction parameter, private availability, and 0.96s/1.92s input chunks:
 ```
 
 At 0.96s chunks, KIT scored BLEU 18.32 / chrF 19.30 / CER 0.824 with raw
-xCOMET 0.0685 / MetricX-QE 9.343 at speed=1.0, and BLEU 18.92 / chrF 19.82 /
-CER 0.830 with raw xCOMET 0.1632 / MetricX-QE 11.891 at speed=1.5. At 1.92s
-chunks, KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with raw xCOMET 0.0579 /
-MetricX-QE 8.468 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
-raw xCOMET 0.0665 / MetricX-QE 9.808 at speed=1.5. The 60s smoke advantage did not
-carry over to the full wav; inspect the dashboard detail text and local audio
-before treating KIT as competitive on the full sample. The 0.96s rows are
-numerically higher on the current short-segment QE columns, especially at
-speed=1.5, but this may be a proportional-alignment artifact; it is a
-single-sample result and BLEU/CER do not show a clear quality win.
+xCOMET 0.0595 / MetricX-QE 9.344 at speed=1.0, and BLEU 18.92 / chrF 19.82 /
+CER 0.830 with raw xCOMET 0.1737 / MetricX-QE 11.500 at speed=1.5. At 1.92s
+chunks, KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with raw xCOMET 0.0441 /
+MetricX-QE 8.383 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
+raw xCOMET 0.0522 / MetricX-QE 8.454 at speed=1.5. The 60s smoke advantage did
+not carry over to the full wav; inspect the dashboard detail text and local
+audio before treating KIT as competitive on the full sample. The 0.96s rows are
+numerically higher on the current sentence-slot QE columns, especially at
+speed=1.5; it is a single-sample result and BLEU/CER do not show a clear
+quality win.
 
 The earlier full-source mixed/high-quality KIT rows below are diagnostic only
 because the session creation used `language=en` rather than the bilingual KIT
@@ -178,21 +179,22 @@ debug data only.
   ASR transcript against the current GPT-generated target reference text.
 - `xCOMET-QE`: reference-free quality estimate from
   `myyycroft/XCOMET-lite`, using source transcript plus target-speech ASR
-  hypothesis only. The dashboard reports the raw no-reference score over short
-  proportional text chunks and does not apply an artificial calibration curve.
-  The source-vs-GPT-reference anchor scored 0.351 weighted mean, which is useful
+  hypothesis only. The dashboard reports the raw no-reference score over 32
+  manifest sentence slots and does not apply an artificial calibration curve.
+  The source-vs-GPT-reference anchor scored 0.476 weighted mean, which is useful
   for scale sanity but is not used to normalize system scores. System-row
-  segment scores still include negatives after short segmentation, so this is
-  not a calibrated 0-1 quality score.
+  segment scores still include negatives after sentence-slot segmentation, so
+  this is not a calibrated 0-1 quality score.
 - `MetricX-QE`: reference-free score derived from
   `google/metricx-24-hybrid-large-v2p6-bfloat16`, using source transcript plus
   target-speech ASR hypothesis only. The model's raw `MetricX err` is
   lower-is-better on a 0-25 scale; the dashboard reports `25 - err` as
   higher-is-better `MetricX-QE` and keeps the raw error column.
-- QE is computed on proportional text chunks because the full 1072s transcript
-  is too long for these learned metrics. This is an approximate document-level
-  segmentation, not a time-aligned or sentence-aligned comparison; interpret QE
-  carefully for high-backlog, truncated, or heavily compressed runs.
+- QE is computed over the 32 manifest `target_sentences` slots because the full
+  1072s transcript is too long for these learned metrics. Source/reference use
+  manifest sentence pairs; system hypotheses are monotonic text splits into the
+  same slots, not human-aligned sentences. Interpret QE carefully for
+  high-backlog, truncated, or heavily compressed runs.
 
 ## Refresh Command
 
@@ -307,7 +309,6 @@ The current full-source KIT rows are corrected bilingual/no-post runs:
 `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`, `format=mixed`,
 `ttsQualityMode=high_quality`, and target-speech ASR, now at both 0.96s and
 1.92s input chunks. The earlier 60s smoke advantage did not hold on the full
-wav. QE has been rerun for all 16 dashboard rows using short proportional
-segments; KIT 0.96s is numerically higher than 1.92s on both QE columns,
-especially at speed=1.5, but that may be an alignment artifact and BLEU remains
-around 18-19.
+wav. QE has been rerun for all 16 dashboard rows using 32 manifest sentence
+slots; KIT 0.96s is numerically higher than 1.92s on both QE columns,
+especially at speed=1.5, but BLEU remains around 18-19.

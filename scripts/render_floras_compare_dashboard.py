@@ -238,7 +238,7 @@ audio{{width:220px}}.meta{{color:#667085;margin:8px 0 16px}}
 <div class="meta">
 {len(rows)} runs · source audio is the selected source clip · target audio is backend output
 <br>duration lag = target audio duration - source stream duration · wall delay = simulated target playback end wall-clock - source stream end · max backlog = max window-level emitted-target deficit
-<br>QE columns are reference-free source+hypothesis scores over short proportional text chunks; xCOMET-QE is the raw xCOMET-lite no-reference score without artificial rescaling and should be treated as a relative diagnostic when segment scores include negatives. MetricX-QE is higher-is-better, and MetricX err is lower-is-better.
+<br>QE columns are reference-free source+hypothesis scores. Current full-run QE uses manifest sentence slots when available; system hypotheses are monotonic text splits into those slots, not manually sentence-aligned. xCOMET-QE is the raw xCOMET-lite no-reference score without artificial rescaling and should be treated as a relative diagnostic when segment scores include negatives. MetricX-QE is higher-is-better, and MetricX err is lower-is-better.
 </div>
 <table>
 <thead>

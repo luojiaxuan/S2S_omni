@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.build_floras_qe_inputs import make_segment_rows
+from scripts.build_floras_qe_inputs import make_segment_rows, make_segment_rows_from_chunks, split_text
 from s2s_omni.floras_qe import attach_qe_scores, load_qe_scores, row_key
 
 
@@ -96,6 +96,31 @@ class FlorasQETest(unittest.TestCase):
         self.assertEqual(rows[0]["model"], "reference_anchor")
         self.assertEqual(rows[0]["reference"], "")
         self.assertEqual(rows[-1]["segment_count"], len(rows))
+
+    def test_split_text_keeps_requested_non_empty_chunks(self) -> None:
+        text = "，".join(f"片段{i}" for i in range(64))
+        chunks = split_text(text, 32)
+
+        self.assertEqual(len(chunks), 32)
+        self.assertTrue(all(chunk for chunk in chunks))
+        self.assertGreaterEqual(min(len(chunk) for chunk in chunks), 2)
+
+    def test_manifest_sentence_segment_builder(self) -> None:
+        rows = make_segment_rows_from_chunks(
+            key="run1||kit||960||kit",
+            run_id="run1",
+            model="kit",
+            chunk_ms=960,
+            eval_label="kit",
+            speed_factor=1.0,
+            source_chunks=["source one", "source two"],
+            hypothesis_chunks=["目标一", "目标二"],
+        )
+
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["segment_count"], 2)
+        self.assertEqual(rows[1]["source"], "source two")
+        self.assertEqual(rows[1]["hypothesis"], "目标二")
 
 
 if __name__ == "__main__":

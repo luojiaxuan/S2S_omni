@@ -41,7 +41,7 @@ target-speech-ASR evals. The current KIT rows use the corrected bilingual
 no-post setup: repeated `language=zh&language=en`, `mtLanguage=zh`,
 `audioLanguage=zh`, `format=mixed`, `ttsQualityMode=high_quality`,
 0.96s/1.92s input chunks, and target-speech ASR. The new KIT rows have
-BLEU/chrF/CER and audio detail plus refreshed short-segment xCOMET/MetricX QE
+BLEU/chrF/CER and audio detail plus refreshed sentence-slot xCOMET/MetricX QE
 for all 16 full-dashboard rows.
 
 ```text

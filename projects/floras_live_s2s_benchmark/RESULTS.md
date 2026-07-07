@@ -2,37 +2,37 @@
 
 | run | backend | chunk_ms | speed | xCOMET-QE raw | MetricX-QE | MetricX err | BLEU | chrF | CER | duration_lag_s | wall_delay_s | max_backlog_s |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| en-zh_mono_asr_test__0__speed_1 | chatgpt | 960 | 1.00 | 0.1014 | 11.117 | 13.883 | 24.10 | 25.96 | 0.875 | 19.57 | 63.52 | 40.20 |
-| en-zh_mono_asr_test__0__speed_1 | chatgpt | 1920 | 1.00 | 0.0605 | 8.785 | 16.215 | 19.56 | 20.58 | 0.844 | 21.27 | 46.20 | 23.53 |
-| en-zh_mono_asr_test__0__speed_1 | gemini | 960 | 1.00 | 0.0433 | 10.348 | 14.652 | 17.30 | 18.90 | 0.914 | 5.62 | 185.97 | 114.00 |
-| en-zh_mono_asr_test__0__speed_1 | gemini | 1920 | 1.00 | 0.0542 | 8.294 | 16.706 | 14.03 | 18.20 | 0.863 | 132.37 | 160.32 | 16.25 |
-| en-zh_mono_asr_test__0__speed_1 | seed | 960 | 1.00 | 0.0666 | 10.813 | 14.187 | 21.48 | 21.85 | 0.836 | -313.22 | 1.75 | 314.53 |
-| en-zh_mono_asr_test__0__speed_1 | seed | 1920 | 1.00 | 0.0639 | 8.549 | 16.451 | 20.81 | 21.53 | 0.812 | -287.35 | 1.58 | 288.37 |
-| en-zh_mono_asr_test__0__speed_1 | kit | 960 | 1.00 | 0.0685 | 9.343 | 15.657 | 18.32 | 19.30 | 0.824 | -113.46 | 191.25 | 259.38 |
-| en-zh_mono_asr_test__0__speed_1 | kit | 1920 | 1.00 | 0.0579 | 8.468 | 16.532 | 18.37 | 19.12 | 0.827 | -120.18 | 132.20 | 239.36 |
-| en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 960 | 1.50 | 0.0742 | 9.326 | 15.674 | 19.74 | 20.72 | 0.807 | 27.70 | 94.63 | 65.53 |
-| en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 1920 | 1.50 | 0.0540 | 9.227 | 15.773 | 16.96 | 18.31 | 0.891 | 22.70 | 40.04 | 16.09 |
-| en-zh_mono_asr_test__0__speed_1.5 | gemini | 960 | 1.50 | 0.0568 | 10.124 | 14.876 | 20.42 | 21.35 | 0.865 | 5.15 | 75.30 | 69.84 |
-| en-zh_mono_asr_test__0__speed_1.5 | gemini | 1920 | 1.50 | 0.0668 | 10.426 | 14.574 | 20.38 | 21.44 | 0.867 | 94.40 | 109.81 | 15.09 |
-| en-zh_mono_asr_test__0__speed_1.5 | seed | 960 | 1.50 | 0.0625 | 10.588 | 14.412 | 21.13 | 21.65 | 0.805 | -221.05 | 24.40 | 241.92 |
-| en-zh_mono_asr_test__0__speed_1.5 | seed | 1920 | 1.50 | 0.0750 | 10.622 | 14.378 | 21.30 | 21.46 | 0.818 | -202.16 | 2.13 | 203.37 |
-| en-zh_mono_asr_test__0__speed_1.5 | kit | 960 | 1.50 | 0.1632 | 11.891 | 13.109 | 18.92 | 19.82 | 0.830 | 123.75 | 197.61 | 71.62 |
-| en-zh_mono_asr_test__0__speed_1.5 | kit | 1920 | 1.50 | 0.0665 | 9.808 | 15.192 | 18.90 | 19.24 | 0.843 | -45.55 | 166.02 | 201.45 |
+| en-zh_mono_asr_test__0__speed_1 | chatgpt | 960 | 1.00 | 0.0601 | 9.908 | 15.092 | 24.10 | 25.96 | 0.875 | 19.57 | 63.52 | 40.20 |
+| en-zh_mono_asr_test__0__speed_1 | chatgpt | 1920 | 1.00 | 0.0549 | 8.416 | 16.584 | 19.56 | 20.58 | 0.844 | 21.27 | 46.20 | 23.53 |
+| en-zh_mono_asr_test__0__speed_1 | gemini | 960 | 1.00 | 0.0374 | 9.675 | 15.325 | 17.30 | 18.90 | 0.914 | 5.62 | 185.97 | 114.00 |
+| en-zh_mono_asr_test__0__speed_1 | gemini | 1920 | 1.00 | 0.0474 | 8.446 | 16.554 | 14.03 | 18.20 | 0.863 | 132.37 | 160.32 | 16.25 |
+| en-zh_mono_asr_test__0__speed_1 | seed | 960 | 1.00 | 0.0558 | 10.367 | 14.633 | 21.48 | 21.85 | 0.836 | -313.22 | 1.75 | 314.53 |
+| en-zh_mono_asr_test__0__speed_1 | seed | 1920 | 1.00 | 0.0619 | 8.910 | 16.090 | 20.81 | 21.53 | 0.812 | -287.35 | 1.58 | 288.37 |
+| en-zh_mono_asr_test__0__speed_1 | kit | 960 | 1.00 | 0.0595 | 9.344 | 15.656 | 18.32 | 19.30 | 0.824 | -113.46 | 191.25 | 259.38 |
+| en-zh_mono_asr_test__0__speed_1 | kit | 1920 | 1.00 | 0.0441 | 8.383 | 16.617 | 18.37 | 19.12 | 0.827 | -120.18 | 132.20 | 239.36 |
+| en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 960 | 1.50 | 0.0625 | 8.710 | 16.290 | 19.74 | 20.72 | 0.807 | 27.70 | 94.63 | 65.53 |
+| en-zh_mono_asr_test__0__speed_1.5 | chatgpt | 1920 | 1.50 | 0.0475 | 8.443 | 16.557 | 16.96 | 18.31 | 0.891 | 22.70 | 40.04 | 16.09 |
+| en-zh_mono_asr_test__0__speed_1.5 | gemini | 960 | 1.50 | 0.0543 | 9.587 | 15.413 | 20.42 | 21.35 | 0.865 | 5.15 | 75.30 | 69.84 |
+| en-zh_mono_asr_test__0__speed_1.5 | gemini | 1920 | 1.50 | 0.0575 | 9.775 | 15.225 | 20.38 | 21.44 | 0.867 | 94.40 | 109.81 | 15.09 |
+| en-zh_mono_asr_test__0__speed_1.5 | seed | 960 | 1.50 | 0.0564 | 9.694 | 15.306 | 21.13 | 21.65 | 0.805 | -221.05 | 24.40 | 241.92 |
+| en-zh_mono_asr_test__0__speed_1.5 | seed | 1920 | 1.50 | 0.0536 | 9.627 | 15.373 | 21.30 | 21.46 | 0.818 | -202.16 | 2.13 | 203.37 |
+| en-zh_mono_asr_test__0__speed_1.5 | kit | 960 | 1.50 | 0.1737 | 11.500 | 13.500 | 18.92 | 19.82 | 0.830 | 123.75 | 197.61 | 71.62 |
+| en-zh_mono_asr_test__0__speed_1.5 | kit | 1920 | 1.50 | 0.0522 | 8.454 | 16.546 | 18.90 | 19.24 | 0.843 | -45.55 | 166.02 | 201.45 |
 
 Seed AST rows use ASR over the generated target speech with
 `gpt-4o-mini-transcribe`; the AST backend translation subtitle is not used for
 BLEU/chrF/CER.
 
 `xCOMET-QE raw` and `MetricX-QE` are reference-free source+hypothesis scores
-over short proportional text chunks. MetricX's native output is a
+over the 32 manifest `target_sentences` slots. The source/reference anchor uses
+manifest sentence pairs; system hypotheses are monotonic text splits into the
+same 32 slots, not manually sentence-aligned. MetricX's native output is a
 lower-is-better error on a 0-25 scale; `MetricX-QE` is reported as
-`25 - MetricX err` so higher is better in the dashboards. The current QE
-segmentation uses 220 source chars and 160 hypothesis chars per segment by
-default, producing 63 segments per full row. The source-vs-GPT-reference
-xCOMET sanity anchor scored 0.351 weighted mean with no negative segments. The
-dashboard keeps raw xCOMET scores and does not normalize by that anchor.
-System-row xCOMET segments still include negative values, so this is not a
-calibrated 0-1 quality score.
+`25 - MetricX err` so higher is better in the dashboards. The
+source-vs-GPT-reference xCOMET sanity anchor scored 0.476 weighted mean with no
+negative segments. The dashboard keeps raw xCOMET scores and does not normalize
+by that anchor. System-row xCOMET segments still include negative values, so
+this is not a calibrated 0-1 quality score.
 
 The KIT rows in the full table are corrected bilingual no-post runs using
 repeated `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
@@ -55,15 +55,14 @@ hypothesis was derived from retrieved target speech transcribed by
 `gpt-4o-mini-transcribe`; KIT displayed text was not used.
 
 At 0.96s chunks, KIT scored BLEU 18.32 / chrF 19.30 / CER 0.824 with raw
-xCOMET 0.0685 / MetricX-QE 9.343 at speed=1.0, and BLEU 18.92 / chrF 19.82 /
-CER 0.830 with raw xCOMET 0.1632 / MetricX-QE 11.891 at speed=1.5. At 1.92s
-chunks, KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with raw xCOMET 0.0579 /
-MetricX-QE 8.468 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
-raw xCOMET 0.0665 / MetricX-QE 9.808 at speed=1.5. The earlier 60s smoke
+xCOMET 0.0595 / MetricX-QE 9.344 at speed=1.0, and BLEU 18.92 / chrF 19.82 /
+CER 0.830 with raw xCOMET 0.1737 / MetricX-QE 11.500 at speed=1.5. At 1.92s
+chunks, KIT scored BLEU 18.37 / chrF 19.12 / CER 0.827 with raw xCOMET 0.0441 /
+MetricX-QE 8.383 at speed=1.0, and BLEU 18.90 / chrF 19.24 / CER 0.843 with
+raw xCOMET 0.0522 / MetricX-QE 8.454 at speed=1.5. The earlier 60s smoke
 advantage still did not carry over to the full wav. The 0.96s rows are higher
-on the current short-segment QE columns, especially at speed=1.5, but this may
-be a proportional-alignment artifact. This is a single-sample result and
-BLEU/CER do not show a clear quality win.
+on the current sentence-slot QE columns, especially at speed=1.5. This is a
+single-sample result and BLEU/CER do not show a clear quality win.
 
 The older only-en full rows scored BLEU 18.29 at speed=1.0 and BLEU 17.46 at
 speed=1.5; keep them only as local historical diagnostics.

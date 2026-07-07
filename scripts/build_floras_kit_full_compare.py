@@ -325,7 +325,7 @@ Observed text sources: {esc(metric_rows_text_sources(rows))}.
 </p>
 <p class="meta">
 Timing metrics are read from each eval run's audio chunk timeline. KIT timing uses retrieved <code>tts:0</code> target-audio chunk arrival times, then the same FLORAS evaluator computes duration lag, wall delay, backlog, and playback queue.
-QE columns are reference-free source+hypothesis scores over short proportional text chunks. xCOMET-QE is the raw xCOMET-lite no-reference score without artificial rescaling; a source-vs-GPT-reference short-segment anchor scored 0.351 weighted mean. System-row xCOMET segments still include negative values, so treat this as a relative diagnostic rather than a calibrated 0-1 quality score. MetricX-QE is reported as higher-is-better, while MetricX err is lower-is-better.
+QE columns are reference-free source+hypothesis scores over the 32 manifest <code>target_sentences</code> slots. The source/reference anchor uses manifest sentence pairs; system hypotheses are monotonic text splits into the same 32 slots, not manually sentence-aligned. xCOMET-QE is the raw xCOMET-lite no-reference score without artificial rescaling; the current source-vs-GPT-reference sentence anchor scored 0.476 weighted mean. System-row xCOMET segments still include negative values, so treat this as a relative diagnostic rather than a calibrated 0-1 quality score. MetricX-QE is reported as higher-is-better, while MetricX err is lower-is-better.
 The current QE score file covers all rows in this dashboard; rebuild with <code>--require-qe</code> to catch missing or stale QE rows.
 </p>
 <table>

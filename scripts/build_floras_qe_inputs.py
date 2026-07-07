@@ -26,6 +26,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-segments", required=True)
     parser.add_argument("--output-runs", required=True)
     parser.add_argument("--output-reference-anchor-segments", default="")
+    parser.add_argument(
+        "--segmentation-mode",
+        choices=("manifest_target_sentences", "short_proportional_text_chunks"),
+        default="manifest_target_sentences",
+    )
     parser.add_argument("--max-source-chars", type=int, default=220)
     parser.add_argument("--max-hypothesis-chars", type=int, default=160)
     return parser.parse_args()
@@ -39,20 +44,33 @@ def split_text(text: str, parts: int) -> list[str]:
     text = clean_text(text)
     if parts <= 1 or not text:
         return [text]
+    if len(text) < parts:
+        chars = list(text)
+        return chars + [""] * (parts - len(chars))
     chunks: list[str] = []
     start = 0
     length = len(text)
+    min_chunk_chars = max(1, int((length / parts) * 0.35))
     for idx in range(parts - 1):
-        target = round(length * (idx + 1) / parts)
-        window_start = max(start + 1, target - 120)
-        window_end = min(length - 1, target + 120)
+        remaining_after_cut = parts - idx - 1
+        min_cut = start + min_chunk_chars
+        max_cut = length - (remaining_after_cut * min_chunk_chars)
+        if min_cut > max_cut:
+            min_cut = start + 1
+            max_cut = length - remaining_after_cut
+        target = min(max(round(length * (idx + 1) / parts), min_cut), max_cut)
+        window_start = max(min_cut, target - 120)
+        window_end = min(max_cut, target + 120)
         cut = target
         best_distance = length
         for match in BOUNDARY_RE.finditer(text, window_start, window_end):
-            distance = abs(match.end() - target)
+            candidate = match.end()
+            if candidate < min_cut or candidate > max_cut:
+                continue
+            distance = abs(candidate - target)
             if distance < best_distance:
                 best_distance = distance
-                cut = match.end()
+                cut = candidate
         chunks.append(text[start:cut].strip())
         start = cut
     chunks.append(text[start:].strip())
@@ -105,6 +123,54 @@ def make_segment_rows(
     return rows
 
 
+def make_segment_rows_from_chunks(
+    *,
+    key: str,
+    run_id: str,
+    model: str,
+    chunk_ms: int | None,
+    eval_label: Any,
+    speed_factor: Any,
+    source_chunks: list[str],
+    hypothesis_chunks: list[str],
+) -> list[dict[str, Any]]:
+    if len(source_chunks) != len(hypothesis_chunks):
+        raise SystemExit(f"bad sentence segmentation for {key}: {len(source_chunks)} vs {len(hypothesis_chunks)}")
+    rows: list[dict[str, Any]] = []
+    parts = len(source_chunks)
+    for idx, (source_chunk, hypothesis_chunk) in enumerate(zip(source_chunks, hypothesis_chunks)):
+        rows.append(
+            {
+                "qe_id": f"{key}||seg={idx:03d}",
+                "qe_row_key": key,
+                "run_id": run_id,
+                "model": model,
+                "chunk_ms": chunk_ms,
+                "eval_label": eval_label,
+                "speed_factor": speed_factor,
+                "segment_index": idx,
+                "segment_count": parts,
+                "source": source_chunk,
+                "hypothesis": hypothesis_chunk,
+                "reference": "",
+                "weight_chars": max(1, len(source_chunk) + len(hypothesis_chunk)),
+            }
+        )
+    return rows
+
+
+def manifest_sentence_chunks(manifest: dict[str, Any]) -> tuple[list[str], list[str]]:
+    source_chunks: list[str] = []
+    target_chunks: list[str] = []
+    for item in manifest.get("target_sentences") or []:
+        source = clean_text(item.get("source_sentence"))
+        target = clean_text(item.get("target_sentence"))
+        if source and target:
+            source_chunks.append(source)
+            target_chunks.append(target)
+    return source_chunks, target_chunks
+
+
 def main() -> None:
     args = parse_args()
     manifest_by_run: dict[str, dict[str, Any]] = {}
@@ -130,7 +196,14 @@ def main() -> None:
         hypothesis_text = clean_text(row.get("candidate_text") or row.get("hypothesis_text"))
         if not source_text or not hypothesis_text:
             raise SystemExit(f"missing source or hypothesis for {key}")
-        parts = segment_count(source_text, hypothesis_text, args.max_source_chars, args.max_hypothesis_chars)
+        sentence_source_chunks, sentence_reference_chunks = manifest_sentence_chunks(manifest)
+        use_manifest_sentences = args.segmentation_mode == "manifest_target_sentences" and sentence_source_chunks
+        if use_manifest_sentences:
+            parts = len(sentence_source_chunks)
+            qe_segmentation = "manifest_target_sentences"
+        else:
+            parts = segment_count(source_text, hypothesis_text, args.max_source_chars, args.max_hypothesis_chars)
+            qe_segmentation = "short_proportional_text_chunks"
         run_rows.append(
             {
                 "qe_row_key": key,
@@ -144,26 +217,52 @@ def main() -> None:
                 "source_chars": len(source_text),
                 "hypothesis_chars": len(hypothesis_text),
                 "qe_segment_count": parts,
-                "qe_segmentation": "short_proportional_text_chunks",
+                "qe_segmentation": qe_segmentation,
                 "qe_max_source_chars": args.max_source_chars,
                 "qe_max_hypothesis_chars": args.max_hypothesis_chars,
             }
         )
-        segment_rows.extend(
-            make_segment_rows(
-                key=key,
-                run_id=run_id,
-                model=row_model(row),
-                chunk_ms=row_chunk_ms(row),
-                eval_label=row.get("eval_label"),
-                speed_factor=row.get("speed_factor"),
-                source_text=source_text,
-                hypothesis_text=hypothesis_text,
-                max_source_chars=args.max_source_chars,
-                max_hypothesis_chars=args.max_hypothesis_chars,
+        if use_manifest_sentences:
+            segment_rows.extend(
+                make_segment_rows_from_chunks(
+                    key=key,
+                    run_id=run_id,
+                    model=row_model(row),
+                    chunk_ms=row_chunk_ms(row),
+                    eval_label=row.get("eval_label"),
+                    speed_factor=row.get("speed_factor"),
+                    source_chunks=sentence_source_chunks,
+                    hypothesis_chunks=split_text(hypothesis_text, parts),
+                )
             )
-        )
+        else:
+            segment_rows.extend(
+                make_segment_rows(
+                    key=key,
+                    run_id=run_id,
+                    model=row_model(row),
+                    chunk_ms=row_chunk_ms(row),
+                    eval_label=row.get("eval_label"),
+                    speed_factor=row.get("speed_factor"),
+                    source_text=source_text,
+                    hypothesis_text=hypothesis_text,
+                    max_source_chars=args.max_source_chars,
+                    max_hypothesis_chars=args.max_hypothesis_chars,
+                )
+            )
         if args.output_reference_anchor_segments and not reference_anchor_rows:
+            if use_manifest_sentences and sentence_reference_chunks:
+                reference_anchor_rows = make_segment_rows_from_chunks(
+                    key="ref_anchor_short",
+                    run_id=run_id,
+                    model="reference_anchor",
+                    chunk_ms=None,
+                    eval_label="gpt_reference_anchor",
+                    speed_factor=row.get("speed_factor"),
+                    source_chunks=sentence_source_chunks,
+                    hypothesis_chunks=sentence_reference_chunks,
+                )
+                continue
             reference_text = clean_text(row.get("reference_text"))
             if not reference_text:
                 raise SystemExit(f"missing reference_text for reference anchor in {key}")
