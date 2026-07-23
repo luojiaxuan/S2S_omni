@@ -41,6 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default="https://lt2srv.iar.kit.edu")
     parser.add_argument("--asr-base-url", default="https://api.openai.com/v1")
     parser.add_argument("--asr-model", default="gpt-4o-mini-transcribe")
+    parser.add_argument("--asr-window-s", type=float, default=120.0)
     parser.add_argument("--tts-quality-mode", default="high_quality")
     parser.add_argument("--format", default="mixed", choices=["online", "mixed"])
     parser.add_argument("--language-order", default="target,en", choices=["target,en", "en,target"])
@@ -96,6 +97,15 @@ def append_jsonl(path: Path, record: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, ensure_ascii=False, sort_keys=False) + "\n")
+
+
+def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False, sort_keys=False) for row in rows)
+        + ("\n" if rows else ""),
+        encoding="utf-8",
+    )
 
 
 def load_done_indices(instances_path: Path) -> set[int]:
@@ -224,29 +234,140 @@ def fetch_target_audio(args: argparse.Namespace, run_json: Path, target_wav: Pat
     run_cmd(cmd)
 
 
-def transcribe_target(args: argparse.Namespace, api_key: str, target_wav: Path, asr_json: Path) -> dict[str, Any]:
+def wav_duration_ms(path: Path) -> float:
+    with wave.open(str(path), "rb") as handle:
+        return round(handle.getnframes() * 1000.0 / float(handle.getframerate()), 3)
+
+
+def grouped_asr_window_ranges(
+    chunks_jsonl: Path,
+    target_duration_s: float,
+    max_window_s: float,
+) -> list[tuple[float, float]]:
+    if max_window_s <= 0:
+        return [(0.0, target_duration_s)]
+    chunks = chunk_rows_for_timing(chunks_jsonl)
+    if not chunks:
+        ranges = []
+        start = 0.0
+        while start < target_duration_s:
+            end = min(target_duration_s, start + max_window_s)
+            ranges.append((start, end))
+            start = end
+        return ranges
+    ranges: list[tuple[float, float]] = []
+    window_start = 0.0
+    previous_end = 0.0
+    for row in chunks:
+        chunk_end = float(row.get("cumulative_audio_duration_s") or 0.0)
+        if chunk_end <= previous_end:
+            chunk_end = previous_end + float(row.get("audio_duration_s") or 0.0)
+        chunk_end = min(target_duration_s, chunk_end)
+        if previous_end > window_start and chunk_end - window_start > max_window_s:
+            ranges.append((window_start, previous_end))
+            window_start = previous_end
+        previous_end = chunk_end
+    final_end = target_duration_s
+    if final_end > window_start:
+        ranges.append((window_start, final_end))
+    return ranges
+
+
+def slice_wav(input_path: Path, output_path: Path, start_s: float, end_s: float) -> None:
+    with wave.open(str(input_path), "rb") as source:
+        frame_rate = source.getframerate()
+        start_frame = max(0, int(round(start_s * frame_rate)))
+        end_frame = min(source.getnframes(), int(round(end_s * frame_rate)))
+        source.setpos(start_frame)
+        frames = source.readframes(max(0, end_frame - start_frame))
+        params = source.getparams()
+    with wave.open(str(output_path), "wb") as target:
+        target.setparams(params)
+        target.writeframes(frames)
+
+
+def transcribe_target(
+    args: argparse.Namespace,
+    api_key: str,
+    target_wav: Path,
+    chunks_jsonl: Path,
+    asr_json: Path,
+    asr_windows_jsonl: Path,
+) -> dict[str, Any]:
+    strategy = "tts_chunk_grouped_windows_v1"
     if args.resume and asr_json.exists():
         existing = read_json(asr_json)
-        if str(existing.get("asr_text") or "").strip():
+        if (
+            str(existing.get("asr_text") or "").strip()
+            and existing.get("asr_strategy") == strategy
+            and existing.get("asr_model") == args.asr_model
+            and float(existing.get("asr_window_s") or 0.0) == args.asr_window_s
+        ):
             return existing
     from s2s_omni.openai_asr import transcode_for_upload, transcribe_openai
 
-    with tempfile.TemporaryDirectory() as tmp:
-        upload = transcode_for_upload(target_wav, Path(tmp), 25 * 1024 * 1024)
-        text = transcribe_openai(api_key, args.asr_base_url, args.asr_model, upload)
+    target_duration_s = wav_duration_ms(target_wav) / 1000.0
+    ranges = grouped_asr_window_ranges(
+        chunks_jsonl,
+        target_duration_s,
+        args.asr_window_s,
+    )
+    existing_windows = {
+        int(row["window_index"]): row
+        for row in read_jsonl(asr_windows_jsonl)
+        if row.get("window_index") is not None
+    }
+    window_rows: list[dict[str, Any]] = []
+    with tempfile.TemporaryDirectory(prefix="acl6060_kit_asr_") as tmp:
+        tmp_dir = Path(tmp)
+        for window_index, (start_s, end_s) in enumerate(ranges):
+            existing = existing_windows.get(window_index)
+            if (
+                existing is not None
+                and abs(float(existing.get("start_s") or 0.0) - start_s) < 0.01
+                and abs(float(existing.get("end_s") or 0.0) - end_s) < 0.01
+                and existing.get("asr_model") == args.asr_model
+            ):
+                window_rows.append(existing)
+                continue
+            window_wav = tmp_dir / f"window_{window_index:04d}.wav"
+            slice_wav(target_wav, window_wav, start_s, end_s)
+            upload = transcode_for_upload(window_wav, tmp_dir, 25 * 1024 * 1024)
+            text = transcribe_openai(
+                api_key,
+                args.asr_base_url,
+                args.asr_model,
+                upload,
+            )
+            window_rows.append(
+                {
+                    "window_index": window_index,
+                    "start_s": round(start_s, 3),
+                    "end_s": round(end_s, 3),
+                    "duration_s": round(end_s - start_s, 3),
+                    "asr_text": text,
+                    "asr_model": args.asr_model,
+                    "uploaded_audio_size_bytes": upload.stat().st_size,
+                }
+            )
+            write_jsonl(asr_windows_jsonl, window_rows)
+    text = " ".join(
+        str(row.get("asr_text") or "").strip()
+        for row in window_rows
+        if str(row.get("asr_text") or "").strip()
+    )
     payload = {
         "asr_text": text,
         "asr_model": args.asr_model,
+        "asr_strategy": strategy,
+        "asr_window_s": args.asr_window_s,
+        "asr_window_count": len(window_rows),
+        "asr_windows_jsonl": str(asr_windows_jsonl),
         "target_wav": str(target_wav),
         "target_wav_bytes": target_wav.stat().st_size,
     }
     write_json(asr_json, payload)
     return payload
-
-
-def wav_duration_ms(path: Path) -> float:
-    with wave.open(str(path), "rb") as handle:
-        return round(handle.getnframes() * 1000.0 / float(handle.getframerate()), 3)
 
 
 def text_units(text: str, target_lang: str) -> list[str]:
@@ -328,6 +449,7 @@ def sample_result_paths(run_dir: Path) -> dict[str, Path]:
         "target_wav": run_dir / "target_tts.wav",
         "chunks_jsonl": run_dir / "audio_chunks.jsonl",
         "asr_json": run_dir / "target_asr.json",
+        "asr_windows_jsonl": run_dir / "target_asr_windows.jsonl",
     }
 
 
@@ -374,6 +496,8 @@ def main() -> None:
         "kit_smart_chaptering": args.smart_chaptering,
         "asr_model": args.asr_model,
         "asr_base_url": args.asr_base_url,
+        "asr_strategy": "tts_chunk_grouped_windows_v1",
+        "asr_window_s": args.asr_window_s,
         "candidate_text_source": "target_speech_asr_gpt4o_mini_transcribe",
     }
     write_json(args.output_dir / "run_config.json", run_config)
@@ -401,7 +525,14 @@ def main() -> None:
         created = create_session(args, result_paths["create_result"], name)
         run_stream(args, result_paths["run_json"], stream_wav, created, name)
         fetch_target_audio(args, result_paths["run_json"], result_paths["target_wav"], result_paths["chunks_jsonl"])
-        asr = transcribe_target(args, api_key, result_paths["target_wav"], result_paths["asr_json"])
+        asr = transcribe_target(
+            args,
+            api_key,
+            result_paths["target_wav"],
+            result_paths["chunks_jsonl"],
+            result_paths["asr_json"],
+            result_paths["asr_windows_jsonl"],
+        )
         prediction = str(asr.get("asr_text") or "").strip()
         delays, elapsed, timing = target_unit_times_ms(
             text=prediction,

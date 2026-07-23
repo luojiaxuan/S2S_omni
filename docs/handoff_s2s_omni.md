@@ -706,6 +706,7 @@ projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py
 scripts/run_acl6060_kit_live_eval.py       # KIT full-wav target-speech-ASR runner
 scripts/refresh_kit_auth.py                # interactive Dex login -> mode-0600 cookie header
 scripts/repair_acl6060_word_emissions.py   # rebuild De word timestamps from raw events
+scripts/repair_acl6060_kit_asr.py          # replace truncated long-audio ASR with windowed ASR
 scripts/run_acl6060_omnisteval.py          # OmniSTEval LongYAAL/BLEU wrapper
 scripts/build_acl6060_xcomet_input.py      # segment-level src/hyp/ref input
 scripts/run_acl6060_xcomet_xl.py           # XCOMET-XL scorer
@@ -719,6 +720,11 @@ En-Zh uses `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
 `format=mixed`, `ttsQualityMode=high_quality`, private availability. Main KIT
 hypotheses come from retrieved `tts:0` target speech transcribed by
 `gpt-4o-mini-transcribe`; KIT web text is not used as a metric hypothesis.
+The 12-14 minute target wav must not be transcribed in one API request: that
+response can hit the transcript output-token cap and stop mid-sentence. Group
+the emitted TTS chunks into contiguous windows of at most 120 seconds, transcribe
+each window, and concatenate in order without removing punctuation or adding
+overlap.
 
 Metric conventions:
 
@@ -772,6 +778,18 @@ python3 scripts/refresh_kit_auth.py \
 
 The password is read interactively and is never written to Git or command-line
 arguments.
+- The first KIT 1x samples exposed a single-request ASR truncation even though
+  KIT ASR/MT/TTS counts were complete and ended in `TTS-finish`. Windowed ASR
+  repaired En-Zh from 2683 to 2967 characters, En-De from 1251 to 1622 words,
+  and En-Ja from 2710 to 4057 timing units; all three now reach the final
+  conclusion and thank-you. Existing target wavs can be repaired without
+  rerunning KIT:
+
+```bash
+python3 scripts/repair_acl6060_kit_asr.py \
+  --run-dir /tmp/acl6060_kit_live_sweep/<run-tag> \
+  --api-key-file /tmp/acl6060_keys/openai.key
+```
 
 XCOMET-XL status:
 

@@ -337,7 +337,8 @@ scripts/run_acl6060_full_table.sh
   `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
   `format=mixed`, `ttsQualityMode=high_quality`。主 metric hypothesis 来自
   retrieved `tts:0` target speech 经过 `gpt-4o-mini-transcribe`，不使用 KIT
-  web text。
+  web text。长 target wav 按真实 TTS chunk 边界分成最多 120 秒的 ASR
+  windows，避免单请求 transcript output token cap 截断尾部。
 - `scripts/run_acl6060_metric_pipeline.py`: 对所有已有 run 执行
   `scripts/run_acl6060_omnisteval.py`，生成 BLEU, `LongYAAL (CU)`,
   `ending_offset_ca_ms_mean`，并生成 XCOMET-XL segment 输入。
@@ -347,6 +348,9 @@ scripts/run_acl6060_full_table.sh
 - `scripts/repair_acl6060_word_emissions.py`: 从保留的 raw API events 重建
   De whitespace-word emission timestamps，用于修复旧 run 中 transcript
   delta 在单词中间切分导致的 LongYAAL 错误。
+- `scripts/repair_acl6060_kit_asr.py`: 复用已生成的 KIT target wav 和 TTS
+  chunk metadata，把旧的 single-request long-audio ASR 替换为可 resume 的
+  grouped-window ASR，不重跑 KIT streaming。
 
 OmniSTEval/LongYAAL 细节:
 
@@ -382,6 +386,15 @@ Gemini Live session 约束:
   缺失。非 GoAway receiver exception 会计入 `error_count`。
 - 官方 session lifecycle:
   https://ai.google.dev/gemini-api/docs/live-api/session-management
+
+KIT target-speech ASR 约束:
+
+- 12-14 分钟 target wav 单次调用 `gpt-4o-mini-transcribe` 会在 response
+  output token cap 处半句截断。不能把该文本作为 full-wav hypothesis。
+- 当前实现按 `audio_chunks.jsonl` 中的真实 TTS chunk 边界分组，每个窗口
+  最多 120 秒，不硬切语音、不 overlap 重复；窗口文本顺序拼接并保留原标点。
+- 每个 sample 持久化 `target_asr_windows.jsonl`，API 中断后可按
+  `window_index` resume。
 
 XCOMET-XL 细节:
 
