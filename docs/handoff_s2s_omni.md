@@ -767,7 +767,9 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl
   `torchvision 0.26.0+cu130`, `transformers 4.40.2`,
   `huggingface-hub 0.23.5`).
 - Actual `Unbabel/XCOMET-XL` download is blocked by Hugging Face gated-model
-  access: the token can read model metadata but file download returns 403
+  access. On this Mac, `~/hf_key.txt`, `~/sglang-omni_hf_key.txt`, and
+  `~/.cache/huggingface/token` were all tested: each can read model metadata,
+  but downloading `Unbabel/XCOMET-XL/resolve/main/.gitattributes` returns 403
   `not in the authorized list`. Request/approve access on Hugging Face or
   explicitly choose a non-gated XCOMET variant before filling the XCOMET-XL
   column.

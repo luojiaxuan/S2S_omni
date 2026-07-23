@@ -374,8 +374,11 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl
   `/tmp/acl6060_keys/openai.key` 和 `/tmp/acl6060_keys/gemini.key` 不存在；
   恢复 key 文件后可直接跑 `scripts/run_acl6060_full_table.sh` resume。
 - XCOMET-XL 环境在 hyper01 H200 上已验证到可以 import COMET，但
-  `Unbabel/XCOMET-XL` 是 gated Hugging Face repo；当前 token 下载文件时报
-  403 `not in the authorized list`。需要先在 Hugging Face 授权该模型，或明确
+  `Unbabel/XCOMET-XL` 是 gated Hugging Face repo。已在本机测试
+  `~/hf_key.txt`, `~/sglang-omni_hf_key.txt`, 和
+  `~/.cache/huggingface/token`：三者都能读 model metadata，但下载
+  `Unbabel/XCOMET-XL/resolve/main/.gitattributes` 都返回 403
+  `not in the authorized list`。需要先在 Hugging Face 授权该模型，或明确
   换用非 gated XCOMET variant。临时传到 hyper01 的 HF token 已删除，失败容器
   已清理。
 
