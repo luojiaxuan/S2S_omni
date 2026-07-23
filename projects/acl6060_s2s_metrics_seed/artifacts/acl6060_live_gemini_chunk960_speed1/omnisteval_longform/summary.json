@@ -1,0 +1,33 @@
+{
+  "run_dir": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960_speed1",
+  "output_dir": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960_speed1/omnisteval_longform",
+  "target_lang": "zh",
+  "language": "En-Zh",
+  "speed_factor": 1.0,
+  "bleu_tokenizer": "zh",
+  "char_level": true,
+  "scores": {
+    "BLEU": 48.9042,
+    "chrF": 41.943,
+    "BLEU (NFKC-normalized)": 49.7098,
+    "chrF (NFKC-normalized)": 42.6905,
+    "LongYAAL (CU)": 2526.7379,
+    "LongAL (CU)": 2284.6858,
+    "LongLAAL (CU)": 2448.9663,
+    "LongAP (CU)": 0.9863,
+    "LongDAL (CU)": 3034.0631,
+    "LongYAAL (CA)": 17614.517,
+    "LongAL (CA)": 21956.0943,
+    "LongLAAL (CA)": 22025.0162,
+    "LongAP (CA)": 5.0705,
+    "LongDAL (CA)": 23006.1078
+  },
+  "rows": 468,
+  "warnings": 0,
+  "hypothesis": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960_speed1/omnisteval_longform/hypothesis.omnisteval.jsonl",
+  "warnings_path": "",
+  "speech_segmentation": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_gemini_chunk960_speed1/omnisteval_longform/audio.scaled.yaml",
+  "ending_offset_cu_ms_mean": -1049.475,
+  "ending_offset_ca_ms_mean": 69673.8176,
+  "ending_offset_rows": 5
+}

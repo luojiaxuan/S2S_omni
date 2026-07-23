@@ -685,6 +685,95 @@ text reference with `sacrebleu-tokenizer=zh`, not target-speech ASR BLEU. The
 same old log scores 51.316 with tokenizer `zh` but only 3.479 with default
 `13a`.
 
+2026-07-23 ACL6060 3x3x3 full-table pipeline:
+
+The target table is 3 target languages (`zh`, `de`, `ja`) x 3 source speedups
+(`1`, `1.25`, `1.5`) x 3 systems (OpenAI Realtime, Gemini Live, KIT Lecture
+Translator), with columns BLEU, XCOMET-XL, LongYAAL, and Ending Offset. The
+current canonical table artifacts are:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.jsonl
+```
+
+New/updated scripts:
+
+```text
+scripts/run_acl6060_full_table.sh          # orchestrates missing live rows + metrics
+scripts/run_acl6060_live_compare.sh        # now supports zh/de/ja and copies artifacts with --no-score
+projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py
+scripts/run_acl6060_kit_live_eval.py       # KIT full-wav target-speech-ASR runner
+scripts/run_acl6060_omnisteval.py          # OmniSTEval LongYAAL/BLEU wrapper
+scripts/build_acl6060_xcomet_input.py      # segment-level src/hyp/ref input
+scripts/run_acl6060_xcomet_xl.py           # XCOMET-XL scorer
+scripts/run_acl6060_metric_pipeline.py     # local metric orchestration
+scripts/build_acl6060_full_table.py        # final TSV/JSONL builder
+```
+
+The KIT ACL rows must use the corrected bilingual/no-post-style configuration:
+target language plus English as repeated `language` parameters, for example
+En-Zh uses `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
+`format=mixed`, `ttsQualityMode=high_quality`, private availability. Main KIT
+hypotheses come from retrieved `tts:0` target speech transcribed by
+`gpt-4o-mini-transcribe`; KIT web text is not used as a metric hypothesis.
+
+Metric conventions:
+
+- BLEU and LongYAAL come from `omnisteval==0.1.10` longform mode.
+- Source speech speedup is reflected by scaling `audio.yaml`
+  offsets/durations by `1/speed_factor` before LongYAAL.
+- `LongYAAL` in the table is `LongYAAL (CU)`.
+- `Ending Offset` in the table is `ending_offset_ca_ms_mean`.
+- Zh/Ja use char-level timing units; De uses whitespace word units.
+- BLEU keeps hypothesis/reference punctuation and uses tokenizers zh=`zh`,
+  ja=`ja-mecab`, de=`13a`.
+- XCOMET-XL is reference-based `src+hyp+ref` because ACL dev has human target
+  references; this is not the FLORAS reference-free QE-lite diagnostic score.
+
+Current state on 2026-07-23:
+
+- The table skeleton has all 27 rows.
+- Existing En-Zh OpenAI/Gemini `chunk=960` speed `1` and `1.5` rows have BLEU,
+  LongYAAL, and Ending Offset via OmniSTEval.
+- 23 live rows are still missing because the current shell cannot find:
+
+```text
+/tmp/acl6060_keys/openai.key
+/tmp/acl6060_keys/gemini.key
+```
+
+Once those key files are restored, run:
+
+```bash
+scripts/run_acl6060_full_table.sh
+```
+
+This will resume from existing artifacts and fill missing GPT/Gemini/KIT rows.
+Expected sequential wall time is long: roughly 10+ hours for missing
+OpenAI/Gemini rows and about 7 hours for KIT rows, because live runs are paced
+over the 57.4-minute ACL6060 full-wav set at each speed.
+
+XCOMET-XL status:
+
+- Combined XCOMET input for the current 4 rows exists at:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl
+```
+
+- A hyper01 H200 environment was tested with an isolated venv. COMET import and
+  torch/torchvision compatibility were fixed (`torch 2.11.0+cu130`,
+  `torchvision 0.26.0+cu130`, `transformers 4.40.2`,
+  `huggingface-hub 0.23.5`).
+- Actual `Unbabel/XCOMET-XL` download is blocked by Hugging Face gated-model
+  access: the token can read model metadata but file download returns 403
+  `not in the authorized list`. Request/approve access on Hugging Face or
+  explicitly choose a non-gated XCOMET variant before filling the XCOMET-XL
+  column.
+- The temporary HF token copied to hyper01 was deleted, and failed XCOMET
+  containers were removed.
+
 ## Major Remote Artifacts
 
 See `docs/remote_artifacts.md` for the full list. The most important entries

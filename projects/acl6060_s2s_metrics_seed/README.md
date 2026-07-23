@@ -310,12 +310,81 @@ This explains why ACL6060 EN->ZH BLEU can look much higher than FLORAS scores:
 the old ACL6060 number is text prediction vs text reference with Chinese
 tokenization/character-like segmentation. It is not target-speech-ASR BLEU.
 
+## 2026-07-23 ACL6060 3x3x3 Full Table Pipeline
+
+目标表格覆盖 3 个 target language (`zh`, `de`, `ja`), 3 个 source speedup
+(`1`, `1.25`, `1.5`), 3 个 system (OpenAI Realtime, Gemini Live, KIT Lecture
+Translator)。统一输出路径:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.jsonl
+```
+
+一键 resume 脚本:
+
+```bash
+scripts/run_acl6060_full_table.sh
+```
+
+它按顺序执行:
+
+- `scripts/run_acl6060_live_compare.sh`: 跑 OpenAI/Gemini full-wav live rows。
+  当前 full-table 默认只跑 `chunk_ms=960` 和 `speed=1,1.25,1.5`；`--no-score`
+  时也会把完整 5-row run copy 到 `artifacts/`，后续统一用 OmniSTEval 打分。
+- `scripts/run_acl6060_kit_live_eval.py`: 跑 KIT rows。KIT 使用 target-language
+  + English bilingual source-language 参数，例如 En-Zh 为
+  `language=zh&language=en`, `mtLanguage=zh`, `audioLanguage=zh`,
+  `format=mixed`, `ttsQualityMode=high_quality`。主 metric hypothesis 来自
+  retrieved `tts:0` target speech 经过 `gpt-4o-mini-transcribe`，不使用 KIT
+  web text。
+- `scripts/run_acl6060_metric_pipeline.py`: 对所有已有 run 执行
+  `scripts/run_acl6060_omnisteval.py`，生成 BLEU, `LongYAAL (CU)`,
+  `ending_offset_ca_ms_mean`，并生成 XCOMET-XL segment 输入。
+
+OmniSTEval/LongYAAL 细节:
+
+- 使用 `omnisteval==0.1.10` longform evaluator。
+- `speed_factor` rows 会把 `audio.yaml` 的 source offsets/durations 按
+  `1/speed_factor` 缩放后再送入 LongYAAL。
+- Zh/Ja 使用 char-level hypothesis units；De 使用 whitespace word units。
+- BLEU 保留 hypothesis/reference 原始标点；tokenizer 为 zh=`zh`,
+  ja=`ja-mecab`, de=`13a`。
+- 表中 `LongYAAL` 使用 `LongYAAL (CU)`；`Ending Offset` 使用
+  `ending_offset_ca_ms_mean`。
+
+XCOMET-XL 细节:
+
+- `scripts/build_acl6060_xcomet_input.py` 从 OmniSTEval resegmented segments
+  生成 `src+hyp+ref` 输入；ACL dev 有人工 reference，所以这里用
+  reference-based XCOMET-XL，不是之前 FLORAS 的 QE-lite diagnostic 分。
+- `scripts/run_acl6060_xcomet_xl.py` 支持把 combined scores 按 `run_dir`
+  拆回每个 artifact 的 `xcomet_xl/summary.json`。
+- 当前本机已生成 4 个已有 En-Zh GPT/Gemini rows 的 combined input:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl
+```
+
+当前状态:
+
+- 已有 En-Zh OpenAI/Gemini `chunk=960` speed `1`/`1.5` 四行已有 BLEU,
+  LongYAAL, Ending Offset。
+- 其余 23 行还缺 live run。当前 shell 中
+  `/tmp/acl6060_keys/openai.key` 和 `/tmp/acl6060_keys/gemini.key` 不存在；
+  恢复 key 文件后可直接跑 `scripts/run_acl6060_full_table.sh` resume。
+- XCOMET-XL 环境在 hyper01 H200 上已验证到可以 import COMET，但
+  `Unbabel/XCOMET-XL` 是 gated Hugging Face repo；当前 token 下载文件时报
+  403 `not in the authorized list`。需要先在 Hugging Face 授权该模型，或明确
+  换用非 gated XCOMET variant。临时传到 hyper01 的 HF token 已删除，失败容器
+  已清理。
+
 ## Related KIT Lecture Translator Work
 
-KIT Lecture Translator is being explored under the FLORAS live benchmark, not
-as part of this ACL6060 Seed metrics bundle. Do not compare a KIT web-event text
-capture directly with the ACL6060 segmented diagnostic or the ACL6060 5-full-wav
-RASST scorer rows.
+KIT Lecture Translator was first explored under the FLORAS live benchmark. For
+the ACL6060 full table above, use `scripts/run_acl6060_kit_live_eval.py` and
+score only retrieved target speech through ASR. Do not compare a KIT web-event
+text capture directly with ACL6060 rows.
 
 Current KIT status on 2026-07-06:
 

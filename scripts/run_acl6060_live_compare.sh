@@ -9,19 +9,21 @@ OUTPUT_BASE="/tmp/acl6060_live_sweep"
 ARTIFACT_BASE="${REPO}/projects/acl6060_s2s_metrics_seed/artifacts"
 OPENAI_KEY_FILE="/tmp/acl6060_keys/openai.key"
 GEMINI_KEY_FILE="/tmp/acl6060_keys/gemini.key"
-REMOTE_BASE="/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_live_sweep_20260704"
+REMOTE_BASE="/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_full_table_20260723"
 REMOTE_RASST="/mnt/data2/jiaxuanluo/RASST"
 REMOTE_PYTHON="/mnt/taurus/home/jiaxuanluo/miniconda3/envs/spaCyEnv/bin/python"
 REMOTE_FBK="/mnt/taurus/home/jiaxuanluo/FBK-fairseq"
 REMOTE_MWER="/mnt/taurus/home/jiaxuanluo/mwerSegmenter"
 PROVIDERS="openai,gemini"
-CHUNKS="960,1920"
-SPEEDS="1,1.5"
+TARGET_LANGS="zh,de,ja"
+CHUNKS="960"
+SPEEDS="1,1.25,1.5"
 LIMIT="0"
 START_INDEX="0"
 MAX_AUDIO_SECONDS="0"
 PACE_FLAG="--pace"
 RESUME_FLAG="--resume"
+DOWNLOAD_HF_FLAG="--download-hf"
 NO_SCORE="0"
 PROGRESS_INTERVAL_S="120"
 OPENAI_RECEIVE_TIMEOUT_S="600"
@@ -35,8 +37,9 @@ Usage: scripts/run_acl6060_live_compare.sh [options]
 
 Options:
   --providers openai,gemini
+  --target-langs zh,de,ja
   --chunks 960,1920
-  --speeds 1,1.5
+  --speeds 1,1.25,1.5
   --dataset-root PATH
   --output-base PATH
   --artifact-base PATH
@@ -53,12 +56,14 @@ Options:
   --no-score
   --pace | --no-pace
   --resume | --no-resume
+  --download-hf | --no-download-hf
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --providers) PROVIDERS="$2"; shift 2 ;;
+    --target-langs) TARGET_LANGS="$2"; shift 2 ;;
     --chunks) CHUNKS="$2"; shift 2 ;;
     --speeds) SPEEDS="$2"; shift 2 ;;
     --dataset-root) DATASET_ROOT="$2"; shift 2 ;;
@@ -79,6 +84,8 @@ while [[ $# -gt 0 ]]; do
     --no-pace) PACE_FLAG="--no-pace"; shift ;;
     --resume) RESUME_FLAG="--resume"; shift ;;
     --no-resume) RESUME_FLAG="--no-resume"; shift ;;
+    --download-hf) DOWNLOAD_HF_FLAG="--download-hf"; shift ;;
+    --no-download-hf) DOWNLOAD_HF_FLAG="--no-download-hf"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -108,6 +115,7 @@ score_run() {
   local local_dir="$1"
   local tag="$2"
   local artifact_dir="$3"
+  local target_lang="$4"
   local remote_dir="${REMOTE_BASE}/${tag}"
 
   mkdir -p "${artifact_dir}"
@@ -118,12 +126,25 @@ score_run() {
     "${local_dir}/run_config.json" \
     "taurus:${remote_dir}/"
   ssh -T -o RemoteCommand=none -o RequestTTY=no taurus \
-    "cd '${REMOTE_RASST}' && PATH='${REMOTE_MWER}':\$PATH '${REMOTE_PYTHON}' code/rasst/eval/offline_sst_eval/offline_streamlaal_eval.py --mode acl6060 --instances-log '${remote_dir}/instances.log' --lang-code zh --ref-file data/main_result/inputs/acl_zh/ref.txt --source-file data/main_result/inputs/acl_zh/source_text.txt --audio-yaml data/main_result/inputs/acl_zh/audio.yaml --glossary-acl6060 data/glossaries/acl6060_tagged_gt_raw_min_norm2.json --fbk-fairseq-root '${REMOTE_FBK}' --python-bin '${REMOTE_PYTHON}' --output-tsv '${remote_dir}/eval_results.tsv' --output-log '${remote_dir}/eval_results.log'"
+    "cd '${REMOTE_RASST}' && PATH='${REMOTE_MWER}':\$PATH '${REMOTE_PYTHON}' code/rasst/eval/offline_sst_eval/offline_streamlaal_eval.py --mode acl6060 --instances-log '${remote_dir}/instances.log' --lang-code '${target_lang}' --ref-file 'data/main_result/inputs/acl_${target_lang}/ref.txt' --source-file 'data/main_result/inputs/acl_${target_lang}/source_text.txt' --audio-yaml 'data/main_result/inputs/acl_${target_lang}/audio.yaml' --glossary-acl6060 data/glossaries/acl6060_tagged_gt_raw_min_norm2.json --fbk-fairseq-root '${REMOTE_FBK}' --python-bin '${REMOTE_PYTHON}' --output-tsv '${remote_dir}/eval_results.tsv' --output-log '${remote_dir}/eval_results.log'"
   cp "${local_dir}/instances.log" "${local_dir}/responses.jsonl" "${local_dir}/run_config.json" "${artifact_dir}/"
   scp -q -O \
     "taurus:${remote_dir}/eval_results.tsv" \
     "taurus:${remote_dir}/eval_results.log" \
     "${artifact_dir}/"
+}
+
+copy_run_artifacts() {
+  local local_dir="$1"
+  local artifact_dir="$2"
+
+  mkdir -p "${artifact_dir}"
+  cp "${local_dir}/instances.log" "${local_dir}/responses.jsonl" "${local_dir}/run_config.json" "${artifact_dir}/"
+}
+
+is_full_run() {
+  [[ "${LIMIT}" == "0" &&
+    ( "${MAX_AUDIO_SECONDS}" == "0" || "${MAX_AUDIO_SECONDS}" == "0.0" ) ]]
 }
 
 mkdir -p "${OUTPUT_BASE}" "${ARTIFACT_BASE}"
@@ -148,9 +169,10 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
       ;;
   esac
 
-  for chunk in $(csv_to_array "${CHUNKS}"); do
-    for speed in $(csv_to_array "${SPEEDS}"); do
-      tag="${provider}_chunk${chunk}_$(speed_tag "${speed}")"
+  for target_lang in $(csv_to_array "${TARGET_LANGS}"); do
+    for chunk in $(csv_to_array "${CHUNKS}"); do
+      for speed in $(csv_to_array "${SPEEDS}"); do
+      tag="en${target_lang}_${provider}_chunk${chunk}_$(speed_tag "${speed}")"
       local_dir="${OUTPUT_BASE}/${tag}"
       artifact_dir="${ARTIFACT_BASE}/acl6060_live_${tag}"
       key_file="${OPENAI_KEY_FILE}"
@@ -161,6 +183,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
         --output-dir "${local_dir}"
         --provider "${provider}"
         --api-key-file "${key_file}"
+        --target-lang "${target_lang}"
         --chunk-ms "${chunk}"
         --speed-factor "${speed}"
         --start-index "${START_INDEX}"
@@ -170,6 +193,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
         --progress-interval-s "${PROGRESS_INTERVAL_S}"
         "${PACE_FLAG}"
         "${RESUME_FLAG}"
+        "${DOWNLOAD_HF_FLAG}"
       )
       if [[ "${provider}" == "gemini" ]]; then
         key_file="${GEMINI_KEY_FILE}"
@@ -180,6 +204,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
           --output-dir "${local_dir}"
           --provider "${provider}"
           --api-key-file "${key_file}"
+          --target-lang "${target_lang}"
           --chunk-ms "${chunk}"
           --speed-factor "${speed}"
           --start-index "${START_INDEX}"
@@ -189,6 +214,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
           --progress-interval-s "${PROGRESS_INTERVAL_S}"
           "${PACE_FLAG}"
           "${RESUME_FLAG}"
+          "${DOWNLOAD_HF_FLAG}"
           --post-send-idle-s "${GEMINI_POST_SEND_IDLE_S}"
           --max-session-input-s "${GEMINI_MAX_SESSION_INPUT_S}"
         )
@@ -196,12 +222,17 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
 
       run_step "acl6060 ${tag}" "${runner_cmd[@]}"
 
-      if [[ "${NO_SCORE}" == "1" || "${LIMIT}" != "0" ||
-        ( "${MAX_AUDIO_SECONDS}" != "0" && "${MAX_AUDIO_SECONDS}" != "0.0" ) ]]; then
+      if [[ "${NO_SCORE}" == "1" ]]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] SKIP score ${tag}"
+        if is_full_run; then
+          run_step "copy artifacts ${tag}" copy_run_artifacts "${local_dir}" "${artifact_dir}"
+        fi
+      elif ! is_full_run; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] SKIP score ${tag}"
       else
-        run_step "score ${tag}" score_run "${local_dir}" "${tag}" "${artifact_dir}"
+        run_step "score ${tag}" score_run "${local_dir}" "${tag}" "${artifact_dir}" "${target_lang}"
       fi
     done
+  done
   done
 done

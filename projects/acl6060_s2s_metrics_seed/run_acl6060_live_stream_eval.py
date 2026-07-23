@@ -28,18 +28,18 @@ GEMINI_WS_URL = (
 OPENAI_SAMPLE_RATE = 24000
 GEMINI_SAMPLE_RATE = 16000
 TARGET_LANGUAGES = {"zh": "Chinese", "ja": "Japanese", "de": "German"}
-HF_ACL6060_ZH_FILES = [
-    "main_result/inputs/acl_zh/audio.yaml",
-    "main_result/inputs/acl_zh/ref.txt",
-    "main_result/inputs/acl_zh/source.list",
-    "main_result/inputs/acl_zh/source_text.txt",
-    "main_result/inputs/acl_zh/target.list",
+ACL6060_AUDIO_FILES = [
     "main_result/audio/acl6060/2022.acl-long.110.wav",
     "main_result/audio/acl6060/2022.acl-long.117.wav",
     "main_result/audio/acl6060/2022.acl-long.268.wav",
     "main_result/audio/acl6060/2022.acl-long.367.wav",
     "main_result/audio/acl6060/2022.acl-long.590.wav",
 ]
+ACL6060_SOURCE_LIST_BY_LANG = {
+    "zh": "source.list",
+    "de": "source.portable.list",
+    "ja": "source.portable.list",
+}
 
 
 @dataclass(frozen=True)
@@ -116,8 +116,21 @@ def download_file(url: str, output_path: Path) -> None:
     tmp_path.replace(output_path)
 
 
-def download_hf_subset(dataset_root: Path) -> None:
-    for rel_path in HF_ACL6060_ZH_FILES:
+def hf_acl6060_files(target_lang: str) -> list[str]:
+    input_dir = f"main_result/inputs/acl_{target_lang}"
+    source_list_name = ACL6060_SOURCE_LIST_BY_LANG[target_lang]
+    return [
+        f"{input_dir}/audio.yaml",
+        f"{input_dir}/ref.txt",
+        f"{input_dir}/{source_list_name}",
+        f"{input_dir}/source_text.txt",
+        f"{input_dir}/target.list",
+        *ACL6060_AUDIO_FILES,
+    ]
+
+
+def download_hf_subset(dataset_root: Path, target_lang: str) -> None:
+    for rel_path in hf_acl6060_files(target_lang):
         out_path = dataset_root / rel_path
         print(
             json.dumps({"download": rel_path, "path": str(out_path)}, ensure_ascii=False),
@@ -136,10 +149,26 @@ def resolve_paths(dataset_root: Path, target_lang: str) -> ReleasePaths:
         input_dir = base / "inputs" / input_name
         audio_root = base / "audio" / "acl6060"
         if input_dir.is_dir() and audio_root.is_dir():
+            source_list = input_dir / "source.list"
+            if not source_list.exists():
+                source_list = input_dir / "source.portable.list"
+            required = [
+                source_list,
+                input_dir / "target.list",
+                input_dir / "ref.txt",
+                input_dir / "source_text.txt",
+                input_dir / "audio.yaml",
+            ]
+            missing = [str(path) for path in required if not path.exists()]
+            if missing:
+                raise FileNotFoundError(
+                    "found ACL6060 input directory but missing required files: "
+                    + ", ".join(missing)
+                )
             return ReleasePaths(
                 input_dir=input_dir,
                 audio_root=audio_root,
-                source_list=input_dir / "source.list",
+                source_list=source_list,
                 target_list=input_dir / "target.list",
                 ref_file=input_dir / "ref.txt",
                 source_text_file=input_dir / "source_text.txt",
@@ -784,7 +813,7 @@ def select_indices(total: int, start_index: int, limit: int) -> list[int]:
 async def async_main() -> None:
     args = parse_args()
     if args.download_hf:
-        download_hf_subset(args.dataset_root)
+        download_hf_subset(args.dataset_root, args.target_lang)
     paths = resolve_paths(args.dataset_root, args.target_lang)
     source_lines = read_lines(paths.source_list)
     target_lines = read_lines(paths.target_list)
