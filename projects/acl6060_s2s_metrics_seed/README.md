@@ -360,27 +360,29 @@ XCOMET-XL 细节:
   reference-based XCOMET-XL，不是之前 FLORAS 的 QE-lite diagnostic 分。
 - `scripts/run_acl6060_xcomet_xl.py` 支持把 combined scores 按 `run_dir`
   拆回每个 artifact 的 `xcomet_xl/summary.json`。
-- 当前本机已生成 4 个已有 En-Zh GPT/Gemini rows 的 combined input:
+- 当前本机已生成 4 个已有 En-Zh GPT/Gemini rows 的 combined input 和
+  XCOMET-XL scores:
 
 ```text
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/scores_all.jsonl
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/summary_all.json
 ```
 
 当前状态:
 
 - 已有 En-Zh OpenAI/Gemini `chunk=960` speed `1`/`1.5` 四行已有 BLEU,
-  LongYAAL, Ending Offset。
+  XCOMET-XL, LongYAAL, Ending Offset。`Unbabel/XCOMET-XL` 在 hyper01 H200
+  上完成 1872 个 segment scoring，combined mean 为 `0.7232119914`。分
+  run summaries 已写入各 run 的 `xcomet_xl/summary.json`。
 - 其余 23 行还缺 live run。当前 shell 中
   `/tmp/acl6060_keys/openai.key` 和 `/tmp/acl6060_keys/gemini.key` 不存在；
   恢复 key 文件后可直接跑 `scripts/run_acl6060_full_table.sh` resume。
-- XCOMET-XL 环境在 hyper01 H200 上已验证到可以 import COMET，但
-  `Unbabel/XCOMET-XL` 是 gated Hugging Face repo。已在本机测试
-  `~/hf_key.txt`, `~/sglang-omni_hf_key.txt`, 和
-  `~/.cache/huggingface/token`：三者都能读 model metadata，但下载
-  `Unbabel/XCOMET-XL/resolve/main/.gitattributes` 都返回 403
-  `not in the authorized list`。需要先在 Hugging Face 授权该模型，或明确
-  换用非 gated XCOMET variant。临时传到 hyper01 的 HF token 已删除，失败容器
-  已清理。
+- XCOMET-XL 环境在 hyper01 H200 上已验证到可以 import COMET，并使用
+  `torch 2.11.0+cu130`, `torchvision 0.26.0+cu130`,
+  `transformers 4.40.2`, `huggingface-hub 0.23.5` 跑通。2026-07-23
+  重新授权 `~/hf_key.txt` 后，`Unbabel/XCOMET-XL` gated model 可下载并完成
+  scoring。临时传到 hyper01 的 HF token 已删除，任务容器已清理。
 
 ## Related KIT Lecture Translator Work
 

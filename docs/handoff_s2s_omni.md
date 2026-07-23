@@ -735,7 +735,7 @@ Current state on 2026-07-23:
 
 - The table skeleton has all 27 rows.
 - Existing En-Zh OpenAI/Gemini `chunk=960` speed `1` and `1.5` rows have BLEU,
-  LongYAAL, and Ending Offset via OmniSTEval.
+  XCOMET-XL, LongYAAL, and Ending Offset.
 - 23 live rows are still missing because the current shell cannot find:
 
 ```text
@@ -756,25 +756,25 @@ over the 57.4-minute ACL6060 full-wav set at each speed.
 
 XCOMET-XL status:
 
-- Combined XCOMET input for the current 4 rows exists at:
+- Combined XCOMET input/scores for the current 4 rows exist at:
 
 ```text
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/scores_all.jsonl
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/summary_all.json
 ```
 
 - A hyper01 H200 environment was tested with an isolated venv. COMET import and
   torch/torchvision compatibility were fixed (`torch 2.11.0+cu130`,
   `torchvision 0.26.0+cu130`, `transformers 4.40.2`,
   `huggingface-hub 0.23.5`).
-- Actual `Unbabel/XCOMET-XL` download is blocked by Hugging Face gated-model
-  access. On this Mac, `~/hf_key.txt`, `~/sglang-omni_hf_key.txt`, and
-  `~/.cache/huggingface/token` were all tested: each can read model metadata,
-  but downloading `Unbabel/XCOMET-XL/resolve/main/.gitattributes` returns 403
-  `not in the authorized list`. Request/approve access on Hugging Face or
-  explicitly choose a non-gated XCOMET variant before filling the XCOMET-XL
-  column.
-- The temporary HF token copied to hyper01 was deleted, and failed XCOMET
-  containers were removed.
+- After `~/hf_key.txt` was authorized on 2026-07-23, `Unbabel/XCOMET-XL`
+  downloaded successfully and scored all 1872 current segments. Combined mean:
+  `0.7232119914`. Per-run summaries are under each completed artifact at
+  `xcomet_xl/summary.json`, and the final table now fills XCOMET-XL for those
+  four rows.
+- The temporary HF token copied to hyper01 was deleted, and the XCOMET
+  container was removed after completion.
 
 ## Major Remote Artifacts
 
