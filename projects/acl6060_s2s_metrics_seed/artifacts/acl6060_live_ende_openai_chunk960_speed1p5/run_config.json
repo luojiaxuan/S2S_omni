@@ -1,0 +1,18 @@
+{
+  "provider": "openai",
+  "model": "gpt-realtime-translate",
+  "dataset_root": "/tmp/rasst_main_result_data",
+  "source_list": "/tmp/rasst_main_result_data/main_result/inputs/acl_de/source.portable.list",
+  "target_list": "/tmp/rasst_main_result_data/main_result/inputs/acl_de/target.list",
+  "ref_file": "/tmp/rasst_main_result_data/main_result/inputs/acl_de/ref.txt",
+  "source_text_file": "/tmp/rasst_main_result_data/main_result/inputs/acl_de/source_text.txt",
+  "audio_yaml": "/tmp/rasst_main_result_data/main_result/inputs/acl_de/audio.yaml",
+  "audio_yaml_rows": 468,
+  "chunk_ms": 960,
+  "speed_factor": 1.5,
+  "pace": true,
+  "max_audio_seconds": 0.0,
+  "max_session_input_s": 0.0,
+  "target_lang": "de",
+  "hf_repo": "gavinlaw/rasst-main-result-data"
+}

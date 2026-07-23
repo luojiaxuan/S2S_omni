@@ -1,0 +1,69 @@
+================================================================
+OmniSTEval v0.1.10  |  Longform evaluation (with resegmentation)
+================================================================
+
+Settings
+----------------------------------------------------------------
+  Hypothesis         projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p5/omnisteval_longform/hypothesis.omnisteval.jsonl
+  Hypothesis format  jsonl
+  Reference          /tmp/rasst_main_result_data/main_result/inputs/acl_de/ref.txt
+  Segmentation       projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p5/omnisteval_longform/audio.scaled.yaml
+  Seg. type          speech
+  Language           de
+  BLEU tokenizer     13a
+  Char-level         no
+  Offset delays      no
+  Fix CA emissions   no
+  Metrics            quality, latency
+  Version            0.1.10
+
+Scores
+----------------------------------------------------------------
+  BLEU                    29.2762
+  chrF                    59.5295
+  BLEU (NFKC-normalized)  29.2762
+  chrF (NFKC-normalized)  59.5295
+  LongYAAL (CU)           9788.2364
+  LongAL (CU)             9345.6409
+  LongLAAL (CU)           9353.9157
+  LongAP (CU)             3.1015
+  LongDAL (CU)            9864.5787
+  LongYAAL (CA)           13305.3867
+  LongAL (CA)             12983.4582
+  LongLAAL (CA)           12986.2450
+  LongAP (CA)             4.1014
+  LongDAL (CA)            13515.4611
+
+Instance-level Details
+----------------------------------------------------------------
+Empty Predictions: 2
+Total Instances:   468
+
+For long-form evaluation, empty predictions may naturally occur for segments with short references
+due to resegmentation or segments containing non-speech content such as music or silence.
+However, if many segments or segments with substantial references have empty predictions,
+this may indicate an issue with SimulST system or resegmentation.
+
+
+Instances with empty predictions:
+----------------------------------------------------------------
+Instance 73 with reference 'Das sind die Ergebnisse, die wir erhalten haben.' has an empty prediction.
+Instance 429 with reference 'Hier ist ein Beispiel für eine Änderung der Referenz: „Wer war Kapitän der Richmond's VFL-Reservemannschaft?“' has an empty prediction.
+================================================================
+
+Unicode Normalization Details
+----------------------------------------------------------------
+Unicode Normalization Issues in References:
+0079 Original:   Wir haben mit verschiedenen Arten von Einbettungen experimentiert, z. B. mit Transformer-basierten, aber auch mit Schnell-Text-Einbettungen und Zeichen-Einbettungen.
+0079 Normalized: Wir haben mit verschiedenen Arten von Einbettungen experimentiert, z. B. mit Transformer-basierten, aber auch mit Schnell-Text-Einbettungen und Zeichen-Einbettungen.
+----------------------------------------
+0115 Original:   Aufgrund der komplexen Morphologie, die von den meisten morphologisch reichen Sprachen ausgedrückt wird, kann der allgegenwärtige byte pair encoding-Tokenisierungsalgorithmus, den ich verwendet habe, nicht die genauen lexikalischen Unterwort-Einheiten extrahieren, d. h. die Morpheme, die für eine effektive Repräsentation benötigt werden.
+0115 Normalized: Aufgrund der komplexen Morphologie, die von den meisten morphologisch reichen Sprachen ausgedrückt wird, kann der allgegenwärtige byte pair encoding-Tokenisierungsalgorithmus, den ich verwendet habe, nicht die genauen lexikalischen Unterwort-Einheiten extrahieren, d. h. die Morpheme, die für eine effektive Repräsentation benötigt werden.
+----------------------------------------
+0144 Original:   Ein faktorisiertes Modell erster Ordnung wird verwendet, um die Morphologie-Wahrscheinlichkeit zu berücksichtigen, d. h. die Wahrscheinlichkeit, die vom morphologischen Analysator zugewiesen wird.
+0144 Normalized: Ein faktorisiertes Modell erster Ordnung wird verwendet, um die Morphologie-Wahrscheinlichkeit zu berücksichtigen, d. h. die Wahrscheinlichkeit, die vom morphologischen Analysator zugewiesen wird.
+----------------------------------------
+0356 Original:   Es gibt auch einige Funktionen, bei denen wir eine beeindruckende Latenzreduzierung erzielen und der rote Balken viel länger ist, wie z. B. Find Manager und Empfänger.
+0356 Normalized: Es gibt auch einige Funktionen, bei denen wir eine beeindruckende Latenzreduzierung erzielen und der rote Balken viel länger ist, wie z. B. Find Manager und Empfänger.
+----------------------------------------
+================================================================

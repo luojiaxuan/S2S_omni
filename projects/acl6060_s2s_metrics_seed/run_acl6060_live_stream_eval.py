@@ -7,12 +7,13 @@ import argparse
 import asyncio
 import base64
 import json
+import re
 import shutil
 import subprocess
 import time
 import urllib.request
 import wave
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +61,7 @@ class StreamedText:
     elapsed_ms: list[float]
     input_transcript_parts: list[str]
     errors: list[dict[str, Any]]
+    emissions: list[tuple[str, float, float]] = field(default_factory=list)
 
 
 def parse_args() -> argparse.Namespace:
@@ -343,11 +345,26 @@ def add_text_delta(
     if not delta:
         return
     streamed.text_parts.append(delta)
+    streamed.emissions.append((delta, round(delay_ms, 3), round(elapsed_ms, 3)))
     unit_count = len(text_units(delta, target_lang))
     if unit_count <= 0:
         return
     streamed.delays_ms.extend([round(delay_ms, 3)] * unit_count)
     streamed.elapsed_ms.extend([round(elapsed_ms, 3)] * unit_count)
+
+
+def normalize_word_emissions(streamed: StreamedText, target_lang: str) -> None:
+    if target_lang in {"zh", "ja"} or not streamed.emissions:
+        return
+    text = "".join(fragment for fragment, _, _ in streamed.emissions)
+    delay_by_char: list[float] = []
+    elapsed_by_char: list[float] = []
+    for fragment, delay_ms, elapsed_ms in streamed.emissions:
+        delay_by_char.extend([delay_ms] * len(fragment))
+        elapsed_by_char.extend([elapsed_ms] * len(fragment))
+    word_ends = [match.end() - 1 for match in re.finditer(r"\S+", text)]
+    streamed.delays_ms = [delay_by_char[index] for index in word_ends]
+    streamed.elapsed_ms = [elapsed_by_char[index] for index in word_ends]
 
 
 def sanitize_event(event: dict[str, Any]) -> dict[str, Any]:
@@ -427,6 +444,8 @@ async def run_openai_stream(
     streamed = StreamedText([], [], [], [], [])
     start_time = time.monotonic()
     closed = asyncio.Event()
+    target_language_ready = asyncio.Event()
+    session_update_error: list[dict[str, Any]] = []
     sent_audio_s = 0.0
 
     async def receiver() -> None:
@@ -443,6 +462,18 @@ async def run_openai_stream(
                 event_type = str(event.get("type") or "")
                 if "error" in event_type or event.get("error"):
                     streamed.errors.append(safe)
+                    if not target_language_ready.is_set():
+                        session_update_error.append(safe)
+                        target_language_ready.set()
+                if event_type == "session.updated":
+                    output_language = (
+                        event.get("session", {})
+                        .get("audio", {})
+                        .get("output", {})
+                        .get("language")
+                    )
+                    if output_language == args.target_lang:
+                        target_language_ready.set()
                 add_text_delta(
                     streamed,
                     openai_output_delta(event),
@@ -462,6 +493,17 @@ async def run_openai_stream(
     receiver_task = asyncio.create_task(receiver())
     await ws.send(json.dumps(openai_session_update(args)))
     append_jsonl(send_events, {"type": "session.update", "sent_at_s": 0.0})
+    update_deadline = time.monotonic() + args.setup_timeout_s
+    while not target_language_ready.is_set() and not closed.is_set() and time.monotonic() < update_deadline:
+        await asyncio.sleep(0.01)
+    if session_update_error:
+        await ws.close()
+        receiver_task.cancel()
+        raise RuntimeError(f"OpenAI session.update failed: {session_update_error[-1]}")
+    if not target_language_ready.is_set():
+        await ws.close()
+        receiver_task.cancel()
+        raise TimeoutError(f"OpenAI session.update target language timeout: {args.target_lang}")
 
     bytes_per_chunk = max(2, int(round(sample_rate * args.chunk_ms / 1000.0)) * 2)
     next_progress_s = args.progress_interval_s
@@ -802,6 +844,7 @@ async def run_stream(
         combined.elapsed_ms.extend(part.elapsed_ms)
         combined.input_transcript_parts.extend(part.input_transcript_parts)
         combined.errors.extend(part.errors)
+        combined.emissions.extend(part.emissions)
     return combined
 
 
@@ -812,6 +855,12 @@ def select_indices(total: int, start_index: int, limit: int) -> list[int]:
 
 async def async_main() -> None:
     args = parse_args()
+    if args.provider == "openai" and args.instructions:
+        raise SystemExit(
+            "OpenAI /v1/realtime/translations does not support session.instructions; "
+            "use gpt-realtime-translate without prompting, or evaluate a separate "
+            "promptable voice-agent/cascade system."
+        )
     if args.download_hf:
         download_hf_subset(args.dataset_root, args.target_lang)
     paths = resolve_paths(args.dataset_root, args.target_lang)
@@ -876,6 +925,7 @@ async def async_main() -> None:
         streamed = await run_stream(stream_wav, api_key, run_dir, args, source_length_ms)
         elapsed_ms = (time.monotonic() - start_s) * 1000.0
         prediction = "".join(streamed.text_parts).strip()
+        normalize_word_emissions(streamed, args.target_lang)
         if not streamed.delays_ms:
             fallback_units = max(1, count_latency_units(prediction, args.target_lang))
             streamed.delays_ms = [source_length_ms] * fallback_units

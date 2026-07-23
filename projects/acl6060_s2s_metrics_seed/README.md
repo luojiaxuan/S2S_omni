@@ -341,6 +341,12 @@ scripts/run_acl6060_full_table.sh
 - `scripts/run_acl6060_metric_pipeline.py`: 对所有已有 run 执行
   `scripts/run_acl6060_omnisteval.py`，生成 BLEU, `LongYAAL (CU)`,
   `ending_offset_ca_ms_mean`，并生成 XCOMET-XL segment 输入。
+- `scripts/refresh_kit_auth.py`: 通过 KIT Dex email login 交互式刷新
+  forward-auth cookie。密码只从 `getpass` 读取；输出文件原子写入并设为
+  `0600`。
+- `scripts/repair_acl6060_word_emissions.py`: 从保留的 raw API events 重建
+  De whitespace-word emission timestamps，用于修复旧 run 中 transcript
+  delta 在单词中间切分导致的 LongYAAL 错误。
 
 OmniSTEval/LongYAAL 细节:
 
@@ -348,10 +354,23 @@ OmniSTEval/LongYAAL 细节:
 - `speed_factor` rows 会把 `audio.yaml` 的 source offsets/durations 按
   `1/speed_factor` 缩放后再送入 LongYAAL。
 - Zh/Ja 使用 char-level hypothesis units；De 使用 whitespace word units。
+- De 的 emission time 使用完整单词最后一个字符所在 transcript delta 的
+  source/wall timestamp。不能把任意 transcript delta 当作一个完整单词，也
+  不能把 delta-level timestamps 直接截断到最终 word count。
 - BLEU 保留 hypothesis/reference 原始标点；tokenizer 为 zh=`zh`,
   ja=`ja-mecab`, de=`13a`。
 - 表中 `LongYAAL` 使用 `LongYAAL (CU)`；`Ending Offset` 使用
   `ending_offset_ca_ms_mean`。
+
+OpenAI Realtime 约束:
+
+- `GPT-realtime-translate` 使用专用
+  `/v1/realtime/translations` translation session，不是 promptable voice
+  agent。该接口不接受 `session.instructions`；表中 OpenAI config 因此没有
+  custom prompt。
+- runner 在发送任何 source audio 前等待 `session.updated` 确认
+  `session.audio.output.language` 等于目标语言。update error 或 timeout
+  会直接失败，避免无效语言输出进入表格。
 
 XCOMET-XL 细节:
 
@@ -371,13 +390,17 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/summary_all.json
 
 当前状态:
 
-- 已有 En-Zh OpenAI/Gemini `chunk=960` speed `1`/`1.5` 四行已有 BLEU,
-  XCOMET-XL, LongYAAL, Ending Offset。`Unbabel/XCOMET-XL` 在 hyper01 H200
-  上完成 1872 个 segment scoring，combined mean 为 `0.7232119914`。分
-  run summaries 已写入各 run 的 `xcomet_xl/summary.json`。
-- 其余 23 行还缺 live run。当前 shell 中
-  `/tmp/acl6060_keys/openai.key` 和 `/tmp/acl6060_keys/gemini.key` 不存在；
-  恢复 key 文件后可直接跑 `scripts/run_acl6060_full_table.sh` resume。
+- 9/27 行已有 BLEU, LongYAAL, Ending Offset：En-Zh OpenAI speed
+  `1`/`1.25`/`1.5`，En-Zh Gemini speed `1`/`1.5`，En-De OpenAI speed
+  `1`/`1.25`/`1.5`，En-Ja OpenAI speed `1`。
+- 其中 4 个较早的 En-Zh OpenAI/Gemini speed `1`/`1.5` rows 已有
+  XCOMET-XL。`Unbabel/XCOMET-XL` 在 hyper01 H200 上完成 1872 个 segment
+  scoring，combined mean 为 `0.7232119914`。
+- En-De OpenAI 三行的错误负 LongYAAL 已修复。修复后的 `LongYAAL (CU)`
+  为 speed `1`=`4605.7919`, `1.25`=`4990.0444`,
+  `1.5`=`9788.2364`；BLEU 不变。
+- 其余 18 行正在并行 live collection。OpenAI/Gemini key 已恢复到
+  `/tmp/acl6060_keys/`；KIT forward-auth cookie 已于 2026-07-23 刷新。
 - XCOMET-XL 环境在 hyper01 H200 上已验证到可以 import COMET，并使用
   `torch 2.11.0+cu130`, `torchvision 0.26.0+cu130`,
   `transformers 4.40.2`, `huggingface-hub 0.23.5` 跑通。2026-07-23

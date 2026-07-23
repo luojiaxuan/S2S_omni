@@ -2,22 +2,22 @@ Language	Speedup	System	Config	BLEU	XCOMET-XL	LongYAAL	Ending Offset
 En-Zh	1x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript	35.9311	0.743886	4483.7160	14270.6488
 En-Zh	1x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript	48.9042	0.697234	2526.7379	69673.8176
 En-Zh	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR				
-En-Zh	1.25x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript				
+En-Zh	1.25x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript	36.0835		6399.2351	11149.1662
 En-Zh	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript				
 En-Zh	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR				
 En-Zh	1.5x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript	33.4248	0.724315	13605.2633	12516.8566
 En-Zh	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript	49.2740	0.727414	3547.1671	30144.5468
 En-Zh	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR				
-En-De	1x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript				
+En-De	1x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	30.2500		4605.7919	14984.2956
 En-De	1x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript				
 En-De	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR				
-En-De	1.25x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript				
+En-De	1.25x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	30.8493		4990.0444	11842.6332
 En-De	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript				
 En-De	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR				
-En-De	1.5x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript				
+En-De	1.5x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	29.2762		9788.2364	11141.7540
 En-De	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript				
 En-De	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR				
-En-Ja	1x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript				
+En-Ja	1x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript	25.4617		5214.8022	15111.0122
 En-Ja	1x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript				
 En-Ja	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR				
 En-Ja	1.25x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript				

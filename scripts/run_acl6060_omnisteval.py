@@ -239,6 +239,8 @@ def run_omnisteval(
     ]
     if target_lang in CHAR_LEVEL_LANGS:
         cmd.append("--char_level")
+    else:
+        cmd.append("--word_level")
     lang = OMNISTEVAL_LANG_BY_LANG[target_lang]
     if lang:
         cmd.extend(["--lang", lang])

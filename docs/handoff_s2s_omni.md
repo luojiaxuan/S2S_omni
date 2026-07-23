@@ -704,6 +704,8 @@ scripts/run_acl6060_full_table.sh          # orchestrates missing live rows + me
 scripts/run_acl6060_live_compare.sh        # now supports zh/de/ja and copies artifacts with --no-score
 projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py
 scripts/run_acl6060_kit_live_eval.py       # KIT full-wav target-speech-ASR runner
+scripts/refresh_kit_auth.py                # interactive Dex login -> mode-0600 cookie header
+scripts/repair_acl6060_word_emissions.py   # rebuild De word timestamps from raw events
 scripts/run_acl6060_omnisteval.py          # OmniSTEval LongYAAL/BLEU wrapper
 scripts/build_acl6060_xcomet_input.py      # segment-level src/hyp/ref input
 scripts/run_acl6060_xcomet_xl.py           # XCOMET-XL scorer
@@ -726,6 +728,9 @@ Metric conventions:
 - `LongYAAL` in the table is `LongYAAL (CU)`.
 - `Ending Offset` in the table is `ending_offset_ca_ms_mean`.
 - Zh/Ja use char-level timing units; De uses whitespace word units.
+- De word emission time is the timestamp of the transcript delta containing the
+  word's final character. Arbitrary API deltas must not be counted as complete
+  words or truncated to the final word count.
 - BLEU keeps hypothesis/reference punctuation and uses tokenizers zh=`zh`,
   ja=`ja-mecab`, de=`13a`.
 - XCOMET-XL is reference-based `src+hyp+ref` because ACL dev has human target
@@ -734,25 +739,32 @@ Metric conventions:
 Current state on 2026-07-23:
 
 - The table skeleton has all 27 rows.
-- Existing En-Zh OpenAI/Gemini `chunk=960` speed `1` and `1.5` rows have BLEU,
-  XCOMET-XL, LongYAAL, and Ending Offset.
-- 23 live rows are still missing because the current shell cannot find:
-
-```text
-/tmp/acl6060_keys/openai.key
-/tmp/acl6060_keys/gemini.key
-```
-
-Once those key files are restored, run:
+- 9 rows have BLEU/LongYAAL/Ending Offset: all three En-Zh OpenAI speeds,
+  En-Zh Gemini speed `1`/`1.5`, all three En-De OpenAI speeds, and En-Ja
+  OpenAI speed `1`. Four older En-Zh rows also have XCOMET-XL.
+- The invalid negative En-De OpenAI LongYAAL values came from counting arbitrary
+  transcript deltas as words and then truncating timestamps. Raw events were
+  re-aligned to final whitespace words. Correct `LongYAAL (CU)` is
+  `4605.7919`/`4990.0444`/`9788.2364` for speed `1`/`1.25`/`1.5`; BLEU did
+  not change.
+- The remaining 18 rows are in parallel live collection. OpenAI/Gemini keys are
+  restored under `/tmp/acl6060_keys/`. KIT Dex authentication was refreshed and
+  its three language queues are creating valid sessions.
+- `gpt-realtime-translate` uses the dedicated
+  `/v1/realtime/translations` session. It does not accept
+  `session.instructions`, so this table does not attach a custom translation
+  prompt. The runner now waits for `session.updated` to confirm the target
+  language before sending the first audio chunk.
+- Refresh KIT auth after expiry with:
 
 ```bash
-scripts/run_acl6060_full_table.sh
+python3 scripts/refresh_kit_auth.py \
+  --username siqiouya@andrew.cmu.edu \
+  --output-file /path/to/.lt2srv_cookie_header
 ```
 
-This will resume from existing artifacts and fill missing GPT/Gemini/KIT rows.
-Expected sequential wall time is long: roughly 10+ hours for missing
-OpenAI/Gemini rows and about 7 hours for KIT rows, because live runs are paced
-over the 57.4-minute ACL6060 full-wav set at each speed.
+The password is read interactively and is never written to Git or command-line
+arguments.
 
 XCOMET-XL status:
 

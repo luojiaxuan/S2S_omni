@@ -1,0 +1,33 @@
+{
+  "run_dir": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p25",
+  "output_dir": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p25/omnisteval_longform",
+  "target_lang": "de",
+  "language": "En-De",
+  "speed_factor": 1.25,
+  "bleu_tokenizer": "13a",
+  "char_level": false,
+  "scores": {
+    "BLEU": 30.8493,
+    "chrF": 62.2843,
+    "BLEU (NFKC-normalized)": 30.8493,
+    "chrF (NFKC-normalized)": 62.2843,
+    "LongYAAL (CU)": 4990.0444,
+    "LongAL (CU)": 4718.3443,
+    "LongLAAL (CU)": 4729.7114,
+    "LongAP (CU)": 1.5583,
+    "LongDAL (CU)": 5199.9648,
+    "LongYAAL (CA)": 9167.0864,
+    "LongAL (CA)": 8994.4161,
+    "LongLAAL (CA)": 8997.7715,
+    "LongAP (CA)": 2.5578,
+    "LongDAL (CA)": 9532.9432
+  },
+  "rows": 468,
+  "warnings": 0,
+  "hypothesis": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p25/omnisteval_longform/hypothesis.omnisteval.jsonl",
+  "warnings_path": "",
+  "speech_segmentation": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p25/omnisteval_longform/audio.scaled.yaml",
+  "ending_offset_cu_ms_mean": -97.6,
+  "ending_offset_ca_ms_mean": 11842.633199999982,
+  "ending_offset_rows": 5
+}

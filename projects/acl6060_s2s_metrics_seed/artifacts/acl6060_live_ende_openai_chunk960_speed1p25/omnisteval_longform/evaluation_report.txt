@@ -1,0 +1,58 @@
+================================================================
+OmniSTEval v0.1.10  |  Longform evaluation (with resegmentation)
+================================================================
+
+Settings
+----------------------------------------------------------------
+  Hypothesis         projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p25/omnisteval_longform/hypothesis.omnisteval.jsonl
+  Hypothesis format  jsonl
+  Reference          /tmp/rasst_main_result_data/main_result/inputs/acl_de/ref.txt
+  Segmentation       projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p25/omnisteval_longform/audio.scaled.yaml
+  Seg. type          speech
+  Language           de
+  BLEU tokenizer     13a
+  Char-level         no
+  Offset delays      no
+  Fix CA emissions   no
+  Metrics            quality, latency
+  Version            0.1.10
+
+Scores
+----------------------------------------------------------------
+  BLEU                    30.8493
+  chrF                    62.2843
+  BLEU (NFKC-normalized)  30.8493
+  chrF (NFKC-normalized)  62.2843
+  LongYAAL (CU)           4990.0444
+  LongAL (CU)             4718.3443
+  LongLAAL (CU)           4729.7114
+  LongAP (CU)             1.5583
+  LongDAL (CU)            5199.9648
+  LongYAAL (CA)           9167.0864
+  LongAL (CA)             8994.4161
+  LongLAAL (CA)           8997.7715
+  LongAP (CA)             2.5578
+  LongDAL (CA)            9532.9432
+
+Instance-level Details
+----------------------------------------------------------------
+Empty Predictions: 0
+Total Instances:   468
+================================================================
+
+Unicode Normalization Details
+----------------------------------------------------------------
+Unicode Normalization Issues in References:
+0079 Original:   Wir haben mit verschiedenen Arten von Einbettungen experimentiert, z. B. mit Transformer-basierten, aber auch mit Schnell-Text-Einbettungen und Zeichen-Einbettungen.
+0079 Normalized: Wir haben mit verschiedenen Arten von Einbettungen experimentiert, z. B. mit Transformer-basierten, aber auch mit Schnell-Text-Einbettungen und Zeichen-Einbettungen.
+----------------------------------------
+0115 Original:   Aufgrund der komplexen Morphologie, die von den meisten morphologisch reichen Sprachen ausgedrückt wird, kann der allgegenwärtige byte pair encoding-Tokenisierungsalgorithmus, den ich verwendet habe, nicht die genauen lexikalischen Unterwort-Einheiten extrahieren, d. h. die Morpheme, die für eine effektive Repräsentation benötigt werden.
+0115 Normalized: Aufgrund der komplexen Morphologie, die von den meisten morphologisch reichen Sprachen ausgedrückt wird, kann der allgegenwärtige byte pair encoding-Tokenisierungsalgorithmus, den ich verwendet habe, nicht die genauen lexikalischen Unterwort-Einheiten extrahieren, d. h. die Morpheme, die für eine effektive Repräsentation benötigt werden.
+----------------------------------------
+0144 Original:   Ein faktorisiertes Modell erster Ordnung wird verwendet, um die Morphologie-Wahrscheinlichkeit zu berücksichtigen, d. h. die Wahrscheinlichkeit, die vom morphologischen Analysator zugewiesen wird.
+0144 Normalized: Ein faktorisiertes Modell erster Ordnung wird verwendet, um die Morphologie-Wahrscheinlichkeit zu berücksichtigen, d. h. die Wahrscheinlichkeit, die vom morphologischen Analysator zugewiesen wird.
+----------------------------------------
+0356 Original:   Es gibt auch einige Funktionen, bei denen wir eine beeindruckende Latenzreduzierung erzielen und der rote Balken viel länger ist, wie z. B. Find Manager und Empfänger.
+0356 Normalized: Es gibt auch einige Funktionen, bei denen wir eine beeindruckende Latenzreduzierung erzielen und der rote Balken viel länger ist, wie z. B. Find Manager und Empfänger.
+----------------------------------------
+================================================================
