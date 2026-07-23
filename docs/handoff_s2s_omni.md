@@ -755,6 +755,13 @@ Current state on 2026-07-23:
   `session.instructions`, so this table does not attach a custom translation
   prompt. The runner now waits for `session.updated` to confirm the target
   language before sending the first audio chunk.
+- Gemini sends `goAway(timeLeft=...)` before a connection-lifetime reset. The
+  runner now drains based on the final output transcript delta rather than
+  usage/keepalive traffic, closes the connection before a forced `1008`, and
+  counts non-GoAway receiver exceptions as API errors. The earlier first
+  segments had already sent all 480 seconds and finished transcript output
+  before their GoAway closures, so those rows remain valid. Official lifecycle:
+  https://ai.google.dev/gemini-api/docs/live-api/session-management
 - Refresh KIT auth after expiry with:
 
 ```bash

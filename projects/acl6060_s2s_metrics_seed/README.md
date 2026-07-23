@@ -372,6 +372,17 @@ OpenAI Realtime 约束:
   `session.audio.output.language` 等于目标语言。update error 或 timeout
   会直接失败，避免无效语言输出进入表格。
 
+Gemini Live session 约束:
+
+- Gemini 会在 connection lifetime 结束前发送 `goAway(timeLeft=...)`。runner
+  按最终 output transcript delta 的 idle time drain，不再被
+  usage/keepalive events 延长到服务器强制 `1008` 关闭。
+- 已完成的首批 segmented rows 在完整发送 480 秒首段、输出 drain 完成后
+  收到 GoAway 关闭，再用新 connection 继续剩余 source；该关闭不代表翻译
+  缺失。非 GoAway receiver exception 会计入 `error_count`。
+- 官方 session lifecycle:
+  https://ai.google.dev/gemini-api/docs/live-api/session-management
+
 XCOMET-XL 细节:
 
 - `scripts/build_acl6060_xcomet_input.py` 从 OmniSTEval resegmented segments

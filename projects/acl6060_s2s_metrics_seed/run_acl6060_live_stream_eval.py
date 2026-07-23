@@ -645,15 +645,15 @@ async def run_gemini_stream(
     setup_done = asyncio.Event()
     receiver_done = asyncio.Event()
     start_time = run_start_time if run_start_time is not None else time.monotonic()
-    last_event_time = time.monotonic()
+    last_output_time = time.monotonic()
+    go_away_received = False
     sent_audio_s = 0.0
 
     async def receiver() -> None:
-        nonlocal last_event_time, sent_audio_s
+        nonlocal go_away_received, last_output_time, sent_audio_s
         try:
             async for message in ws:
                 now = time.monotonic()
-                last_event_time = now
                 now_s = now - start_time
                 if isinstance(message, bytes):
                     message = message.decode("utf-8")
@@ -669,11 +669,16 @@ async def run_gemini_stream(
                     append_jsonl(raw_events, safe)
                 if event.get("setupComplete") is not None:
                     setup_done.set()
+                if event.get("goAway") is not None:
+                    go_away_received = True
                 if event.get("error"):
                     streamed.errors.append(safe if isinstance(safe, dict) else {"error": safe})
+                output_delta = gemini_transcription(event, "outputTranscription")
+                if output_delta:
+                    last_output_time = now
                 add_text_delta(
                     streamed,
-                    gemini_transcription(event, "outputTranscription"),
+                    output_delta,
                     args.target_lang,
                     delay_ms=min(total_source_ms, base_source_ms + sent_audio_s * 1000.0),
                     elapsed_ms=now_s * 1000.0,
@@ -682,7 +687,10 @@ async def run_gemini_stream(
                 if input_delta:
                     streamed.input_transcript_parts.append(input_delta)
         except Exception as exc:
-            append_jsonl(raw_events, {"receiver_error": f"{type(exc).__name__}: {exc}"})
+            error = {"receiver_error": f"{type(exc).__name__}: {exc}"}
+            append_jsonl(raw_events, error)
+            if not go_away_received:
+                streamed.errors.append(error)
         finally:
             receiver_done.set()
 
@@ -750,7 +758,7 @@ async def run_gemini_stream(
         not receiver_done.is_set()
         and time.monotonic() < send_finished_at + args.receive_timeout_s
     ):
-        idle_s = time.monotonic() - max(last_event_time, send_finished_at)
+        idle_s = time.monotonic() - max(last_output_time, send_finished_at)
         if idle_s >= args.post_send_idle_s:
             break
         await asyncio.sleep(0.1)
