@@ -685,7 +685,46 @@ text reference with `sacrebleu-tokenizer=zh`, not target-speech ASR BLEU. The
 same old log scores 51.316 with tokenizer `zh` but only 3.479 with default
 `13a`.
 
-2026-07-23 ACL6060 3x3x3 full-table pipeline:
+2026-07-24 ACL6060 SEGALE re-evaluation (current canonical):
+
+This entry supersedes the immediately following 2026-07-23 OmniSTEval and
+reference-based XCOMET description. Do not use the historical table or its
+`weight_chars`-weighted scores for the main result.
+
+- Current table: `projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv`
+  and `.jsonl`. It covers all 27 conditions (En-Zh/En-De/En-Ja x
+  1x/1.25x/1.5x x GPT/Gemini/KIT).
+- Quality segmentation/alignment now uses SEGALE from
+  `SakaiXue6666/Speech-to-Speech-Latency` at revision
+  `d0041438abf097a1ec3055e7f09656ad6302f672`: spaCy sentence splitting,
+  LaBSE contiguous-span embeddings, and monotonic Vecalign many-to-many
+  alignment with `max_size=8`. The required upstream one-line syntax repair is
+  tracked at
+  `third_party_patches/speech-to-speech-latency/0001-fix-tgt-matching-docstring.patch`.
+- Preserve SEGALE source reference ids as global 1-based ids for the upstream
+  LongYAAL matcher. Audit requires every source segment exactly once.
+- BLEU is computed over SEGALE aligned reference/hypothesis while retaining
+  punctuation. XCOMET-XL is reference-free QE (`source+hypothesis`), not
+  `source+hypothesis+reference`. The main table uses the official arithmetic
+  mean, with no length weighting.
+- `source==""` is over-translation and `hypothesis==""` is under-translation.
+  Both receive score `0.0` and remain in BLEU/XCOMET aggregation. Of 10,765
+  aligned units, 736 are null alignments and all 736 have XCOMET score zero.
+  Global XCOMET-XL QE arithmetic mean is `0.7074453687`.
+- LongYAAL consumes the same SEGALE alignments and speed-scaled source audio;
+  null alignments are omitted only from latency because they have no defined
+  arrival time. Match audit: 10,029 `char_span_from_segale`, 725
+  `skip_under_translation`, 11 `skip_over_translation`, zero fallback source
+  matches.
+- Core scripts: `scripts/build_acl6060_segale_inputs.py`,
+  `scripts/run_acl6060_segale_alignment.py`,
+  `scripts/run_acl6060_segale_longyaal.py`,
+  `scripts/build_acl6060_xcomet_input.py`,
+  `scripts/run_acl6060_xcomet_xl.py`, and
+  `scripts/run_acl6060_metric_pipeline.py`. Combined QE artifacts are in
+  `artifacts/acl6060_xcomet_xl_segale/`.
+
+2026-07-23 ACL6060 3x3x3 full-table pipeline (historical):
 
 The target table is 3 target languages (`zh`, `de`, `ja`) x 3 source speedups
 (`1`, `1.25`, `1.5`) x 3 systems (OpenAI Realtime, Gemini Live, KIT Lecture

@@ -315,7 +315,77 @@ This explains why ACL6060 EN->ZH BLEU can look much higher than FLORAS scores:
 the old ACL6060 number is text prediction vs text reference with Chinese
 tokenization/character-like segmentation. It is not target-speech-ASR BLEU.
 
-## 2026-07-23 ACL6060 3x3x3 Full Table Pipeline
+## 2026-07-24 ACL6060 SEGALE 重评（当前 canonical）
+
+本节取代本文档中随后 `2026-07-23` 记录的 OmniSTEval、reference-based
+XCOMET-XL 和 `weight_chars` 加权结论。旧记录只保留为历史实验说明，不能再用于
+主表、看板或论文。
+
+当前完整结果在：
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.jsonl
+```
+
+它覆盖 En-Zh / En-De / En-Ja、`1x` / `1.25x` / `1.5x` 和 GPT Realtime /
+Gemini Live / KIT Lecture Translator 共 27 个条件。全局 XCOMET-XL QE 值为
+`0.7074453687`，来自全部 `10,765` 个 SEGALE 对齐单元的算术平均，包含空对齐的
+零分。
+
+### 对齐与质量协议
+
+- 对齐使用 [Speech-to-Speech-Latency](https://github.com/SakaiXue6666/Speech-to-Speech-Latency)
+  的 SEGALE 实现，固定 revision `d0041438abf097a1ec3055e7f09656ad6302f672`：
+  spaCy 句切分、`sentence-transformers/LaBSE` contiguous span embedding、
+  Vecalign 单调 many-to-many 对齐，`max_size=8`。Vecalign 的 adaptive skip
+  penalty 允许显式 null alignment，因而不会把缺失 hypothesis 静默跳过。
+- 上游 `src/evaluation/tgt_matching.py` 有一个 docstring 引号语法错误；本项目以
+  `third_party_patches/speech-to-speech-latency/0001-fix-tgt-matching-docstring.patch`
+  记录唯一的一行可复现修补，不改变算法。
+- SEGALE 产出的 reference segment id 被保留为上游 LongYAAL matcher 所需的全局
+  1-based id；每个 run 审计 source coverage，确保每个 ACL source segment 恰好
+  对齐一次。
+- BLEU 以 SEGALE 的 aligned `reference/hypothesis` 计算，保留原始标点；Zh=`zh`，
+  Ja=`ja-mecab`，De=`13a`。空对齐也进入语料级 BLEU，不能通过过滤提高分数。
+- XCOMET-XL 使用 QE / reference-free `source+hypothesis` 模式，**不输入 target
+  reference**。主表用 COMET 官方算术平均，不做字符长度或任何其他加权。
+  `source==""` 是 over-translation、`hypothesis==""` 是 under-translation；两类
+  都被主动赋值 `0.0` 并纳入平均。全部 736 个 null alignment 已验证均为零分。
+- LongYAAL 使用相同 SEGALE 对齐和 speed-scaled source audio (`offset` / `duration`
+  除以 speedup)。空对齐没有定义 arrival latency，因此只从 LongYAAL 的 timing
+  aggregate 略去，但保留在 BLEU/XCOMET 的质量惩罚中。所有 10,765 个 timing
+  records 都是 `char_span_from_segale`、`skip_under_translation` 或
+  `skip_over_translation`，没有 source-text fallback。
+
+### 可复现入口与审计
+
+```bash
+scripts/run_acl6060_metric_pipeline.py \
+  --artifact-base projects/acl6060_s2s_metrics_seed/artifacts \
+  --speech-latency-repo /path/to/Speech-to-Speech-Latency \
+  --run-segale --run-segale-longyaal --run-xcomet --reference-free-xcomet
+```
+
+关键可复用产物：
+
+```text
+artifacts/<run>/segale_alignment/ref.jsonl
+artifacts/<run>/segale_alignment/hyp/aligned_spacy_hyp.jsonl
+artifacts/<run>/segale_longyaal/{scores.resegmented.csv,summary.json}
+artifacts/<run>/xcomet_xl/{input.jsonl,segments.jsonl,summary.json}
+artifacts/acl6060_xcomet_xl_segale/{input_all.jsonl,scores_all.jsonl,summary_all.json}
+```
+
+最终审计：27/27 主表行均有 BLEU、XCOMET-XL、LongYAAL 和 Ending Offset；27 个
+condition 唯一；combined XCOMET 输入/输出/SEGALE 对齐均为 10,765 行；source
+coverage 无遗漏或重复；null score 非零数为 0。
+
+逐候选 LaBSE matching trace (`*_aps_results.json`) 和逐 token LongYAAL trace
+(`instances.resegmented.json`) 是可由上述 Git 输入确定性重建的运行中间件，保留在
+本机/Aries 持久目录，不提交到 Git。
+
+## 2026-07-23 ACL6060 3x3x3 Full Table Pipeline（历史）
 
 目标表格覆盖 3 个 target language (`zh`, `de`, `ja`), 3 个 source speedup
 (`1`, `1.25`, `1.5`), 3 个 system (OpenAI Realtime, Gemini Live, KIT Lecture

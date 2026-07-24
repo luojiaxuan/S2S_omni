@@ -1,8 +1,16 @@
 {
-  "xcomet_xl": 0.6809561740252175,
+  "xcomet_xl": 0.5527469465611187,
   "xcomet_xl_model": "Unbabel/XCOMET-XL",
-  "xcomet_xl_mode": "source_hypothesis_reference",
-  "segments": 468,
-  "output_jsonl": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1/xcomet_xl/segments.jsonl",
-  "combined_output_jsonl": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/scores_all.jsonl"
+  "xcomet_xl_mode": "source_hypothesis",
+  "alignment_backend": "SEGALE",
+  "segments": 383,
+  "valid_segments": 315,
+  "null_alignments": 68,
+  "over_translation_alignments": 0,
+  "under_translation_alignments": 68,
+  "null_alignment_ratio": 0.17754569190600522,
+  "null_alignment_score": 0.0,
+  "aggregation": "arithmetic_mean_including_null_alignment_zeros",
+  "output_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1/xcomet_xl/segments.jsonl",
+  "combined_output_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl_segale/scores_all.jsonl"
 }

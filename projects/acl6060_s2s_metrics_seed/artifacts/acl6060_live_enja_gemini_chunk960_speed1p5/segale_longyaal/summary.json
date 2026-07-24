@@ -1,0 +1,14 @@
+{
+  "alignment_backend": "SEGALE",
+  "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672",
+  "bleu": 33.47161519689735,
+  "bleu_tokenizer": "ja-mecab",
+  "longyaal_cu": 6948.3161,
+  "longyaal_ca": 8556.5995,
+  "ending_offset_cu_ms_mean": 6653.1295,
+  "ending_offset_ca_ms_mean": 9551.0828,
+  "latency_valid_segments": 382,
+  "null_alignments": 2,
+  "null_alignment_ratio": 0.005208333333333333,
+  "scores_path": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enja_gemini_chunk960_speed1p5/segale_longyaal/scores.resegmented.csv"
+}

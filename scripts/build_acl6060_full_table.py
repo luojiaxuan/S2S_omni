@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-
 LANGUAGES = [("zh", "En-Zh"), ("de", "En-De"), ("ja", "En-Ja")]
 SPEEDS = [1.0, 1.25, 1.5]
 SYSTEMS = [
@@ -63,7 +62,9 @@ def read_tsv_scores(path: Path) -> dict[str, float]:
     return out
 
 
-def candidate_run_dirs(artifact_base: Path, provider: str, lang: str, chunk_ms: int, speed: float) -> list[Path]:
+def candidate_run_dirs(
+    artifact_base: Path, provider: str, lang: str, chunk_ms: int, speed: float
+) -> list[Path]:
     tag = f"{provider}_chunk{chunk_ms}_{speed_tag(speed)}"
     return [
         artifact_base / f"acl6060_live_en{lang}_{tag}",
@@ -72,7 +73,9 @@ def candidate_run_dirs(artifact_base: Path, provider: str, lang: str, chunk_ms: 
     ]
 
 
-def find_run_dir(artifact_base: Path, provider: str, lang: str, chunk_ms: int, speed: float) -> Path | None:
+def find_run_dir(
+    artifact_base: Path, provider: str, lang: str, chunk_ms: int, speed: float
+) -> Path | None:
     for path in candidate_run_dirs(artifact_base, provider, lang, chunk_ms, speed):
         if (path / "instances.log").exists() and (path / "run_config.json").exists():
             return path
@@ -83,9 +86,9 @@ def provider_config(provider: str, lang: str, chunk_ms: int) -> str:
     if provider == "kit":
         return (
             f"chunk={chunk_ms}ms; format=mixed; ttsQualityMode=high_quality; "
-            f"language={lang},en; target-audio ASR"
+            f"language={lang},en; target-audio ASR; quality alignment=SEGALE"
         )
-    return f"chunk={chunk_ms}ms; target={lang}; live text transcript"
+    return f"chunk={chunk_ms}ms; target={lang}; live text transcript; quality alignment=SEGALE"
 
 
 def load_xcomet_score(run_dir: Path) -> float | None:
@@ -124,27 +127,31 @@ def build_row(
 
     row["status"] = "has_run"
     row["run_dir"] = str(run_dir)
-    omnisteval = read_json(run_dir / "omnisteval_longform" / "summary.json")
-    scores = omnisteval.get("scores") if isinstance(omnisteval.get("scores"), dict) else {}
-    if scores:
-        row["BLEU"] = f"{float(scores.get('BLEU')):.4f}" if scores.get("BLEU") is not None else ""
+    segale_quality = read_json(run_dir / "segale_alignment" / "quality_summary.json")
+    segale_latency = read_json(run_dir / "segale_longyaal" / "summary.json")
+    if segale_quality.get("bleu") is not None:
+        row["BLEU"] = f"{float(segale_quality['bleu']):.4f}"
+    if segale_latency:
         row["LongYAAL"] = (
-            f"{float(scores.get('LongYAAL (CU)')):.4f}"
-            if scores.get("LongYAAL (CU)") is not None
+            f"{float(segale_latency['longyaal_cu']):.4f}"
+            if segale_latency.get("longyaal_cu") is not None
             else ""
         )
-        if omnisteval.get("ending_offset_ca_ms_mean") is not None:
-            row["Ending Offset"] = f"{float(omnisteval['ending_offset_ca_ms_mean']):.4f}"
-        row["status"] = "has_longyaal"
+        if segale_latency.get("ending_offset_ca_ms_mean") is not None:
+            row["Ending Offset"] = f"{float(segale_latency['ending_offset_ca_ms_mean']):.4f}"
+    if segale_quality:
+        row["status"] = "has_segale_quality"
     else:
         rasst_scores = read_tsv_scores(run_dir / "eval_results.tsv")
         if rasst_scores.get("BLEU") is not None:
             row["BLEU"] = f"{float(rasst_scores['BLEU']):.4f}"
+    if segale_quality and segale_latency:
+        row["status"] = "has_segale_quality_and_latency"
 
     xcomet = load_xcomet_score(run_dir)
     if xcomet is not None:
         row["XCOMET-XL"] = f"{xcomet:.6f}"
-        if row["status"] == "has_longyaal":
+        if row["status"] == "has_segale_quality_and_latency":
             row["status"] = "complete_without_manual_check"
     return row
 
@@ -159,7 +166,16 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
 
 def write_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = ["Language", "Speedup", "System", "Config", "BLEU", "XCOMET-XL", "LongYAAL", "Ending Offset"]
+    fieldnames = [
+        "Language",
+        "Speedup",
+        "System",
+        "Config",
+        "BLEU",
+        "XCOMET-XL",
+        "LongYAAL",
+        "Ending Offset",
+    ]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,

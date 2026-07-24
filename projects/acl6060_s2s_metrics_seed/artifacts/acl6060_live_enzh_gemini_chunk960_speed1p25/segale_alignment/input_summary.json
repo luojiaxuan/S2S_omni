@@ -1,0 +1,13 @@
+{
+  "alignment_backend": "SEGALE",
+  "run_dir": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_gemini_chunk960_speed1p25",
+  "target_lang": "zh",
+  "speed_factor": 1.25,
+  "documents": 5,
+  "source_segments": 468,
+  "hypothesis_documents": 5,
+  "ref_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_gemini_chunk960_speed1p25/segale_alignment/ref.jsonl",
+  "hyp_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_gemini_chunk960_speed1p25/segale_alignment/hyp.jsonl",
+  "latency_instances_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_gemini_chunk960_speed1p25/segale_alignment/instances.segale.jsonl",
+  "scaled_yaml": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_gemini_chunk960_speed1p25/segale_alignment/audio.scaled.basename.yaml"
+}

@@ -24,6 +24,10 @@ outputs/
 *.pt
 *.pth
 
+# Reproducible SEGALE/LongYAAL intermediate traces; final aligned/QE artifacts stay tracked.
+projects/acl6060_s2s_metrics_seed/artifacts/**/segale_alignment/hyp/spacy_run_vecalign_explore/
+projects/acl6060_s2s_metrics_seed/artifacts/**/segale_longyaal/instances.resegmented.json
+
 # Local editor/OS files
 .DS_Store
 .idea/

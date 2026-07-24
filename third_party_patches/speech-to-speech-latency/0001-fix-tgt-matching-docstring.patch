@@ -1,0 +1,15 @@
+diff --git a/src/evaluation/tgt_matching.py b/src/evaluation/tgt_matching.py
+index e8b68f7..3f597bc 100644
+--- a/src/evaluation/tgt_matching.py
++++ b/src/evaluation/tgt_matching.py
+@@ -409,9 +409,9 @@
+ def _norm_char_stream(text: str) -> str:
+     """
+     Convert text to a normalised string for character-stream matching: "hello world!" -> "helloworld"
+     - NFKC
+     - keep only letters / digits / apostrophes
+     - lowercase
+-    """"
++    """
+     text = _norm(text)
+     return "".join(ch.lower() for ch in text if _is_kept_char(ch))
