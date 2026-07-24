@@ -875,6 +875,46 @@ Its Hugging Face status is `PENDING_HF_UPLOAD`. The temporary HF token,
 XCOMET container, and remote scoring directory were deleted after hash and row
 count validation.
 
+2026-07-24 ACL6060 En-Zh audio detail:
+
+- 本地页面:
+  `/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_samples_all_systems/index.html`
+- 选取稳定 talk `2022.acl-long.268`、`2022.acl-long.590`，分别展示
+  `1.25x`、`1.5x`；`367` 因已知 KIT partial-output failure 被排除。
+- 每个 speed/talk 展示相同 60 秒 sped English source，以及
+  GPT/Gemini/KIT 三个中文 target，共 4 组、16 个 audio player。
+- GPT/Gemini 的历史 full-wav raw logs 只保留脱敏后的 audio metadata，
+  不能恢复 base64 payload。因此用 canonical model、`target=zh`,
+  `chunk=960ms`、对应 speed 对 first-60s source 做了定性重跑。8 次请求
+  `error_count=0`，但这些不是正式 full-wav session 的原始 target audio。
+- KIT player 使用正式 `high_quality` full-wav `target_tts.wav` 的前 60 秒。
+  该 target-time excerpt 不与 GPT/Gemini 的 60 秒 source rerun 对齐，
+  可能覆盖更少 source 内容；不能把页面当作 source-aligned ranking。
+  KIT text panel 是 full-talk reference-aligned excerpt，不是该 60 秒 audio
+  的精确 transcript。页面展示的 canonical BLEU/XCOMET 是背景信息，不是
+  60 秒样例重算分。
+- `run_acl6060_live_stream_eval.py --save-output-audio` 现在可显式保存
+  OpenAI/Gemini 返回的 24kHz mono target WAV；默认关闭，不改变正式表。
+- 展示 MP3 做了 `loudnorm=I=-20:TP=-2:LRA=11`；raw WAV 未修改。页面和
+  manifest 约 8.5 MB，raw rerun 约 48 MB。
+- Git canonical code:
+  `scripts/build_acl6060_enzh_audio_details.py`；
+  本地 staging:
+  `/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_sample_reruns`
+  和
+  `/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_samples_all_systems`。
+- 预定 HF dataset:
+  `gavinlaw/acl6060-s2s-audio-samples-en-zh`，状态
+  `PENDING_HF_UPLOAD`；本次未创建或上传。
+
+重建页面:
+
+```bash
+python scripts/build_acl6060_enzh_audio_details.py \
+  --rerun-root /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_sample_reruns \
+  --output-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_samples_all_systems
+```
+
 XCOMET-XL status:
 
 - Combined XCOMET input/scores for all 27 rows exist at:

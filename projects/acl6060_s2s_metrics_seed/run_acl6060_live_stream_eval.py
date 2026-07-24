@@ -62,6 +62,8 @@ class StreamedText:
     input_transcript_parts: list[str]
     errors: list[dict[str, Any]]
     emissions: list[tuple[str, float, float]] = field(default_factory=list)
+    audio_parts: list[bytes] = field(default_factory=list)
+    audio_sample_rate: int = 0
 
 
 def parse_args() -> argparse.Namespace:
@@ -89,6 +91,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--progress-interval-s", type=float, default=30.0)
     parser.add_argument("--pace", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--save-output-audio",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+    )
     parser.add_argument("--download-hf", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--dry-run", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--openai-ws-url", default=OPENAI_WS_URL)
@@ -300,6 +307,55 @@ def pcm16_duration_s(payload: bytes, sample_rate: int) -> float:
     return len(payload) / 2.0 / float(sample_rate)
 
 
+def append_base64_pcm_audio(
+    streamed: StreamedText,
+    encoded: str,
+    sample_rate: int,
+) -> None:
+    if not encoded:
+        return
+    if sample_rate <= 0:
+        raise ValueError(f"invalid output audio sample rate: {sample_rate}")
+    if streamed.audio_sample_rate not in {0, sample_rate}:
+        raise ValueError(
+            f"output audio sample rate changed from {streamed.audio_sample_rate} "
+            f"to {sample_rate}"
+        )
+    streamed.audio_sample_rate = sample_rate
+    streamed.audio_parts.append(base64.b64decode(encoded, validate=True))
+
+
+def capture_base64_pcm_audio(
+    streamed: StreamedText,
+    encoded: str,
+    sample_rate: int,
+    provider: str,
+) -> dict[str, Any] | None:
+    try:
+        append_base64_pcm_audio(streamed, encoded, sample_rate)
+    except Exception as exc:
+        return {
+            "audio_capture_error": f"{type(exc).__name__}: {exc}",
+            "provider": provider,
+            "sample_rate": sample_rate,
+        }
+    return None
+
+
+def write_streamed_audio(streamed: StreamedText, path: Path) -> Path | None:
+    if not streamed.audio_parts:
+        return None
+    if streamed.audio_sample_rate <= 0:
+        raise ValueError("output audio has payloads but no sample rate")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(streamed.audio_sample_rate)
+        handle.writeframes(b"".join(streamed.audio_parts))
+    return path
+
+
 def append_jsonl(path: Path, record: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
@@ -395,6 +451,15 @@ def openai_input_delta(event: dict[str, Any]) -> str:
     return value if isinstance(value, str) else ""
 
 
+def openai_output_audio(event: dict[str, Any]) -> tuple[str, int] | None:
+    if str(event.get("type") or "") != "session.output_audio.delta":
+        return None
+    encoded = event.get("delta")
+    if not isinstance(encoded, str):
+        return None
+    return encoded, int(event.get("sample_rate") or OPENAI_SAMPLE_RATE)
+
+
 async def connect_openai(url: str, api_key: str, model: str):
     import websockets
 
@@ -460,6 +525,18 @@ async def run_openai_stream(
                 safe["sent_source_ms"] = round(min(total_source_ms, sent_audio_s * 1000.0), 3)
                 append_jsonl(raw_events, safe)
                 event_type = str(event.get("type") or "")
+                if args.save_output_audio:
+                    output_audio = openai_output_audio(event)
+                    if output_audio is not None:
+                        audio_error = capture_base64_pcm_audio(
+                            streamed,
+                            output_audio[0],
+                            output_audio[1],
+                            "openai",
+                        )
+                        if audio_error is not None:
+                            streamed.errors.append(audio_error)
+                            append_jsonl(raw_events, audio_error)
                 if "error" in event_type or event.get("error"):
                     streamed.errors.append(safe)
                     if not target_language_ready.is_set():
@@ -600,6 +677,32 @@ def gemini_transcription(event: dict[str, Any], key: str) -> str:
     return text if isinstance(text, str) else ""
 
 
+def gemini_output_audio(event: dict[str, Any]) -> list[tuple[str, int]]:
+    content = event.get("serverContent")
+    if not isinstance(content, dict):
+        return []
+    model_turn = content.get("modelTurn")
+    if not isinstance(model_turn, dict):
+        return []
+    parts = model_turn.get("parts")
+    if not isinstance(parts, list):
+        return []
+    output: list[tuple[str, int]] = []
+    for part in parts:
+        if not isinstance(part, dict):
+            continue
+        inline_data = part.get("inlineData")
+        if not isinstance(inline_data, dict):
+            continue
+        encoded = inline_data.get("data")
+        mime_type = str(inline_data.get("mimeType") or "")
+        if not isinstance(encoded, str) or not mime_type.startswith("audio/pcm"):
+            continue
+        match = re.search(r"(?:^|;)rate=(\d+)(?:;|$)", mime_type)
+        output.append((encoded, int(match.group(1)) if match else 24000))
+    return output
+
+
 def sanitize_gemini(value: Any) -> Any:
     if isinstance(value, dict):
         return {key: sanitize_gemini_item(key, item) for key, item in value.items()}
@@ -673,6 +776,17 @@ async def run_gemini_stream(
                     go_away_received = True
                 if event.get("error"):
                     streamed.errors.append(safe if isinstance(safe, dict) else {"error": safe})
+                if args.save_output_audio:
+                    for encoded_audio, output_sample_rate in gemini_output_audio(event):
+                        audio_error = capture_base64_pcm_audio(
+                            streamed,
+                            encoded_audio,
+                            output_sample_rate,
+                            "gemini",
+                        )
+                        if audio_error is not None:
+                            streamed.errors.append(audio_error)
+                            append_jsonl(raw_events, audio_error)
                 output_delta = gemini_transcription(event, "outputTranscription")
                 if output_delta:
                     last_output_time = now
@@ -853,6 +967,14 @@ async def run_stream(
         combined.input_transcript_parts.extend(part.input_transcript_parts)
         combined.errors.extend(part.errors)
         combined.emissions.extend(part.emissions)
+        if part.audio_parts:
+            if combined.audio_sample_rate not in {0, part.audio_sample_rate}:
+                raise ValueError(
+                    f"Gemini output audio sample rate changed from "
+                    f"{combined.audio_sample_rate} to {part.audio_sample_rate}"
+                )
+            combined.audio_sample_rate = part.audio_sample_rate
+            combined.audio_parts.extend(part.audio_parts)
     return combined
 
 
@@ -901,6 +1023,7 @@ async def async_main() -> None:
         "chunk_ms": args.chunk_ms,
         "speed_factor": args.speed_factor,
         "pace": args.pace,
+        "save_output_audio": args.save_output_audio,
         "max_audio_seconds": args.max_audio_seconds,
         "max_session_input_s": args.max_session_input_s,
         "target_lang": args.target_lang,
@@ -933,6 +1056,15 @@ async def async_main() -> None:
         streamed = await run_stream(stream_wav, api_key, run_dir, args, source_length_ms)
         elapsed_ms = (time.monotonic() - start_s) * 1000.0
         prediction = "".join(streamed.text_parts).strip()
+        target_audio = None
+        target_audio_duration_ms = 0.0
+        if args.save_output_audio and streamed.audio_parts:
+            target_audio = write_streamed_audio(
+                streamed,
+                run_dir / f"target_audio_{streamed.audio_sample_rate}.wav",
+            )
+            if target_audio is not None:
+                target_audio_duration_ms = wav_duration_ms(target_audio)
         normalize_word_emissions(streamed, args.target_lang)
         if not streamed.delays_ms:
             fallback_units = max(1, count_latency_units(prediction, args.target_lang))
@@ -961,6 +1093,16 @@ async def async_main() -> None:
             "error_count": len(streamed.errors),
             "run_dir": str(run_dir),
         }
+        if args.save_output_audio:
+            response.update(
+                {
+                    "target_audio": str(target_audio) if target_audio is not None else "",
+                    "target_audio_duration_ms": target_audio_duration_ms,
+                    "target_audio_bytes": (
+                        target_audio.stat().st_size if target_audio is not None else 0
+                    ),
+                }
+            )
         append_jsonl(responses_path, response)
         print(
             json.dumps(

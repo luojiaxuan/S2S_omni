@@ -108,6 +108,11 @@ the default paced live run takes about an hour. `--no-pace` sends chunks as fast
 as the WebSocket accepts them; that is useful for protocol debugging, but it is
 not a live wall-clock measurement. For Gemini full runs, pass
 `--max-session-input-s 480` so long talks are split into service-sized sessions.
+需要保留 API 返回的 target speech 时显式传 `--save-output-audio`；runner
+会把 OpenAI `session.output_audio.delta` 或 Gemini
+`serverContent.modelTurn.parts[].inlineData` 写为 24kHz mono WAV，并在
+`responses.jsonl` 中记录路径、字节数和时长。默认不开启，正式 full-table
+既有行为不变。
 
 For the FLORAS-dashboard-style sweep over providers, chunk sizes, and input
 speed factors, use:
@@ -535,7 +540,7 @@ python scripts/build_acl6060_kit_quality_mode_comparison.py \
 Targeted verification:
 
 ```text
-tests/test_acl6060_kit_eval.py + tests/test_acl6060_stream_eval.py: 9 passed
+tests/test_acl6060_kit_eval.py + tests/test_acl6060_stream_eval.py: 11 passed
 comparison builder: 5 instances, 5 responses, 468 XCOMET-XL segments
 config diff: kit_tts_quality_mode only
 canonical baseline metrics: exact at stored table precision
@@ -551,6 +556,62 @@ Ending Offset: per-talk mean reconciles to aggregate in both modes
 该 201 MB raw audio bundle 尚未上传 Hugging Face，状态为
 `PENDING_HF_UPLOAD`。Git artifact 保留 5-row instances/responses、配置、
 OmniSTEval 和 468 条 XCOMET-XL 输入/分数。
+
+## 2026-07-24 ACL6060 En-Zh Audio Detail
+
+为展示 `1.25x` 和 `1.5x` 的定性细节，选择两条稳定 talk
+`2022.acl-long.268`、`2022.acl-long.590`，生成同页横向对比
+GPT/Gemini/KIT 的本地 detail 页面。已知 KIT partial-output failure
+`2022.acl-long.367` 不作为展示样例。
+
+页面入口:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_samples_all_systems/index.html
+```
+
+数据语义:
+
+- 每个 speed/talk 有一个 60 秒 sped English source，以及 GPT、Gemini、KIT
+  三个中文 target audio player，共 4 组、16 个 player。
+- GPT/Gemini 历史 canonical full-wav raw logs 已将 base64 audio payload
+  脱敏，无法从旧日志恢复目标语音。因此重新使用相同 model、`target=zh`,
+  `chunk=960ms`, speed 配置，对相同 first-60s sped source 做定性重跑。
+  8 次 API 请求 `error_count` 均为 0；这些音频不是 canonical full-wav
+  session 的原始音频，不能用于替换正式表分数。
+- KIT 使用 canonical full-wav run 中已经持久化的
+  `target_tts.wav` 前 60 秒；配置仍为 `format=mixed`,
+  `language=zh,en`, `ttsQualityMode=high_quality`。这是 full-talk target
+  timeline 上的时间裁切，不与 GPT/Gemini 的 60 秒 source window 对齐，
+  可能覆盖更少 source 内容；页面只用于 speech-quality inspection，不是
+  source-aligned ranking。KIT text panel 也明确标记为 full-talk
+  reference-aligned excerpt，并非该 60 秒 audio 的精确 transcript。
+- 页面显示 canonical full-wav BLEU/XCOMET 仅作系统背景；它们不是用
+  60 秒展示样例重新计算的指标。
+- 展示 MP3 统一为 24kHz mono、64kbps，并做
+  `loudnorm=I=-20:TP=-2:LRA=11`，便于公平试听；raw WAV 保持不变。
+- 每个 detail 同时展示 ACL English source transcript、人工中文 reference
+  和系统 target transcript。页面和 manifest 共约 8.5 MB；GPT/Gemini raw
+  rerun 约 48 MB。
+
+可复现 builder:
+
+```bash
+python scripts/build_acl6060_enzh_audio_details.py \
+  --rerun-root /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_sample_reruns \
+  --output-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_samples_all_systems
+```
+
+生成音频属于 reusable data artifact，当前仍在本机 persistent staging:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_sample_reruns
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_samples_all_systems
+```
+
+预定 Hugging Face dataset repo 为
+`gavinlaw/acl6060-s2s-audio-samples-en-zh`，当前状态
+`PENDING_HF_UPLOAD`；本次没有执行 HF 创建或上传。
 
 ## Related KIT Lecture Translator Work
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import base64
 import importlib.util
 import sys
+import wave
 from pathlib import Path
 
 
@@ -88,3 +90,98 @@ def test_atempo_filters_handles_ffmpeg_bounds() -> None:
     assert acl6060_stream_eval.atempo_filters(1.5) == "atempo=1.50000000"
     assert acl6060_stream_eval.atempo_filters(4.0) == "atempo=2.0,atempo=2.00000000"
     assert acl6060_stream_eval.atempo_filters(0.25) == "atempo=0.5,atempo=0.50000000"
+
+
+def test_output_audio_extractors_and_wav_writer(tmp_path: Path) -> None:
+    pcm = b"\x01\x00\x02\x00"
+    encoded = base64.b64encode(pcm).decode("ascii")
+    event = {
+        "serverContent": {
+            "modelTurn": {
+                "parts": [
+                    {
+                        "inlineData": {
+                            "mimeType": "audio/pcm;rate=24000",
+                            "data": encoded,
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    assert acl6060_stream_eval.gemini_output_audio(event) == [(encoded, 24000)]
+    assert acl6060_stream_eval.gemini_output_audio(
+        {
+            "serverContent": {
+                "modelTurn": {
+                    "parts": [
+                        {
+                            "inlineData": {
+                                "mimeType": "audio/pcm",
+                                "data": encoded,
+                            }
+                        },
+                        {
+                            "inlineData": {
+                                "mimeType": "image/png",
+                                "data": encoded,
+                            }
+                        },
+                    ]
+                }
+            }
+        }
+    ) == [(encoded, 24000)]
+    assert acl6060_stream_eval.openai_output_audio(
+        {"type": "session.output_audio.delta", "delta": encoded}
+    ) == (encoded, 24000)
+    assert acl6060_stream_eval.openai_output_audio(
+        {
+            "type": "session.output_audio.delta",
+            "delta": encoded,
+            "sample_rate": 16000,
+        }
+    ) == (encoded, 16000)
+
+    streamed = acl6060_stream_eval.StreamedText([], [], [], [], [])
+    acl6060_stream_eval.append_base64_pcm_audio(streamed, encoded, 24000)
+    output = tmp_path / "target.wav"
+    assert acl6060_stream_eval.write_streamed_audio(streamed, output) == output
+    with wave.open(str(output), "rb") as handle:
+        assert handle.getframerate() == 24000
+        assert handle.getnchannels() == 1
+        assert handle.getsampwidth() == 2
+        assert handle.readframes(handle.getnframes()) == pcm
+
+
+def test_audio_capture_error_does_not_raise() -> None:
+    streamed = acl6060_stream_eval.StreamedText([], [], [], [], [])
+    error = acl6060_stream_eval.capture_base64_pcm_audio(
+        streamed,
+        "not-base64",
+        24000,
+        "openai",
+    )
+    assert error is not None
+    assert error["provider"] == "openai"
+    assert "audio_capture_error" in error
+    assert streamed.audio_parts == []
+
+    encoded = base64.b64encode(b"\x01\x00").decode("ascii")
+    assert (
+        acl6060_stream_eval.capture_base64_pcm_audio(
+            streamed,
+            encoded,
+            24000,
+            "openai",
+        )
+        is None
+    )
+    rate_error = acl6060_stream_eval.capture_base64_pcm_audio(
+        streamed,
+        encoded,
+        16000,
+        "openai",
+    )
+    assert rate_error is not None
+    assert "sample rate changed" in rate_error["audio_capture_error"]
