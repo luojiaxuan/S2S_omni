@@ -697,6 +697,15 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.jsonl
 ```
 
+The canonical 27 rows were copied to the `ACL 60/60 Dev` Google Sheet on
+2026-07-23:
+
+https://docs.google.com/spreadsheets/d/1_HUxgwe8jqgoL9GRuVR1HZz__GOK2lfjFbqnFhweimM/edit?gid=0#gid=0
+
+The populated ranges are `D2:H10`, `D12:H20`, and `D22:H30`. A cell-by-cell
+readback matched `acl6060_full_table.tsv`; all nine KIT rows use
+`ttsQualityMode=high_quality`.
+
 New/updated scripts:
 
 ```text

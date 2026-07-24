@@ -321,6 +321,15 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.jsonl
 ```
 
+Google Sheet:
+
+https://docs.google.com/spreadsheets/d/1_HUxgwe8jqgoL9GRuVR1HZz__GOK2lfjFbqnFhweimM/edit?gid=0#gid=0
+
+2026-07-23 已将 canonical 27 行写入 `ACL 60/60 Dev` sheet 的
+`D2:H10`, `D12:H20`, `D22:H30`。写入后逐 cell 回读，数值与
+`acl6060_full_table.tsv` 一致；9 个 KIT rows 均为
+`ttsQualityMode=high_quality`。
+
 一键 resume 脚本:
 
 ```bash
