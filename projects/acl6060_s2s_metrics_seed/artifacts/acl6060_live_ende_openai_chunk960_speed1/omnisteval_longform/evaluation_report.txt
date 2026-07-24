@@ -4,10 +4,10 @@ OmniSTEval v0.1.10  |  Longform evaluation (with resegmentation)
 
 Settings
 ----------------------------------------------------------------
-  Hypothesis         projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1/omnisteval_longform/hypothesis.omnisteval.jsonl
+  Hypothesis         /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1/omnisteval_longform/hypothesis.omnisteval.jsonl
   Hypothesis format  jsonl
   Reference          /tmp/rasst_main_result_data/main_result/inputs/acl_de/ref.txt
-  Segmentation       projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1/omnisteval_longform/audio.scaled.yaml
+  Segmentation       /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1/omnisteval_longform/audio.scaled.yaml
   Seg. type          speech
   Language           de
   BLEU tokenizer     13a

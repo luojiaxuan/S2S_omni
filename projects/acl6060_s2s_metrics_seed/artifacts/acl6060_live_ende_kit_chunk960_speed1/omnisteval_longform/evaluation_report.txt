@@ -1,0 +1,116 @@
+================================================================
+OmniSTEval v0.1.10  |  Longform evaluation (with resegmentation)
+================================================================
+
+Settings
+----------------------------------------------------------------
+  Hypothesis         /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_kit_chunk960_speed1/omnisteval_longform/hypothesis.omnisteval.jsonl
+  Hypothesis format  jsonl
+  Reference          /tmp/rasst_main_result_data/main_result/inputs/acl_de/ref.txt
+  Segmentation       /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_kit_chunk960_speed1/omnisteval_longform/audio.scaled.yaml
+  Seg. type          speech
+  Language           de
+  BLEU tokenizer     13a
+  Char-level         no
+  Offset delays      no
+  Fix CA emissions   no
+  Metrics            quality, latency
+  Version            0.1.10
+
+Scores
+----------------------------------------------------------------
+  BLEU                    26.6810
+  chrF                    51.6259
+  BLEU (NFKC-normalized)  26.6810
+  chrF (NFKC-normalized)  51.6259
+  LongYAAL (CU)           88946.4138
+  LongAL (CU)             93498.2713
+  LongLAAL (CU)           93498.5032
+  LongAP (CU)             15.6937
+  LongDAL (CU)            96130.4469
+  LongYAAL (CA)           88946.4138
+  LongAL (CA)             109355.5285
+  LongLAAL (CA)           109355.7604
+  LongAP (CA)             19.5259
+  LongDAL (CA)            112507.8733
+
+Instance-level Details
+----------------------------------------------------------------
+Empty Predictions: 49
+Total Instances:   468
+
+For long-form evaluation, empty predictions may naturally occur for segments with short references
+due to resegmentation or segments containing non-speech content such as music or silence.
+However, if many segments or segments with substantial references have empty predictions,
+this may indicate an issue with SimulST system or resegmentation.
+
+
+Instances with empty predictions:
+----------------------------------------------------------------
+Instance 110 with reference 'Heute werde ich über den Grund für diese Forschung sprechen.' has an empty prediction.
+Instance 111 with reference 'Dann werde ich die KinyaBERT-Modell-Architektur im Detail vorstellen.' has an empty prediction.
+Instance 112 with reference 'Ich werde dann über unsere experimentellen Ergebnisse sprechen und zum Schluss einige Schlussfolgerungen darstellen.' has an empty prediction.
+Instance 113 with reference 'Wir alle wissen, dass die jüngsten Fortschritte bei der NLP durch die Verwendung von vortrainierten Sprachmodellen wie BERT ermöglicht wurden.' has an empty prediction.
+Instance 114 with reference 'Allerdings gibt es immer noch eine Reihe von Einschränkungen.' has an empty prediction.
+Instance 116 with reference 'Hier haben wir zum Beispiel drei Kinyarwanda-Wörter, die mehrere Morpheme enthalten, aber die BPE-Algorithmen können sie nicht extrahieren.' has an empty prediction.
+Instance 118 with reference 'Die zweite Herausforderung besteht darin, dass, selbst wenn man Zugang zu einem morphologischen Analysator von Oracle hätte, würde es nicht ausreichen, das BPE-Token durch Morpheme zu ersetzen, um die morphologische Kompositionalität auszudrücken.' has an empty prediction.
+Instance 119 with reference 'Eine dritte Lücke in der Forschung besteht darin, dass neue vortrainierte Sprachmodelle meist bei ressourcenintensiven Sprachen evaluiert werden.' has an empty prediction.
+Instance 121 with reference 'Daher präsentieren wir KinyaBERT. Das ist eine einfache, aber effektive Anpassung der BERT-Architektur, die für den effektiveren Umgang mit morphologisch reichen Sprachen gedacht ist.' has an empty prediction.
+Instance 122 with reference 'Wir evaluieren KinyaBERT mit Kinyarwanda, einer ressourcenarmen und morphologisch reichen Sprache, die von mehr als zwölf Millionen Menschen in Ost- und Zentralafrika gesprochen wird.' has an empty prediction.
+Instance 123 with reference 'Die Eingabe für das Modell ist entweder ein Satz oder ein Dokument.' has an empty prediction.
+Instance 125 with reference 'Wie Sie sehen können, enthaltenWörter im Kinyarwanda mehrere Morpheme, die unterschiedliche Informationen enthalten.' has an empty prediction.
+Instance 127 with reference 'Dieser erzeugt dann Morpheme, die in allen Wörtern enthalten sind.' has an empty prediction.
+Instance 128 with reference 'Die Morpheme setzen sich in der Regel aus dem Stamm und null oder mehr Affixen zusammen.' has an empty prediction.
+Instance 129 with reference 'Die Affixe können Zeitform, Aspekt, Subjekt oder Objekt in den Verben anzeigen und beziehen sich häufiger auf die Substantivklasse der Bantu für Subjekte und Objekte.' has an empty prediction.
+Instance 130 with reference 'Der morphologische Analysator erzeugt auch einen Teil eines Sprach-Tags für jedes der Wörter.' has an empty prediction.
+Instance 131 with reference 'Nach diesem Schritt erstellen wir Einbettungen für den Teil der Sprach-Tags.' has an empty prediction.
+Instance 132 with reference 'Einbettungen für die Affixe.' has an empty prediction.
+Instance 134 with reference 'Dies sind die Einbettungen auf Morphologie-Ebene.' has an empty prediction.
+Instance 136 with reference 'Ausgegeben werden die Vektoren, die mit den morphologischen Informationen bei jedem Wort kontextualisiert werden.' has an empty prediction.
+Instance 137 with reference 'Nun führen wir eine Komposition durch, bei der die morphologischen Einbettungen, die der Sprache und dem Wortstamm entsprechen, miteinander verkettet werden.' has an empty prediction.
+Instance 138 with reference 'Wir verketten sie mit einer weiteren Einbettung des Stammes auf der Ebene des Satzes.' has an empty prediction.
+Instance 140 with reference 'Die Endausgabe sind kontextualisierte Einbettungen, die für nachgelagerte NLP-Aufgaben verwendet werden können.' has an empty prediction.
+Instance 141 with reference 'Für einen morphologischen Analysator verwenden wir Morphologie-Prinzipien mit endlichen Automaten auf zwei Ebenen und mit einer maßgeschneiderten Implementierung, die auf die Sprache Kinyarwanda zugeschnitten ist.' has an empty prediction.
+Instance 142 with reference 'Wir modellieren die Morphologie aller Wörter auf Kinyarwanda, einschließlich der Verben, Substantive, Demonstrativ- und Possessivpronomen, Numerale und andere.' has an empty prediction.
+Instance 145 with reference 'Wir berücksichtigen auch den Vorrang der Sprach-Tags sowie die syntaktischen Vereinbarungen, die in den eingegebenen Wörtern vorhanden sind.' has an empty prediction.
+Instance 146 with reference 'Der Teil des Sprach-Taggers verwendet eine bidirektionale Inferenz, die den häufiger verwendeten Viterbi-Algorithmus für die Dekodierung verbessert.' has an empty prediction.
+Instance 147 with reference 'Hier noch ein paar Anmerkungen zur Positionskodierung.' has an empty prediction.
+Instance 148 with reference 'Erstens verwendet der Morphologie-Encoder keine Positionskodierung.' has an empty prediction.
+Instance 150 with reference 'Daher ist die positionelle Information inhärent, wenn die Morpheme gegeben sind.' has an empty prediction.
+Instance 154 with reference 'Im Wesentlichen müssen wir sowohl den Stamm als auch die Affixe, aus denen die Wörter bestehen, vorhersagen.' has an empty prediction.
+Instance 155 with reference 'Während des Vortrainings werden fünfzehn Prozent aller Wörter für die Vorhersage berücksichtigt, von denen achtzig Prozent maskiert, zehn Prozent mit zufälligen Wörtern ausgetauscht und zehn Prozent unverändert gelassen werden.' has an empty prediction.
+Instance 156 with reference 'Für die Vorhersage der Affixe stehen wir vor einem Multi-Label-Klassifikationsproblem.' has an empty prediction.
+Instance 159 with reference 'Wir bewerten beide Ansätze in unseren Experimenten.' has an empty prediction.
+Instance 165 with reference 'Wir bewerten die vortrainierten Modelle anhand von drei Gruppen von Aufgaben.' has an empty prediction.
+Instance 166 with reference 'Eine davon ist die GLUE-Benchmark, die häufig zur Bewertung der Effektivität von vortrainierten Sprachmodellen verwendet wird.' has an empty prediction.
+Instance 167 with reference 'Wir erhalten unsere GLUE-Benchmark-Daten, indem wir die originalen Benchmark-Daten mit Google Translate ins Kinyarwanda übersetzen.' has an empty prediction.
+Instance 168 with reference 'Die zweite Aufgabe ist die named entity recognition-Benchmark von Kinyarwanda, ein qualitativ hochwertiger Datensatz, der von trainierten Muttersprachlern annotiert wurde.' has an empty prediction.
+Instance 169 with reference 'Bei der dritten Aufgabe handelt es sich um eine Kategorisierung von Nachrichten. Hier rufen wir Nachrichtenartikel von verschiedenen Websites ab und sammeln ihre Kategorisierungstags, die von den Autoren zugewiesen wurden. Im Wesentlichen versuchen wir, die gleichen Kategorien vorherzusagen.' has an empty prediction.
+Instance 172 with reference 'Hier zeigen wir die durchschnittliche Leistung von zehn Durchläufen zur Feinabstimmung.' has an empty prediction.
+Instance 175 with reference 'Das Ergebnis war, dass viele Übersetzungen qualitativ schlecht waren.' has an empty prediction.
+Instance 178 with reference 'Diese Ergebnisse sind auch Mittelwerte von zehn Durchläufen zur Feinabstimmung.' has an empty prediction.
+Instance 181 with reference 'Daher ist die Verwendung von vortrainierten Sprachmodellen weniger erfolgsversprechend.' has an empty prediction.
+Instance 182 with reference 'Jetzt zu dieser besonderen Aufgabe der Kategorisierung von Nachrichten.' has an empty prediction.
+Instance 183 with reference 'Wir haben auch eine Ablationsstudie durchgeführt, um zu sehen, ob es alternative Strukturen gibt, die die Leistung verbessern.' has an empty prediction.
+Instance 184 with reference 'Bei der GLUE-Benchmark haben wir festgestellt, dass die Verwendung von Affix-Sätzen durchweg besser abschneidet, während das Ziel der Affix-Wahrscheinlichkeitsregression die beste Leistung bei der Named Entity Recognition erbringt.' has an empty prediction.
+Instance 187 with reference 'Die vorgeschlagene zweistufige Transformer-Encoder-Architektur ermöglicht die Erfassung von morphologischer Komplexität und morphologischer Kompositionalität, die ein wichtiger Aspekt von morphologisch reichen Sprachen ist.' has an empty prediction.
+Instance 188 with reference 'Diese Ergebnisse sollten zu weiteren Forschungen über morphologie-bewusste, vortrainierte Sprachmodelle motivieren.' has an empty prediction.
+Instance 362 with reference 'Danke fürs Zuhören.' has an empty prediction.
+================================================================
+
+Unicode Normalization Details
+----------------------------------------------------------------
+Unicode Normalization Issues in References:
+0079 Original:   Wir haben mit verschiedenen Arten von Einbettungen experimentiert, z. B. mit Transformer-basierten, aber auch mit Schnell-Text-Einbettungen und Zeichen-Einbettungen.
+0079 Normalized: Wir haben mit verschiedenen Arten von Einbettungen experimentiert, z. B. mit Transformer-basierten, aber auch mit Schnell-Text-Einbettungen und Zeichen-Einbettungen.
+----------------------------------------
+0115 Original:   Aufgrund der komplexen Morphologie, die von den meisten morphologisch reichen Sprachen ausgedrückt wird, kann der allgegenwärtige byte pair encoding-Tokenisierungsalgorithmus, den ich verwendet habe, nicht die genauen lexikalischen Unterwort-Einheiten extrahieren, d. h. die Morpheme, die für eine effektive Repräsentation benötigt werden.
+0115 Normalized: Aufgrund der komplexen Morphologie, die von den meisten morphologisch reichen Sprachen ausgedrückt wird, kann der allgegenwärtige byte pair encoding-Tokenisierungsalgorithmus, den ich verwendet habe, nicht die genauen lexikalischen Unterwort-Einheiten extrahieren, d. h. die Morpheme, die für eine effektive Repräsentation benötigt werden.
+----------------------------------------
+0144 Original:   Ein faktorisiertes Modell erster Ordnung wird verwendet, um die Morphologie-Wahrscheinlichkeit zu berücksichtigen, d. h. die Wahrscheinlichkeit, die vom morphologischen Analysator zugewiesen wird.
+0144 Normalized: Ein faktorisiertes Modell erster Ordnung wird verwendet, um die Morphologie-Wahrscheinlichkeit zu berücksichtigen, d. h. die Wahrscheinlichkeit, die vom morphologischen Analysator zugewiesen wird.
+----------------------------------------
+0356 Original:   Es gibt auch einige Funktionen, bei denen wir eine beeindruckende Latenzreduzierung erzielen und der rote Balken viel länger ist, wie z. B. Find Manager und Empfänger.
+0356 Normalized: Es gibt auch einige Funktionen, bei denen wir eine beeindruckende Latenzreduzierung erzielen und der rote Balken viel länger ist, wie z. B. Find Manager und Empfänger.
+----------------------------------------
+================================================================

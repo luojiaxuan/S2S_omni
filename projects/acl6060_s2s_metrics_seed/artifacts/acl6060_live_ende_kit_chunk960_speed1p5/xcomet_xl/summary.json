@@ -1,0 +1,8 @@
+{
+  "xcomet_xl": 0.7925094202897465,
+  "xcomet_xl_model": "Unbabel/XCOMET-XL",
+  "xcomet_xl_mode": "source_hypothesis_reference",
+  "segments": 468,
+  "output_jsonl": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_kit_chunk960_speed1p5/xcomet_xl/segments.jsonl",
+  "combined_output_jsonl": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/scores_all.jsonl"
+}

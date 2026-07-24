@@ -744,18 +744,17 @@ Metric conventions:
 
 Current state on 2026-07-23:
 
-- The table skeleton has all 27 rows.
-- 9 rows have BLEU/LongYAAL/Ending Offset: all three En-Zh OpenAI speeds,
-  En-Zh Gemini speed `1`/`1.5`, all three En-De OpenAI speeds, and En-Ja
-  OpenAI speed `1`. Four older En-Zh rows also have XCOMET-XL.
+- All 27 rows have BLEU, XCOMET-XL, LongYAAL, and Ending Offset. The canonical
+  TSV and JSONL are complete.
+- The final audit covers 135 full-wav outputs and 12636 XCOMET segments. Every
+  row has five unique samples; all OpenAI/Gemini API error counts are zero;
+  emission and elapsed timelines are monotonic; speed-scaled source durations,
+  target languages, and punctuation retention were checked.
 - The invalid negative En-De OpenAI LongYAAL values came from counting arbitrary
   transcript deltas as words and then truncating timestamps. Raw events were
   re-aligned to final whitespace words. Correct `LongYAAL (CU)` is
   `4605.7919`/`4990.0444`/`9788.2364` for speed `1`/`1.25`/`1.5`; BLEU did
   not change.
-- The remaining 18 rows are in parallel live collection. OpenAI/Gemini keys are
-  restored under `/tmp/acl6060_keys/`. KIT Dex authentication was refreshed and
-  its three language queues are creating valid sessions.
 - `gpt-realtime-translate` uses the dedicated
   `/v1/realtime/translations` session. It does not accept
   `session.instructions`, so this table does not attach a custom translation
@@ -768,6 +767,12 @@ Current state on 2026-07-23:
   segments had already sent all 480 seconds and finished transcript output
   before their GoAway closures, so those rows remain valid. Official lifecycle:
   https://ai.google.dev/gemini-api/docs/live-api/session-management
+- KIT `2022.acl-long.367` at speed `1.25` produces only 53-94 timing units
+  across the three target languages. This is not a target-ASR truncation:
+  source audio POSTs succeeded, all available TTS chunks were fetched, and
+  grouped-window ASR completed. KIT source ASR kept a long unstable segment, so
+  MT/TTS consumed only the small stabilized portion. Preserve this as a real
+  S2S failure rather than substituting KIT web text.
 - Refresh KIT auth after expiry with:
 
 ```bash
@@ -793,7 +798,7 @@ python3 scripts/repair_acl6060_kit_asr.py \
 
 XCOMET-XL status:
 
-- Combined XCOMET input/scores for the current 4 rows exist at:
+- Combined XCOMET input/scores for all 27 rows exist at:
 
 ```text
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl
@@ -801,17 +806,17 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/scores_all.jsonl
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/summary_all.json
 ```
 
-- A hyper01 H200 environment was tested with an isolated venv. COMET import and
-  torch/torchvision compatibility were fixed (`torch 2.11.0+cu130`,
-  `torchvision 0.26.0+cu130`, `transformers 4.40.2`,
-  `huggingface-hub 0.23.5`).
-- After `~/hf_key.txt` was authorized on 2026-07-23, `Unbabel/XCOMET-XL`
-  downloaded successfully and scored all 1872 current segments. Combined mean:
-  `0.7232119914`. Per-run summaries are under each completed artifact at
-  `xcomet_xl/summary.json`, and the final table now fills XCOMET-XL for those
-  four rows.
-- The temporary HF token copied to hyper01 was deleted, and the XCOMET
-  container was removed after completion.
+- `Unbabel/XCOMET-XL` revision
+  `6a123c5e8e6dccab25e5fcffa3c8b417abadb462` scored all 12636 segments on
+  three hyper01 H200 GPUs. The `weight_chars`-weighted combined mean is
+  `0.7877888664`.
+- The scoring environment used `unbabel-comet==2.2.7`,
+  `torch 2.11.0+cu130`, `torchvision 0.26.0+cu130`,
+  `transformers 4.40.2`, and `huggingface-hub 0.23.5`. Per-run summaries under
+  `xcomet_xl/summary.json` each contain 468 segments and were independently
+  recomputed against the final table.
+- The temporary HF token, XCOMET container, and remote intermediate directory
+  were removed after local score-ID and row-count validation.
 
 ## Major Remote Artifacts
 

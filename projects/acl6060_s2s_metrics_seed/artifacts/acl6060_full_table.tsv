@@ -1,28 +1,28 @@
 Language	Speedup	System	Config	BLEU	XCOMET-XL	LongYAAL	Ending Offset
 En-Zh	1x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript	35.9311	0.743886	4483.7160	14270.6488
 En-Zh	1x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript	48.9042	0.697234	2526.7379	69673.8176
-En-Zh	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR				
-En-Zh	1.25x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript	36.0835		6399.2351	11149.1662
-En-Zh	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript				
-En-Zh	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR				
+En-Zh	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR	35.4007	0.680956	85358.7596	166172.1296
+En-Zh	1.25x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript	36.0835	0.742399	6399.2351	11149.1662
+En-Zh	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript	47.3073	0.721290	3664.2226	91332.4292
+En-Zh	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR	35.2534	0.677134	54419.0036	130753.4242
 En-Zh	1.5x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript	33.4248	0.724315	13605.2633	12516.8566
 En-Zh	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript	49.2740	0.727414	3547.1671	30144.5468
-En-Zh	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR				
-En-De	1x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	30.2500		4605.7919	14984.2956
-En-De	1x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript				
-En-De	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR				
-En-De	1.25x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	30.8493		4990.0444	11842.6332
-En-De	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript				
-En-De	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR				
-En-De	1.5x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	29.2762		9788.2364	11141.7540
-En-De	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript				
-En-De	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR				
-En-Ja	1x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript	25.4617		5214.8022	15111.0122
-En-Ja	1x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript				
-En-Ja	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR				
-En-Ja	1.25x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript				
-En-Ja	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript				
-En-Ja	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR				
-En-Ja	1.5x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript				
-En-Ja	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript				
-En-Ja	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR				
+En-Zh	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR	36.8778	0.673282	49090.2567	113144.7220
+En-De	1x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	30.2500	0.907074	4605.7919	14984.2956
+En-De	1x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript	34.5072	0.866109	3820.2628	95769.2350
+En-De	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR	26.6810	0.758619	88946.4138	168654.5922
+En-De	1.25x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	30.8493	0.903929	4990.0444	11842.6332
+En-De	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript	37.4161	0.890346	4437.5700	17000.1568
+En-De	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR	27.2118	0.784735	63260.4041	129040.5130
+En-De	1.5x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript	29.2762	0.877447	9788.2364	11141.7540
+En-De	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript	36.8880	0.869578	5995.4354	48467.9018
+En-De	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR	28.3761	0.792509	49731.0571	110915.0030
+En-Ja	1x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript	25.4617	0.725460	5214.8022	15111.0122
+En-Ja	1x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript	29.9750	0.636704	4921.7036	100475.2894
+En-Ja	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR	27.2499	0.639384	81658.8386	165467.6510
+En-Ja	1.25x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript	24.6053	0.712970	7193.7306	12839.2078
+En-Ja	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript	32.7624	0.692102	3995.6527	14513.7582
+En-Ja	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR	27.6142	0.653898	48584.0150	127027.7556
+En-Ja	1.5x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript	21.8406	0.693801	12846.7917	11719.8070
+En-Ja	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript	33.4059	0.710760	7312.9267	50497.0978
+En-Ja	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR	28.6936	0.641808	42715.6204	107156.6454

@@ -1,8 +1,8 @@
 {
-  "xcomet_xl": 0.7232119914049074,
+  "xcomet_xl": 0.7877888663676914,
   "xcomet_xl_model": "Unbabel/XCOMET-XL",
   "xcomet_xl_mode": "source_hypothesis_reference",
-  "segments": 1872,
-  "input_jsonl": "/data/input_all.jsonl",
-  "output_jsonl": "/data/scores_all.jsonl"
+  "segments": 12636,
+  "input_jsonl": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl",
+  "output_jsonl": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/scores_all.jsonl"
 }

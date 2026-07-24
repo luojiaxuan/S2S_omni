@@ -403,8 +403,7 @@ XCOMET-XL 细节:
   reference-based XCOMET-XL，不是之前 FLORAS 的 QE-lite diagnostic 分。
 - `scripts/run_acl6060_xcomet_xl.py` 支持把 combined scores 按 `run_dir`
   拆回每个 artifact 的 `xcomet_xl/summary.json`。
-- 当前本机已生成 4 个已有 En-Zh GPT/Gemini rows 的 combined input 和
-  XCOMET-XL scores:
+- 27 个 rows 的 combined input、scores 和总览均已生成:
 
 ```text
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/input_all.jsonl
@@ -414,22 +413,29 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/summary_all.json
 
 当前状态:
 
-- 9/27 行已有 BLEU, LongYAAL, Ending Offset：En-Zh OpenAI speed
-  `1`/`1.25`/`1.5`，En-Zh Gemini speed `1`/`1.5`，En-De OpenAI speed
-  `1`/`1.25`/`1.5`，En-Ja OpenAI speed `1`。
-- 其中 4 个较早的 En-Zh OpenAI/Gemini speed `1`/`1.5` rows 已有
-  XCOMET-XL。`Unbabel/XCOMET-XL` 在 hyper01 H200 上完成 1872 个 segment
-  scoring，combined mean 为 `0.7232119914`。
+- 27/27 行均已有 BLEU、XCOMET-XL、LongYAAL 和 Ending Offset。最终 TSV
+  和 JSONL 是本表的 canonical results。
+- 27 行共包含 135 个 full-wav system outputs。自动审计确认每行 5 个
+  sample、全部 OpenAI/Gemini live API error 为 0、emission timestamp
+  单调、source speed 缩放一致、目标语言正确，并保留 hypothesis/reference
+  标点。
+- `Unbabel/XCOMET-XL` 对 27 x 468 = 12636 个 `src+hyp+ref` segment 完成
+  reference-based scoring。按 `weight_chars` 加权的 combined mean 为
+  `0.7877888664`；每行 `xcomet_xl/summary.json` 都由 468 个 segment
+  重新聚合并与最终表核对。
 - En-De OpenAI 三行的错误负 LongYAAL 已修复。修复后的 `LongYAAL (CU)`
   为 speed `1`=`4605.7919`, `1.25`=`4990.0444`,
   `1.5`=`9788.2364`；BLEU 不变。
-- 其余 18 行正在并行 live collection。OpenAI/Gemini key 已恢复到
-  `/tmp/acl6060_keys/`；KIT forward-auth cookie 已于 2026-07-23 刷新。
-- XCOMET-XL 环境在 hyper01 H200 上已验证到可以 import COMET，并使用
+- KIT 的 `2022.acl-long.367` 在 speed `1.25` 三种目标语言中都只产生了
+  53-94 个 timing units。这不是 target ASR 截断：输入 audio POST 均成功，
+  已取回全部 TTS chunks，窗口 ASR 也完整；KIT source ASR 长时间不稳定，
+  导致 MT/TTS 只消费少量已稳定文本。这是实际 S2S failure，结果中保留。
+- XCOMET-XL 使用 model revision
+  `6a123c5e8e6dccab25e5fcffa3c8b417abadb462`，在 hyper01 的 3 张 H200
+  上分片运行。环境为 `unbabel-comet==2.2.7`,
   `torch 2.11.0+cu130`, `torchvision 0.26.0+cu130`,
-  `transformers 4.40.2`, `huggingface-hub 0.23.5` 跑通。2026-07-23
-  重新授权 `~/hf_key.txt` 后，`Unbabel/XCOMET-XL` gated model 可下载并完成
-  scoring。临时传到 hyper01 的 HF token 已删除，任务容器已清理。
+  `transformers 4.40.2`, `huggingface-hub 0.23.5`。临时 HF token、任务
+  container 和远端中间目录均已删除。
 
 ## Related KIT Lecture Translator Work
 

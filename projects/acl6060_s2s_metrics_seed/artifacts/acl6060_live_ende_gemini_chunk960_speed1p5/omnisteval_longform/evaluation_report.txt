@@ -1,0 +1,75 @@
+================================================================
+OmniSTEval v0.1.10  |  Longform evaluation (with resegmentation)
+================================================================
+
+Settings
+----------------------------------------------------------------
+  Hypothesis         /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_gemini_chunk960_speed1p5/omnisteval_longform/hypothesis.omnisteval.jsonl
+  Hypothesis format  jsonl
+  Reference          /tmp/rasst_main_result_data/main_result/inputs/acl_de/ref.txt
+  Segmentation       /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_gemini_chunk960_speed1p5/omnisteval_longform/audio.scaled.yaml
+  Seg. type          speech
+  Language           de
+  BLEU tokenizer     13a
+  Char-level         no
+  Offset delays      no
+  Fix CA emissions   no
+  Metrics            quality, latency
+  Version            0.1.10
+
+Scores
+----------------------------------------------------------------
+  BLEU                    36.8880
+  chrF                    65.5095
+  BLEU (NFKC-normalized)  36.8880
+  chrF (NFKC-normalized)  65.5095
+  LongYAAL (CU)           5995.4354
+  LongAL (CU)             5726.4138
+  LongLAAL (CU)           5742.5796
+  LongAP (CU)             2.2427
+  LongDAL (CU)            6268.8770
+  LongYAAL (CA)           7821.3222
+  LongAL (CA)             8479.7617
+  LongLAAL (CA)           8487.7456
+  LongAP (CA)             4.0614
+  LongDAL (CA)            9359.2121
+
+Instance-level Details
+----------------------------------------------------------------
+Empty Predictions: 8
+Total Instances:   468
+
+For long-form evaluation, empty predictions may naturally occur for segments with short references
+due to resegmentation or segments containing non-speech content such as music or silence.
+However, if many segments or segments with substantial references have empty predictions,
+this may indicate an issue with SimulST system or resegmentation.
+
+
+Instances with empty predictions:
+----------------------------------------------------------------
+Instance 63 with reference 'Handelt es sich um einen Titel?' has an empty prediction.
+Instance 269 with reference 'All diese Szenarien haben eines gemeinsam.' has an empty prediction.
+Instance 341 with reference 'Die volle Leistung des Äußerung-Parsings wird jedoch im oberen rechten Punkt nicht beeinflusst.' has an empty prediction.
+Instance 362 with reference 'Danke fürs Zuhören.' has an empty prediction.
+Instance 376 with reference 'Wenn also Kontrafakten wertvoll sind, wie können wir sie dann generieren?' has an empty prediction.
+Instance 377 with reference 'Diese Aufgabe ist besonders schwierig für NLP, denn hier sind drei Beispiele aus drei verschiedenen NLP-Aufgaben.' has an empty prediction.
+Instance 391 with reference 'Wir wollen eine sehr einfache, aber effektive Technik mit dem Namen „Retrieve Generate Filter“ oder RGF vorschlagen, um kontrafaktische Störungen von Fragen in Angriff zu nehmen. Sie zielt auch darauf ab, alle anderen oben genannten Herausforderungen zu bewältigen.' has an empty prediction.
+Instance 410 with reference 'Hier gibt es eine spezifische semantische Störung.' has an empty prediction.
+================================================================
+
+Unicode Normalization Details
+----------------------------------------------------------------
+Unicode Normalization Issues in References:
+0079 Original:   Wir haben mit verschiedenen Arten von Einbettungen experimentiert, z. B. mit Transformer-basierten, aber auch mit Schnell-Text-Einbettungen und Zeichen-Einbettungen.
+0079 Normalized: Wir haben mit verschiedenen Arten von Einbettungen experimentiert, z. B. mit Transformer-basierten, aber auch mit Schnell-Text-Einbettungen und Zeichen-Einbettungen.
+----------------------------------------
+0115 Original:   Aufgrund der komplexen Morphologie, die von den meisten morphologisch reichen Sprachen ausgedrückt wird, kann der allgegenwärtige byte pair encoding-Tokenisierungsalgorithmus, den ich verwendet habe, nicht die genauen lexikalischen Unterwort-Einheiten extrahieren, d. h. die Morpheme, die für eine effektive Repräsentation benötigt werden.
+0115 Normalized: Aufgrund der komplexen Morphologie, die von den meisten morphologisch reichen Sprachen ausgedrückt wird, kann der allgegenwärtige byte pair encoding-Tokenisierungsalgorithmus, den ich verwendet habe, nicht die genauen lexikalischen Unterwort-Einheiten extrahieren, d. h. die Morpheme, die für eine effektive Repräsentation benötigt werden.
+----------------------------------------
+0144 Original:   Ein faktorisiertes Modell erster Ordnung wird verwendet, um die Morphologie-Wahrscheinlichkeit zu berücksichtigen, d. h. die Wahrscheinlichkeit, die vom morphologischen Analysator zugewiesen wird.
+0144 Normalized: Ein faktorisiertes Modell erster Ordnung wird verwendet, um die Morphologie-Wahrscheinlichkeit zu berücksichtigen, d. h. die Wahrscheinlichkeit, die vom morphologischen Analysator zugewiesen wird.
+----------------------------------------
+0356 Original:   Es gibt auch einige Funktionen, bei denen wir eine beeindruckende Latenzreduzierung erzielen und der rote Balken viel länger ist, wie z. B. Find Manager und Empfänger.
+0356 Normalized: Es gibt auch einige Funktionen, bei denen wir eine beeindruckende Latenzreduzierung erzielen und der rote Balken viel länger ist, wie z. B. Find Manager und Empfänger.
+----------------------------------------
+================================================================

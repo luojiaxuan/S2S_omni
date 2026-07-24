@@ -1,0 +1,33 @@
+{
+  "run_dir": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1",
+  "output_dir": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1/omnisteval_longform",
+  "target_lang": "zh",
+  "language": "En-Zh",
+  "speed_factor": 1.0,
+  "bleu_tokenizer": "zh",
+  "char_level": true,
+  "scores": {
+    "BLEU": 35.4007,
+    "chrF": 30.6405,
+    "BLEU (NFKC-normalized)": 38.391,
+    "chrF (NFKC-normalized)": 33.542,
+    "LongYAAL (CU)": 85358.7596,
+    "LongAL (CU)": 84413.3722,
+    "LongLAAL (CU)": 84413.3722,
+    "LongAP (CU)": 14.2581,
+    "LongDAL (CU)": 87367.5503,
+    "LongYAAL (CA)": 85358.7596,
+    "LongAL (CA)": 99854.142,
+    "LongLAAL (CA)": 99854.142,
+    "LongAP (CA)": 18.4122,
+    "LongDAL (CA)": 103324.8243
+  },
+  "rows": 468,
+  "warnings": 0,
+  "hypothesis": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1/omnisteval_longform/hypothesis.omnisteval.jsonl",
+  "warnings_path": "",
+  "speech_segmentation": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1/omnisteval_longform/audio.scaled.yaml",
+  "ending_offset_cu_ms_mean": 0.0,
+  "ending_offset_ca_ms_mean": 166172.1296,
+  "ending_offset_rows": 5
+}

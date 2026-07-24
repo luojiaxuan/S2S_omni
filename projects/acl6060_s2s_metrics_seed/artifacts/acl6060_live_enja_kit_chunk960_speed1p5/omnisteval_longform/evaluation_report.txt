@@ -1,0 +1,185 @@
+================================================================
+OmniSTEval v0.1.10  |  Longform evaluation (with resegmentation)
+================================================================
+
+Settings
+----------------------------------------------------------------
+  Hypothesis         /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enja_kit_chunk960_speed1p5/omnisteval_longform/hypothesis.omnisteval.jsonl
+  Hypothesis format  jsonl
+  Reference          /tmp/rasst_main_result_data/main_result/inputs/acl_ja/ref.txt
+  Segmentation       /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enja_kit_chunk960_speed1p5/omnisteval_longform/audio.scaled.yaml
+  Seg. type          speech
+  Language           none
+  BLEU tokenizer     ja-mecab
+  Char-level         yes
+  Offset delays      no
+  Fix CA emissions   no
+  Metrics            quality, latency
+  Version            0.1.10
+
+Scores
+----------------------------------------------------------------
+  BLEU                    28.6936
+  chrF                    35.8871
+  BLEU (NFKC-normalized)  28.7396
+  chrF (NFKC-normalized)  35.9159
+  LongYAAL (CU)           42715.6204
+  LongAL (CU)             43404.0478
+  LongLAAL (CU)           43404.0478
+  LongAP (CU)             13.4339
+  LongDAL (CU)            45406.9458
+  LongYAAL (CA)           42715.6204
+  LongAL (CA)             54355.9452
+  LongLAAL (CA)           54355.9452
+  LongAP (CA)             16.4839
+  LongDAL (CA)            56690.9959
+
+Instance-level Details
+----------------------------------------------------------------
+Empty Predictions: 46
+Total Instances:   468
+
+For long-form evaluation, empty predictions may naturally occur for segments with short references
+due to resegmentation or segments containing non-speech content such as music or silence.
+However, if many segments or segments with substantial references have empty predictions,
+this may indicate an issue with SimulST system or resegmentation.
+
+
+Instances with empty predictions:
+----------------------------------------------------------------
+Instance 122 with reference '低リソースで形態素が豊富な言語のキニアルワンダ語で、KinyaBERTを評価します。キニアルワンダ語は東部および中央アフリカで1,200万人以上の方々が話す言語です。' has an empty prediction.
+Instance 123 with reference 'モデルへの入力は、文または文章のいずれかです。' has an empty prediction.
+Instance 124 with reference 'たとえばこちらには、「Johntwarahamubonyebiradutangaza」という文章があります。「私たちはそこでジョンを見つけてびっくりした」という意味です。' has an empty prediction.
+Instance 125 with reference 'ご覧のとおり、キニアルワンダ語の単語には、異なる情報を含む形態素がいくつか含まれています。' has an empty prediction.
+Instance 126 with reference 'したがって、私たちのモデルでは、この文または文章を形態素アナライザーに渡します。' has an empty prediction.
+Instance 131 with reference 'このステップの後、スピーチタグの一部の為に埋込みを用意します。' has an empty prediction.
+Instance 132 with reference '接尾辞の為の埋込みです。' has an empty prediction.
+Instance 133 with reference 'そして語幹の為の埋込みです。' has an empty prediction.
+Instance 134 with reference 'これらは、語形論レベルであり、語形論レベルの埋込みです。' has an empty prediction.
+Instance 135 with reference '次に、これらの埋込みを語形エンコーダに渡します。これは、各単語に独立して適用される小さなトランスフォーマーエンコーダです。' has an empty prediction.
+Instance 136 with reference 'そして、各単語で形態的情報がついている、文脈で理解できるベクトルが出力されます。' has an empty prediction.
+Instance 137 with reference 'それでは、スピーチと語幹に対応する形態的埋込みが連結される合成を行います。' has an empty prediction.
+Instance 139 with reference '次に、メインの文または文章エンコーダへの入力を形成します。' has an empty prediction.
+Instance 141 with reference '形態素アナライザーでは、キニアルワンダ語に合わせてカスタム実装された有限状態2レベル語形論原則を使用します。' has an empty prediction.
+Instance 142 with reference '口語、名詞、指示代名詞、所有代名詞、数字などを含むすべてのキニアルワンダ語の語形を効果的にモデリングします。' has an empty prediction.
+Instance 143 with reference 'スピーチタグ付けアルゴリズムの監視なしの部分を使用します。' has an empty prediction.
+Instance 144 with reference '一次因子モデルを使用して、語形の確率、つまり形態素アナライザーによって割り当てられた確率を説明します。' has an empty prediction.
+Instance 147 with reference 'ここで、位置的エンコーディングの為の注意事項を少し紹介します。' has an empty prediction.
+Instance 148 with reference '1つ目は、形態素エンコーダは位置的エンコーダを使用しないことです。' has an empty prediction.
+Instance 149 with reference 'これは、各形態素が形態的モデル内の既知のスロットを占有しているためです。' has an empty prediction.
+Instance 150 with reference 'したがって、位置情報は、形態素が与えられたときに内在します。' has an empty prediction.
+Instance 151 with reference '第二に、文エンコーダは、最近ICLRカンファレンスで公開されたいわゆる不拘束の相対位置の埋込みを使用します。' has an empty prediction.
+Instance 152 with reference 'この位置的埋込みは、トークンからトークンアテンション計算へ、位置相関を本質的に分離します。' has an empty prediction.
+Instance 153 with reference 'BERTと同様に、マスク言語モデル事前訓練の目的を使用します。' has an empty prediction.
+Instance 155 with reference '事前訓練では、すべての単語の15%が予測と見なされ、そのうち80%がマスクされ、10%がランダムな単語と交換され、10%は変更されません。' has an empty prediction.
+Instance 156 with reference '接辞の予測では、複数のラベルの分類に関する問題に直面します。' has an empty prediction.
+Instance 157 with reference 'この為には、接辞を固定した数でセットグループ化し、クラスラベルとしてセットを予測するか、' has an empty prediction.
+Instance 158 with reference 'もしくは、接辞の確率ベクトルを予測することです。' has an empty prediction.
+Instance 159 with reference 'この2つのアプローチを実験で計測しています。' has an empty prediction.
+Instance 160 with reference 'KinyaBERTを約2.5ギガバイトのキニアルワンダのテキストで事前訓練し、3つのベースラインモデルと比較します。' has an empty prediction.
+Instance 161 with reference '一つは多言語モデルで、XLM-Rと呼ばれ、複数の言語で作られた大規模なテキストコーパスで訓練されています。' has an empty prediction.
+Instance 164 with reference '多言語を除くすべてのモデルは、32,000の傾度の更新で事前訓練されたものです。各更新のバッチサイズは2,560のシーケンスです。' has an empty prediction.
+Instance 165 with reference '事前訓練されたモデルは、3つのタスクセットで評価されます。' has an empty prediction.
+Instance 166 with reference '1つは、事前訓練された言語モデルの有効性を評価するためにしばしば使用されてきたGLUEベンチマークです。' has an empty prediction.
+Instance 167 with reference 'GLUEベンチマークデータは、元のベンチマークデータをGoogle翻訳でキニアルワンダ語に翻訳して取得します。' has an empty prediction.
+Instance 168 with reference '2つ目のタスクはキニアルワンダ語の名前付きエンティティ認識ベンチマークで、訓練を受けたネイティブスピーカーによる注釈付きの、高品質のデータセットです。' has an empty prediction.
+Instance 175 with reference 'その結果、多くの翻訳はノイズが多くなりました。' has an empty prediction.
+Instance 176 with reference 'しかし、すべてのモデルは同じ翻訳ノイズに対処しなければならず、モデル間の相対的なパフォーマンスは依然として注目に値します。' has an empty prediction.
+Instance 177 with reference '名前付きエンティティ認識タスクでは、KinyaBERTが、最高のパフォーマンスを示し、接辞分布回帰バリアントが最高のパフォーマンスを示すことがわかりました。' has an empty prediction.
+Instance 178 with reference 'これらの結果は、10回の微調整の実行結果の平均でもあります。' has an empty prediction.
+Instance 179 with reference 'ニュース分類タスクについては、さまざまな結果が確認できます。' has an empty prediction.
+Instance 180 with reference '以前のキニアルワンダ語のテキスト分類の研究では、単純なキーワード検出がこの特定のタスクを解決するのに十分であることがわかりました。' has an empty prediction.
+Instance 181 with reference 'したがって、事前訓練された言語のモデルを使用することで得られる利益は少なくなります。' has an empty prediction.
+Instance 182 with reference 'このニュース分類の特定のタスクについて。' has an empty prediction.
+Instance 183 with reference 'また、パフォーマンスを向上させる代替構造があるかどうかを調べるためにアブレーション研究を実施しました。' has an empty prediction.
+Instance 184 with reference 'GLUEベンチマークでは、接辞セットを使用すると一貫してパフォーマンスが向上し、名前付きエンティティ認識で接辞確率回帰目標では、最高のパフォーマンスが得られることがわかりました。' has an empty prediction.
+================================================================
+
+Unicode Normalization Details
+----------------------------------------------------------------
+Unicode Normalization Issues in References:
+0000 Original:   こんにちは、エレナです。これから私たちの研究、スペイン語における同化されていない借用の検出：注釈付きコーパスとモデリングへのアプローチについて発表します。
+0000 Normalized: こんにちは、エレナです。これから私たちの研究、スペイン語における同化されていない借用の検出:注釈付きコーパスとモデリングへのアプローチについて発表します。
+----------------------------------------
+0013 Original:   では、なぜ借用は興味深い現象なのでしょうか？
+0013 Normalized: では、なぜ借用は興味深い現象なのでしょうか?
+----------------------------------------
+0025 Original:   このスペイン語の文章：Lasprendasbestsellersseestampanconmotivosflorales,animalprintoretalestipopatchwork.
+0025 Normalized: このスペイン語の文章:Lasprendasbestsellersseestampanconmotivosflorales,animalprintoretalestipopatchwork.
+----------------------------------------
+0053 Original:   インスタンスの為にここで確認できることに、最初の例では、マルチ単語借用語、batchcooking（バッチクッキング）があります。
+0053 Normalized: インスタンスの為にここで確認できることに、最初の例では、マルチ単語借用語、batchcooking(バッチクッキング)があります。
+----------------------------------------
+0062 Original:   大文字の単語やトークンなどのバイナリの機能ですか？
+0062 Normalized: 大文字の単語やトークンなどのバイナリの機能ですか?
+----------------------------------------
+0063 Original:   見出しのために大文字になっているのでしょうか？
+0063 Normalized: 見出しのために大文字になっているのでしょうか?
+----------------------------------------
+0064 Original:   引用符ですか？
+0064 Normalized: 引用符ですか?
+----------------------------------------
+0077 Original:   これらの結果を得た後、もう一つの質問に直面しました。BiLSTM-CRFモデルを見つけ、異なる種類の埋め込みを行い、これらの埋め込みにさまざまな種類の言語的情報をエンコーディングすると、トランスフォーマーベースのモデルで得られた結果より優れたパフォーマンスを発揮できるでしょうか？
+0077 Normalized: これらの結果を得た後、もう一つの質問に直面しました。BiLSTM-CRFモデルを見つけ、異なる種類の埋め込みを行い、これらの埋め込みにさまざまな種類の言語的情報をエンコーディングすると、トランスフォーマーベースのモデルで得られた結果より優れたパフォーマンスを発揮できるでしょうか?
+----------------------------------------
+0090 Original:   コード切り換え埋込みとは何か？
+0090 Normalized: コード切り換え埋込みとは何か?
+----------------------------------------
+0216 Original:   重要なトークンを選択するには、そして、その選択に傾度を逆伝播するにはどうすればよいでしょうか？
+0216 Normalized: 重要なトークンを選択するには、そして、その選択に傾度を逆伝播するにはどうすればよいでしょうか?
+----------------------------------------
+0265 Original:   ここでは、システムがより早い応答が達成できるよう、ユーザーが発話を終わる前にプログラムの生成を開始し、実行できるか？という質問について追求していきます。
+0265 Normalized: ここでは、システムがより早い応答が達成できるよう、ユーザーが発話を終わる前にプログラムの生成を開始し、実行できるか?という質問について追求していきます。
+----------------------------------------
+0281 Original:   これがオフラインのシステムでは、どのように実行のタイムラインに影響を与えるでしょうか？
+0281 Normalized: これがオフラインのシステムでは、どのように実行のタイムラインに影響を与えるでしょうか?
+----------------------------------------
+0303 Original:   そこで，それぞれのトークン後に、ゼロから再解析します。
+0303 Normalized: そこで,それぞれのトークン後に、ゼロから再解析します。
+----------------------------------------
+0312 Original:   もう少し詳しく説明すると、これらのグラフはどのように生成されるのでしょうか？
+0312 Normalized: もう少し詳しく説明すると、これらのグラフはどのように生成されるのでしょうか?
+----------------------------------------
+0342 Original:   これらの強力な結果に基づいて、どのくらいレイテンシを削減できるでしょうか？
+0342 Normalized: これらの強力な結果に基づいて、どのくらいレイテンシを削減できるでしょうか?
+----------------------------------------
+0372 Original:   なぜでしょうか？
+0372 Normalized: なぜでしょうか?
+----------------------------------------
+0376 Original:   それでは、非現実節が価値あるものであるならば、どのようにしてそれらを生成することができるのでしょうか？
+0376 Normalized: それでは、非現実節が価値あるものであるならば、どのようにしてそれらを生成することができるのでしょうか?
+----------------------------------------
+0386 Original:   たとえば、インディ・ジョーンズ/魔宮の伝説の前編ですか？という質問にゆらぎを与えるとします。
+0386 Normalized: たとえば、インディ・ジョーンズ/魔宮の伝説の前編ですか?という質問にゆらぎを与えるとします。
+----------------------------------------
+0387 Original:   レイダース／失われたアークは前編ですかという質問に達するには、フランチャイズの他の映画を認識する必要があります。
+0387 Normalized: レイダース/失われたアークは前編ですかという質問に達するには、フランチャイズの他の映画を認識する必要があります。
+----------------------------------------
+0390 Original:   たとえば、インディアナ・ジョーンズは魔宮で児童奴隷制を実践しているのか？などの質問です。
+0390 Normalized: たとえば、インディアナ・ジョーンズは魔宮で児童奴隷制を実践しているのか?などの質問です。
+----------------------------------------
+0393 Original:   たとえば、最先端のモデルであるREALMは、リッチモンドフットボールクラブのキャプテンは誰ですか？」と言う質問に対して、次のトップk回答を「生成します。
+0393 Normalized: たとえば、最先端のモデルであるREALMは、リッチモンドフットボールクラブのキャプテンは誰ですか?」と言う質問に対して、次のトップk回答を「生成します。
+----------------------------------------
+0409 Original:   たとえば、リッチモンド・フットボールクラブのキャプテンは誰ですか？という疑問にはREALMは、ジェス・ケネディがキャプテンをつとめるクラブの女性チームについての一説を取得し、そして質問生成モデルは、リッチモンド・フットボールクラブの最初の女性チームのキャプテンは誰ですか？という疑問を生成します。
+0409 Normalized: たとえば、リッチモンド・フットボールクラブのキャプテンは誰ですか?という疑問にはREALMは、ジェス・ケネディがキャプテンをつとめるクラブの女性チームについての一説を取得し、そして質問生成モデルは、リッチモンド・フットボールクラブの最初の女性チームのキャプテンは誰ですか?という疑問を生成します。
+----------------------------------------
+0411 Original:   同様に、リッチモンドのVFLリザーブチームのキャプテンは誰ですか？
+0411 Normalized: 同様に、リッチモンドのVFLリザーブチームのキャプテンは誰ですか?
+----------------------------------------
+0412 Original:   または、去年グラハムが決勝で勝った相手は誰ですか？といった質問も得られます。
+0412 Normalized: または、去年グラハムが決勝で勝った相手は誰ですか?といった質問も得られます。
+----------------------------------------
+0416 Original:   たとえば、私たちは昨年決勝でグラハムが勝った相手は誰ですか？という質問を削除します。
+0416 Normalized: たとえば、私たちは昨年決勝でグラハムが勝った相手は誰ですか?という質問を削除します。
+----------------------------------------
+0429 Original:   たとえば、「リッチモンドのVFLリザーブチームのキャプテンは誰ですか？」は参照の変更でしょうか？
+0429 Normalized: たとえば、「リッチモンドのVFLリザーブチームのキャプテンは誰ですか?」は参照の変更でしょうか?
+----------------------------------------
+0430 Original:   「クラブで背番号9をつけているのは誰ですか？」というのは、述語の変更です。
+0430 Normalized: 「クラブで背番号9をつけているのは誰ですか?」というのは、述語の変更です。
+----------------------------------------
+0438 Original:   ベースラインとRGF拡張は、モデルに質問と文脈にアクセスできる読解でどのように機能するでしょうか？
+0438 Normalized: ベースラインとRGF拡張は、モデルに質問と文脈にアクセスできる読解でどのように機能するでしょうか?
+----------------------------------------
+================================================================
