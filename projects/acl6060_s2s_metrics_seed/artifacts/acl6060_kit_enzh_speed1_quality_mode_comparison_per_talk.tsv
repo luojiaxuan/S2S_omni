@@ -1,0 +1,6 @@
+Talk	Segments	High BLEU	Low BLEU	High LongYAAL (isolated non-additive)	Low LongYAAL (isolated non-additive)	LongYAAL Delta (isolated non-additive)	High Ending Offset	Low Ending Offset	Ending Offset Delta	Ending Offset Interpretation
+2022.acl-long.268	107	39.3502	40.4650	76364.9540	69874.5370	-6490.4170	167352.2440	130791.2540	-36560.9900	per_talk_component_of_aggregate_mean
+2022.acl-long.367	82	0.0000	0.0000	366431.6651	78459.2894	-287972.3757	173025.4850	165339.7030	-7685.7820	non_informative_partial_output_failure
+2022.acl-long.590	66	44.3868	41.9085	64276.6240	75916.8747	11640.2507	136020.3600	149350.8840	13330.5240	per_talk_component_of_aggregate_mean
+2022.acl-long.110	108	47.0307	46.7589	93437.2699	77313.5641	-16123.7058	191632.6510	167793.6190	-23839.0320	per_talk_component_of_aggregate_mean
+2022.acl-long.117	105	42.9046	44.1181	73971.0765	76262.2149	2291.1384	162829.9080	169447.3800	6617.4720	per_talk_component_of_aggregate_mean

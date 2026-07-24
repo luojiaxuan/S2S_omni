@@ -437,6 +437,112 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl/summary_all.json
   `transformers 4.40.2`, `huggingface-hub 0.23.5`。临时 HF token、任务
   container 和远端中间目录均已删除。
 
+## 2026-07-23 KIT Low-Latency One-Cell A/B
+
+对正式表中的 `En-Zh / 1x / KIT` 单格做了控制变量实验。两组均使用
+`chunk=960ms`, `format=mixed`, `language=zh,en`,
+`smartChaptering=online_dynamic`, private availability，以及同一套 target
+speech `gpt-4o-mini-transcribe` windowed ASR。唯一变量是
+`ttsQualityMode=high_quality` 或 `low_latency`。comparison builder 会比较
+两个 tracked `run_config.json` 并在差异字段不等于
+`kit_tts_quality_mode` 时直接失败。high-quality baseline 是正式表已有的:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1/
+```
+
+builder 还会把该 artifact 的 BLEU `35.4007`, XCOMET-XL `0.680956`,
+LongYAAL `85358.7596` 和 Ending Offset `166172.1296` 与
+`acl6060_full_table.jsonl` 中唯一的 `En-Zh / 1x / KIT` canonical row
+逐项核对，不一致时直接失败。
+
+| metric | high_quality | low_latency | low - high |
+| --- | ---: | ---: | ---: |
+| BLEU | 35.4007 | 35.5727 | +0.1720 |
+| XCOMET-XL | 0.680956 | 0.678843 | -0.002113 |
+| LongYAAL (CU, ms) | 85358.7596 | 74863.3737 | -10495.3859 |
+| Ending Offset (CA, ms) | 166172.1296 | 156544.5680 | -9627.5616 |
+| mean TTS audio chunks | 70.0 | 90.8 | +20.8 |
+| mean target audio duration (ms) | 558980.0 | 589235.0 | +30255.0 |
+| mean prediction units | 2269.2 | 2256.4 | -12.8 |
+
+结论:
+
+- BLEU 上升 `0.1720`，XCOMET-XL 下降 `0.0021`，方向不一致。这里只有 5
+  个彼此相关的 talk，未做 paired significance test，因此只能说没有看到
+  明确的质量变化，不能断言两者统计等价或 low latency 无质量损失。
+- aggregate LongYAAL 观察值降低约 `10.50s`，Ending Offset 降低约
+  `9.63s`，但不能直接解释为纯粹的 TTS mode latency gain。
+- `2022.acl-long.367` 在两种 mode 下都是严重 partial-output failure。
+  low latency 只有 10 个目标音频块和 160 个字符，high quality 也只有 9
+  块和 145 个字符；两者都遗漏了大部分 11.6 分钟输入。该失败按正式协议
+  保留在五条 aggregate 中。
+- 逐 talk Ending Offset 可与五条 aggregate 的算术均值对齐。除去无法
+  解释 latency 的失败样本 `367`，其余四条中两条改善、两条变差:
+
+| talk | high_quality | low_latency | Ending Offset delta (ms) |
+| --- | ---: | ---: | ---: |
+| `2022.acl-long.268` | 167352.2440 | 130791.2540 | -36560.9900 |
+| `2022.acl-long.367` | 173025.4850 | 165339.7030 | -7685.7820 (failure; non-informative) |
+| `2022.acl-long.590` | 136020.3600 | 149350.8840 | +13330.5240 |
+| `2022.acl-long.110` | 191632.6510 | 167793.6190 | -23839.0320 |
+| `2022.acl-long.117` | 162829.9080 | 169447.3800 | +6617.4720 |
+
+- 当前 target-unit timing proxy 假设 ASR 字符在 target audio 上均匀分布，
+  再把每个字符吸附到覆盖它的 TTS chunk arrival。low latency 平均 chunk
+  数为 `90.8`，high quality 为 `70.0`；时间量化粒度本身与 treatment
+  变量一起改变，所以 LongYAAL 存在 chunk-granularity confound。
+- `delays` 还会被 clamp 到 `source_length`，因此 source 结束后才到达的
+  target tail 在两种 mode 下都会被低估。per-talk TSV 中的 LongYAAL 是把
+  talk 隔离后重新运行 OmniSTEval 的 non-additive diagnostic，不能视为
+  joint 468-segment aggregate LongYAAL 的贡献分解；`367` 的隔离
+  LongYAAL 尤其没有解释意义。
+- 5/5 samples 均确认 `pauseStatus.ok`, `TTS-finish`，且 KIT 已提供的所有
+  target audio chunks 均被抓取并用 grouped-window ASR 转写。这只排除了
+  fetch/ASR 额外截断，不代表 KIT 对 source 内容的覆盖完整，`367` 明确
+  不是完整输出。
+- 正式 27 行 canonical table 暂时仍保留 `high_quality`。本实验只覆盖一个
+  En-Zh/1x cell，尚不足以把其他 KIT 行统一切换为 low latency。
+
+Tracked comparison:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_kit_enzh_speed1_quality_mode_comparison.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_kit_enzh_speed1_quality_mode_comparison.json
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_kit_enzh_speed1_quality_mode_comparison_per_talk.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_low_latency_chunk960_speed1/
+```
+
+使用 tracked run artifacts、ACL6060 HF/RASST dataset 和
+`omnisteval==0.1.10` runtime 可复现 comparison；不是只靠 Git checkout
+即可运行:
+
+```bash
+python scripts/build_acl6060_kit_quality_mode_comparison.py \
+  --dataset-root /tmp/rasst_main_result_data \
+  --omnisteval-bin /path/to/omnisteval
+```
+
+Targeted verification:
+
+```text
+tests/test_acl6060_kit_eval.py + tests/test_acl6060_stream_eval.py: 9 passed
+comparison builder: 5 instances, 5 responses, 468 XCOMET-XL segments
+config diff: kit_tts_quality_mode only
+canonical baseline metrics: exact at stored table precision
+Ending Offset: per-talk mean reconciles to aggregate in both modes
+```
+
+完整目标语音和逐 chunk 原始记录已移到持久化本机 staging:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_kit_live_sweep/enzh_kit_chunk960_speed1_low_latency
+```
+
+该 201 MB raw audio bundle 尚未上传 Hugging Face，状态为
+`PENDING_HF_UPLOAD`。Git artifact 保留 5-row instances/responses、配置、
+OmniSTEval 和 468 条 XCOMET-XL 输入/分数。
+
 ## Related KIT Lecture Translator Work
 
 KIT Lecture Translator was first explored under the FLORAS live benchmark. For

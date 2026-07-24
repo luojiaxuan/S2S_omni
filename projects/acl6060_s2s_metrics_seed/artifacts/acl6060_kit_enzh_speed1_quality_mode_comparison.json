@@ -1,0 +1,191 @@
+{
+  "baseline_artifact": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1",
+  "candidate_artifact": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_low_latency_chunk960_speed1",
+  "canonical_baseline_row": {
+    "Language": "En-Zh",
+    "Speedup": "1x",
+    "System": "KIT Lecture Translator",
+    "Config": "chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR",
+    "BLEU": "35.4007",
+    "XCOMET-XL": "0.680956",
+    "LongYAAL": "85358.7596",
+    "Ending Offset": "166172.1296",
+    "status": "complete_without_manual_check",
+    "run_dir": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_chunk960_speed1"
+  },
+  "run_config_diff": {
+    "kit_tts_quality_mode": [
+      "high_quality",
+      "low_latency"
+    ]
+  },
+  "protocol": {
+    "language": "En-Zh",
+    "speed_factor": 1.0,
+    "chunk_ms": 960,
+    "format": "mixed",
+    "languages": [
+      "zh",
+      "en"
+    ],
+    "mt_language": "zh",
+    "audio_language": "zh",
+    "smart_chaptering": "online_dynamic",
+    "availability": "private",
+    "hypothesis_source": "target_speech_asr_gpt4o_mini_transcribe",
+    "samples": 5
+  },
+  "high_quality": {
+    "BLEU": 35.4007,
+    "XCOMET-XL": 0.6809561740252175,
+    "LongYAAL": 85358.7596,
+    "Ending Offset": 166172.1296,
+    "mean_tts_audio_chunks": 70.0,
+    "mean_target_audio_duration_ms": 558980.0,
+    "mean_prediction_units": 2269.2
+  },
+  "low_latency": {
+    "BLEU": 35.5727,
+    "XCOMET-XL": 0.6788431135099907,
+    "LongYAAL": 74863.3737,
+    "Ending Offset": 156544.56799999997,
+    "mean_tts_audio_chunks": 90.8,
+    "mean_target_audio_duration_ms": 589235.0,
+    "mean_prediction_units": 2256.4
+  },
+  "delta_low_minus_high": {
+    "BLEU": 0.17199999999999704,
+    "XCOMET-XL": -0.00211306051522675,
+    "LongYAAL": -10495.385900000008,
+    "Ending Offset": -9627.561600000015,
+    "mean_tts_audio_chunks": 20.799999999999997,
+    "mean_target_audio_duration_ms": 30255.0,
+    "mean_prediction_units": -12.799999999999727
+  },
+  "per_talk": [
+    {
+      "mode": "high_quality",
+      "talk": "2022.acl-long.268",
+      "segments": 107,
+      "BLEU": 39.3502,
+      "LongYAAL": 76364.954,
+      "Ending Offset": 167352.24399999995,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "per_talk_component_of_aggregate_mean"
+    },
+    {
+      "mode": "high_quality",
+      "talk": "2022.acl-long.367",
+      "segments": 82,
+      "BLEU": 0.0,
+      "LongYAAL": 366431.6651,
+      "Ending Offset": 173025.485,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "non_informative_partial_output_failure"
+    },
+    {
+      "mode": "high_quality",
+      "talk": "2022.acl-long.590",
+      "segments": 66,
+      "BLEU": 44.3868,
+      "LongYAAL": 64276.624,
+      "Ending Offset": 136020.36,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "per_talk_component_of_aggregate_mean"
+    },
+    {
+      "mode": "high_quality",
+      "talk": "2022.acl-long.110",
+      "segments": 108,
+      "BLEU": 47.0307,
+      "LongYAAL": 93437.2699,
+      "Ending Offset": 191632.65099999995,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "per_talk_component_of_aggregate_mean"
+    },
+    {
+      "mode": "high_quality",
+      "talk": "2022.acl-long.117",
+      "segments": 105,
+      "BLEU": 42.9046,
+      "LongYAAL": 73971.0765,
+      "Ending Offset": 162829.90800000005,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "per_talk_component_of_aggregate_mean"
+    },
+    {
+      "mode": "low_latency",
+      "talk": "2022.acl-long.268",
+      "segments": 107,
+      "BLEU": 40.465,
+      "LongYAAL": 69874.537,
+      "Ending Offset": 130791.25399999996,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "per_talk_component_of_aggregate_mean"
+    },
+    {
+      "mode": "low_latency",
+      "talk": "2022.acl-long.367",
+      "segments": 82,
+      "BLEU": 0.0,
+      "LongYAAL": 78459.2894,
+      "Ending Offset": 165339.70299999998,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "non_informative_partial_output_failure"
+    },
+    {
+      "mode": "low_latency",
+      "talk": "2022.acl-long.590",
+      "segments": 66,
+      "BLEU": 41.9085,
+      "LongYAAL": 75916.8747,
+      "Ending Offset": 149350.88399999996,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "per_talk_component_of_aggregate_mean"
+    },
+    {
+      "mode": "low_latency",
+      "talk": "2022.acl-long.110",
+      "segments": 108,
+      "BLEU": 46.7589,
+      "LongYAAL": 77313.5641,
+      "Ending Offset": 167793.61899999995,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "per_talk_component_of_aggregate_mean"
+    },
+    {
+      "mode": "low_latency",
+      "talk": "2022.acl-long.117",
+      "segments": 105,
+      "BLEU": 44.1181,
+      "LongYAAL": 76262.2149,
+      "Ending Offset": 169447.38,
+      "longyaal_scope": "isolated_talk_rescore_non_additive",
+      "ending_offset_scope": "per_talk_component_of_aggregate_mean"
+    }
+  ],
+  "ending_offset_reconciliation": {
+    "high_quality_per_talk_mean": 166172.1296,
+    "high_quality_aggregate": 166172.1296,
+    "low_latency_per_talk_mean": 156544.56799999997,
+    "low_latency_aggregate": 156544.56799999997
+  },
+  "interpretation_caveats": [
+    "2022.acl-long.367 is a severe partial-output failure in both modes; keep it in the formal five-talk aggregate.",
+    "Target-unit times assume units are uniform over target audio and snap them to TTS chunk arrivals, so different chunk counts confound latency.",
+    "Delay timestamps are clamped to source_length, so late tail arrivals are understated in both modes.",
+    "Per-talk LongYAAL values are isolated re-scores and do not decompose the joint 468-segment aggregate; use them only as non-additive diagnostics.",
+    "BLEU and XCOMET-XL move in opposite directions over five correlated talks; no significance test was run."
+  ],
+  "tracked_audit": {
+    "instances": 5,
+    "responses": 5,
+    "xcomet_segments": 468,
+    "config_diff_keys": [
+      "kit_tts_quality_mode"
+    ],
+    "status": "STRUCTURE_PASS_WITH_INTERPRETATION_CAVEATS"
+  },
+  "raw_local_staging": "/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_kit_live_sweep/enzh_kit_chunk960_speed1_low_latency",
+  "raw_audio_upload_status": "PENDING_HF_UPLOAD"
+}

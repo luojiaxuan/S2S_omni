@@ -796,6 +796,76 @@ python3 scripts/repair_acl6060_kit_asr.py \
   --api-key-file /tmp/acl6060_keys/openai.key
 ```
 
+2026-07-23 KIT low-latency one-cell A/B:
+
+- `En-Zh / 1x / KIT` was rerun over all five ACL6060 full wavs with the formal
+  `960ms`, `format=mixed`, `language=zh,en`, private,
+  `smartChaptering=online_dynamic` protocol. The only changed field was
+  `ttsQualityMode=low_latency`. The builder verifies that the two tracked
+  `run_config.json` files differ only in `kit_tts_quality_mode`; the baseline is
+  `artifacts/acl6060_live_enzh_kit_chunk960_speed1`.
+- The builder also verifies that the baseline BLEU `35.4007`, XCOMET-XL
+  `0.680956`, LongYAAL `85358.7596`, and Ending Offset `166172.1296` exactly
+  match the unique `En-Zh / 1x / KIT` row in `acl6060_full_table.jsonl`.
+- BLEU moved from `35.4007` to `35.5727`, while XCOMET-XL moved from `0.680956`
+  to `0.678843`. With five correlated talks and no paired significance test,
+  this is no clear quality shift, not proof of statistical equivalence.
+- Aggregate LongYAAL changed from `85358.7596ms` to `74863.3737ms`; Ending
+  Offset changed from `166172.1296ms` to `156544.5680ms`. Do not interpret
+  these deltas as a clean causal latency gain.
+- Low latency emitted `90.8` mean target audio chunks vs `70.0` and generated
+  `589235ms` mean target audio vs `558980ms`. Mean prediction units stayed
+  within `0.6%`.
+- The `2022.acl-long.367` upstream stabilization failure persisted as a severe
+  partial-output failure: low latency produced 10 target chunks/160 units and
+  high quality produced 9 chunks/145 units for an 11.6-minute source.
+- Per-talk Ending Offset deltas (low minus high) were `268=-36561ms`,
+  `367=-7686ms`, `590=+13331ms`, `110=-23839ms`, and `117=+6617ms`.
+  Ending Offset decomposes as a per-talk mean; `367` remains non-informative
+  because it is a partial-output failure. Among the other four, two improved
+  and two worsened.
+- The timing proxy spreads final ASR units uniformly over target-audio duration
+  and snaps them to TTS chunk arrivals. Because low latency itself increases
+  chunk count, LongYAAL has a chunk-granularity confound.
+- Delay timestamps are also clamped to `source_length`, understating target
+  speech that arrives after the source ends in both modes. The tracked per-talk
+  LongYAAL columns are isolated OmniSTEval re-scores and do not add up to or
+  decompose the joint 468-segment aggregate; treat them only as explicitly
+  labeled diagnostics, and do not interpret the `367` value.
+- All five samples passed pause and `TTS-finish`; all target chunks supplied by
+  KIT were fetched and transcribed with grouped-window ASR. This excludes
+  additional fetch/ASR truncation but does not make the partial `367` output
+  complete. The runner session name now includes the actual `ttsQualityMode`
+  instead of hard-coding `_hq_`.
+- Keep the 27-row canonical table on `high_quality` until low latency is tested
+  on more than this one cell. Comparison artifacts:
+
+```text
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_kit_enzh_speed1_quality_mode_comparison.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_kit_enzh_speed1_quality_mode_comparison.json
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_kit_enzh_speed1_quality_mode_comparison_per_talk.tsv
+projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enzh_kit_low_latency_chunk960_speed1/
+```
+
+Regenerate the comparison from tracked run artifacts plus the ACL6060 HF/RASST
+dataset and an `omnisteval==0.1.10` runtime:
+
+```bash
+python scripts/build_acl6060_kit_quality_mode_comparison.py \
+  --dataset-root /tmp/rasst_main_result_data \
+  --omnisteval-bin /path/to/omnisteval
+```
+
+The 201 MB raw target-audio bundle is staged locally at:
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_kit_live_sweep/enzh_kit_chunk960_speed1_low_latency
+```
+
+Its Hugging Face status is `PENDING_HF_UPLOAD`. The temporary HF token,
+XCOMET container, and remote scoring directory were deleted after hash and row
+count validation.
+
 XCOMET-XL status:
 
 - Combined XCOMET input/scores for all 27 rows exist at:

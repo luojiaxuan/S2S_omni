@@ -1,0 +1,4 @@
+Mode	Config	BLEU	XCOMET-XL	LongYAAL	Ending Offset	Mean TTS Chunks	Mean Target Audio (ms)	Mean Prediction Units
+high_quality	chunk=960ms; speed=1; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR	35.4007	0.680956	85358.7596	166172.1296	70.0	558980.0	2269.2
+low_latency	chunk=960ms; speed=1; format=mixed; ttsQualityMode=low_latency; language=zh,en; target-audio ASR	35.5727	0.678843	74863.3737	156544.5680	90.8	589235.0	2256.4
+delta (low-high)		0.1720	-0.002113	-10495.3859	-9627.5616	20.8	30255.0	-12.8

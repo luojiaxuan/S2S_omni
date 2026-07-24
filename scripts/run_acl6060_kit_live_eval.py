@@ -136,8 +136,11 @@ def target_languages(args: argparse.Namespace) -> list[str]:
 
 
 def session_name(args: argparse.Namespace, index: int, run_id: str) -> str:
+    quality_tag = "".join(
+        char if char.isalnum() else "_" for char in args.tts_quality_mode
+    ).strip("_") or "default"
     return (
-        f"acl6060_en{args.target_lang}_kit_{args.format}_hq_"
+        f"acl6060_en{args.target_lang}_kit_{args.format}_{quality_tag}_"
         f"chunk{args.chunk_ms}_speed{speed_tag(args.speed_factor)}_{index:03d}_{run_id}"
     )
 

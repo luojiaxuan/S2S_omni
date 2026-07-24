@@ -1,0 +1,30 @@
+{
+  "provider": "kit",
+  "model": "KIT Lecture Translator",
+  "dataset_root": "/tmp/rasst_main_result_data",
+  "source_list": "/tmp/rasst_main_result_data/main_result/inputs/acl_zh/source.list",
+  "target_list": "/tmp/rasst_main_result_data/main_result/inputs/acl_zh/target.list",
+  "ref_file": "/tmp/rasst_main_result_data/main_result/inputs/acl_zh/ref.txt",
+  "source_text_file": "/tmp/rasst_main_result_data/main_result/inputs/acl_zh/source_text.txt",
+  "audio_yaml": "/tmp/rasst_main_result_data/main_result/inputs/acl_zh/audio.yaml",
+  "audio_yaml_rows": 468,
+  "chunk_ms": 960,
+  "speed_factor": 1.0,
+  "target_lang": "zh",
+  "kit_base_url": "https://lt2srv.iar.kit.edu",
+  "kit_languages": [
+    "zh",
+    "en"
+  ],
+  "kit_mt_language": "zh",
+  "kit_audio_language": "zh",
+  "kit_format": "mixed",
+  "kit_tts_quality_mode": "low_latency",
+  "kit_availability": "private",
+  "kit_smart_chaptering": "online_dynamic",
+  "asr_model": "gpt-4o-mini-transcribe",
+  "asr_base_url": "https://api.openai.com/v1",
+  "asr_strategy": "tts_chunk_grouped_windows_v1",
+  "asr_window_s": 120.0,
+  "candidate_text_source": "target_speech_asr_gpt4o_mini_transcribe"
+}
