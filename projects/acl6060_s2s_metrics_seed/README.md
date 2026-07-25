@@ -365,6 +365,10 @@ scripts/run_acl6060_metric_pipeline.py \
   --artifact-base projects/acl6060_s2s_metrics_seed/artifacts \
   --speech-latency-repo /path/to/Speech-to-Speech-Latency \
   --run-segale --run-segale-longyaal --run-xcomet --reference-free-xcomet
+
+python scripts/build_acl6060_segale_diagnostics.py \
+  --artifact-base projects/acl6060_s2s_metrics_seed/artifacts \
+  --output-dir projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics
 ```
 
 关键可复用产物：
@@ -380,6 +384,45 @@ artifacts/acl6060_xcomet_xl_segale/{input_all.jsonl,scores_all.jsonl,summary_all
 最终审计：27/27 主表行均有 BLEU、XCOMET-XL、LongYAAL 和 Ending Offset；27 个
 condition 唯一；combined XCOMET 输入/输出/SEGALE 对齐均为 10,765 行；source
 coverage 无遗漏或重复；null score 非零数为 0。
+
+### 逐句诊断与 speed 对比（2026-07-24）
+
+为检查 SEGALE 切分、空对齐和随 source speedup 的单句变化，新增以下可直接打开的
+静态看板与可机读产物：
+
+```text
+artifacts/acl6060_segale_diagnostics/index.html
+artifacts/acl6060_segale_diagnostics/cell_summary.tsv
+artifacts/acl6060_segale_diagnostics/speed_delta_summary.tsv
+artifacts/acl6060_segale_diagnostics/sentence_cases.jsonl
+artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
+```
+
+- `index.html` 的每个 cell 都给出 SEGALE `over_translation`、
+  `under_translation`、总 null count，及单句 tail/first-emission/emission-span
+  的均值或分位数。底层有 10,765 个 SEGALE 对齐单元；
+  `sentence_cases.jsonl` 是 12,636 条 source-sentence condition
+  records，保留 source/reference/hypothesis、`source:hypothesis` 对齐形状、QE
+  score 和单句 timing。若 SEGALE 为 many-to-many，对齐组的 hypothesis、QE 和 timing 会被
+  重复在它覆盖的每个 source sentence 下，并以 `source:hypothesis` 明示该事实；
+  九个 `compare_*.html` 页面让同一个 ACL source sentence 横向比较
+  `1x/1.25x/1.5x`，包括 null case。
+- `speed_delta_summary.tsv` 是同一句的 paired 分析：只在两档 speed 都有 SEGALE
+  非空对齐和 timing 时计算，分别报告 XCOMET 变化、tail latency 的 mean/p50/p90
+  变化和 first-emission p50 变化。它不能替代正式主表，也不会以删除 null 的方式
+  改写质量分数。
+- 这些单句 timing 是 `session.output_transcript.delta` 的到达时间减去该 source
+  sentence 的结束时间，即 computation-aware **target-text emission proxy**；不是
+  target speech 的 audio playout completion。现有 OpenAI/Gemini formal runs 没有
+  保存可用的 target-audio playout timestamp，所以不能从此断言某个系统的 TTS
+  语速更快或更慢。
+- live runner 先以 `ffmpeg atempo(speed_factor)` 加速 source，再固定每 960 ms
+  发一个 chunk 并按 960 ms pacing。因此 speedup 提高时，每个 wall-clock chunk
+  的语言信息量确实增加。Gemini 的 QE 随 speed 提升、GPT 在 `1.5x` 出现更多
+  under-translation 并有更长 tail 的现象与“固定 chunk 上下文密度 + 模型实时
+  跟随能力不同”相容，但不是因果证明。要分离两种机制，需额外控制每个 chunk 的
+  语言内容量（例如 480/1440 ms 设置）并记录 target-audio sample/packet 的真实
+  playout 时间戳。
 
 逐候选 LaBSE matching trace (`*_aps_results.json`) 和逐 token LongYAAL trace
 (`instances.resegmented.json`) 是可由上述 Git 输入确定性重建的运行中间件，保留在

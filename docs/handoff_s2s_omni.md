@@ -721,8 +721,36 @@ reference-based XCOMET description. Do not use the historical table or its
   `scripts/run_acl6060_segale_longyaal.py`,
   `scripts/build_acl6060_xcomet_input.py`,
   `scripts/run_acl6060_xcomet_xl.py`, and
-  `scripts/run_acl6060_metric_pipeline.py`. Combined QE artifacts are in
+  `scripts/run_acl6060_metric_pipeline.py`, and
+  `scripts/build_acl6060_segale_diagnostics.py`. Combined QE artifacts are in
   `artifacts/acl6060_xcomet_xl_segale/`.
+
+2026-07-24 sentence-level SEGALE diagnostics:
+
+- Canonical dashboard: `projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics/index.html`.
+  It has all 27 cells and links to nine per-language/system pages comparing the
+  same ACL source sentence at `1x`, `1.25x`, and `1.5x`.
+- `cell_summary.tsv` reports per-cell `over_translation`,
+  `under_translation`, total null alignment count, and sentence-level tail,
+  first-emission, and emission-span distributions. `sentence_cases.jsonl`
+  contains 12,636 source-sentence condition records with
+  source/reference/hypothesis, SEGALE alignment shape, XCOMET QE, and timing.
+  A many-to-many alignment repeats its group QE/timing for every covered source
+  sentence and labels the shape explicitly. `speed_delta_summary.tsv` is paired on source
+  sentence and excludes a pair only from timing deltas when either side is
+  null; nulls remain zero-scored in the canonical BLEU/XCOMET table.
+- Timing semantics are narrow: `first_emission_offset_ms` and
+  `tail_latency_ms` use `session.output_transcript.delta` arrival minus source
+  sentence end. They are target-text emission proxies, not target-audio
+  playback latency. GPT/Gemini formal runs did not retain target-audio playout
+  timestamps, so do not claim an observed transcript timing difference proves
+  a TTS speaking-rate difference.
+- The source runner applies `atempo(speed_factor)` before fixed 960 ms chunks
+  and 960 ms pacing. Higher speed therefore means more linguistic content per
+  wall-clock chunk. Gemini QE increasing with speed and GPT degradation at
+  `1.5x` are compatible with different real-time tracking behavior, but the
+  current data does not establish causality. A controlled variable-chunk study
+  plus target-audio timestamps is required.
 
 2026-07-23 ACL6060 3x3x3 full-table pipeline (historical):
 

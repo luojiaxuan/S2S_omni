@@ -1,0 +1,8 @@
+{
+  "cells": 27,
+  "alignment_groups": 10765,
+  "source_sentence_cases": 12636,
+  "null_alignments": 736,
+  "output_dir": "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics",
+  "latency_semantics": "target transcript-delta arrival proxy, not target-audio playback"
+}
