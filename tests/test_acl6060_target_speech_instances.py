@@ -135,13 +135,21 @@ def test_unit_playout_uses_audio_position_and_packet_queue() -> None:
     assert elapsed == [150.0, 350.0, 500.0]
 
 
-def test_kit_source_timeline_uses_completed_post_time(tmp_path: Path) -> None:
+def test_kit_source_timeline_uses_post_request_start(tmp_path: Path) -> None:
     (tmp_path / "run.json").write_text(
         json.dumps(
             {
                 "postStats": [
-                    {"sent_at_s": 1.2, "audio_end_s": 0.96},
-                    {"sent_at_s": 2.7, "audio_end_s": 1.92},
+                    {
+                        "request_started_at_s": 1.2,
+                        "sent_at_s": 2.1,
+                        "audio_end_s": 0.96,
+                    },
+                    {
+                        "request_started_at_s": 2.7,
+                        "sent_at_s": 3.6,
+                        "audio_end_s": 1.92,
+                    },
                 ]
             }
         ),

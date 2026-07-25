@@ -331,12 +331,13 @@ target text 当作 speech timing。
   audio-end position 映射到 PCM FIFO playout clock。尾部无发声 PCM 不计入
   target speech completion。
 - `instances.log.elapsed[i]` 是第 `i` 个 target-speech ASR unit 的播放完成时刻；
-  `delays[i]` 是该播放时刻之前真实发送完成的 source audio 时长。OpenAI/Gemini
+  `delays[i]` 是该播放时刻之前已进入客户端传输的 source audio 时长。OpenAI/Gemini
   使用逐 chunk WebSocket send timeline；KIT 使用逐 960ms source POST 的 HTTP
-  response completion timeline。
+  request-start timeline。POST response latency 只会推迟下一次 request，不会把
+  已发送的当前 chunk 错记到 response 返回时。
 - 当前协议 id 为
   `target_speech_word_timestamp_to_pcm_packet_playout_v2`，source-consumption
-  协议为 `source_send_timeline_at_speech_playout_v1`。full-table builder、
+  协议为 `source_chunk_transport_timeline_at_speech_playout_v2`。full-table builder、
   SEGALE LongYAAL 和 diagnostics 都会拒绝旧 timing method，避免静默复用
   target-text proxy。
 - 这里的“播放”是基于捕获 PCM 的立即零抖动客户端播放模型，包含网络晚到和

@@ -700,12 +700,13 @@ sentence-latency result based on target transcript deltas.
   then mapped to PCM packet playout. Trailing silent PCM after the last spoken
   ASR unit is excluded from speech completion.
 - `instances.log.elapsed` is target-speech unit playout completion.
-  `instances.log.delays` is source audio whose send completed by that playout
+  `instances.log.delays` is source audio that entered client transport by that playout
   time. OpenAI/Gemini use the WebSocket chunk-send timeline; KIT uses each
-  960ms source POST's HTTP completion timeline.
+  960ms source POST's request-start timeline. A slow POST response delays the
+  next request but does not postpone the already transmitted current chunk.
 - Protocol ids are
   `target_speech_word_timestamp_to_pcm_packet_playout_v2` and
-  `source_send_timeline_at_speech_playout_v1`. The full-table builder, SEGALE
+  `source_chunk_transport_timeline_at_speech_playout_v2`. The full-table builder, SEGALE
   LongYAAL, and diagnostics reject old timing artifacts.
 - This is an immediate zero-jitter PCM client model. It includes packet stalls
   and queued speech duration but not additional OS, sound-card, or Bluetooth

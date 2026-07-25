@@ -25,7 +25,7 @@ from s2s_omni.openai_asr import transcribe_openai_json
 
 CHAR_LEVEL_LANGS = {"zh", "ja"}
 TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v2"
-SOURCE_TIMING_METHOD = "source_send_timeline_at_speech_playout_v1"
+SOURCE_TIMING_METHOD = "source_chunk_transport_timeline_at_speech_playout_v2"
 ZH_SIMPLIFIER = OpenCC("t2s")
 
 
@@ -383,7 +383,7 @@ def source_send_timeline(
         run = read_json(sample_dir / "run.json")
         rows = [
             {
-                "sent_at_s": row.get("sent_at_s"),
+                "sent_at_s": row.get("request_started_at_s"),
                 "sent_source_ms": float(row.get("audio_end_s") or 0.0) * 1000.0,
             }
             for row in run.get("postStats") or []
