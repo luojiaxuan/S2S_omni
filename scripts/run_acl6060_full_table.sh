@@ -81,8 +81,19 @@ run_step() {
 
 is_complete_artifact() {
   local dir="$1"
-  [[ -f "${dir}/instances.log" && -f "${dir}/run_config.json" ]] &&
-    [[ "$(wc -l < "${dir}/instances.log" | tr -d ' ')" == "5" ]]
+  local summary="${dir}/target_speech_timing_summary.json"
+  [[ -f "${dir}/instances.log" && -f "${dir}/run_config.json" && -f "${summary}" ]] &&
+    [[ "$(wc -l < "${dir}/instances.log" | tr -d ' ')" == "5" ]] &&
+    "${PYTHON_BIN}" -c \
+      'import json,sys; data=json.load(open(sys.argv[1])); ok=data.get("samples")==5 and data.get("timing_method")=="target_speech_word_timestamp_to_pcm_packet_playout_v2"; raise SystemExit(0 if ok else 1)' \
+      "${summary}"
+}
+
+has_kit_source_timeline() {
+  local dir="$1"
+  "${PYTHON_BIN}" -c \
+    'import json,pathlib,sys; runs=sorted(pathlib.Path(sys.argv[1]).glob("[0-9][0-9][0-9]_*")); ok=len(runs)==5 and all(any(row.get("sent_at_s") is not None for row in json.load(open(run/"run.json")).get("postStats", [])) for run in runs); raise SystemExit(0 if ok else 1)' \
+    "${dir}"
 }
 
 run_kit_row() {
@@ -95,6 +106,10 @@ run_kit_row() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] SKIP existing KIT ${tag}"
     return
   fi
+  local resume_flag="--no-resume"
+  if has_kit_source_timeline "${local_dir}"; then
+    resume_flag="--resume"
+  fi
   run_step "kit ${tag}" \
     "${PYTHON_BIN}" "${REPO}/scripts/run_acl6060_kit_live_eval.py" \
       --dataset-root "${DATASET_ROOT}" \
@@ -105,9 +120,21 @@ run_kit_row() {
       --chunk-ms "${CHUNK_MS}" \
       --speed-factor "${speed}" \
       --download-hf \
+      "${resume_flag}"
+  run_step "target speech timing ${tag}" \
+    "${PYTHON_BIN}" "${REPO}/scripts/build_acl6060_target_speech_instances.py" \
+      --run-dir "${local_dir}" \
+      --api-key-file "${OPENAI_KEY_FILE}" \
       --resume
   mkdir -p "${artifact_dir}"
-  cp "${local_dir}/instances.log" "${local_dir}/responses.jsonl" "${local_dir}/run_config.json" "${artifact_dir}/"
+  cp \
+    "${local_dir}/instances.log" \
+    "${local_dir}/instances.provider_transcript.log" \
+    "${local_dir}/responses.jsonl" \
+    "${local_dir}/run_config.json" \
+    "${local_dir}/target_speech_timing.jsonl" \
+    "${local_dir}/target_speech_timing_summary.json" \
+    "${artifact_dir}/"
 }
 
 mkdir -p "${OUTPUT_BASE}" "${KIT_OUTPUT_BASE}" "${ARTIFACT_BASE}"
