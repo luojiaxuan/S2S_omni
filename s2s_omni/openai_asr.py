@@ -1,12 +1,38 @@
 from __future__ import annotations
 
+import fcntl
 import json
 import subprocess
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
+
+ASR_REQUEST_SLOTS = 4
+ASR_SLOT_DIR = Path("/tmp/s2s_omni_openai_asr_slots")
+
+
+@contextmanager
+def transcription_request_slot() -> Iterator[None]:
+    ASR_SLOT_DIR.mkdir(parents=True, exist_ok=True)
+    while True:
+        for index in range(ASR_REQUEST_SLOTS):
+            handle = (ASR_SLOT_DIR / f"{index}.lock").open("a+")
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                handle.close()
+                continue
+            try:
+                yield
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+                handle.close()
+            return
+        time.sleep(0.1)
 
 
 def transcode_for_upload(input_path: Path, tmp_dir: Path, max_upload_bytes: int) -> Path:
@@ -102,7 +128,10 @@ def transcribe_openai_json(
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=180.0) as resp:
+            with (
+                transcription_request_slot(),
+                urllib.request.urlopen(request, timeout=180.0) as resp,
+            ):
                 data = json.loads(resp.read().decode("utf-8"))
             break
         except urllib.error.HTTPError as exc:
