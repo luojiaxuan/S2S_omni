@@ -315,7 +315,34 @@ This explains why ACL6060 EN->ZH BLEU can look much higher than FLORAS scores:
 the old ACL6060 number is text prediction vs text reference with Chinese
 tokenization/character-like segmentation. It is not target-speech-ASR BLEU.
 
-## 2026-07-24 ACL6060 SEGALE 重评（当前 canonical）
+## 2026-07-25 target-speech playout 时延修正（当前 canonical）
+
+本节取代此前基于 `session.output_transcript.delta` 的所有 LongYAAL、Ending
+Offset 和逐句时延结果。质量和时延均从 target speech 出发，不能再把同步生成的
+target text 当作 speech timing。
+
+- live runner 保存每个 target PCM packet 的到达时刻、采样率、sample count 和
+  target-audio 累计位置。客户端播放时钟采用 zero-jitter immediate FIFO：
+  `playout_start=max(packet_arrival, previous_playout_end)`，
+  `playout_end=playout_start+packet_duration`。
+- canonical hypothesis 仍由 `gpt-4o-mini-transcribe` 转写 target speech。
+  `whisper-1` 只用于取得同一音频的 word timestamps；实现把 canonical
+  hypothesis 单调对齐到 timestamp units，再把每个 hypothesis unit 的
+  audio-end position 映射到 PCM FIFO playout clock。尾部无发声 PCM 不计入
+  target speech completion。
+- `instances.log.elapsed[i]` 是第 `i` 个 target-speech ASR unit 的播放完成时刻；
+  `delays[i]` 是该播放时刻之前真实发送完成的 source audio 时长。OpenAI/Gemini
+  使用逐 chunk WebSocket send timeline；KIT 使用逐 960ms source POST 的 HTTP
+  response completion timeline。
+- 当前协议 id 为
+  `target_speech_word_timestamp_to_pcm_packet_playout_v2`，source-consumption
+  协议为 `source_send_timeline_at_speech_playout_v1`。full-table builder、
+  SEGALE LongYAAL 和 diagnostics 都会拒绝旧 timing method，避免静默复用
+  target-text proxy。
+- 这里的“播放”是基于捕获 PCM 的立即零抖动客户端播放模型，包含网络晚到和
+  PCM backlog，但不包含操作系统、声卡、蓝牙设备等额外 output-buffer latency。
+
+## 2026-07-24 ACL6060 SEGALE 重评（质量与对齐协议）
 
 本节取代本文档中随后 `2026-07-23` 记录的 OmniSTEval、reference-based
 XCOMET-XL 和 `weight_chars` 加权结论。旧记录只保留为历史实验说明，不能再用于
@@ -419,18 +446,18 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
   非空对齐和 timing 时计算，分别报告 XCOMET 变化、tail latency 的 mean/p50/p90
   变化和 first-emission p50 变化。它不能替代正式主表，也不会以删除 null 的方式
   改写质量分数。
-- 这些单句 timing 是 `session.output_transcript.delta` 的到达时间减去该 source
-  sentence 的结束时间，即 computation-aware **target-text emission proxy**；不是
-  target speech 的 audio playout completion。现有 OpenAI/Gemini formal runs 没有
-  保存可用的 target-audio playout timestamp，所以不能从此断言某个系统的 TTS
-  语速更快或更慢。
+- 单句 timing 使用 target-speech ASR unit 的 PCM FIFO 播放完成时间减去对应
+  source sentence 的结束时间。`first_speech_playout_offset_ms` 是对齐
+  hypothesis span 第一个 unit 的 offset，`ending_offset_ms` 是最后一个 unit
+  的 offset，`speech_playout_span_ms` 是两者之差；不再读取 target transcript
+  delta。
 - live runner 先以 `ffmpeg atempo(speed_factor)` 加速 source，再固定每 960 ms
   发一个 chunk 并按 960 ms pacing。因此 speedup 提高时，每个 wall-clock chunk
   的语言信息量确实增加。Gemini 的 QE 随 speed 提升、GPT 在 `1.5x` 出现更多
   under-translation 并有更长 tail 的现象与“固定 chunk 上下文密度 + 模型实时
-  跟随能力不同”相容，但不是因果证明。要分离两种机制，需额外控制每个 chunk 的
-  语言内容量（例如 480/1440 ms 设置）并记录 target-audio sample/packet 的真实
-  playout 时间戳。
+  跟随能力不同”相容，但不是因果证明。当前已记录 target-audio packet 和 FIFO
+  playout；要进一步分离两种机制，仍需额外控制每个 chunk 的语言内容量（例如
+  480/1440 ms 设置）以及实际设备 output-buffer latency。
 - XCOMET-XL 的 COMET `2.2.7` runtime 会把 reference-free 的 `mt` 与 `src`
   拼接到最多 512 个 subwords；`mt` 在前，超长输入会截断后部 source。当前
   SEGALE `1:1` / `N:1` / `1:N` / `N:M` 非空 group 的观察均值分别为

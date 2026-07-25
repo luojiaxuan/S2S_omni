@@ -685,7 +685,33 @@ text reference with `sacrebleu-tokenizer=zh`, not target-speech ASR BLEU. The
 same old log scores 51.316 with tokenizer `zh` but only 3.479 with default
 `13a`.
 
-2026-07-24 ACL6060 SEGALE re-evaluation (current canonical):
+2026-07-25 ACL6060 target-speech playout latency correction (current canonical):
+
+This entry supersedes every prior ACL6060 LongYAAL, Ending Offset, and
+sentence-latency result based on target transcript deltas.
+
+- The live runners retain every target PCM packet's arrival time, sample count,
+  sample rate, and cumulative target-audio position. The client clock uses
+  zero-jitter immediate FIFO playout:
+  `start=max(packet_arrival, previous_playout_end)`.
+- The canonical hypothesis is target speech transcribed by
+  `gpt-4o-mini-transcribe`. `whisper-1` is used only to obtain word timestamps;
+  canonical ASR units are monotonically aligned to those timestamp units and
+  then mapped to PCM packet playout. Trailing silent PCM after the last spoken
+  ASR unit is excluded from speech completion.
+- `instances.log.elapsed` is target-speech unit playout completion.
+  `instances.log.delays` is source audio whose send completed by that playout
+  time. OpenAI/Gemini use the WebSocket chunk-send timeline; KIT uses each
+  960ms source POST's HTTP completion timeline.
+- Protocol ids are
+  `target_speech_word_timestamp_to_pcm_packet_playout_v2` and
+  `source_send_timeline_at_speech_playout_v1`. The full-table builder, SEGALE
+  LongYAAL, and diagnostics reject old timing artifacts.
+- This is an immediate zero-jitter PCM client model. It includes packet stalls
+  and queued speech duration but not additional OS, sound-card, or Bluetooth
+  output-buffer latency.
+
+2026-07-24 ACL6060 SEGALE re-evaluation (quality/alignment protocol):
 
 This entry supersedes the immediately following 2026-07-23 OmniSTEval and
 reference-based XCOMET description. Do not use the historical table or its
@@ -745,18 +771,17 @@ reference-based XCOMET description. Do not use the historical table or its
   equivalent to that count. `speed_delta_summary.tsv` is paired on source
   sentence and excludes a pair only from timing deltas when either side is
   null; nulls remain zero-scored in the canonical BLEU/XCOMET table.
-- Timing semantics are narrow: `first_emission_offset_ms` and
-  `tail_latency_ms` use `session.output_transcript.delta` arrival minus source
-  sentence end. They are target-text emission proxies, not target-audio
-  playback latency. GPT/Gemini formal runs did not retain target-audio playout
-  timestamps, so do not claim an observed transcript timing difference proves
-  a TTS speaking-rate difference.
+- Sentence timing now uses target-speech ASR-unit completion on the PCM FIFO
+  playout clock minus source-sentence end. The exposed fields are
+  `first_speech_playout_offset_ms`, `ending_offset_ms`, and
+  `speech_playout_span_ms`; target transcript deltas are not timing inputs.
 - The source runner applies `atempo(speed_factor)` before fixed 960 ms chunks
   and 960 ms pacing. Higher speed therefore means more linguistic content per
   wall-clock chunk. Gemini QE increasing with speed and GPT degradation at
   `1.5x` are compatible with different real-time tracking behavior, but the
-  current data does not establish causality. A controlled variable-chunk study
-  plus target-audio timestamps is required.
+  current data does not establish causality. Target-audio packet/FIFO timing is
+  now captured; a controlled variable-chunk study and actual device-buffer
+  timing are still required to isolate the mechanism.
 - XCOMET-XL in COMET `2.2.7` concatenates reference-free `mt` before `src` and
   truncates the joint sequence at 512 subwords. Long SEGALE groups are therefore
   diagnostic rather than calibrated sentence scores. Observed non-null group
