@@ -74,6 +74,17 @@ def test_session_name_uses_default_for_empty_sanitized_mode() -> None:
     )
 
 
+def test_upsert_jsonl_replaces_duplicate_index(tmp_path: Path) -> None:
+    path = tmp_path / "responses.jsonl"
+    kit_eval.upsert_jsonl(path, {"index": 1, "value": "old"})
+    kit_eval.upsert_jsonl(path, {"index": 0, "value": "zero"})
+    kit_eval.upsert_jsonl(path, {"index": 1, "value": "new"})
+    assert kit_eval.read_jsonl(path) == [
+        {"index": 0, "value": "zero"},
+        {"index": 1, "value": "new"},
+    ]
+
+
 def test_comparison_config_diff_and_audio_groups() -> None:
     high = {"chunk_ms": 960, "kit_tts_quality_mode": "high_quality"}
     low = {"chunk_ms": 960, "kit_tts_quality_mode": "low_latency"}

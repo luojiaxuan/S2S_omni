@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import importlib.util
 import json
 import subprocess
@@ -93,12 +94,6 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def append_jsonl(path: Path, record: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(record, ensure_ascii=False, sort_keys=False) + "\n")
-
-
 def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -106,6 +101,21 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
         + ("\n" if rows else ""),
         encoding="utf-8",
     )
+
+
+def upsert_jsonl(path: Path, record: dict[str, Any], key: str = "index") -> None:
+    rows = read_jsonl(path)
+    record_key = record[key]
+    updated = False
+    for row_index, row in enumerate(rows):
+        if row.get(key) == record_key:
+            rows[row_index] = record
+            updated = True
+            break
+    if not updated:
+        rows.append(record)
+    rows.sort(key=lambda row: int(row[key]))
+    write_jsonl(path, rows)
 
 
 def load_done_indices(instances_path: Path) -> set[int]:
@@ -121,7 +131,7 @@ def select_indices(total: int, start_index: int, limit: int) -> list[int]:
 
 
 def speed_tag(speed: float) -> str:
-    return ("%g" % speed).replace(".", "p")
+    return f"{speed:g}".replace(".", "p")
 
 
 def run_cmd(cmd: list[str]) -> None:
@@ -279,8 +289,8 @@ def grouped_asr_window_ranges(
 def slice_wav(input_path: Path, output_path: Path, start_s: float, end_s: float) -> None:
     with wave.open(str(input_path), "rb") as source:
         frame_rate = source.getframerate()
-        start_frame = max(0, int(round(start_s * frame_rate)))
-        end_frame = min(source.getnframes(), int(round(end_s * frame_rate)))
+        start_frame = max(0, round(start_s * frame_rate))
+        end_frame = min(source.getnframes(), round(end_s * frame_rate))
         source.setpos(start_frame)
         frames = source.readframes(max(0, end_frame - start_frame))
         params = source.getparams()
@@ -456,8 +466,7 @@ def sample_result_paths(run_dir: Path) -> dict[str, Path]:
     }
 
 
-def main() -> None:
-    args = parse_args()
+def run_eval(args: argparse.Namespace) -> None:
     acl = load_acl_live_module()
     if args.download_hf:
         acl.download_hf_subset(args.dataset_root, args.target_lang)
@@ -556,7 +565,7 @@ def main() -> None:
             "source": [str(source_wav)],
             "source_length": source_length_ms,
         }
-        append_jsonl(instances_path, record)
+        upsert_jsonl(instances_path, record)
         response = {
             "index": index,
             "run_id": run_id,
@@ -572,7 +581,7 @@ def main() -> None:
             "run_dir": str(run_dir),
             **timing,
         }
-        append_jsonl(responses_path, response)
+        upsert_jsonl(responses_path, response)
         print(
             json.dumps(
                 {
@@ -586,6 +595,14 @@ def main() -> None:
             ),
             flush=True,
         )
+
+
+def main() -> None:
+    args = parse_args()
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    with (args.output_dir / ".kit_eval.lock").open("a+", encoding="utf-8") as lock_handle:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        run_eval(args)
 
 
 if __name__ == "__main__":
