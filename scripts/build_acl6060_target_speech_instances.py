@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import bisect
 import difflib
+import importlib
 import itertools
 import json
 import re
@@ -21,7 +22,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from s2s_omni.openai_asr import transcribe_openai_json
+transcribe_openai_json = importlib.import_module(
+    "s2s_omni.openai_asr"
+).transcribe_openai_json
 
 CHAR_LEVEL_LANGS = {"zh", "ja"}
 TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v2"
