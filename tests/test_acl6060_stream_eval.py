@@ -6,7 +6,6 @@ import sys
 import wave
 from pathlib import Path
 
-
 SCRIPT = (
     Path(__file__).resolve().parents[1]
     / "projects"
@@ -144,7 +143,13 @@ def test_output_audio_extractors_and_wav_writer(tmp_path: Path) -> None:
     ) == (encoded, 16000)
 
     streamed = acl6060_stream_eval.StreamedText([], [], [], [], [])
-    acl6060_stream_eval.append_base64_pcm_audio(streamed, encoded, 24000)
+    acl6060_stream_eval.append_base64_pcm_audio(
+        streamed,
+        encoded,
+        24000,
+        received_at_ms=100.0,
+        sent_source_ms=960.0,
+    )
     output = tmp_path / "target.wav"
     assert acl6060_stream_eval.write_streamed_audio(streamed, output) == output
     with wave.open(str(output), "rb") as handle:
@@ -152,6 +157,25 @@ def test_output_audio_extractors_and_wav_writer(tmp_path: Path) -> None:
         assert handle.getnchannels() == 1
         assert handle.getsampwidth() == 2
         assert handle.readframes(handle.getnframes()) == pcm
+    timeline = acl6060_stream_eval.audio_packet_playout_timeline(
+        [
+            {
+                **streamed.audio_packets[0],
+                "duration_ms": 50.0,
+            },
+            {
+                **streamed.audio_packets[0],
+                "packet_index": 1,
+                "received_at_ms": 110.0,
+                "duration_ms": 25.0,
+            },
+        ]
+    )
+    assert timeline[0]["playout_start_ms"] == 100.0
+    assert timeline[0]["playout_end_ms"] == 150.0
+    assert timeline[1]["playout_start_ms"] == 150.0
+    assert timeline[1]["playout_end_ms"] == 175.0
+    assert timeline[1]["queue_delay_ms"] == 40.0
 
 
 def test_audio_capture_error_does_not_raise() -> None:

@@ -127,7 +127,14 @@ score_run() {
     "taurus:${remote_dir}/"
   ssh -T -o RemoteCommand=none -o RequestTTY=no taurus \
     "cd '${REMOTE_RASST}' && PATH='${REMOTE_MWER}':\$PATH '${REMOTE_PYTHON}' code/rasst/eval/offline_sst_eval/offline_streamlaal_eval.py --mode acl6060 --instances-log '${remote_dir}/instances.log' --lang-code '${target_lang}' --ref-file 'data/main_result/inputs/acl_${target_lang}/ref.txt' --source-file 'data/main_result/inputs/acl_${target_lang}/source_text.txt' --audio-yaml 'data/main_result/inputs/acl_${target_lang}/audio.yaml' --glossary-acl6060 data/glossaries/acl6060_tagged_gt_raw_min_norm2.json --fbk-fairseq-root '${REMOTE_FBK}' --python-bin '${REMOTE_PYTHON}' --output-tsv '${remote_dir}/eval_results.tsv' --output-log '${remote_dir}/eval_results.log'"
-  cp "${local_dir}/instances.log" "${local_dir}/responses.jsonl" "${local_dir}/run_config.json" "${artifact_dir}/"
+  cp \
+    "${local_dir}/instances.log" \
+    "${local_dir}/instances.provider_transcript.log" \
+    "${local_dir}/responses.jsonl" \
+    "${local_dir}/run_config.json" \
+    "${local_dir}/target_speech_timing.jsonl" \
+    "${local_dir}/target_speech_timing_summary.json" \
+    "${artifact_dir}/"
   scp -q -O \
     "taurus:${remote_dir}/eval_results.tsv" \
     "taurus:${remote_dir}/eval_results.log" \
@@ -139,12 +146,27 @@ copy_run_artifacts() {
   local artifact_dir="$2"
 
   mkdir -p "${artifact_dir}"
-  cp "${local_dir}/instances.log" "${local_dir}/responses.jsonl" "${local_dir}/run_config.json" "${artifact_dir}/"
+  cp \
+    "${local_dir}/instances.log" \
+    "${local_dir}/instances.provider_transcript.log" \
+    "${local_dir}/responses.jsonl" \
+    "${local_dir}/run_config.json" \
+    "${local_dir}/target_speech_timing.jsonl" \
+    "${local_dir}/target_speech_timing_summary.json" \
+    "${artifact_dir}/"
 }
 
 is_full_run() {
   [[ "${LIMIT}" == "0" &&
     ( "${MAX_AUDIO_SECONDS}" == "0" || "${MAX_AUDIO_SECONDS}" == "0.0" ) ]]
+}
+
+target_speech_complete() {
+  local summary_path="$1"
+  [[ -f "${summary_path}" ]] &&
+    "${PYTHON_BIN}" -c \
+      'import json,sys; data=json.load(open(sys.argv[1])); raise SystemExit(0 if data.get("samples")==5 else 1)' \
+      "${summary_path}"
 }
 
 mkdir -p "${OUTPUT_BASE}" "${ARTIFACT_BASE}"
@@ -194,6 +216,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
         "${PACE_FLAG}"
         "${RESUME_FLAG}"
         "${DOWNLOAD_HF_FLAG}"
+        --save-output-audio
       )
       if [[ "${provider}" == "gemini" ]]; then
         key_file="${GEMINI_KEY_FILE}"
@@ -215,12 +238,31 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
           "${PACE_FLAG}"
           "${RESUME_FLAG}"
           "${DOWNLOAD_HF_FLAG}"
+          --save-output-audio
           --post-send-idle-s "${GEMINI_POST_SEND_IDLE_S}"
           --max-session-input-s "${GEMINI_MAX_SESSION_INPUT_S}"
         )
       fi
 
-      run_step "acl6060 ${tag}" "${runner_cmd[@]}"
+      timing_summary="${local_dir}/target_speech_timing_summary.json"
+      run_lock="${local_dir}/.target_speech_run_lock"
+      if target_speech_complete "${timing_summary}"; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] REUSE complete target speech run ${tag}"
+      elif mkdir "${run_lock}" 2>/dev/null; then
+        run_step "acl6060 ${tag}" "${runner_cmd[@]}"
+        run_step "target speech timing ${tag}" \
+          "${PYTHON_BIN}" "${REPO}/scripts/build_acl6060_target_speech_instances.py" \
+          --run-dir "${local_dir}" \
+          --api-key-file "${OPENAI_KEY_FILE}" \
+          --resume
+        rmdir "${run_lock}"
+      else
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] WAIT active target speech run ${tag}"
+        until target_speech_complete "${timing_summary}"; do
+          sleep 30
+        done
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] REUSE completed target speech run ${tag}"
+      fi
 
       if [[ "${NO_SCORE}" == "1" ]]; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] SKIP score ${tag}"

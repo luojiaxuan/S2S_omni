@@ -5,6 +5,7 @@ import subprocess
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 
 def transcode_for_upload(input_path: Path, tmp_dir: Path, max_upload_bytes: int) -> Path:
@@ -31,7 +32,9 @@ def transcode_for_upload(input_path: Path, tmp_dir: Path, max_upload_bytes: int)
         check=True,
     )
     if output_path.stat().st_size > max_upload_bytes:
-        raise RuntimeError(f"transcoded audio is still too large: {output_path.stat().st_size} bytes")
+        raise RuntimeError(
+            f"transcoded audio is still too large: {output_path.stat().st_size} bytes"
+        )
     return output_path
 
 
@@ -63,9 +66,23 @@ def multipart_body(fields: dict[str, str], file_field: str, file_path: Path) -> 
     return b"".join(chunks), boundary
 
 
-def transcribe_openai(api_key: str, base_url: str, model: str, audio_path: Path) -> str:
+def transcribe_openai_json(
+    api_key: str,
+    base_url: str,
+    model: str,
+    audio_path: Path,
+    *,
+    response_format: str = "json",
+    language: str = "",
+    timestamp_granularities: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    fields = {"model": model, "response_format": response_format}
+    if language:
+        fields["language"] = language
+    if timestamp_granularities:
+        fields["timestamp_granularities[]"] = ",".join(timestamp_granularities)
     body, boundary = multipart_body(
-        {"model": model, "response_format": "json"},
+        fields,
         "file",
         audio_path,
     )
@@ -84,4 +101,11 @@ def transcribe_openai(api_key: str, base_url: str, model: str, audio_path: Path)
     except urllib.error.HTTPError as exc:
         body_text = exc.read().decode("utf-8", errors="replace")
         raise RuntimeError(f"transcription failed: HTTP {exc.code}: {body_text}") from exc
+    if not isinstance(data, dict):
+        raise TypeError(f"unexpected transcription response: {type(data).__name__}")
+    return data
+
+
+def transcribe_openai(api_key: str, base_url: str, model: str, audio_path: Path) -> str:
+    data = transcribe_openai_json(api_key, base_url, model, audio_path)
     return str(data.get("text") or "").strip()

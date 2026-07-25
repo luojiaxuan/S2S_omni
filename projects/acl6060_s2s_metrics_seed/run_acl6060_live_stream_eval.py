@@ -17,7 +17,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-
 HF_REPO = "gavinlaw/rasst-main-result-data"
 OPENAI_MODEL = "gpt-realtime-translate"
 OPENAI_WS_URL = "wss://api.openai.com/v1/realtime/translations"
@@ -64,6 +63,7 @@ class StreamedText:
     emissions: list[tuple[str, float, float]] = field(default_factory=list)
     audio_parts: list[bytes] = field(default_factory=list)
     audio_sample_rate: int = 0
+    audio_packets: list[dict[str, Any]] = field(default_factory=list)
 
 
 def parse_args() -> argparse.Namespace:
@@ -311,6 +311,9 @@ def append_base64_pcm_audio(
     streamed: StreamedText,
     encoded: str,
     sample_rate: int,
+    *,
+    received_at_ms: float | None = None,
+    sent_source_ms: float | None = None,
 ) -> None:
     if not encoded:
         return
@@ -318,11 +321,30 @@ def append_base64_pcm_audio(
         raise ValueError(f"invalid output audio sample rate: {sample_rate}")
     if streamed.audio_sample_rate not in {0, sample_rate}:
         raise ValueError(
-            f"output audio sample rate changed from {streamed.audio_sample_rate} "
-            f"to {sample_rate}"
+            f"output audio sample rate changed from {streamed.audio_sample_rate} to {sample_rate}"
         )
+    payload = base64.b64decode(encoded, validate=True)
+    if len(payload) % 2:
+        raise ValueError(f"PCM16 payload has odd byte count: {len(payload)}")
     streamed.audio_sample_rate = sample_rate
-    streamed.audio_parts.append(base64.b64decode(encoded, validate=True))
+    audio_start_ms = sum(len(part) for part in streamed.audio_parts) * 500.0 / sample_rate
+    duration_ms = len(payload) * 500.0 / sample_rate
+    streamed.audio_parts.append(payload)
+    if received_at_ms is not None:
+        streamed.audio_packets.append(
+            {
+                "packet_index": len(streamed.audio_packets),
+                "received_at_ms": round(received_at_ms, 3),
+                "sent_source_ms": (
+                    round(sent_source_ms, 3) if sent_source_ms is not None else None
+                ),
+                "sample_rate": sample_rate,
+                "sample_count": len(payload) // 2,
+                "duration_ms": round(duration_ms, 3),
+                "audio_start_ms": round(audio_start_ms, 3),
+                "audio_end_ms": round(audio_start_ms + duration_ms, 3),
+            }
+        )
 
 
 def capture_base64_pcm_audio(
@@ -330,16 +352,51 @@ def capture_base64_pcm_audio(
     encoded: str,
     sample_rate: int,
     provider: str,
+    *,
+    received_at_ms: float | None = None,
+    sent_source_ms: float | None = None,
 ) -> dict[str, Any] | None:
     try:
-        append_base64_pcm_audio(streamed, encoded, sample_rate)
-    except Exception as exc:
+        append_base64_pcm_audio(
+            streamed,
+            encoded,
+            sample_rate,
+            received_at_ms=received_at_ms,
+            sent_source_ms=sent_source_ms,
+        )
+    except Exception as exc:  # noqa: BLE001
         return {
             "audio_capture_error": f"{type(exc).__name__}: {exc}",
             "provider": provider,
             "sample_rate": sample_rate,
         }
     return None
+
+
+def audio_packet_playout_timeline(
+    packets: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    playout_end_ms = 0.0
+    output: list[dict[str, Any]] = []
+    for expected_index, packet in enumerate(packets):
+        if int(packet["packet_index"]) != expected_index:
+            raise ValueError(
+                f"non-contiguous target audio packet index: {packet['packet_index']} "
+                f"!= {expected_index}"
+            )
+        arrival_ms = float(packet["received_at_ms"])
+        duration_ms = float(packet["duration_ms"])
+        playout_start_ms = max(arrival_ms, playout_end_ms)
+        playout_end_ms = playout_start_ms + duration_ms
+        output.append(
+            {
+                **packet,
+                "playout_start_ms": round(playout_start_ms, 3),
+                "playout_end_ms": round(playout_end_ms, 3),
+                "queue_delay_ms": round(playout_start_ms - arrival_ms, 3),
+            }
+        )
+    return output
 
 
 def write_streamed_audio(streamed: StreamedText, path: Path) -> Path | None:
@@ -533,6 +590,8 @@ async def run_openai_stream(
                             output_audio[0],
                             output_audio[1],
                             "openai",
+                            received_at_ms=now_s * 1000.0,
+                            sent_source_ms=min(total_source_ms, sent_audio_s * 1000.0),
                         )
                         if audio_error is not None:
                             streamed.errors.append(audio_error)
@@ -544,10 +603,7 @@ async def run_openai_stream(
                         target_language_ready.set()
                 if event_type == "session.updated":
                     output_language = (
-                        event.get("session", {})
-                        .get("audio", {})
-                        .get("output", {})
-                        .get("language")
+                        event.get("session", {}).get("audio", {}).get("output", {}).get("language")
                     )
                     if output_language == args.target_lang:
                         target_language_ready.set()
@@ -563,7 +619,7 @@ async def run_openai_stream(
                     streamed.input_transcript_parts.append(input_delta)
                 if event_type in {"session.closed", "translation_session.closed"}:
                     closed.set()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             append_jsonl(raw_events, {"receiver_error": f"{type(exc).__name__}: {exc}"})
             closed.set()
 
@@ -571,7 +627,11 @@ async def run_openai_stream(
     await ws.send(json.dumps(openai_session_update(args)))
     append_jsonl(send_events, {"type": "session.update", "sent_at_s": 0.0})
     update_deadline = time.monotonic() + args.setup_timeout_s
-    while not target_language_ready.is_set() and not closed.is_set() and time.monotonic() < update_deadline:
+    while (
+        not target_language_ready.is_set()
+        and not closed.is_set()
+        and time.monotonic() < update_deadline
+    ):
         await asyncio.sleep(0.01)
     if session_update_error:
         await ws.close()
@@ -582,7 +642,7 @@ async def run_openai_stream(
         receiver_task.cancel()
         raise TimeoutError(f"OpenAI session.update target language timeout: {args.target_lang}")
 
-    bytes_per_chunk = max(2, int(round(sample_rate * args.chunk_ms / 1000.0)) * 2)
+    bytes_per_chunk = max(2, round(sample_rate * args.chunk_ms / 1000.0) * 2)
     next_progress_s = args.progress_interval_s
     for send_index, start in enumerate(range(0, len(pcm), bytes_per_chunk)):
         payload = pcm[start : start + bytes_per_chunk]
@@ -783,6 +843,11 @@ async def run_gemini_stream(
                             encoded_audio,
                             output_sample_rate,
                             "gemini",
+                            received_at_ms=now_s * 1000.0,
+                            sent_source_ms=min(
+                                total_source_ms,
+                                base_source_ms + sent_audio_s * 1000.0,
+                            ),
                         )
                         if audio_error is not None:
                             streamed.errors.append(audio_error)
@@ -800,7 +865,7 @@ async def run_gemini_stream(
                 input_delta = gemini_transcription(event, "inputTranscription")
                 if input_delta:
                     streamed.input_transcript_parts.append(input_delta)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             error = {"receiver_error": f"{type(exc).__name__}: {exc}"}
             append_jsonl(raw_events, error)
             if not go_away_received:
@@ -823,7 +888,7 @@ async def run_gemini_stream(
     except asyncio.TimeoutError:
         append_jsonl(raw_events, {"setup_timeout_s": args.setup_timeout_s})
 
-    bytes_per_chunk = max(2, int(round(sample_rate * args.chunk_ms / 1000.0)) * 2)
+    bytes_per_chunk = max(2, round(sample_rate * args.chunk_ms / 1000.0) * 2)
     next_progress_s = args.progress_interval_s
     for send_index, start in enumerate(range(0, len(pcm), bytes_per_chunk)):
         payload = pcm[start : start + bytes_per_chunk]
@@ -869,8 +934,7 @@ async def run_gemini_stream(
         },
     )
     while (
-        not receiver_done.is_set()
-        and time.monotonic() < send_finished_at + args.receive_timeout_s
+        not receiver_done.is_set() and time.monotonic() < send_finished_at + args.receive_timeout_s
     ):
         idle_s = time.monotonic() - max(last_output_time, send_finished_at)
         if idle_s >= args.post_send_idle_s:
@@ -913,11 +977,8 @@ def pcm_segment_ranges(
 ) -> list[tuple[int, int]]:
     if max_session_input_s <= 0:
         return [(0, len(pcm))]
-    max_bytes = max(2, int(round(max_session_input_s * sample_rate)) * 2)
-    return [
-        (start, min(len(pcm), start + max_bytes))
-        for start in range(0, len(pcm), max_bytes)
-    ]
+    max_bytes = max(2, round(max_session_input_s * sample_rate) * 2)
+    return [(start, min(len(pcm), start + max_bytes)) for start in range(0, len(pcm), max_bytes)]
 
 
 async def run_stream(
@@ -974,7 +1035,19 @@ async def run_stream(
                     f"{combined.audio_sample_rate} to {part.audio_sample_rate}"
                 )
             combined.audio_sample_rate = part.audio_sample_rate
+            audio_base_ms = (
+                float(combined.audio_packets[-1]["audio_end_ms"]) if combined.audio_packets else 0.0
+            )
             combined.audio_parts.extend(part.audio_parts)
+            for packet in part.audio_packets:
+                combined.audio_packets.append(
+                    {
+                        **packet,
+                        "packet_index": len(combined.audio_packets),
+                        "audio_start_ms": round(audio_base_ms + float(packet["audio_start_ms"]), 3),
+                        "audio_end_ms": round(audio_base_ms + float(packet["audio_end_ms"]), 3),
+                    }
+                )
     return combined
 
 
@@ -1058,6 +1131,8 @@ async def async_main() -> None:
         prediction = "".join(streamed.text_parts).strip()
         target_audio = None
         target_audio_duration_ms = 0.0
+        target_audio_packets: list[dict[str, Any]] = []
+        target_audio_packets_path = run_dir / "target_audio_packets.jsonl"
         if args.save_output_audio and streamed.audio_parts:
             target_audio = write_streamed_audio(
                 streamed,
@@ -1065,6 +1140,8 @@ async def async_main() -> None:
             )
             if target_audio is not None:
                 target_audio_duration_ms = wav_duration_ms(target_audio)
+            target_audio_packets = audio_packet_playout_timeline(streamed.audio_packets)
+            write_jsonl(target_audio_packets_path, target_audio_packets)
         normalize_word_emissions(streamed, args.target_lang)
         if not streamed.delays_ms:
             fallback_units = max(1, count_latency_units(prediction, args.target_lang))
@@ -1101,6 +1178,15 @@ async def async_main() -> None:
                     "target_audio_bytes": (
                         target_audio.stat().st_size if target_audio is not None else 0
                     ),
+                    "target_audio_packets": str(target_audio_packets_path),
+                    "target_audio_packet_count": len(target_audio_packets),
+                    "target_audio_last_arrival_ms": (
+                        target_audio_packets[-1]["received_at_ms"] if target_audio_packets else None
+                    ),
+                    "target_audio_playout_end_ms": (
+                        target_audio_packets[-1]["playout_end_ms"] if target_audio_packets else None
+                    ),
+                    "target_audio_timing_method": ("pcm_packet_zero_jitter_immediate_playout_v1"),
                 }
             )
         append_jsonl(responses_path, response)

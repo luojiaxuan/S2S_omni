@@ -38,6 +38,7 @@ audio = [
 ]
 floras-live = [
   "numpy",
+  "opencc-python-reimplemented",
   "pyarrow",
   "sacrebleu",
   "soundfile",
