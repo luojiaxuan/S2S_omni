@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -75,6 +76,8 @@ def transcribe_openai_json(
     response_format: str = "json",
     language: str = "",
     timestamp_granularities: tuple[str, ...] = (),
+    max_attempts: int = 5,
+    retry_base_s: float = 1.0,
 ) -> dict[str, Any]:
     fields = {"model": model, "response_format": response_format}
     if language:
@@ -86,21 +89,32 @@ def transcribe_openai_json(
         "file",
         audio_path,
     )
-    request = urllib.request.Request(
-        f"{base_url.rstrip('/')}/audio/transcriptions",
-        data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": f"multipart/form-data; boundary={boundary}",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=180.0) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body_text = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"transcription failed: HTTP {exc.code}: {body_text}") from exc
+    retryable_statuses = {408, 409, 429, 500, 502, 503, 504}
+    data: Any = None
+    for attempt in range(1, max_attempts + 1):
+        request = urllib.request.Request(
+            f"{base_url.rstrip('/')}/audio/transcriptions",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=180.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as exc:
+            body_text = exc.read().decode("utf-8", errors="replace")
+            if exc.code not in retryable_statuses or attempt == max_attempts:
+                raise RuntimeError(
+                    f"transcription failed: HTTP {exc.code}: {body_text}"
+                ) from exc
+        except (TimeoutError, urllib.error.URLError) as exc:
+            if attempt == max_attempts:
+                raise RuntimeError(f"transcription failed after {max_attempts} attempts") from exc
+        time.sleep(retry_base_s * (2 ** (attempt - 1)))
     if not isinstance(data, dict):
         raise TypeError(f"unexpected transcription response: {type(data).__name__}")
     return data
