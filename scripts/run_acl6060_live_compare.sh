@@ -177,7 +177,8 @@ cleanup_run_lock() {
 }
 trap cleanup_run_lock EXIT
 
-mkdir -p "${OUTPUT_BASE}" "${ARTIFACT_BASE}"
+RUN_LOCK_BASE="${OUTPUT_BASE}/.run_locks"
+mkdir -p "${OUTPUT_BASE}" "${ARTIFACT_BASE}" "${RUN_LOCK_BASE}"
 
 for provider in $(csv_to_array "${PROVIDERS}"); do
   case "${provider}" in
@@ -253,7 +254,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
       fi
 
       timing_summary="${local_dir}/target_speech_timing_summary.json"
-      run_lock="${local_dir}/.target_speech_run_lock"
+      run_lock="${RUN_LOCK_BASE}/${tag}.lock"
       mkdir -p "${local_dir}"
       if target_speech_complete "${timing_summary}"; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] REUSE complete target speech run ${tag}"
