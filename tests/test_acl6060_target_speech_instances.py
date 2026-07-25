@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+import wave
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +23,51 @@ target_speech = load_script(
     "acl6060_target_speech_instances",
     ROOT / "scripts/build_acl6060_target_speech_instances.py",
 )
+
+
+def test_transcribe_windows_reuses_kit_gpt_mini_text(tmp_path: Path, monkeypatch) -> None:
+    audio_path = tmp_path / "target.wav"
+    with wave.open(str(audio_path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(16000)
+        handle.writeframes(b"\x00\x00" * 16000)
+    (tmp_path / "target_asr_windows.jsonl").write_text(
+        json.dumps(
+            {
+                "window_index": 0,
+                "start_s": 0.0,
+                "end_s": 1.0,
+                "asr_model": "gpt-4o-mini-transcribe",
+                "asr_text": "复用文本。",
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    def fake_transcribe(_api_key, _base_url, model, _window_path, **_kwargs):
+        assert model == "whisper-1"
+        return {
+            "text": "复用文本",
+            "words": [{"word": "复用文本", "start": 0.1, "end": 0.9}],
+        }
+
+    monkeypatch.setattr(target_speech, "transcribe_openai_json", fake_transcribe)
+    rows = target_speech.transcribe_windows(
+        audio_path=audio_path,
+        sample_dir=tmp_path,
+        api_key="test",
+        base_url="https://example.test",
+        asr_model="gpt-4o-mini-transcribe",
+        timestamp_model="whisper-1",
+        target_lang="zh",
+        window_s=120.0,
+        resume=True,
+    )
+    assert rows[0]["asr_text"] == "复用文本。"
+    assert rows[0]["asr_reused_from"] == "target_asr_windows.jsonl"
 
 
 def test_align_hypothesis_units_interpolates_punctuation() -> None:

@@ -139,6 +139,11 @@ def transcribe_windows(
         for row in read_jsonl(output_path)
         if row.get("window_index") is not None
     }
+    kit_asr = {
+        int(row["window_index"]): row
+        for row in read_jsonl(sample_dir / "target_asr_windows.jsonl")
+        if row.get("window_index") is not None
+    }
     ranges = existing_kit_ranges(sample_dir)
     if not ranges:
         ranges = fixed_window_ranges(wav_duration_s(audio_path), window_s)
@@ -160,12 +165,23 @@ def transcribe_windows(
                 continue
             window_path = tmp_dir / f"window_{window_index:04d}.wav"
             slice_wav(audio_path, window_path, start_s, end_s)
-            asr = transcribe_openai_json(
-                api_key,
-                base_url,
-                asr_model,
-                window_path,
-                language=target_lang,
+            kit_asr_window = kit_asr.get(window_index)
+            can_reuse_kit_asr = (
+                kit_asr_window is not None
+                and kit_asr_window.get("asr_model") == asr_model
+                and abs(float(kit_asr_window.get("start_s") or 0.0) - start_s) < 0.01
+                and abs(float(kit_asr_window.get("end_s") or 0.0) - end_s) < 0.01
+            )
+            asr = (
+                {"text": str(kit_asr_window.get("asr_text") or "")}
+                if can_reuse_kit_asr and kit_asr_window is not None
+                else transcribe_openai_json(
+                    api_key,
+                    base_url,
+                    asr_model,
+                    window_path,
+                    language=target_lang,
+                )
             )
             timestamped = transcribe_openai_json(
                 api_key,
@@ -192,6 +208,7 @@ def transcribe_windows(
                     "end_s": round(end_s, 6),
                     "asr_model": asr_model,
                     "asr_text": str(asr.get("text") or "").strip(),
+                    "asr_reused_from": ("target_asr_windows.jsonl" if can_reuse_kit_asr else ""),
                     "timestamp_model": timestamp_model,
                     "timestamp_text": str(timestamped.get("text") or "").strip(),
                     "timestamp_words": words,
