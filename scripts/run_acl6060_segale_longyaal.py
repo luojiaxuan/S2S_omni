@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -12,6 +13,7 @@ from build_acl6060_segale_inputs import resolve_path
 from run_acl6060_segale_alignment import PINNED_SPEECH_LATENCY_REVISION, git_revision
 
 BLEU_TOKENIZER_BY_LANG = {"zh": "zh", "de": "13a", "ja": "ja-mecab"}
+TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v1"
 
 
 def parse_args() -> argparse.Namespace:
@@ -32,13 +34,28 @@ def read_scores(path: Path) -> dict[str, float]:
     return {key: float(value) for key, value in row.items() if key and value}
 
 
+def latency_input_fingerprint(alignment_dir: Path) -> str:
+    digest = hashlib.sha256()
+    for path in [
+        alignment_dir / "audio.scaled.basename.yaml",
+        alignment_dir / "instances.segale.jsonl",
+        alignment_dir / "hyp" / "aligned_spacy_hyp.jsonl",
+    ]:
+        digest.update(path.name.encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
 def run_longyaal(args: argparse.Namespace) -> dict[str, Any]:
     alignment_dir = args.run_dir / "segale_alignment"
     output_dir = args.output_dir or (args.run_dir / "segale_longyaal")
     summary_path = output_dir / "summary.json"
     scores_path = output_dir / "scores.resegmented.csv"
+    fingerprint = latency_input_fingerprint(alignment_dir)
     if args.resume and summary_path.exists() and scores_path.exists():
-        return json.loads(summary_path.read_text(encoding="utf-8"))
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        if summary.get("latency_input_fingerprint") == fingerprint:
+            return summary
 
     revision = git_revision(args.speech_latency_repo)
     if args.expected_revision and revision != args.expected_revision:
@@ -46,6 +63,11 @@ def run_longyaal(args: argparse.Namespace) -> dict[str, Any]:
             f"Speech-to-Speech-Latency revision mismatch: {revision} != {args.expected_revision}"
         )
     config = json.loads((args.run_dir / "run_config.json").read_text(encoding="utf-8"))
+    timing_method = str(config.get("latency_timing_method") or "")
+    if timing_method != TARGET_SPEECH_TIMING_METHOD:
+        raise ValueError(
+            f"run does not use target-speech playout timing: {args.run_dir} {timing_method!r}"
+        )
     dataset_root = args.dataset_root
     if dataset_root is None and config.get("dataset_root"):
         dataset_root = Path(str(config["dataset_root"]))
@@ -69,6 +91,8 @@ def run_longyaal(args: argparse.Namespace) -> dict[str, Any]:
     summary = {
         "alignment_backend": "SEGALE",
         "speech_latency_revision": revision,
+        "latency_timing_method": timing_method,
+        "latency_input_fingerprint": fingerprint,
         "bleu": quality["bleu"],
         "bleu_tokenizer": quality["bleu_tokenizer"],
         "longyaal_cu": scores.get("ca_unaware_yaal"),

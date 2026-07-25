@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ruff: noqa: E501
 from __future__ import annotations
 
 import argparse
@@ -11,6 +10,8 @@ from collections import defaultdict
 from pathlib import Path
 from statistics import mean
 from typing import Any
+
+TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v1"
 
 
 def parse_args() -> argparse.Namespace:
@@ -67,24 +68,24 @@ def escaped(value: Any) -> str:
 def latency_fields(row: dict[str, Any] | None) -> dict[str, float | None]:
     if row is None:
         return {
-            "first_emission_offset_ms": None,
-            "tail_latency_ms": None,
-            "emission_span_ms": None,
+            "first_speech_playout_offset_ms": None,
+            "ending_offset_ms": None,
+            "speech_playout_span_ms": None,
             "target_units": None,
         }
     elapsed = [float(value) for value in row.get("elapsed") or []]
     source_length = float(row.get("source_length") or 0.0)
     if not elapsed:
         return {
-            "first_emission_offset_ms": None,
-            "tail_latency_ms": None,
-            "emission_span_ms": None,
+            "first_speech_playout_offset_ms": None,
+            "ending_offset_ms": None,
+            "speech_playout_span_ms": None,
             "target_units": len(row.get("raw_units") or []),
         }
     return {
-        "first_emission_offset_ms": elapsed[0] - source_length,
-        "tail_latency_ms": elapsed[-1] - source_length,
-        "emission_span_ms": elapsed[-1] - elapsed[0],
+        "first_speech_playout_offset_ms": elapsed[0] - source_length,
+        "ending_offset_ms": elapsed[-1] - source_length,
+        "speech_playout_span_ms": elapsed[-1] - elapsed[0],
         "target_units": len(row.get("raw_units") or []),
     }
 
@@ -108,15 +109,18 @@ def build_run(
     run_dir: Path, table_row: dict[str, Any]
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     config = read_json(run_dir / "run_config.json")
+    if config.get("latency_timing_method") != TARGET_SPEECH_TIMING_METHOD:
+        raise ValueError(
+            f"run does not use target-speech playout timing: {run_dir} "
+            f"{config.get('latency_timing_method')!r}"
+        )
     quality = read_json(run_dir / "segale_alignment" / "quality_summary.json")
     xcomet_rows = read_jsonl(run_dir / "xcomet_xl" / "segments.jsonl")
     latency_rows = read_json(run_dir / "segale_longyaal" / "instances.resegmented.json")
     source_rows = read_jsonl(run_dir / "segale_alignment" / "ref.jsonl")
     if not source_rows:
         raise ValueError(f"empty SEGALE reference rows: {run_dir}")
-    latency_by_key = {
-        source_key(row["doc_id"], int(row["seg_id"])): row for row in latency_rows
-    }
+    latency_by_key = {source_key(row["doc_id"], int(row["seg_id"])): row for row in latency_rows}
     sentence_rows: list[dict[str, Any]] = []
     expected_keys = set()
     for row in xcomet_rows:
@@ -135,7 +139,7 @@ def build_run(
         else:
             if key not in latency_by_key:
                 raise ValueError(f"valid alignment missing latency: {run_dir} {key}")
-            if latency["tail_latency_ms"] is None:
+            if latency["ending_offset_ms"] is None:
                 raise ValueError(f"valid alignment missing timing data: {run_dir} {key}")
         sentence_rows.append(
             {
@@ -174,19 +178,17 @@ def build_run(
 
     non_null = [row for row in sentence_rows if not row["null_alignment_type"]]
     tails = [
-        float(row["tail_latency_ms"])
-        for row in non_null
-        if row["tail_latency_ms"] is not None
+        float(row["ending_offset_ms"]) for row in non_null if row["ending_offset_ms"] is not None
     ]
     firsts = [
-        float(row["first_emission_offset_ms"])
+        float(row["first_speech_playout_offset_ms"])
         for row in non_null
-        if row["first_emission_offset_ms"] is not None
+        if row["first_speech_playout_offset_ms"] is not None
     ]
     spans = [
-        float(row["emission_span_ms"])
+        float(row["speech_playout_span_ms"])
         for row in non_null
-        if row["emission_span_ms"] is not None
+        if row["speech_playout_span_ms"] is not None
     ]
     over = sum(row["null_alignment_type"] == "over_translation" for row in sentence_rows)
     under = sum(row["null_alignment_type"] == "under_translation" for row in sentence_rows)
@@ -217,11 +219,11 @@ def build_run(
         "max_source_group_size": max(
             (int(row["source_group_size"]) for row in non_null_groups), default=0
         ),
-        "tail_latency_mean_ms": mean(tails) if tails else None,
-        "tail_latency_p50_ms": percentile(tails, 0.5),
-        "tail_latency_p90_ms": percentile(tails, 0.9),
-        "first_emission_offset_p50_ms": percentile(firsts, 0.5),
-        "emission_span_p50_ms": percentile(spans, 0.5),
+        "ending_offset_mean_ms": mean(tails) if tails else None,
+        "ending_offset_p50_ms": percentile(tails, 0.5),
+        "ending_offset_p90_ms": percentile(tails, 0.9),
+        "first_speech_playout_offset_p50_ms": percentile(firsts, 0.5),
+        "speech_playout_span_p50_ms": percentile(spans, 0.5),
     }
     return summary, sentence_rows
 
@@ -245,11 +247,11 @@ def write_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         "non_1to1_groups",
         "many_source_to_one_groups",
         "max_source_group_size",
-        "tail_latency_mean_ms",
-        "tail_latency_p50_ms",
-        "tail_latency_p90_ms",
-        "first_emission_offset_p50_ms",
-        "emission_span_p50_ms",
+        "ending_offset_mean_ms",
+        "ending_offset_p50_ms",
+        "ending_offset_p90_ms",
+        "first_speech_playout_offset_p50_ms",
+        "speech_playout_span_p50_ms",
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
@@ -266,16 +268,16 @@ def write_speed_delta_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         "source_sentences_all_speeds",
         "valid_pairs_1p25x_vs_1x",
         "xcomet_delta_mean_1p25x_vs_1x",
-        "tail_delta_mean_ms_1p25x_vs_1x",
-        "tail_delta_p50_ms_1p25x_vs_1x",
-        "tail_delta_p90_ms_1p25x_vs_1x",
-        "first_delta_p50_ms_1p25x_vs_1x",
+        "ending_offset_delta_mean_ms_1p25x_vs_1x",
+        "ending_offset_delta_p50_ms_1p25x_vs_1x",
+        "ending_offset_delta_p90_ms_1p25x_vs_1x",
+        "first_speech_playout_delta_p50_ms_1p25x_vs_1x",
         "valid_pairs_1p5x_vs_1x",
         "xcomet_delta_mean_1p5x_vs_1x",
-        "tail_delta_mean_ms_1p5x_vs_1x",
-        "tail_delta_p50_ms_1p5x_vs_1x",
-        "tail_delta_p90_ms_1p5x_vs_1x",
-        "first_delta_p50_ms_1p5x_vs_1x",
+        "ending_offset_delta_mean_ms_1p5x_vs_1x",
+        "ending_offset_delta_p50_ms_1p5x_vs_1x",
+        "ending_offset_delta_p90_ms_1p5x_vs_1x",
+        "first_speech_playout_delta_p50_ms_1p5x_vs_1x",
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
@@ -295,11 +297,11 @@ def render_index(summary_rows: list[dict[str, Any]], output_dir: Path) -> str:
             f"<td>{row['over_translation_alignments']}</td><td>{row['under_translation_alignments']}</td>"
             f"<td>{row['non_1to1_groups']}</td><td>{row['many_source_to_one_groups']}</td>"
             f"<td>{row['max_source_group_size']}</td>"
-            f"<td>{number(row['tail_latency_mean_ms'])}</td>"
-            f"<td>{number(row['tail_latency_p50_ms'])}</td>"
-            f"<td>{number(row['tail_latency_p90_ms'])}</td>"
-            f"<td>{number(row['first_emission_offset_p50_ms'])}</td>"
-            f"<td>{number(row['emission_span_p50_ms'])}</td>"
+            f"<td>{number(row['ending_offset_mean_ms'])}</td>"
+            f"<td>{number(row['ending_offset_p50_ms'])}</td>"
+            f"<td>{number(row['ending_offset_p90_ms'])}</td>"
+            f"<td>{number(row['first_speech_playout_offset_p50_ms'])}</td>"
+            f"<td>{number(row['speech_playout_span_p50_ms'])}</td>"
             f"<td><a href='{escaped(page)}'>sentence cases</a></td>"
             "</tr>"
         )
@@ -312,11 +314,11 @@ th,td{{border:1px solid #d8dde3;padding:7px;text-align:right;vertical-align:top}
 .note{{background:#fff8db;border-left:4px solid #ca8a04;padding:10px;max-width:1200px}}
 </style></head><body>
 <h1>ACL6060 SEGALE sentence diagnostics</h1>
-<p class='note'><strong>Latency semantics:</strong> tail and first-emission offsets use the arrival time of target transcript deltas. They are a computation-aware target-text proxy, not verified target-audio playback completion: the formal GPT/Gemini runs did not save output audio timestamps.</p>
+<p class='note'><strong>Latency semantics:</strong> first and ending offsets use target-speech ASR unit playback completion. Each ASR unit's target-audio position is mapped through the captured PCM packet arrival and zero-jitter playout queue; trailing silence after the final spoken unit is excluded.</p>
 <p class='note'><strong>XCOMET length caveat:</strong> XCOMET-XL is a sentence-trained metric with a 512-subword joint input limit. SEGALE non-1:1 groups, especially long N:1 groups, are out-of-distribution and may be truncated. Their group scores are diagnostics, not calibrated per-source-sentence scores.</p>
 <p><strong>Structural versus semantic:</strong> a non-null SEGALE group only means Vecalign linked non-empty source and hypothesis spans. It is not a semantic “matched” judgment. XCOMET assesses the full aligned group; non-1:1 and N:1 counts flag spans that must be inspected before attributing a group hypothesis to an individual source sentence. A null row is the only structural `over_translation`/`under_translation` count and is retained with XCOMET=0.0 but no latency.</p>
-<table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>structural over</th><th>structural under</th><th>non-1:1</th><th>N:1 groups</th><th>max source span</th><th>tail mean ms</th><th>tail p50 ms</th><th>tail p90 ms</th><th>first p50 ms</th><th>emit span p50 ms</th><th>details</th></tr></thead><tbody>
-{''.join(rows)}</tbody></table>
+<table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>structural over</th><th>structural under</th><th>non-1:1</th><th>N:1 groups</th><th>max source span</th><th>ending mean ms</th><th>ending p50 ms</th><th>ending p90 ms</th><th>first speech p50 ms</th><th>speech playout span p50 ms</th><th>details</th></tr></thead><tbody>
+{"".join(rows)}</tbody></table>
 <p>Machine-readable summaries: <a href='cell_summary.tsv'>per-cell TSV</a>, <a href='cell_summary.jsonl'>per-cell JSONL</a>, <a href='speed_delta_summary.tsv'>paired-speed TSV</a>, <a href='speed_delta_summary.jsonl'>paired-speed JSONL</a>, <a href='sentence_cases.jsonl'>all source-sentence cases</a>.</p>
 </body></html>"""
 
@@ -342,14 +344,14 @@ def render_speed_page(
                 continue
             structural_status = structural_alignment_label(row)
             summary_bits.append(
-                f"{speed:g}x: {row['alignment_shape']} {structural_status}, QE {number(row['xcomet_xl_score'], 3)}, tail {number(row['tail_latency_ms'])} ms"
+                f"{speed:g}x: {row['alignment_shape']} {structural_status}, QE {number(row['xcomet_xl_score'], 3)}, ending {number(row['ending_offset_ms'])} ms"
             )
             rows.append(
                 "<tr>"
                 f"<td>{speed:g}x</td><td>{escaped(row['alignment_shape'])}</td>"
                 f"<td>{escaped(structural_status)}</td><td>{number(row['xcomet_xl_score'], 6)}</td>"
-                f"<td>{number(row['first_emission_offset_ms'])}</td>"
-                f"<td>{number(row['tail_latency_ms'])}</td><td>{number(row['emission_span_ms'])}</td>"
+                f"<td>{number(row['first_speech_playout_offset_ms'])}</td>"
+                f"<td>{number(row['ending_offset_ms'])}</td><td>{number(row['speech_playout_span_ms'])}</td>"
                 f"<td>{escaped(row['hypothesis'])}</td></tr>"
             )
         group_details = []
@@ -378,7 +380,7 @@ def render_speed_page(
             f"<p><strong>Source:</strong> {escaped(anchor['source_sentence'])}</p>"
             f"<p><strong>Reference:</strong> {escaped(anchor['reference_sentence'])}</p>"
             "<table><thead><tr><th>speed</th><th>group shape</th><th>structural status</th><th>group XCOMET</th>"
-            "<th>first offset ms</th><th>tail offset ms</th><th>emit span ms</th><th>hypothesis</th>"
+            "<th>first speech playout offset ms</th><th>ending offset ms</th><th>speech playout span ms</th><th>hypothesis</th>"
             f"</tr></thead><tbody>{''.join(rows)}</tbody></table>{''.join(group_details)}</details>"
         )
     return f"""<!doctype html>
@@ -390,8 +392,8 @@ table{{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}}th
 .note{{background:#fff8db;border-left:4px solid #ca8a04;padding:10px}}
 </style></head><body>
 <p><a href='index.html'>&larr; all cells</a></p><h1>{escaped(language)} | {escaped(system)} | source-speed cases</h1>
-<p class='note'>First and tail offsets are target transcript-delta arrival minus source sentence end. Negative values mean the text arrived before that source sentence ended. This is not target-audio playback latency. The displayed source sentence is only one member of a SEGALE group. “Non-null SEGALE group” is structural, not a semantic match: inspect the expanded full group source/reference/hypothesis before judging repetition, omission, or over-translation. XCOMET is scored on that full group and is repeated here only to make the group boundary visible.</p>
-{''.join(entries)}
+<p class='note'>First speech playout and ending offsets are the first/last aligned target-speech ASR unit's PCM playback completion minus source sentence end. Negative values mean that speech point played before the source sentence ended. The displayed source sentence is only one member of a SEGALE group. “Non-null SEGALE group” is structural, not a semantic match: inspect the expanded full group source/reference/hypothesis before judging repetition, omission, or over-translation. XCOMET is scored on that full group and is repeated here only to make the group boundary visible.</p>
+{"".join(entries)}
 </body></html>"""
 
 
@@ -421,10 +423,10 @@ def paired_delta_row(
             if (
                 baseline["null_alignment_type"]
                 or comparison["null_alignment_type"]
-                or baseline["tail_latency_ms"] is None
-                or comparison["tail_latency_ms"] is None
-                or baseline["first_emission_offset_ms"] is None
-                or comparison["first_emission_offset_ms"] is None
+                or baseline["ending_offset_ms"] is None
+                or comparison["ending_offset_ms"] is None
+                or baseline["first_speech_playout_offset_ms"] is None
+                or comparison["first_speech_playout_offset_ms"] is None
             ):
                 continue
             pairs.append((baseline, comparison))
@@ -432,21 +434,23 @@ def paired_delta_row(
             float(comparison["xcomet_xl_score"]) - float(baseline["xcomet_xl_score"])
             for baseline, comparison in pairs
         ]
-        tail_deltas = [
-            float(comparison["tail_latency_ms"]) - float(baseline["tail_latency_ms"])
+        ending_offset_deltas = [
+            float(comparison["ending_offset_ms"]) - float(baseline["ending_offset_ms"])
             for baseline, comparison in pairs
         ]
         first_deltas = [
-            float(comparison["first_emission_offset_ms"])
-            - float(baseline["first_emission_offset_ms"])
+            float(comparison["first_speech_playout_offset_ms"])
+            - float(baseline["first_speech_playout_offset_ms"])
             for baseline, comparison in pairs
         ]
         result[f"valid_pairs_{label}_vs_1x"] = len(pairs)
         result[f"xcomet_delta_mean_{label}_vs_1x"] = mean(xcomet_deltas) if pairs else None
-        result[f"tail_delta_mean_ms_{label}_vs_1x"] = mean(tail_deltas) if pairs else None
-        result[f"tail_delta_p50_ms_{label}_vs_1x"] = percentile(tail_deltas, 0.5)
-        result[f"tail_delta_p90_ms_{label}_vs_1x"] = percentile(tail_deltas, 0.9)
-        result[f"first_delta_p50_ms_{label}_vs_1x"] = percentile(first_deltas, 0.5)
+        result[f"ending_offset_delta_mean_ms_{label}_vs_1x"] = (
+            mean(ending_offset_deltas) if pairs else None
+        )
+        result[f"ending_offset_delta_p50_ms_{label}_vs_1x"] = percentile(ending_offset_deltas, 0.5)
+        result[f"ending_offset_delta_p90_ms_{label}_vs_1x"] = percentile(ending_offset_deltas, 0.9)
+        result[f"first_speech_playout_delta_p50_ms_{label}_vs_1x"] = percentile(first_deltas, 0.5)
     return result
 
 
@@ -481,12 +485,8 @@ def build_comparison_pages(
                 by_speed[row["speed_factor"]][source_id] = source_case
                 source_sentence_cases.append(source_case)
         page = render_speed_page(language, system, provider, target_lang, by_speed)
-        (output_dir / f"compare_{target_lang}_{provider}.html").write_text(
-            page, encoding="utf-8"
-        )
-        delta_rows.append(
-            paired_delta_row(language, system, provider, target_lang, by_speed)
-        )
+        (output_dir / f"compare_{target_lang}_{provider}.html").write_text(page, encoding="utf-8")
+        delta_rows.append(paired_delta_row(language, system, provider, target_lang, by_speed))
     source_sentence_cases.sort(
         key=lambda row: (
             row["language"],
@@ -527,7 +527,7 @@ def main() -> None:
         "source_sentence_cases": len(source_sentence_cases),
         "null_alignments": sum(int(row["null_alignments"]) for row in summaries),
         "output_dir": str(args.output_dir),
-        "latency_semantics": "target transcript-delta arrival proxy, not target-audio playback",
+        "latency_semantics": TARGET_SPEECH_TIMING_METHOD,
     }
     (args.output_dir / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

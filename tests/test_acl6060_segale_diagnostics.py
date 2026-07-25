@@ -23,25 +23,23 @@ diagnostics = load_script(
 )
 
 
-def test_latency_fields_use_sentence_end_as_the_origin() -> None:
+def test_speech_playout_fields_use_sentence_end_as_the_origin() -> None:
     result = diagnostics.latency_fields(
         {"source_length": 3000, "elapsed": [2500, 4500, 7000], "raw_units": ["a", "b"]}
     )
     assert result == {
-        "first_emission_offset_ms": -500.0,
-        "tail_latency_ms": 4000.0,
-        "emission_span_ms": 4500.0,
+        "first_speech_playout_offset_ms": -500.0,
+        "ending_offset_ms": 4000.0,
+        "speech_playout_span_ms": 4500.0,
         "target_units": 2,
     }
 
 
 def test_null_sentinel_has_no_latency() -> None:
-    result = diagnostics.latency_fields(
-        {"source_length": None, "elapsed": [], "raw_units": []}
-    )
-    assert result["first_emission_offset_ms"] is None
-    assert result["tail_latency_ms"] is None
-    assert result["emission_span_ms"] is None
+    result = diagnostics.latency_fields({"source_length": None, "elapsed": [], "raw_units": []})
+    assert result["first_speech_playout_offset_ms"] is None
+    assert result["ending_offset_ms"] is None
+    assert result["speech_playout_span_ms"] is None
     assert result["target_units"] == 0
 
 
@@ -49,17 +47,18 @@ def test_structural_alignment_label_does_not_claim_semantic_match() -> None:
     assert diagnostics.structural_alignment_label({"null_alignment_type": ""}) == (
         "non-null SEGALE group"
     )
-    assert diagnostics.structural_alignment_label(
-        {"null_alignment_type": "under_translation"}
-    ) == "null under_translation"
+    assert (
+        diagnostics.structural_alignment_label({"null_alignment_type": "under_translation"})
+        == "null under_translation"
+    )
 
 
 def test_paired_delta_summary_excludes_null_alignments() -> None:
-    def row(xcomet: float, tail: float, first: float, null: str = ""):
+    def row(xcomet: float, ending: float, first: float, null: str = ""):
         return {
             "xcomet_xl_score": xcomet,
-            "tail_latency_ms": tail,
-            "first_emission_offset_ms": first,
+            "ending_offset_ms": ending,
+            "first_speech_playout_offset_ms": first,
             "null_alignment_type": null,
         }
 
@@ -72,6 +71,6 @@ def test_paired_delta_summary_excludes_null_alignments() -> None:
     assert result["source_sentences_all_speeds"] == 2
     assert result["valid_pairs_1p25x_vs_1x"] == 1
     assert abs(result["xcomet_delta_mean_1p25x_vs_1x"] - 0.2) < 1e-9
-    assert result["tail_delta_p50_ms_1p25x_vs_1x"] == -100.0
+    assert result["ending_offset_delta_p50_ms_1p25x_vs_1x"] == -100.0
     assert result["valid_pairs_1p5x_vs_1x"] == 2
-    assert result["tail_delta_p50_ms_1p5x_vs_1x"] == 50.0
+    assert result["ending_offset_delta_p50_ms_1p5x_vs_1x"] == 50.0

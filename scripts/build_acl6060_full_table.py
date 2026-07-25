@@ -14,6 +14,7 @@ SYSTEMS = [
     ("gemini", "Gemini 3.5-live-translate"),
     ("kit", "KIT Lecture Translator"),
 ]
+TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v1"
 
 
 def parse_args() -> argparse.Namespace:
@@ -30,7 +31,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def speed_tag(speed: float) -> str:
-    text = ("%g" % speed).replace(".", "p")
+    text = f"{speed:g}".replace(".", "p")
     return f"speed{text}"
 
 
@@ -86,9 +87,13 @@ def provider_config(provider: str, lang: str, chunk_ms: int) -> str:
     if provider == "kit":
         return (
             f"chunk={chunk_ms}ms; format=mixed; ttsQualityMode=high_quality; "
-            f"language={lang},en; target-audio ASR; quality alignment=SEGALE"
+            f"language={lang},en; target-audio ASR; speech-playout timing; "
+            "quality alignment=SEGALE"
         )
-    return f"chunk={chunk_ms}ms; target={lang}; live text transcript; quality alignment=SEGALE"
+    return (
+        f"chunk={chunk_ms}ms; target={lang}; target-audio ASR; "
+        "speech-playout timing; quality alignment=SEGALE"
+    )
 
 
 def load_xcomet_score(run_dir: Path) -> float | None:
@@ -125,10 +130,18 @@ def build_row(
     if run_dir is None:
         return row
 
+    run_config = read_json(run_dir / "run_config.json")
+    timing_method = str(run_config.get("latency_timing_method") or "")
+    if timing_method != TARGET_SPEECH_TIMING_METHOD:
+        raise ValueError(
+            f"run does not use target-speech playout timing: {run_dir} {timing_method!r}"
+        )
     row["status"] = "has_run"
     row["run_dir"] = str(run_dir)
     segale_quality = read_json(run_dir / "segale_alignment" / "quality_summary.json")
     segale_latency = read_json(run_dir / "segale_longyaal" / "summary.json")
+    if segale_latency and segale_latency.get("latency_timing_method") != timing_method:
+        raise ValueError(f"stale SEGALE latency summary: {run_dir}")
     if segale_quality.get("bleu") is not None:
         row["BLEU"] = f"{float(segale_quality['bleu']):.4f}"
     if segale_latency:
