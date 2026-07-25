@@ -1,0 +1,34 @@
+name: Publish ACL6060 SEGALE diagnostics
+
+on:
+  push:
+    branches:
+      - kit-lecture-translator
+    paths:
+      - ".github/workflows/acl6060-segale-pages.yml"
+      - "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics
+      - id: deployment
+        uses: actions/deploy-pages@v4

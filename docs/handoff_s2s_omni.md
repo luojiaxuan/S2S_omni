@@ -728,6 +728,7 @@ reference-based XCOMET description. Do not use the historical table or its
 2026-07-24 sentence-level SEGALE diagnostics:
 
 - Canonical dashboard: `projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics/index.html`.
+  GitHub Pages preview: `https://luojiaxuan.github.io/S2S_omni/`.
   It has all 27 cells and links to nine per-language/system pages comparing the
   same ACL source sentence at `1x`, `1.25x`, and `1.5x`.
 - `cell_summary.tsv` reports per-cell `over_translation`,
@@ -756,6 +757,16 @@ reference-based XCOMET description. Do not use the historical table or its
   `1.5x` are compatible with different real-time tracking behavior, but the
   current data does not establish causality. A controlled variable-chunk study
   plus target-audio timestamps is required.
+- XCOMET-XL in COMET `2.2.7` concatenates reference-free `mt` before `src` and
+  truncates the joint sequence at 512 subwords. Long SEGALE groups are therefore
+  diagnostic rather than calibrated sentence scores. Observed non-null group
+  means are `1:1=0.7921`, `N:1=0.6539`, `1:N=0.6282`, and `N:M=0.6285`; the
+  current data shows lower non-1:1 scores, but length, alignment shape, and
+  translation quality are confounded.
+- All 27 `segale_longyaal/instances.resegmented.json` traces (29.2 MiB) and all
+  135 LaBSE `spacy_run_vecalign_explore/*_aps_results.json` traces (12.0 MiB)
+  are now Git-tracked for direct audit. Pages deploys only the curated
+  diagnostics directory.
 
 2026-07-23 ACL6060 3x3x3 full-table pipeline (historical):
 

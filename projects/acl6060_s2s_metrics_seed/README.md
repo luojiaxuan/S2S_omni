@@ -391,6 +391,7 @@ coverage 无遗漏或重复；null score 非零数为 0。
 静态看板与可机读产物：
 
 ```text
+GitHub Pages: https://luojiaxuan.github.io/S2S_omni/
 artifacts/acl6060_segale_diagnostics/index.html
 artifacts/acl6060_segale_diagnostics/cell_summary.tsv
 artifacts/acl6060_segale_diagnostics/speed_delta_summary.tsv
@@ -430,10 +431,17 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
   跟随能力不同”相容，但不是因果证明。要分离两种机制，需额外控制每个 chunk 的
   语言内容量（例如 480/1440 ms 设置）并记录 target-audio sample/packet 的真实
   playout 时间戳。
+- XCOMET-XL 的 COMET `2.2.7` runtime 会把 reference-free 的 `mt` 与 `src`
+  拼接到最多 512 个 subwords；`mt` 在前，超长输入会截断后部 source。当前
+  SEGALE `1:1` / `N:1` / `1:N` / `N:M` 非空 group 的观察均值分别为
+  `0.7921` / `0.6539` / `0.6282` / `0.6285`。非 `1:1` group 在本数据上总体
+  更低，并非观察到系统性虚高；但长度、输出质量与对齐形状相互混杂，长 group
+  分数仍不能视为经过校准的单句 QE。
 
 逐候选 LaBSE matching trace (`*_aps_results.json`) 和逐 token LongYAAL trace
-(`instances.resegmented.json`) 是可由上述 Git 输入确定性重建的运行中间件，保留在
-本机/Aries 持久目录，不提交到 Git。
+(`instances.resegmented.json`) 已按用户要求一并纳入 Git：135 份 LaBSE trace
+约 12.0 MiB，27 份 LongYAAL trace 约 29.2 MiB。它们不进入 Pages 导航，但可从
+对应 run artifact 目录直接审计。
 
 ## 2026-07-23 ACL6060 3x3x3 Full Table Pipeline（历史）
 

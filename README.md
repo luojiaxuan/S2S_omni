@@ -77,7 +77,9 @@ scripts/
   artifacts that are intentionally not tracked in Git.
 - `projects/acl6060_s2s_metrics_seed/`: imported Seed / ByteDance AST S2S
   metrics script bundle, with protobuf definitions, generated Python protobuf
-  files, and credentials removed for public GitHub tracking.
+  files, and credentials removed for public GitHub tracking. The ACL6060
+  sentence-level SEGALE dashboard is published at
+  https://luojiaxuan.github.io/S2S_omni/.
 
 ## Quick Start
 
