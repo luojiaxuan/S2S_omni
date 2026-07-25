@@ -400,13 +400,20 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
 
 - `index.html` 的每个 cell 都给出 SEGALE `over_translation`、
   `under_translation`、总 null count，及单句 tail/first-emission/emission-span
-  的均值或分位数。底层有 10,765 个 SEGALE 对齐单元；
+  的均值或分位数，也给出非 `1:1`、`N:1` 和最大 source span 的 structural
+  对齐计数。底层有 10,765 个 SEGALE 对齐单元；
   `sentence_cases.jsonl` 是 12,636 条 source-sentence condition
   records，保留 source/reference/hypothesis、`source:hypothesis` 对齐形状、QE
   score 和单句 timing。若 SEGALE 为 many-to-many，对齐组的 hypothesis、QE 和 timing 会被
   重复在它覆盖的每个 source sentence 下，并以 `source:hypothesis` 明示该事实；
   九个 `compare_*.html` 页面让同一个 ACL source sentence 横向比较
   `1x/1.25x/1.5x`，包括 null case。
+- 看板里的 `non-null SEGALE group` **不是** “该 source sentence 翻对了”。它只表示
+  Vecalign 找到非空 source span 与非空 hypothesis span；`7:1` 表示七个连续
+  source sentences 对一段 hypothesis。每个 detail 会展示评分实际使用的完整
+  group source/reference/hypothesis，不能把其中某一个 source sentence 与整段
+  hypothesis 单独当作 matched pair。SEGALE 的 structural over-translation 只在
+  source span 为空时计数；语义重复、错译或过译须结合完整 group 和 XCOMET 判断。
 - `speed_delta_summary.tsv` 是同一句的 paired 分析：只在两档 speed 都有 SEGALE
   非空对齐和 timing 时计算，分别报告 XCOMET 变化、tail latency 的 mean/p50/p90
   变化和 first-emission p50 变化。它不能替代正式主表，也不会以删除 null 的方式

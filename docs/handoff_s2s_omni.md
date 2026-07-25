@@ -736,7 +736,12 @@ reference-based XCOMET description. Do not use the historical table or its
   contains 12,636 source-sentence condition records with
   source/reference/hypothesis, SEGALE alignment shape, XCOMET QE, and timing.
   A many-to-many alignment repeats its group QE/timing for every covered source
-  sentence and labels the shape explicitly. `speed_delta_summary.tsv` is paired on source
+  sentence and labels the shape explicitly. A `non-null SEGALE group` is a
+  structural connection, not a semantic “matched” label: inspect the full
+  group source/reference/hypothesis in the HTML page. `7:1` means seven source
+  sentences were aligned to one hypothesis span. Structural over-translation
+  has an empty source span; semantic repetition and over-translation are not
+  equivalent to that count. `speed_delta_summary.tsv` is paired on source
   sentence and excludes a pair only from timing deltas when either side is
   null; nulls remain zero-scored in the canonical BLEU/XCOMET table.
 - Timing semantics are narrow: `first_emission_offset_ms` and

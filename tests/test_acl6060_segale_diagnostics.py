@@ -45,6 +45,15 @@ def test_null_sentinel_has_no_latency() -> None:
     assert result["target_units"] == 0
 
 
+def test_structural_alignment_label_does_not_claim_semantic_match() -> None:
+    assert diagnostics.structural_alignment_label({"null_alignment_type": ""}) == (
+        "non-null SEGALE group"
+    )
+    assert diagnostics.structural_alignment_label(
+        {"null_alignment_type": "under_translation"}
+    ) == "null under_translation"
+
+
 def test_paired_delta_summary_excludes_null_alignments() -> None:
     def row(xcomet: float, tail: float, first: float, null: str = ""):
         return {

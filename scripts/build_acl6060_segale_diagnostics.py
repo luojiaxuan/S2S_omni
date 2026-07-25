@@ -93,6 +93,17 @@ def source_key(document: str, segment_id: int) -> tuple[str, int]:
     return str(document), int(segment_id)
 
 
+def structural_alignment_label(row: dict[str, Any]) -> str:
+    null_type = str(row.get("null_alignment_type") or "")
+    if null_type:
+        return f"null {null_type}"
+    return "non-null SEGALE group"
+
+
+def compact_ids(ids: list[int]) -> str:
+    return ", ".join(str(value) for value in ids)
+
+
 def build_run(
     run_dir: Path, table_row: dict[str, Any]
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -142,6 +153,9 @@ def build_run(
                 "alignment_shape": (
                     f"{len(row['source_segment_ids'])}:{len(row['hypothesis_sentence_ids'])}"
                 ),
+                "source_group_size": len(row["source_segment_ids"]),
+                "hypothesis_group_size": len(row["hypothesis_sentence_ids"]),
+                "structural_alignment_status": structural_alignment_label(row),
                 "source": row["source"],
                 "reference": row["reference"],
                 "hypothesis": row["hypothesis"],
@@ -176,6 +190,7 @@ def build_run(
     ]
     over = sum(row["null_alignment_type"] == "over_translation" for row in sentence_rows)
     under = sum(row["null_alignment_type"] == "under_translation" for row in sentence_rows)
+    non_null_groups = [row for row in sentence_rows if not row["null_alignment_type"]]
     summary = {
         "Language": table_row["Language"],
         "Speedup": table_row["Speedup"],
@@ -191,6 +206,17 @@ def build_run(
         "over_translation_alignments": over,
         "under_translation_alignments": under,
         "null_alignments": over + under,
+        "non_1to1_groups": sum(
+            row["source_group_size"] != 1 or row["hypothesis_group_size"] != 1
+            for row in non_null_groups
+        ),
+        "many_source_to_one_groups": sum(
+            row["source_group_size"] > 1 and row["hypothesis_group_size"] == 1
+            for row in non_null_groups
+        ),
+        "max_source_group_size": max(
+            (int(row["source_group_size"]) for row in non_null_groups), default=0
+        ),
         "tail_latency_mean_ms": mean(tails) if tails else None,
         "tail_latency_p50_ms": percentile(tails, 0.5),
         "tail_latency_p90_ms": percentile(tails, 0.9),
@@ -216,6 +242,9 @@ def write_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         "over_translation_alignments",
         "under_translation_alignments",
         "null_alignments",
+        "non_1to1_groups",
+        "many_source_to_one_groups",
+        "max_source_group_size",
         "tail_latency_mean_ms",
         "tail_latency_p50_ms",
         "tail_latency_p90_ms",
@@ -264,6 +293,8 @@ def render_index(summary_rows: list[dict[str, Any]], output_dir: Path) -> str:
             f"<td>{escaped(row['Speedup'])}</td><td>{number(row['bleu'], 4)}</td>"
             f"<td>{number(row['xcomet_xl'], 6)}</td><td>{row['valid_segments']}/{row['segments']}</td>"
             f"<td>{row['over_translation_alignments']}</td><td>{row['under_translation_alignments']}</td>"
+            f"<td>{row['non_1to1_groups']}</td><td>{row['many_source_to_one_groups']}</td>"
+            f"<td>{row['max_source_group_size']}</td>"
             f"<td>{number(row['tail_latency_mean_ms'])}</td>"
             f"<td>{number(row['tail_latency_p50_ms'])}</td>"
             f"<td>{number(row['tail_latency_p90_ms'])}</td>"
@@ -282,8 +313,8 @@ th,td{{border:1px solid #d8dde3;padding:7px;text-align:right;vertical-align:top}
 </style></head><body>
 <h1>ACL6060 SEGALE sentence diagnostics</h1>
 <p class='note'><strong>Latency semantics:</strong> tail and first-emission offsets use the arrival time of target transcript deltas. They are a computation-aware target-text proxy, not verified target-audio playback completion: the formal GPT/Gemini runs did not save output audio timestamps.</p>
-<p>Each sentence-case page compares the same ACL source sentence across source speeds. A SEGALE row can be many-to-many; its shape is shown as source:hypothesis. Null rows are retained with XCOMET=0.0 but have no latency because no target arrival exists.</p>
-<table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>over</th><th>under</th><th>tail mean ms</th><th>tail p50 ms</th><th>tail p90 ms</th><th>first p50 ms</th><th>emit span p50 ms</th><th>details</th></tr></thead><tbody>
+<p><strong>Structural versus semantic:</strong> a non-null SEGALE group only means Vecalign linked non-empty source and hypothesis spans. It is not a semantic “matched” judgment. XCOMET assesses the full aligned group; non-1:1 and N:1 counts flag spans that must be inspected before attributing a group hypothesis to an individual source sentence. A null row is the only structural `over_translation`/`under_translation` count and is retained with XCOMET=0.0 but no latency.</p>
+<table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>structural over</th><th>structural under</th><th>non-1:1</th><th>N:1 groups</th><th>max source span</th><th>tail mean ms</th><th>tail p50 ms</th><th>tail p90 ms</th><th>first p50 ms</th><th>emit span p50 ms</th><th>details</th></tr></thead><tbody>
 {''.join(rows)}</tbody></table>
 <p>Machine-readable summaries: <a href='cell_summary.tsv'>per-cell TSV</a>, <a href='cell_summary.jsonl'>per-cell JSONL</a>, <a href='speed_delta_summary.tsv'>paired-speed TSV</a>, <a href='speed_delta_summary.jsonl'>paired-speed JSONL</a>, <a href='sentence_cases.jsonl'>all source-sentence cases</a>.</p>
 </body></html>"""
@@ -308,38 +339,57 @@ def render_speed_page(
             if row is None:
                 rows.append(f"<tr><td>{speed:g}x</td><td colspan='7'>no aligned row</td></tr>")
                 continue
-            null_type = row["null_alignment_type"] or "matched"
+            structural_status = structural_alignment_label(row)
             summary_bits.append(
-                f"{speed:g}x: {null_type}, QE {number(row['xcomet_xl_score'], 3)}, tail {number(row['tail_latency_ms'])} ms"
+                f"{speed:g}x: {row['alignment_shape']} {structural_status}, QE {number(row['xcomet_xl_score'], 3)}, tail {number(row['tail_latency_ms'])} ms"
             )
             rows.append(
                 "<tr>"
                 f"<td>{speed:g}x</td><td>{escaped(row['alignment_shape'])}</td>"
-                f"<td>{escaped(null_type)}</td><td>{number(row['xcomet_xl_score'], 6)}</td>"
+                f"<td>{escaped(structural_status)}</td><td>{number(row['xcomet_xl_score'], 6)}</td>"
                 f"<td>{number(row['first_emission_offset_ms'])}</td>"
                 f"<td>{number(row['tail_latency_ms'])}</td><td>{number(row['emission_span_ms'])}</td>"
                 f"<td>{escaped(row['hypothesis'])}</td></tr>"
             )
+        group_details = []
+        for speed in sorted(by_speed):
+            row = by_speed[speed].get(source_id)
+            if row is None:
+                continue
+            open_attribute = (
+                " open"
+                if row["source_group_size"] != 1 or row["hypothesis_group_size"] != 1
+                else ""
+            )
+            group_details.append(
+                f"<details class='group'{open_attribute}><summary>"
+                f"{speed:g}x SEGALE group {escaped(row['alignment_shape'])}: source #{escaped(compact_ids(row['source_segment_ids']))} -&gt; hypothesis #{escaped(compact_ids(row['hypothesis_sentence_ids']))}; {escaped(structural_alignment_label(row))}"
+                "</summary>"
+                f"<p><strong>Full aligned source span used for QE:</strong> {escaped(row['source'])}</p>"
+                f"<p><strong>Full aligned reference span:</strong> {escaped(row['reference'])}</p>"
+                f"<p><strong>Full aligned hypothesis span:</strong> {escaped(row['hypothesis'])}</p>"
+                "</details>"
+            )
         entries.append(
             "<details><summary>"
-            f"{escaped(anchor['doc_id'])} source #{source_id} | {'; '.join(summary_bits)}"
+            f"{escaped(anchor['doc_id'])} source #{source_id} (member view) | {'; '.join(summary_bits)}"
             "</summary>"
             f"<p><strong>Source:</strong> {escaped(anchor['source_sentence'])}</p>"
             f"<p><strong>Reference:</strong> {escaped(anchor['reference_sentence'])}</p>"
-            "<table><thead><tr><th>speed</th><th>shape</th><th>alignment</th><th>XCOMET</th>"
+            "<table><thead><tr><th>speed</th><th>group shape</th><th>structural status</th><th>group XCOMET</th>"
             "<th>first offset ms</th><th>tail offset ms</th><th>emit span ms</th><th>hypothesis</th>"
-            f"</tr></thead><tbody>{''.join(rows)}</tbody></table></details>"
+            f"</tr></thead><tbody>{''.join(rows)}</tbody></table>{''.join(group_details)}</details>"
         )
     return f"""<!doctype html>
 <html><head><meta charset='utf-8'><title>{escaped(language)} {escaped(system)} speed cases</title>
 <style>
 body{{font-family:Arial,sans-serif;margin:28px;color:#20242a;background:#fafbfc}}a{{color:#075985}}p{{line-height:1.45}}
-details{{margin:10px 0;background:#fff;border:1px solid #d8dde3;border-radius:6px;padding:10px}}summary{{cursor:pointer;font-weight:600;line-height:1.45}}
+details{{margin:10px 0;background:#fff;border:1px solid #d8dde3;border-radius:6px;padding:10px}}summary{{cursor:pointer;font-weight:600;line-height:1.45}}details.group{{margin:8px 0;background:#f7fafc}}
 table{{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}}th,td{{border:1px solid #d8dde3;padding:7px;vertical-align:top;text-align:right;word-break:break-word}}th{{background:#edf1f5}}th:last-child,td:last-child{{text-align:left;width:38%}}
 .note{{background:#fff8db;border-left:4px solid #ca8a04;padding:10px}}
 </style></head><body>
 <p><a href='index.html'>&larr; all cells</a></p><h1>{escaped(language)} | {escaped(system)} | source-speed cases</h1>
-<p class='note'>First and tail offsets are target transcript-delta arrival minus source sentence end. Negative values mean the text arrived before that source sentence ended. This is not target-audio playback latency. Shape is SEGALE source:hypothesis; a multi-source row intentionally repeats the same aligned hypothesis under each source sentence it covers.</p>
+<p class='note'>First and tail offsets are target transcript-delta arrival minus source sentence end. Negative values mean the text arrived before that source sentence ended. This is not target-audio playback latency. The displayed source sentence is only one member of a SEGALE group. “Non-null SEGALE group” is structural, not a semantic match: inspect the expanded full group source/reference/hypothesis before judging repetition, omission, or over-translation. XCOMET is scored on that full group and is repeated here only to make the group boundary visible.</p>
 {''.join(entries)}
 </body></html>"""
 
