@@ -11,7 +11,7 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
-TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v1"
+TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v2"
 
 
 def parse_args() -> argparse.Namespace:

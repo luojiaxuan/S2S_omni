@@ -14,7 +14,7 @@ SYSTEMS = [
     ("gemini", "Gemini 3.5-live-translate"),
     ("kit", "KIT Lecture Translator"),
 ]
-TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v1"
+TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v2"
 
 
 def parse_args() -> argparse.Namespace:

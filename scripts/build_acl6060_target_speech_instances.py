@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import bisect
 import difflib
+import itertools
 import json
 import re
 import shutil
@@ -23,7 +24,8 @@ if str(ROOT) not in sys.path:
 from s2s_omni.openai_asr import transcribe_openai_json
 
 CHAR_LEVEL_LANGS = {"zh", "ja"}
-TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v1"
+TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v2"
+SOURCE_TIMING_METHOD = "source_send_timeline_at_speech_playout_v1"
 ZH_SIMPLIFIER = OpenCC("t2s")
 
 
@@ -355,13 +357,57 @@ def packet_for_audio_position(packets: list[dict[str, Any]], audio_end_ms: float
     return packets[index]
 
 
+def source_send_timeline(
+    sample_dir: Path,
+    provider: str,
+    source_length_ms: float,
+) -> list[tuple[float, float]]:
+    if provider == "kit":
+        run = read_json(sample_dir / "run.json")
+        rows = [
+            {
+                "sent_at_s": row.get("sent_at_s"),
+                "sent_source_ms": float(row.get("audio_end_s") or 0.0) * 1000.0,
+            }
+            for row in run.get("postStats") or []
+        ]
+    else:
+        rows = read_jsonl(sample_dir / "send_events.jsonl")
+    timeline = [
+        (
+            float(row["sent_at_s"]) * 1000.0,
+            min(source_length_ms, float(row["sent_source_ms"])),
+        )
+        for row in rows
+        if row.get("sent_at_s") is not None and row.get("sent_source_ms") is not None
+    ]
+    timeline.sort()
+    if not timeline:
+        raise ValueError(f"source send timeline is empty: {sample_dir}")
+    if any(current[1] < previous[1] for previous, current in itertools.pairwise(timeline)):
+        raise ValueError(f"source send timeline is not monotonic: {sample_dir}")
+    return timeline
+
+
+def source_consumed_at_playout(
+    playout_ms: float,
+    timeline: list[tuple[float, float]],
+    sent_times: list[float] | None = None,
+) -> float:
+    sent_times = sent_times or [row[0] for row in timeline]
+    index = bisect.bisect_right(sent_times, playout_ms) - 1
+    return timeline[index][1] if index >= 0 else 0.0
+
+
 def unit_playout_times(
     audio_end_ms: list[float],
     packets: list[dict[str, Any]],
+    source_timeline: list[tuple[float, float]],
     source_length_ms: float,
 ) -> tuple[list[float], list[float]]:
     elapsed: list[float] = []
     delays: list[float] = []
+    sent_times = [row[0] for row in source_timeline]
     for position_ms in audio_end_ms:
         packet = packet_for_audio_position(packets, position_ms)
         within_packet_ms = min(
@@ -370,14 +416,11 @@ def unit_playout_times(
         )
         playout_ms = float(packet["playout_start_ms"]) + within_packet_ms
         elapsed.append(round(playout_ms, 3))
-        sent_source_ms = packet.get("sent_source_ms")
         delays.append(
             round(
                 min(
                     source_length_ms,
-                    float(sent_source_ms)
-                    if sent_source_ms is not None
-                    else float(packet["received_at_ms"]),
+                    source_consumed_at_playout(playout_ms, source_timeline, sent_times),
                 ),
                 3,
             )
@@ -442,6 +485,7 @@ def build_instances(args: argparse.Namespace) -> dict[str, Any]:
             provider,
             source_length_ms,
         )
+        source_timeline = source_send_timeline(sample_dir, provider, source_length_ms)
         windows = transcribe_windows(
             audio_path=audio_path,
             sample_dir=sample_dir,
@@ -473,6 +517,7 @@ def build_instances(args: argparse.Namespace) -> dict[str, Any]:
         delays, elapsed = unit_playout_times(
             audio_unit_ends,
             packets,
+            source_timeline,
             source_length_ms,
         )
         output_rows.append(
@@ -502,6 +547,7 @@ def build_instances(args: argparse.Namespace) -> dict[str, Any]:
                 "target_speech_asr_model": args.asr_model,
                 "target_speech_timestamp_model": args.timestamp_model,
                 "timing_method": TIMING_METHOD,
+                "source_timing_method": SOURCE_TIMING_METHOD,
                 **alignment,
             }
         )
@@ -513,6 +559,7 @@ def build_instances(args: argparse.Namespace) -> dict[str, Any]:
             "target_speech_asr_model": args.asr_model,
             "target_speech_timestamp_model": args.timestamp_model,
             "latency_timing_method": TIMING_METHOD,
+            "source_consumption_timing_method": SOURCE_TIMING_METHOD,
             "target_speech_playout_assumption": "zero_jitter_immediate_pcm_playout",
         }
     )

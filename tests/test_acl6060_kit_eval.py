@@ -6,7 +6,6 @@ import json
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -21,10 +20,32 @@ def load_script(name: str, path: Path):
 
 
 kit_eval = load_script("acl6060_kit_eval", ROOT / "scripts/run_acl6060_kit_live_eval.py")
+kit_stream = load_script("acl6060_kit_stream", ROOT / "scripts/run_kit_live_floras.py")
 comparison = load_script(
     "acl6060_kit_quality_mode_comparison",
     ROOT / "scripts/build_acl6060_kit_quality_mode_comparison.py",
 )
+
+
+def test_kit_audio_post_records_source_send_wall_time(monkeypatch) -> None:
+    ticks = iter([10.2, 10.7])
+    monkeypatch.setattr(kit_stream.time, "monotonic", lambda: next(ticks))
+    monkeypatch.setattr(
+        kit_stream,
+        "request_json_or_text",
+        lambda **_kwargs: (200, True, "OK"),
+    )
+    result = kit_stream.post_audio_chunk(
+        base_url="https://example.test",
+        session_id="session",
+        cookie_header="cookie",
+        pcm_chunk=b"\x00\x00" * 160,
+        start_s=0.0,
+        run_start_monotonic=10.0,
+    )
+    assert result["request_started_at_s"] == 0.2
+    assert result["sent_at_s"] == 0.7
+    assert result["ms"] == 500
 
 
 def test_session_name_includes_quality_mode() -> None:

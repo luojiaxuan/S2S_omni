@@ -13,7 +13,7 @@ from build_acl6060_segale_inputs import resolve_path
 from run_acl6060_segale_alignment import PINNED_SPEECH_LATENCY_REVISION, git_revision
 
 BLEU_TOKENIZER_BY_LANG = {"zh": "zh", "de": "13a", "ja": "ja-mecab"}
-TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v1"
+TARGET_SPEECH_TIMING_METHOD = "target_speech_word_timestamp_to_pcm_packet_playout_v2"
 
 
 def parse_args() -> argparse.Namespace:

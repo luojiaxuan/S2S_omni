@@ -102,25 +102,29 @@ def post_audio_chunk(
     cookie_header: str,
     pcm_chunk: bytes,
     start_s: float,
+    run_start_monotonic: float,
 ) -> dict[str, Any]:
     payload = {
         "b64_enc_pcm_s16le": base64.b64encode(pcm_chunk).decode("ascii"),
         "start": start_s,
     }
-    sent_at = time.monotonic()
+    request_started_at = time.monotonic()
     status, ok, text = request_json_or_text(
         url=f"{base_url}/webapi/{session_id}/0/append",
         cookie_header=cookie_header,
         payload=payload,
         timeout_s=60.0,
     )
+    request_completed_at = time.monotonic()
     return {
         "offset": int(start_s * 32000),
         "bytes": len(pcm_chunk),
         "audio_end_s": round(start_s + len(pcm_chunk) / 32000.0, 3),
         "status": status,
         "ok": ok,
-        "ms": round((time.monotonic() - sent_at) * 1000.0),
+        "request_started_at_s": round(request_started_at - run_start_monotonic, 6),
+        "sent_at_s": round(request_completed_at - run_start_monotonic, 6),
+        "ms": round((request_completed_at - request_started_at) * 1000.0),
         "text_start": text[:200],
     }
 
@@ -152,7 +156,7 @@ def collect_messages(*, base_url: str, session_id: str, cookie_header: str) -> d
             continue
         stream = worker.split(":")[1]
         component_payload = {"component": worker}
-        status, ok, text = request_json_or_text(
+        _status, ok, text = request_json_or_text(
             url=f"{base_url}/webapi/{session_id}/{stream}/get_output_language_component",
             cookie_header=cookie_header,
             payload=component_payload,
@@ -160,7 +164,7 @@ def collect_messages(*, base_url: str, session_id: str, cookie_header: str) -> d
         )
         if ok:
             sender_map[worker] = text
-        status, ok, text = request_json_or_text(
+        _status, ok, text = request_json_or_text(
             url=f"{base_url}/webapi/{session_id}/get_previous_messages",
             cookie_header=cookie_header,
             payload={"component": worker, "begin": 0},
@@ -199,7 +203,7 @@ def main() -> None:
     cookie_header = read_cookie_header(Path(args.cookie_header_file).expanduser())
     pcm, duration_s = load_pcm16le_mono_16k(wav_path)
     bytes_per_second = 32000
-    chunk_bytes = int(round(args.chunk_s * bytes_per_second))
+    chunk_bytes = round(args.chunk_s * bytes_per_second)
     if chunk_bytes <= 0:
         raise ValueError("--chunk-s must be positive")
     if chunk_bytes % 2:
@@ -218,7 +222,9 @@ def main() -> None:
     }
     write_output(output_path, result)
 
-    chunks = [(offset, pcm[offset : offset + chunk_bytes]) for offset in range(0, len(pcm), chunk_bytes)]
+    chunks = [
+        (offset, pcm[offset : offset + chunk_bytes]) for offset in range(0, len(pcm), chunk_bytes)
+    ]
     start_wall = time.monotonic()
     for index, (offset, chunk) in enumerate(chunks, start=1):
         audio_start_s = offset / bytes_per_second
@@ -228,6 +234,7 @@ def main() -> None:
             cookie_header=cookie_header,
             pcm_chunk=chunk,
             start_s=audio_start_s,
+            run_start_monotonic=start_wall,
         )
         result["postStats"].append(stat)
         if index == 1 or index == len(chunks) or index % 30 == 0:
@@ -237,7 +244,11 @@ def main() -> None:
                 cookie_header=cookie_header,
             )
             result["pollStats"].append(
-                {"at": now_iso(), "audioEndS": stat["audio_end_s"], "counts": collection_counts(collection)}
+                {
+                    "at": now_iso(),
+                    "audioEndS": stat["audio_end_s"],
+                    "counts": collection_counts(collection),
+                }
             )
             result["collection"] = collection
             write_output(output_path, result)
@@ -285,7 +296,11 @@ def main() -> None:
 
     result["finishedAt"] = now_iso()
     write_output(output_path, result)
-    print(json.dumps({"output": str(output_path), "duration_s": duration_s, "counts": last_counts}, indent=2))
+    print(
+        json.dumps(
+            {"output": str(output_path), "duration_s": duration_s, "counts": last_counts}, indent=2
+        )
+    )
 
 
 if __name__ == "__main__":

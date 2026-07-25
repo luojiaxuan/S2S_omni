@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -81,7 +82,27 @@ def test_unit_playout_uses_audio_position_and_packet_queue() -> None:
     delays, elapsed = target_speech.unit_playout_times(
         [50.0, 250.0, 400.0],
         packets,
+        [(100.0, 500.0), (300.0, 900.0)],
         1000.0,
     )
     assert delays == [500.0, 900.0, 900.0]
     assert elapsed == [150.0, 350.0, 500.0]
+
+
+def test_kit_source_timeline_uses_completed_post_time(tmp_path: Path) -> None:
+    (tmp_path / "run.json").write_text(
+        json.dumps(
+            {
+                "postStats": [
+                    {"sent_at_s": 1.2, "audio_end_s": 0.96},
+                    {"sent_at_s": 2.7, "audio_end_s": 1.92},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    timeline = target_speech.source_send_timeline(tmp_path, "kit", 1920.0)
+    assert timeline == [(1200.0, 960.0), (2700.0, 1920.0)]
+    assert target_speech.source_consumed_at_playout(1199.0, timeline) == 0.0
+    assert target_speech.source_consumed_at_playout(1200.0, timeline) == 960.0
+    assert target_speech.source_consumed_at_playout(3000.0, timeline) == 1920.0
