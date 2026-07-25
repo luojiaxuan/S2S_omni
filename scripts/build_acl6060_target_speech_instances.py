@@ -587,6 +587,7 @@ def build_instances(args: argparse.Namespace) -> dict[str, Any]:
         "target_lang": target_lang,
         "samples": len(output_rows),
         "timing_method": TIMING_METHOD,
+        "source_consumption_timing_method": SOURCE_TIMING_METHOD,
         "alignment_coverage_min": min(float(row["alignment_coverage"]) for row in timing_rows),
         "alignment_coverage_mean": sum(float(row["alignment_coverage"]) for row in timing_rows)
         / len(timing_rows),
