@@ -23,6 +23,10 @@ segale_inputs = load_script(
     "acl6060_segale_inputs",
     ROOT / "scripts/build_acl6060_segale_inputs.py",
 )
+segale_alignment = load_script(
+    "acl6060_segale_alignment",
+    ROOT / "scripts/run_acl6060_segale_alignment.py",
+)
 xcomet_input = load_script(
     "acl6060_segale_xcomet_input",
     ROOT / "scripts/build_acl6060_xcomet_input.py",
@@ -41,6 +45,14 @@ def test_prediction_units_preserve_original_character_spans() -> None:
     units, spans = segale_inputs.prediction_units_with_spans("Hallo,  Welt!", "de")
     assert units == ["Hallo,", "Welt!"]
     assert spans == [(0, 6), (8, 13)]
+
+
+def test_vecalign_check_uses_active_python_environment(monkeypatch) -> None:
+    monkeypatch.setattr(segale_alignment.importlib.util, "find_spec", lambda name: object())
+    assert segale_alignment.vecalign_is_installed()
+
+    monkeypatch.setattr(segale_alignment.importlib.util, "find_spec", lambda name: None)
+    assert not segale_alignment.vecalign_is_installed()
 
 
 def test_segale_input_builder_groups_gold_segments_by_document(tmp_path: Path) -> None:

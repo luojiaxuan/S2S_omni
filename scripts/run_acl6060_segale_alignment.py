@@ -5,7 +5,6 @@ import argparse
 import hashlib
 import importlib.util
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -49,6 +48,10 @@ def input_fingerprint(output_dir: Path) -> str:
     return digest.hexdigest()
 
 
+def vecalign_is_installed() -> bool:
+    return importlib.util.find_spec("vecalign") is not None
+
+
 def load_segale_module(repo: Path) -> ModuleType:
     module_path = repo / "src" / "alignment" / "segale.py"
     if not module_path.exists():
@@ -84,7 +87,7 @@ def run_alignment(args: argparse.Namespace) -> dict[str, object]:
         raise RuntimeError(
             f"Speech-to-Speech-Latency revision mismatch: {revision} != {args.expected_revision}"
         )
-    if shutil.which("vecalign") is None:
+    if not vecalign_is_installed():
         raise FileNotFoundError(
             "vecalign is not installed; install <speech-latency-repo>/SEGALE "
             "in the active environment"
