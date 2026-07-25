@@ -169,6 +169,14 @@ target_speech_complete() {
       "${summary_path}"
 }
 
+ACTIVE_RUN_LOCK=""
+cleanup_run_lock() {
+  if [[ -n "${ACTIVE_RUN_LOCK}" ]]; then
+    rmdir "${ACTIVE_RUN_LOCK}" 2>/dev/null || true
+  fi
+}
+trap cleanup_run_lock EXIT
+
 mkdir -p "${OUTPUT_BASE}" "${ARTIFACT_BASE}"
 
 for provider in $(csv_to_array "${PROVIDERS}"); do
@@ -249,6 +257,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
       if target_speech_complete "${timing_summary}"; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] REUSE complete target speech run ${tag}"
       elif mkdir "${run_lock}" 2>/dev/null; then
+        ACTIVE_RUN_LOCK="${run_lock}"
         run_step "acl6060 ${tag}" "${runner_cmd[@]}"
         run_step "target speech timing ${tag}" \
           "${PYTHON_BIN}" "${REPO}/scripts/build_acl6060_target_speech_instances.py" \
@@ -256,6 +265,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
           --api-key-file "${OPENAI_KEY_FILE}" \
           --resume
         rmdir "${run_lock}"
+        ACTIVE_RUN_LOCK=""
       else
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] WAIT active target speech run ${tag}"
         until target_speech_complete "${timing_summary}"; do
