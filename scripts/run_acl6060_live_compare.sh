@@ -254,6 +254,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
 
       timing_summary="${local_dir}/target_speech_timing_summary.json"
       run_lock="${local_dir}/.target_speech_run_lock"
+      mkdir -p "${local_dir}"
       if target_speech_complete "${timing_summary}"; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] REUSE complete target speech run ${tag}"
       elif mkdir "${run_lock}" 2>/dev/null; then
