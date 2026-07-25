@@ -1,6 +1,6 @@
 # S2S_omni Handoff
 
-Last updated: 2026-07-06
+Last updated: 2026-07-25
 
 Repository:
 
@@ -711,8 +711,20 @@ sentence-latency result based on target transcript deltas.
 - This is an immediate zero-jitter PCM client model. It includes packet stalls
   and queued speech duration but not additional OS, sound-card, or Bluetooth
   output-buffer latency.
+- All 27 cells and 135 full-wav samples now use both v2 timing protocol ids.
+  Each canonical run includes `target_speech_timing.jsonl` and
+  `target_speech_timing_summary.json`; minimum ASR/timestamp unit alignment
+  coverage is `0.8319749`.
+- Raw target WAVs, packet/source-send traces, and ASR windows were moved out of
+  `/tmp` to persistent local staging:
+  `/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_speech_playout_raw_20260725/`.
+  It is about 6.1 GB (270 WAVs, 90 OpenAI/Gemini packet traces, 45 KIT audio
+  chunk traces). Intended HF dataset:
+  `gavinlaw/acl6060-s2s-speech-playout-raw`; status `PENDING_HF_UPLOAD`.
+  Git contains the lightweight timing summaries and all directly previewable
+  SEGALE/XCOMET/LongYAAL diagnostics, not the raw WAV bundle.
 
-2026-07-24 ACL6060 SEGALE re-evaluation (quality/alignment protocol):
+2026-07-25 ACL6060 SEGALE re-evaluation (current canonical protocol):
 
 This entry supersedes the immediately following 2026-07-23 OmniSTEval and
 reference-based XCOMET description. Do not use the historical table or its
@@ -721,6 +733,13 @@ reference-based XCOMET description. Do not use the historical table or its
 - Current table: `projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv`
   and `.jsonl`. It covers all 27 conditions (En-Zh/En-De/En-Ja x
   1x/1.25x/1.5x x GPT/Gemini/KIT).
+- Source of truth: GitHub `https://github.com/luojiaxuan/S2S_omni`, branch
+  `kit-lecture-translator`, speech-playout artifact snapshot `38c4911`.
+  Direct dashboard: `https://luojiaxuan.github.io/S2S_omni/`.
+  Google Sheet:
+  `https://docs.google.com/spreadsheets/d/1_HUxgwe8jqgoL9GRuVR1HZz__GOK2lfjFbqnFhweimM/edit?gid=0#gid=0`.
+  On 2026-07-25 ranges `D2:H10`, `D12:H20`, and `D22:H30` were replaced from
+  the canonical TSV and read back block-by-block with equivalent values.
 - Quality segmentation/alignment now uses SEGALE from
   `SakaiXue6666/Speech-to-Speech-Latency` at revision
   `d0041438abf097a1ec3055e7f09656ad6302f672`: spaCy sentence splitting,
@@ -735,13 +754,14 @@ reference-based XCOMET description. Do not use the historical table or its
   `source+hypothesis+reference`. The main table uses the official arithmetic
   mean, with no length weighting.
 - `source==""` is over-translation and `hypothesis==""` is under-translation.
-  Both receive score `0.0` and remain in BLEU/XCOMET aggregation. Of 10,765
-  aligned units, 736 are null alignments and all 736 have XCOMET score zero.
-  Global XCOMET-XL QE arithmetic mean is `0.7074453687`.
+  Both receive score `0.0` and remain in BLEU/XCOMET aggregation. Of 10,433
+  aligned units, 813 are null alignments: 3 over-translation and 810
+  under-translation. All 813 have XCOMET score zero. Global XCOMET-XL QE
+  arithmetic mean is `0.6776717381`.
 - LongYAAL consumes the same SEGALE alignments and speed-scaled source audio;
   null alignments are omitted only from latency because they have no defined
-  arrival time. Match audit: 10,029 `char_span_from_segale`, 725
-  `skip_under_translation`, 11 `skip_over_translation`, zero fallback source
+  arrival time. Match audit: 9,620 `char_span_from_segale`, 810
+  `skip_under_translation`, 3 `skip_over_translation`, zero fallback source
   matches.
 - Core scripts: `scripts/build_acl6060_segale_inputs.py`,
   `scripts/run_acl6060_segale_alignment.py`,
@@ -751,8 +771,11 @@ reference-based XCOMET description. Do not use the historical table or its
   `scripts/run_acl6060_metric_pipeline.py`, and
   `scripts/build_acl6060_segale_diagnostics.py`. Combined QE artifacts are in
   `artifacts/acl6060_xcomet_xl_segale/`.
+- On 2026-07-25 the canonical 27 rows were written to the `ACL 60/60 Dev`
+  Google Sheet ranges `D2:H10`, `D12:H20`, and `D22:H30`. Each block was copied
+  back from Sheets and matched `acl6060_full_table.tsv` semantically.
 
-2026-07-24 sentence-level SEGALE diagnostics:
+2026-07-25 sentence-level SEGALE diagnostics:
 
 - Canonical dashboard: `projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics/index.html`.
   GitHub Pages preview: `https://luojiaxuan.github.io/S2S_omni/`.
@@ -760,7 +783,10 @@ reference-based XCOMET description. Do not use the historical table or its
   same ACL source sentence at `1x`, `1.25x`, and `1.5x`.
 - `cell_summary.tsv` reports per-cell `over_translation`,
   `under_translation`, total null alignment count, and sentence-level tail,
-  first-emission, and emission-span distributions. `sentence_cases.jsonl`
+  first-speech-playout, and speech-playout-span distributions. It also reports
+  talk-level final spoken-unit playout offset, PCM queue tail, and PCM audio
+  after the final spoken unit; queue tail and trailing audio are diagnostics
+  and are excluded from speech Ending Offset. `sentence_cases.jsonl`
   contains 12,636 source-sentence condition records with
   source/reference/hypothesis, SEGALE alignment shape, XCOMET QE, and timing.
   A many-to-many alignment repeats its group QE/timing for every covered source
@@ -772,6 +798,10 @@ reference-based XCOMET description. Do not use the historical table or its
   equivalent to that count. `speed_delta_summary.tsv` is paired on source
   sentence and excludes a pair only from timing deltas when either side is
   null; nulls remain zero-scored in the canonical BLEU/XCOMET table.
+- The dashboard also exposes talk-level target-speech final offset, PCM queue
+  tail after the final packet arrival, and trailing audio after the final
+  spoken ASR unit. Trailing audio is shown for audit but excluded from speech
+  completion and sentence latency.
 - Sentence timing now uses target-speech ASR-unit completion on the PCM FIFO
   playout clock minus source-sentence end. The exposed fields are
   `first_speech_playout_offset_ms`, `ending_offset_ms`, and
@@ -786,13 +816,17 @@ reference-based XCOMET description. Do not use the historical table or its
 - XCOMET-XL in COMET `2.2.7` concatenates reference-free `mt` before `src` and
   truncates the joint sequence at 512 subwords. Long SEGALE groups are therefore
   diagnostic rather than calibrated sentence scores. Observed non-null group
-  means are `1:1=0.7921`, `N:1=0.6539`, `1:N=0.6282`, and `N:M=0.6285`; the
+  means are `1:1=0.7785`, `N:1=0.6079`, `1:N=0.6000`, and `N:M=0.5808`; the
   current data shows lower non-1:1 scores, but length, alignment shape, and
   translation quality are confounded.
 - All 27 `segale_longyaal/instances.resegmented.json` traces (29.2 MiB) and all
   135 LaBSE `spacy_run_vecalign_explore/*_aps_results.json` traces (12.0 MiB)
   are now Git-tracked for direct audit. Pages deploys only the curated
   diagnostics directory.
+- Targeted verification for the speech-timing and diagnostics code is 16
+  passing tests across `test_acl6060_segale_diagnostics.py`,
+  `test_acl6060_target_speech_instances.py`, and
+  `test_acl6060_stream_eval.py`; Ruff is clean.
 
 2026-07-23 ACL6060 3x3x3 full-table pipeline (historical):
 
@@ -1024,7 +1058,7 @@ python scripts/build_acl6060_enzh_audio_details.py \
   --output-dir /Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_enzh_audio_samples_all_systems
 ```
 
-XCOMET-XL status:
+XCOMET-XL status (historical 2026-07-23 protocol; superseded above):
 
 - Combined XCOMET input/scores for all 27 rows exist at:
 

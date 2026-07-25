@@ -342,8 +342,25 @@ target text 当作 speech timing。
   target-text proxy。
 - 这里的“播放”是基于捕获 PCM 的立即零抖动客户端播放模型，包含网络晚到和
   PCM backlog，但不包含操作系统、声卡、蓝牙设备等额外 output-buffer latency。
+- 27/27 个 cell、135/135 个 full-wav sample 均已按上述 v2 协议重建；每个
+  canonical run 都保存 `target_speech_timing.jsonl` 和
+  `target_speech_timing_summary.json`。target-speech ASR 与 timestamp transcript
+  的最小 unit alignment coverage 为 `0.8319749`。
 
-## 2026-07-24 ACL6060 SEGALE 重评（质量与对齐协议）
+原始 target WAV、逐 packet arrival/playout trace、source send trace 和 ASR
+window 不能作为 Git 大文件提交。它们已从 `/tmp` 迁移到本机 persistent staging：
+
+```text
+/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_speech_playout_raw_20260725/
+```
+
+该目录共约 `6.1 GB`，包含 270 个 WAV、90 份 OpenAI/Gemini
+`target_audio_packets.jsonl` 和 45 份 KIT `audio_chunks.jsonl`。预定 Hugging
+Face dataset repo 为 `gavinlaw/acl6060-s2s-speech-playout-raw`，当前状态
+`PENDING_HF_UPLOAD`。Git 中保留无需原始 WAV 即可直接预览和审计的 27-cell
+timing summaries、SEGALE/XCOMET/LongYAAL traces 与 HTML。
+
+## 2026-07-25 ACL6060 SEGALE 重评（当前 canonical）
 
 本节取代本文档中随后 `2026-07-23` 记录的 OmniSTEval、reference-based
 XCOMET-XL 和 `weight_chars` 加权结论。旧记录只保留为历史实验说明，不能再用于
@@ -356,9 +373,21 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv
 projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.jsonl
 ```
 
+Source of Truth：
+
+- GitHub: `https://github.com/luojiaxuan/S2S_omni`
+- Branch: `kit-lecture-translator`
+- 27-cell speech-playout artifact snapshot: `38c4911`
+- 直接预览: `https://luojiaxuan.github.io/S2S_omni/`
+- Google Sheet: `https://docs.google.com/spreadsheets/d/1_HUxgwe8jqgoL9GRuVR1HZz__GOK2lfjFbqnFhweimM/edit?gid=0#gid=0`
+
+2026-07-25 已用上述 TSV 更新 Sheet 的 `D2:H10`、`D12:H20`、
+`D22:H30`，并逐块回读确认 Config、BLEU、XCOMET-XL、LongYAAL 和 Ending
+Offset 数值一致。
+
 它覆盖 En-Zh / En-De / En-Ja、`1x` / `1.25x` / `1.5x` 和 GPT Realtime /
 Gemini Live / KIT Lecture Translator 共 27 个条件。全局 XCOMET-XL QE 值为
-`0.7074453687`，来自全部 `10,765` 个 SEGALE 对齐单元的算术平均，包含空对齐的
+`0.6776717381`，来自全部 `10,433` 个 SEGALE 对齐单元的算术平均，包含空对齐的
 零分。
 
 ### 对齐与质量协议
@@ -379,12 +408,14 @@ Gemini Live / KIT Lecture Translator 共 27 个条件。全局 XCOMET-XL QE 值�
 - XCOMET-XL 使用 QE / reference-free `source+hypothesis` 模式，**不输入 target
   reference**。主表用 COMET 官方算术平均，不做字符长度或任何其他加权。
   `source==""` 是 over-translation、`hypothesis==""` 是 under-translation；两类
-  都被主动赋值 `0.0` 并纳入平均。全部 736 个 null alignment 已验证均为零分。
+  都被主动赋值 `0.0` 并纳入平均。全部 813 个 null alignment 已验证均为零分：
+  3 个 over-translation、810 个 under-translation。
 - LongYAAL 使用相同 SEGALE 对齐和 speed-scaled source audio (`offset` / `duration`
   除以 speedup)。空对齐没有定义 arrival latency，因此只从 LongYAAL 的 timing
-  aggregate 略去，但保留在 BLEU/XCOMET 的质量惩罚中。所有 10,765 个 timing
-  records 都是 `char_span_from_segale`、`skip_under_translation` 或
-  `skip_over_translation`，没有 source-text fallback。
+  aggregate 略去，但保留在 BLEU/XCOMET 的质量惩罚中。所有 10,433 个 timing
+  records 分为 9,620 个 `char_span_from_segale`、810 个
+  `skip_under_translation` 和 3 个 `skip_over_translation`，没有 source-text
+  fallback。
 
 ### 可复现入口与审计
 
@@ -410,10 +441,17 @@ artifacts/acl6060_xcomet_xl_segale/{input_all.jsonl,scores_all.jsonl,summary_all
 ```
 
 最终审计：27/27 主表行均有 BLEU、XCOMET-XL、LongYAAL 和 Ending Offset；27 个
-condition 唯一；combined XCOMET 输入/输出/SEGALE 对齐均为 10,765 行；source
-coverage 无遗漏或重复；null score 非零数为 0。
+condition 唯一；combined XCOMET 输入/输出/SEGALE 对齐均为 10,433 行且
+`xcomet_id` 唯一；source coverage 无遗漏或重复；null score 非零数为 0。
+XCOMET-XL 固定使用 `Unbabel/XCOMET-XL` revision
+`6a123c5e8e6dccab25e5fcffa3c8b417abadb462`。
 
-### 逐句诊断与 speed 对比（2026-07-24）
+2026-07-25 已把该 canonical 27 行更新到
+[ACL 60/60 Dev Google Sheet](https://docs.google.com/spreadsheets/d/1_HUxgwe8jqgoL9GRuVR1HZz__GOK2lfjFbqnFhweimM/edit?gid=0#gid=0)
+的 `D2:H10`、`D12:H20`、`D22:H30`，并逐块复制回读验证 Config、BLEU、
+XCOMET-XL、LongYAAL、Ending Offset 与 `acl6060_full_table.tsv` 一致。
+
+### 逐句诊断与 speed 对比（2026-07-25）
 
 为检查 SEGALE 切分、空对齐和随 source speedup 的单句变化，新增以下可直接打开的
 静态看板与可机读产物：
@@ -428,9 +466,11 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
 ```
 
 - `index.html` 的每个 cell 都给出 SEGALE `over_translation`、
-  `under_translation`、总 null count，及单句 tail/first-emission/emission-span
-  的均值或分位数，也给出非 `1:1`、`N:1` 和最大 source span 的 structural
-  对齐计数。底层有 10,765 个 SEGALE 对齐单元；
+  `under_translation`、总 null count，及单句 ending/first-speech-playout/
+  speech-playout-span 的均值或分位数，也给出非 `1:1`、`N:1` 和最大 source span 的 structural
+  对齐计数。它还显示整段 target speech 最后一个 ASR unit 的完播 offset、
+  最后 PCM packet 到达后的 FIFO queue tail，以及 speech 结束后的 trailing
+  audio；后者不进入 speech completion。底层有 10,433 个 SEGALE 对齐单元；
   `sentence_cases.jsonl` 是 12,636 条 source-sentence condition
   records，保留 source/reference/hypothesis、`source:hypothesis` 对齐形状、QE
   score 和单句 timing。若 SEGALE 为 many-to-many，对齐组的 hypothesis、QE 和 timing 会被
@@ -445,7 +485,7 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
   source span 为空时计数；语义重复、错译或过译须结合完整 group 和 XCOMET 判断。
 - `speed_delta_summary.tsv` 是同一句的 paired 分析：只在两档 speed 都有 SEGALE
   非空对齐和 timing 时计算，分别报告 XCOMET 变化、tail latency 的 mean/p50/p90
-  变化和 first-emission p50 变化。它不能替代正式主表，也不会以删除 null 的方式
+  变化和 first-speech-playout p50 变化。它不能替代正式主表，也不会以删除 null 的方式
   改写质量分数。
 - 单句 timing 使用 target-speech ASR unit 的 PCM FIFO 播放完成时间减去对应
   source sentence 的结束时间。`first_speech_playout_offset_ms` 是对齐
@@ -454,15 +494,15 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
   delta。
 - live runner 先以 `ffmpeg atempo(speed_factor)` 加速 source，再固定每 960 ms
   发一个 chunk 并按 960 ms pacing。因此 speedup 提高时，每个 wall-clock chunk
-  的语言信息量确实增加。Gemini 的 QE 随 speed 提升、GPT 在 `1.5x` 出现更多
-  under-translation 并有更长 tail 的现象与“固定 chunk 上下文密度 + 模型实时
-  跟随能力不同”相容，但不是因果证明。当前已记录 target-audio packet 和 FIFO
-  playout；要进一步分离两种机制，仍需额外控制每个 chunk 的语言内容量（例如
-  480/1440 ms 设置）以及实际设备 output-buffer latency。
+  的语言信息量确实增加。当前 En-Zh 中 Gemini 的 BLEU/QE 随 speed 提升，而 GPT
+  的 LongYAAL 随 speed 增加、Ending Offset 约持平；这与“固定 chunk 上下文密度
+  + 模型实时跟随/出声策略不同”相容，但不是因果证明。当前已记录 target-audio
+  packet 和 FIFO playout。要进一步分离两种机制，仍需额外控制每个 chunk 的语言
+  内容量（例如 480/1440 ms 设置）以及实际设备 output-buffer latency。
 - XCOMET-XL 的 COMET `2.2.7` runtime 会把 reference-free 的 `mt` 与 `src`
   拼接到最多 512 个 subwords；`mt` 在前，超长输入会截断后部 source。当前
   SEGALE `1:1` / `N:1` / `1:N` / `N:M` 非空 group 的观察均值分别为
-  `0.7921` / `0.6539` / `0.6282` / `0.6285`。非 `1:1` group 在本数据上总体
+  `0.7785` / `0.6079` / `0.6000` / `0.5808`。非 `1:1` group 在本数据上总体
   更低，并非观察到系统性虚高；但长度、输出质量与对齐形状相互混杂，长 group
   分数仍不能视为经过校准的单句 QE。
 
@@ -470,6 +510,15 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
 (`instances.resegmented.json`) 已按用户要求一并纳入 Git：135 份 LaBSE trace
 约 12.0 MiB，27 份 LongYAAL trace 约 29.2 MiB。它们不进入 Pages 导航，但可从
 对应 run artifact 目录直接审计。
+
+本轮 timing/diagnostics targeted verification：
+
+```text
+tests/test_acl6060_segale_diagnostics.py
+tests/test_acl6060_target_speech_instances.py
+tests/test_acl6060_stream_eval.py
+16 passed; ruff clean
+```
 
 ## 2026-07-23 ACL6060 3x3x3 Full Table Pipeline（历史）
 
