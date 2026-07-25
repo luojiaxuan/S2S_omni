@@ -90,6 +90,33 @@ def latency_fields(row: dict[str, Any] | None) -> dict[str, float | None]:
     }
 
 
+def target_audio_timing_fields(
+    timing_rows: list[dict[str, Any]],
+    instance_rows: list[dict[str, Any]],
+) -> dict[str, float | None]:
+    source_length_by_index = {
+        int(row["index"]): float(row["source_length"]) for row in instance_rows
+    }
+    final_offsets = []
+    queue_tails = []
+    trailing_audio = []
+    for row in timing_rows:
+        if row.get("timing_method") != TARGET_SPEECH_TIMING_METHOD:
+            raise ValueError(f"stale target-speech timing row: {row.get('timing_method')!r}")
+        index = int(row["index"])
+        speech_end = float(row["target_speech_last_unit_playout_ms"])
+        audio_end = float(row["target_audio_playout_end_ms"])
+        last_arrival = float(row["target_audio_last_arrival_ms"])
+        final_offsets.append(speech_end - source_length_by_index[index])
+        queue_tails.append(audio_end - last_arrival)
+        trailing_audio.append(audio_end - speech_end)
+    return {
+        "talk_speech_final_offset_mean_ms": mean(final_offsets) if final_offsets else None,
+        "target_audio_queue_tail_mean_ms": mean(queue_tails) if queue_tails else None,
+        "target_audio_after_speech_mean_ms": mean(trailing_audio) if trailing_audio else None,
+    }
+
+
 def source_key(document: str, segment_id: int) -> tuple[str, int]:
     return str(document), int(segment_id)
 
@@ -118,6 +145,10 @@ def build_run(
     xcomet_rows = read_jsonl(run_dir / "xcomet_xl" / "segments.jsonl")
     latency_rows = read_json(run_dir / "segale_longyaal" / "instances.resegmented.json")
     source_rows = read_jsonl(run_dir / "segale_alignment" / "ref.jsonl")
+    target_timing = target_audio_timing_fields(
+        read_jsonl(run_dir / "target_speech_timing.jsonl"),
+        read_jsonl(run_dir / "instances.log"),
+    )
     if not source_rows:
         raise ValueError(f"empty SEGALE reference rows: {run_dir}")
     latency_by_key = {source_key(row["doc_id"], int(row["seg_id"])): row for row in latency_rows}
@@ -224,6 +255,7 @@ def build_run(
         "ending_offset_p90_ms": percentile(tails, 0.9),
         "first_speech_playout_offset_p50_ms": percentile(firsts, 0.5),
         "speech_playout_span_p50_ms": percentile(spans, 0.5),
+        **target_timing,
     }
     return summary, sentence_rows
 
@@ -252,6 +284,9 @@ def write_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         "ending_offset_p90_ms",
         "first_speech_playout_offset_p50_ms",
         "speech_playout_span_p50_ms",
+        "talk_speech_final_offset_mean_ms",
+        "target_audio_queue_tail_mean_ms",
+        "target_audio_after_speech_mean_ms",
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
@@ -302,6 +337,9 @@ def render_index(summary_rows: list[dict[str, Any]], output_dir: Path) -> str:
             f"<td>{number(row['ending_offset_p90_ms'])}</td>"
             f"<td>{number(row['first_speech_playout_offset_p50_ms'])}</td>"
             f"<td>{number(row['speech_playout_span_p50_ms'])}</td>"
+            f"<td>{number(row['talk_speech_final_offset_mean_ms'])}</td>"
+            f"<td>{number(row['target_audio_queue_tail_mean_ms'])}</td>"
+            f"<td>{number(row['target_audio_after_speech_mean_ms'])}</td>"
             f"<td><a href='{escaped(page)}'>sentence cases</a></td>"
             "</tr>"
         )
@@ -315,9 +353,10 @@ th,td{{border:1px solid #d8dde3;padding:7px;text-align:right;vertical-align:top}
 </style></head><body>
 <h1>ACL6060 SEGALE sentence diagnostics</h1>
 <p class='note'><strong>Latency semantics:</strong> first and ending offsets use target-speech ASR unit playback completion. Each ASR unit's target-audio position is mapped through the captured PCM packet arrival and zero-jitter playout queue; trailing silence after the final spoken unit is excluded.</p>
+<p class='note'><strong>Talk-level speech completion:</strong> “talk speech final” is the last spoken ASR unit's PCM playback completion minus the sped source duration. “queue tail” is full PCM playout end minus final packet arrival. “audio after speech” is full PCM playout end minus the last spoken ASR unit; it is excluded from speech completion and sentence latency.</p>
 <p class='note'><strong>XCOMET length caveat:</strong> XCOMET-XL is a sentence-trained metric with a 512-subword joint input limit. SEGALE non-1:1 groups, especially long N:1 groups, are out-of-distribution and may be truncated. Their group scores are diagnostics, not calibrated per-source-sentence scores.</p>
 <p><strong>Structural versus semantic:</strong> a non-null SEGALE group only means Vecalign linked non-empty source and hypothesis spans. It is not a semantic “matched” judgment. XCOMET assesses the full aligned group; non-1:1 and N:1 counts flag spans that must be inspected before attributing a group hypothesis to an individual source sentence. A null row is the only structural `over_translation`/`under_translation` count and is retained with XCOMET=0.0 but no latency.</p>
-<table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>structural over</th><th>structural under</th><th>non-1:1</th><th>N:1 groups</th><th>max source span</th><th>ending mean ms</th><th>ending p50 ms</th><th>ending p90 ms</th><th>first speech p50 ms</th><th>speech playout span p50 ms</th><th>details</th></tr></thead><tbody>
+<table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>structural over</th><th>structural under</th><th>non-1:1</th><th>N:1 groups</th><th>max source span</th><th>ending mean ms</th><th>ending p50 ms</th><th>ending p90 ms</th><th>first speech p50 ms</th><th>speech playout span p50 ms</th><th>talk speech final mean ms</th><th>queue tail mean ms</th><th>audio after speech mean ms</th><th>details</th></tr></thead><tbody>
 {"".join(rows)}</tbody></table>
 <p>Machine-readable summaries: <a href='cell_summary.tsv'>per-cell TSV</a>, <a href='cell_summary.jsonl'>per-cell JSONL</a>, <a href='speed_delta_summary.tsv'>paired-speed TSV</a>, <a href='speed_delta_summary.jsonl'>paired-speed JSONL</a>, <a href='sentence_cases.jsonl'>all source-sentence cases</a>.</p>
 </body></html>"""

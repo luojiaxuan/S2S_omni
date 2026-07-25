@@ -43,6 +43,26 @@ def test_null_sentinel_has_no_latency() -> None:
     assert result["target_units"] == 0
 
 
+def test_target_audio_timing_fields_use_last_spoken_playout() -> None:
+    result = diagnostics.target_audio_timing_fields(
+        [
+            {
+                "index": 0,
+                "timing_method": diagnostics.TARGET_SPEECH_TIMING_METHOD,
+                "target_audio_last_arrival_ms": 6500,
+                "target_audio_playout_end_ms": 8000,
+                "target_speech_last_unit_playout_ms": 7200,
+            }
+        ],
+        [{"index": 0, "source_length": 6000}],
+    )
+    assert result == {
+        "talk_speech_final_offset_mean_ms": 1200.0,
+        "target_audio_queue_tail_mean_ms": 1500.0,
+        "target_audio_after_speech_mean_ms": 800.0,
+    }
+
+
 def test_structural_alignment_label_does_not_claim_semantic_match() -> None:
     assert diagnostics.structural_alignment_label({"null_alignment_type": ""}) == (
         "non-null SEGALE group"
