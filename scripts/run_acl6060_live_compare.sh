@@ -165,7 +165,7 @@ target_speech_complete() {
   local summary_path="$1"
   [[ -f "${summary_path}" ]] &&
     "${PYTHON_BIN}" -c \
-      'import json,sys; data=json.load(open(sys.argv[1])); raise SystemExit(0 if data.get("samples")==5 else 1)' \
+      'import json,sys; data=json.load(open(sys.argv[1])); ok=data.get("samples")==5 and data.get("timing_method")=="target_speech_word_timestamp_to_pcm_packet_playout_v2"; raise SystemExit(0 if ok else 1)' \
       "${summary_path}"
 }
 
