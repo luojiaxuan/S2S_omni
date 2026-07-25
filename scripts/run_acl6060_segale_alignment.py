@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -52,6 +53,13 @@ def vecalign_is_installed() -> bool:
     return importlib.util.find_spec("vecalign") is not None
 
 
+def add_active_python_scripts_to_path() -> None:
+    scripts_dir = str(Path(sys.executable).parent)
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
+    if scripts_dir not in path_entries:
+        os.environ["PATH"] = os.pathsep.join([scripts_dir, *path_entries])
+
+
 def load_segale_module(repo: Path) -> ModuleType:
     module_path = repo / "src" / "alignment" / "segale.py"
     if not module_path.exists():
@@ -93,6 +101,7 @@ def run_alignment(args: argparse.Namespace) -> dict[str, object]:
             "in the active environment"
         )
 
+    add_active_python_scripts_to_path()
     module = load_segale_module(args.speech_latency_repo)
     module.step2_segale(
         system_file=str(output_dir / "hyp.jsonl"),

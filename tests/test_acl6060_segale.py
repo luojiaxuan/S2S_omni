@@ -55,6 +55,25 @@ def test_vecalign_check_uses_active_python_environment(monkeypatch) -> None:
     assert not segale_alignment.vecalign_is_installed()
 
 
+def test_active_python_scripts_are_added_to_path(monkeypatch, tmp_path: Path) -> None:
+    system_python = tmp_path / "usr" / "bin" / "python"
+    system_python.parent.mkdir(parents=True)
+    system_python.touch()
+    python = tmp_path / "venv" / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.symlink_to(system_python)
+    monkeypatch.setattr(segale_alignment.sys, "executable", str(python))
+    monkeypatch.setenv("PATH", "/usr/bin")
+
+    segale_alignment.add_active_python_scripts_to_path()
+    segale_alignment.add_active_python_scripts_to_path()
+
+    assert segale_alignment.os.environ["PATH"].split(":") == [
+        str(python.parent),
+        "/usr/bin",
+    ]
+
+
 def test_segale_input_builder_groups_gold_segments_by_document(tmp_path: Path) -> None:
     run_dir = tmp_path / "run"
     data_dir = tmp_path / "data"
