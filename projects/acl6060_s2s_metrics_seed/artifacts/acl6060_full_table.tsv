@@ -1,28 +1,28 @@
 Language	Speedup	System	Config	BLEU	XCOMET-XL	LongYAAL	Ending Offset
-En-Zh	1x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript; quality alignment=SEGALE	34.5028	0.700613	3993.7456	9690.0276
-En-Zh	1x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript; quality alignment=SEGALE	48.2277	0.659058	2284.0147	22357.0849
-En-Zh	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR; quality alignment=SEGALE	34.0006	0.552747	78982.1106	93760.4096
-En-Zh	1.25x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript; quality alignment=SEGALE	34.0650	0.680497	6251.9661	10413.6635
-En-Zh	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript; quality alignment=SEGALE	46.7472	0.681963	3526.3069	20725.0583
-En-Zh	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR; quality alignment=SEGALE	34.7186	0.555850	64341.3517	77505.5478
-En-Zh	1.5x	GPT-realtime-translate	chunk=960ms; target=zh; live text transcript; quality alignment=SEGALE	29.9086	0.608993	13383.5992	17134.2910
-En-Zh	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=zh; live text transcript; quality alignment=SEGALE	48.7255	0.701809	3271.0109	5081.2832
-En-Zh	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR; quality alignment=SEGALE	35.2569	0.562171	53689.9740	63392.1068
-En-De	1x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript; quality alignment=SEGALE	29.8662	0.908017	4171.6328	10117.8380
-En-De	1x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript; quality alignment=SEGALE	33.8694	0.855694	3749.6614	29922.6949
-En-De	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR; quality alignment=SEGALE	26.3379	0.663086	83024.9733	99904.1142
-En-De	1.25x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript; quality alignment=SEGALE	30.4710	0.907606	4751.6683	9218.1343
-En-De	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript; quality alignment=SEGALE	36.9177	0.887921	4324.1758	8135.8456
-En-De	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR; quality alignment=SEGALE	26.8547	0.673960	64907.2881	77277.5538
-En-De	1.5x	GPT-realtime-translate	chunk=960ms; target=de; live text transcript; quality alignment=SEGALE	28.6895	0.885614	9291.2009	13062.5424
-En-De	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=de; live text transcript; quality alignment=SEGALE	36.1296	0.880849	5640.1873	8816.5012
-En-De	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR; quality alignment=SEGALE	27.8950	0.694601	54522.9691	65514.1372
-En-Ja	1x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript; quality alignment=SEGALE	25.3679	0.755326	4746.9639	10200.5459
-En-Ja	1x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript; quality alignment=SEGALE	30.1283	0.661423	4634.5808	32512.5625
-En-Ja	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR; quality alignment=SEGALE	26.9835	0.577595	75758.7633	91553.2145
-En-Ja	1.25x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript; quality alignment=SEGALE	24.6812	0.747121	6753.8798	11148.2285
-En-Ja	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript; quality alignment=SEGALE	33.1207	0.706873	3569.8274	6667.8500
-En-Ja	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR; quality alignment=SEGALE	27.3005	0.575656	58072.8874	69373.6950
-En-Ja	1.5x	GPT-realtime-translate	chunk=960ms; target=ja; live text transcript; quality alignment=SEGALE	21.7039	0.712921	11432.1167	15172.2752
-En-Ja	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=ja; live text transcript; quality alignment=SEGALE	33.4716	0.719518	6948.3161	9551.0828
-En-Ja	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR; quality alignment=SEGALE	28.4362	0.597704	49030.5456	60185.8030
+En-Zh	1x	GPT-realtime-translate	chunk=960ms; target=zh; target-audio ASR; speech-playout timing; quality alignment=SEGALE	32.7042	0.627780	6600.4327	27482.9180
+En-Zh	1x	Gemini 3.5-live-translate	chunk=960ms; target=zh; target-audio ASR; speech-playout timing; quality alignment=SEGALE	40.3927	0.586258	7674.0029	19789.6710
+En-Zh	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	34.7573	0.588395	53292.0278	325079.5454
+En-Zh	1.25x	GPT-realtime-translate	chunk=960ms; target=zh; target-audio ASR; speech-playout timing; quality alignment=SEGALE	32.3742	0.622473	11921.7583	25059.1935
+En-Zh	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=zh; target-audio ASR; speech-playout timing; quality alignment=SEGALE	42.1643	0.614897	8911.6453	19252.7987
+En-Zh	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	33.9931	0.552119	37502.6504	273470.1165
+En-Zh	1.5x	GPT-realtime-translate	chunk=960ms; target=zh; target-audio ASR; speech-playout timing; quality alignment=SEGALE	30.8353	0.608754	15186.0792	25080.6947
+En-Zh	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=zh; target-audio ASR; speech-playout timing; quality alignment=SEGALE	43.2535	0.633218	9913.1559	15979.5568
+En-Zh	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=zh,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	29.0097	0.487954	46366.8502	271014.3790
+En-De	1x	GPT-realtime-translate	chunk=960ms; target=de; target-audio ASR; speech-playout timing; quality alignment=SEGALE	29.0062	0.885493	6162.0172	20402.6552
+En-De	1x	Gemini 3.5-live-translate	chunk=960ms; target=de; target-audio ASR; speech-playout timing; quality alignment=SEGALE	33.5903	0.863070	11355.4711	26219.5649
+En-De	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	27.4272	0.702006	74685.3763	368901.7425
+En-De	1.25x	GPT-realtime-translate	chunk=960ms; target=de; target-audio ASR; speech-playout timing; quality alignment=SEGALE	29.4427	0.885663	7364.1534	22100.0188
+En-De	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=de; target-audio ASR; speech-playout timing; quality alignment=SEGALE	36.9770	0.887337	9023.2119	18940.2306
+En-De	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	26.5242	0.667431	42137.6467	300047.9871
+En-De	1.5x	GPT-realtime-translate	chunk=960ms; target=de; target-audio ASR; speech-playout timing; quality alignment=SEGALE	27.0149	0.846695	11046.2941	20642.3262
+En-De	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=de; target-audio ASR; speech-playout timing; quality alignment=SEGALE	35.9460	0.878126	13562.5640	20707.8872
+En-De	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=de,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	24.2391	0.601264	52440.0191	292508.8187
+En-Ja	1x	GPT-realtime-translate	chunk=960ms; target=ja; target-audio ASR; speech-playout timing; quality alignment=SEGALE	23.7877	0.679379	7306.0817	13757.5413
+En-Ja	1x	Gemini 3.5-live-translate	chunk=960ms; target=ja; target-audio ASR; speech-playout timing; quality alignment=SEGALE	29.0298	0.625537	9316.9582	23036.0441
+En-Ja	1x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	27.2932	0.578292	54240.0639	315538.2175
+En-Ja	1.25x	GPT-realtime-translate	chunk=960ms; target=ja; target-audio ASR; speech-playout timing; quality alignment=SEGALE	21.5508	0.663726	9366.8866	14415.0943
+En-Ja	1.25x	Gemini 3.5-live-translate	chunk=960ms; target=ja; target-audio ASR; speech-playout timing; quality alignment=SEGALE	31.6634	0.679359	9480.5179	19131.4095
+En-Ja	1.25x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	27.0232	0.558196	53297.6774	307443.3900
+En-Ja	1.5x	GPT-realtime-translate	chunk=960ms; target=ja; target-audio ASR; speech-playout timing; quality alignment=SEGALE	20.1782	0.624224	12692.1597	16955.0501
+En-Ja	1.5x	Gemini 3.5-live-translate	chunk=960ms; target=ja; target-audio ASR; speech-playout timing; quality alignment=SEGALE	30.9647	0.680162	9631.0982	15575.3906
+En-Ja	1.5x	KIT Lecture Translator	chunk=960ms; format=mixed; ttsQualityMode=high_quality; language=ja,en; target-audio ASR; speech-playout timing; quality alignment=SEGALE	26.9080	0.568294	69274.3717	342821.2972

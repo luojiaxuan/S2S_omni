@@ -1,14 +1,16 @@
 {
   "alignment_backend": "SEGALE",
   "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672",
-  "bleu": 30.471036503028518,
+  "latency_timing_method": "target_speech_word_timestamp_to_pcm_packet_playout_v2",
+  "latency_input_fingerprint": "ad367e962940f49c10f67cd26772534153af705ddbb74462fd09adc7aa746582",
+  "bleu": 29.442673131054487,
   "bleu_tokenizer": "13a",
-  "longyaal_cu": 4751.6683,
-  "longyaal_ca": 9062.6169,
-  "ending_offset_cu_ms_mean": 4647.2344,
-  "ending_offset_ca_ms_mean": 9218.1343,
-  "latency_valid_segments": 411,
+  "longyaal_cu": 7364.1534,
+  "longyaal_ca": 19147.8107,
+  "ending_offset_cu_ms_mean": 7038.1329,
+  "ending_offset_ca_ms_mean": 22100.0188,
+  "latency_valid_segments": 420,
   "null_alignments": 1,
-  "null_alignment_ratio": 0.0024271844660194173,
-  "scores_path": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_openai_chunk960_speed1p25/segale_longyaal/scores.resegmented.csv"
+  "null_alignment_ratio": 0.0023752969121140144,
+  "scores_path": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_ende_openai_chunk960_speed1p25/segale_longyaal/scores.resegmented.csv"
 }

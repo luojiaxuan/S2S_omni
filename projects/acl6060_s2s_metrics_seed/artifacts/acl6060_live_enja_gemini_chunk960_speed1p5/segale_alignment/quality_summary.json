@@ -4,15 +4,15 @@
   "embedding_model": "sentence-transformers/LaBSE",
   "segmenter": "spacy",
   "max_size": 8,
-  "segments": 384,
-  "valid_segments": 382,
+  "segments": 381,
+  "valid_segments": 379,
   "null_alignments": 2,
   "over_translation_alignments": 0,
   "under_translation_alignments": 2,
-  "null_alignment_ratio": 0.005208333333333333,
+  "null_alignment_ratio": 0.005249343832020997,
   "null_alignment_score": 0.0,
-  "bleu": 33.47161519689735,
+  "bleu": 30.964670987455342,
   "bleu_tokenizer": "ja-mecab",
-  "aligned_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enja_gemini_chunk960_speed1p5/segale_alignment/hyp/aligned_spacy_hyp.jsonl",
-  "xcomet_input_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enja_gemini_chunk960_speed1p5/xcomet_xl/input.jsonl"
+  "aligned_jsonl": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_enja_gemini_chunk960_speed1p5/segale_alignment/hyp/aligned_spacy_hyp.jsonl",
+  "xcomet_input_jsonl": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_enja_gemini_chunk960_speed1p5/xcomet_xl/input.jsonl"
 }

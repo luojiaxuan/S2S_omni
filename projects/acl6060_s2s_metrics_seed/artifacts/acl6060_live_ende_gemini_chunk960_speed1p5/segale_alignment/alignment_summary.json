@@ -8,7 +8,7 @@
   "device": "cuda",
   "max_size": 8,
   "seed": 42,
-  "input_fingerprint": "d8374f8fa08d18ba6a347d9360ef9f146cacdfa2df839cedeb87b90ae063ec4e",
-  "aligned_rows": 368,
-  "aligned_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_ende_gemini_chunk960_speed1p5/segale_alignment/hyp/aligned_spacy_hyp.jsonl"
+  "input_fingerprint": "a78a06b819ed568a6126e3a2aa23dab4d9526a7392f7043821e1f742b6e0e798",
+  "aligned_rows": 399,
+  "aligned_jsonl": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_ende_gemini_chunk960_speed1p5/segale_alignment/hyp/aligned_spacy_hyp.jsonl"
 }

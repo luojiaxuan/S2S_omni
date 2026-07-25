@@ -11,8 +11,15 @@
   "chunk_ms": 960,
   "speed_factor": 1.25,
   "pace": true,
+  "save_output_audio": true,
   "max_audio_seconds": 0.0,
   "max_session_input_s": 0.0,
   "target_lang": "de",
-  "hf_repo": "gavinlaw/rasst-main-result-data"
+  "hf_repo": "gavinlaw/rasst-main-result-data",
+  "candidate_text_source": "target_speech_asr_gpt4o_mini_transcribe",
+  "target_speech_asr_model": "gpt-4o-mini-transcribe",
+  "target_speech_timestamp_model": "whisper-1",
+  "latency_timing_method": "target_speech_word_timestamp_to_pcm_packet_playout_v2",
+  "source_consumption_timing_method": "source_chunk_transport_timeline_at_speech_playout_v2",
+  "target_speech_playout_assumption": "zero_jitter_immediate_pcm_playout"
 }

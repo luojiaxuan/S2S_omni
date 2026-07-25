@@ -1,16 +1,15 @@
 {
-  "xcomet_xl": 0.7553264976493896,
+  "xcomet_xl": 0.6793787441545491,
   "xcomet_xl_model": "Unbabel/XCOMET-XL",
   "xcomet_xl_mode": "source_hypothesis",
   "alignment_backend": "SEGALE",
-  "segments": 441,
-  "valid_segments": 438,
-  "null_alignments": 3,
-  "over_translation_alignments": 0,
-  "under_translation_alignments": 3,
-  "null_alignment_ratio": 0.006802721088435374,
+  "segments": 433,
+  "valid_segments": 428,
+  "null_alignments": 5,
+  "over_translation_alignments": 1,
+  "under_translation_alignments": 4,
+  "null_alignment_ratio": 0.011547344110854504,
   "null_alignment_score": 0.0,
   "aggregation": "arithmetic_mean_including_null_alignment_zeros",
-  "output_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_live_enja_openai_chunk960_speed1/xcomet_xl/segments.jsonl",
-  "combined_output_jsonl": "/data/S2S_omni/projects/acl6060_s2s_metrics_seed/artifacts/acl6060_xcomet_xl_segale/scores_all.jsonl"
+  "output_jsonl": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_enja_openai_chunk960_speed1/xcomet_xl/segments.jsonl"
 }

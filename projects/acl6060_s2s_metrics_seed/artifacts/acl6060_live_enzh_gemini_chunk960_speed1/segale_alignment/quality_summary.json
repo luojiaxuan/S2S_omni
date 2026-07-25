@@ -1,0 +1,18 @@
+{
+  "alignment_backend": "SEGALE",
+  "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672",
+  "embedding_model": "sentence-transformers/LaBSE",
+  "segmenter": "spacy",
+  "max_size": 8,
+  "segments": 309,
+  "valid_segments": 302,
+  "null_alignments": 7,
+  "over_translation_alignments": 0,
+  "under_translation_alignments": 7,
+  "null_alignment_ratio": 0.022653721682847898,
+  "null_alignment_score": 0.0,
+  "bleu": 40.392725103669115,
+  "bleu_tokenizer": "zh",
+  "aligned_jsonl": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_enzh_gemini_chunk960_speed1/segale_alignment/hyp/aligned_spacy_hyp.jsonl",
+  "xcomet_input_jsonl": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_enzh_gemini_chunk960_speed1/xcomet_xl/input.jsonl"
+}

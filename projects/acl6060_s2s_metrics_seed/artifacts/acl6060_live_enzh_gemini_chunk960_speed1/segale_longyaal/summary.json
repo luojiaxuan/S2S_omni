@@ -1,0 +1,16 @@
+{
+  "alignment_backend": "SEGALE",
+  "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672",
+  "latency_timing_method": "target_speech_word_timestamp_to_pcm_packet_playout_v2",
+  "latency_input_fingerprint": "2ce5b01db7754773171af3ed2e027d07333b2407ab231283c717c1ad381b133a",
+  "bleu": 40.392725103669115,
+  "bleu_tokenizer": "zh",
+  "longyaal_cu": 7674.0029,
+  "longyaal_ca": 18235.027,
+  "ending_offset_cu_ms_mean": 7699.9537,
+  "ending_offset_ca_ms_mean": 19789.671,
+  "latency_valid_segments": 302,
+  "null_alignments": 7,
+  "null_alignment_ratio": 0.022653721682847898,
+  "scores_path": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_enzh_gemini_chunk960_speed1/segale_longyaal/scores.resegmented.csv"
+}

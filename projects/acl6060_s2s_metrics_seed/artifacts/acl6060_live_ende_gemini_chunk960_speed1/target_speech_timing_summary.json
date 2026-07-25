@@ -1,0 +1,10 @@
+{
+  "run_dir": "/private/Users/luojiaxuan/Documents/Codex/2026-06-20/s/outputs/acl6060_speech_playout_raw_20260725/openai_gemini/ende_gemini_chunk960_speed1",
+  "provider": "gemini",
+  "target_lang": "de",
+  "samples": 5,
+  "timing_method": "target_speech_word_timestamp_to_pcm_packet_playout_v2",
+  "source_consumption_timing_method": "source_chunk_transport_timeline_at_speech_playout_v2",
+  "alignment_coverage_min": 0.9213483146067416,
+  "alignment_coverage_mean": 0.9487772775137604
+}

@@ -1,0 +1,15 @@
+{
+  "xcomet_xl": 0.5862578909036411,
+  "xcomet_xl_model": "Unbabel/XCOMET-XL",
+  "xcomet_xl_mode": "source_hypothesis",
+  "alignment_backend": "SEGALE",
+  "segments": 309,
+  "valid_segments": 302,
+  "null_alignments": 7,
+  "over_translation_alignments": 0,
+  "under_translation_alignments": 7,
+  "null_alignment_ratio": 0.022653721682847898,
+  "null_alignment_score": 0.0,
+  "aggregation": "arithmetic_mean_including_null_alignment_zeros",
+  "output_jsonl": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_enzh_gemini_chunk960_speed1/xcomet_xl/segments.jsonl"
+}

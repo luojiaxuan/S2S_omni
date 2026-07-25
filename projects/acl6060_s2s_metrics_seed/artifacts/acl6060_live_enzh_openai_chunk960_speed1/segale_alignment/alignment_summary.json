@@ -1,0 +1,14 @@
+{
+  "alignment_backend": "SEGALE",
+  "speech_latency_repo": "https://github.com/SakaiXue6666/Speech-to-Speech-Latency",
+  "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672",
+  "segmenter": "spacy",
+  "target_lang": "zh",
+  "embedding_model": "sentence-transformers/LaBSE",
+  "device": "cuda",
+  "max_size": 8,
+  "seed": 42,
+  "input_fingerprint": "71c1400ae2caa62090eecef46654d4400b120e46895334c76ed3ec4238c53822",
+  "aligned_rows": 318,
+  "aligned_jsonl": "/data/acl6060_speech_playout_artifacts_20260725/acl6060_live_enzh_openai_chunk960_speed1/segale_alignment/hyp/aligned_spacy_hyp.jsonl"
+}
