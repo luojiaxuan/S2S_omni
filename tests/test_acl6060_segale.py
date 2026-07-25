@@ -35,6 +35,10 @@ xcomet_runner = load_script(
     "acl6060_segale_xcomet_runner",
     ROOT / "scripts/run_acl6060_xcomet_xl.py",
 )
+metric_pipeline = load_script(
+    "acl6060_metric_pipeline",
+    ROOT / "scripts/run_acl6060_metric_pipeline.py",
+)
 
 
 def test_prediction_units_preserve_original_character_spans() -> None:
@@ -72,6 +76,15 @@ def test_active_python_scripts_are_added_to_path(monkeypatch, tmp_path: Path) ->
         str(python.parent),
         "/usr/bin",
     ]
+
+
+def test_longyaal_requires_segale_quality_summary() -> None:
+    assert metric_pipeline.needs_segale_quality_summary(
+        SimpleNamespace(build_xcomet_input=False, run_segale_longyaal=True)
+    )
+    assert not metric_pipeline.needs_segale_quality_summary(
+        SimpleNamespace(build_xcomet_input=False, run_segale_longyaal=False)
+    )
 
 
 def test_segale_input_builder_groups_gold_segments_by_document(tmp_path: Path) -> None:

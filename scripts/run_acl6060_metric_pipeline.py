@@ -230,6 +230,10 @@ def arithmetic_mean(rows: list[dict[str, Any]], score_key: str) -> float | None:
     return sum(values) / len(values) if values else None
 
 
+def needs_segale_quality_summary(args: argparse.Namespace) -> bool:
+    return args.build_xcomet_input or args.run_segale_longyaal
+
+
 def split_xcomet_scores(scored_jsonl: Path) -> int:
     rows = read_jsonl(scored_jsonl)
     grouped: dict[str, list[dict[str, Any]]] = {}
@@ -327,9 +331,9 @@ def main() -> None:
             run_omnisteval(args, run_dir)
         if args.run_segale:
             run_segale(args, run_dir)
-        if args.build_xcomet_input:
+        if needs_segale_quality_summary(args):
             input_path = build_xcomet_input(args, run_dir)
-            if input_path is not None:
+            if args.build_xcomet_input and input_path is not None:
                 xcomet_inputs.append(input_path)
         if args.run_segale_longyaal:
             run_segale_longyaal(args, run_dir)
