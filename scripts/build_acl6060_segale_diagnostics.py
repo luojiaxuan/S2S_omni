@@ -433,12 +433,23 @@ def render_speed_page(
     provider: str,
     target_lang: str,
     by_speed: dict[float, dict[int, dict[str, Any]]],
+    over_translation_rows: list[dict[str, Any]],
 ) -> str:
     all_source_ids = sorted({source_id for rows in by_speed.values() for source_id in rows})
     entries = []
+    category_counts = {"normal": 0, "under_translation": 0, "over_translation": 0}
     for source_id in all_source_ids:
         candidates = [rows.get(source_id) for rows in by_speed.values() if source_id in rows]
         anchor = next(row for row in candidates if row is not None)
+        category = (
+            "under_translation"
+            if any(
+                row is not None and row["null_alignment_type"] == "under_translation"
+                for row in candidates
+            )
+            else "normal"
+        )
+        category_counts[category] += 1
         rows = []
         summary_bits = []
         for speed in sorted(by_speed):
@@ -478,7 +489,7 @@ def render_speed_page(
                 "</details>"
             )
         entries.append(
-            "<details><summary>"
+            f"<details class='case' data-category='{category}'><summary>"
             f"{escaped(anchor['doc_id'])} source #{source_id} (member view) | {'; '.join(summary_bits)}"
             "</summary>"
             f"<p><strong>Source:</strong> {escaped(anchor['source_sentence'])}</p>"
@@ -487,6 +498,42 @@ def render_speed_page(
             "<th>first speech playout offset ms</th><th>ending offset ms</th><th>speech playout span ms</th><th>hypothesis</th>"
             f"</tr></thead><tbody>{''.join(rows)}</tbody></table>{''.join(group_details)}</details>"
         )
+    for row in sorted(
+        over_translation_rows,
+        key=lambda item: (
+            float(item["speed_factor"]),
+            str(item["doc_id"]),
+            int(item["segale_segment_id"]),
+        ),
+    ):
+        category_counts["over_translation"] += 1
+        entries.append(
+            "<details class='case' data-category='over_translation'><summary>"
+            f"{escaped(row['doc_id'])} · {float(row['speed_factor']):g}x · "
+            f"over-translation · hypothesis #{escaped(compact_ids(row['hypothesis_sentence_ids']))}"
+            "</summary>"
+            "<p><strong>Source:</strong> empty</p>"
+            f"<p><strong>Reference:</strong> {escaped(row['reference'])}</p>"
+            f"<p><strong>Hypothesis:</strong> {escaped(row['hypothesis'])}</p>"
+            "<p><strong>XCOMET:</strong> 0.0 by structural-null policy; "
+            "latency is not assigned because there is no source sentence.</p>"
+            "</details>"
+        )
+    total_cases = sum(category_counts.values())
+    filter_tabs = "".join(
+        (
+            f"<button class='case-filter{' active' if category == 'all' else ''}' "
+            f"type='button' role='tab' data-filter='{category}' "
+            f"aria-selected='{'true' if category == 'all' else 'false'}'>"
+            f"{label} <span>{count}</span></button>"
+        )
+        for category, label, count in (
+            ("all", "All", total_cases),
+            ("normal", "Normal", category_counts["normal"]),
+            ("under_translation", "Under-translation", category_counts["under_translation"]),
+            ("over_translation", "Over-translation", category_counts["over_translation"]),
+        )
+    )
     return f"""<!doctype html>
 <html><head><meta charset='utf-8'><title>{escaped(language)} {escaped(system)} speed cases</title>
 <style>
@@ -494,10 +541,30 @@ body{{font-family:Arial,sans-serif;margin:28px;color:#20242a;background:#fafbfc}
 details{{margin:10px 0;background:#fff;border:1px solid #d8dde3;border-radius:6px;padding:10px}}summary{{cursor:pointer;font-weight:600;line-height:1.45}}details.group{{margin:8px 0;background:#f7fafc}}
 table{{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}}th,td{{border:1px solid #d8dde3;padding:7px;vertical-align:top;text-align:right;word-break:break-word}}th{{background:#edf1f5}}th:last-child,td:last-child{{text-align:left;width:38%}}
 .note{{background:#fff8db;border-left:4px solid #ca8a04;padding:10px}}
+.case-tabs{{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0;position:sticky;top:0;background:#fafbfc;padding:10px 0;z-index:2}}
+.case-filter{{border:1px solid #aeb7c2;background:#fff;color:#20242a;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600}}
+.case-filter span{{color:#59636f;font-weight:400}}.case-filter.active{{background:#20242a;color:#fff;border-color:#20242a}}
+.case-filter.active span{{color:#e5e7eb}}.case[hidden]{{display:none}}
 </style></head><body>
 <p><a href='index.html'>&larr; all cells</a></p><h1>{escaped(language)} | {escaped(system)} | source-speed cases</h1>
 <p class='note'>First speech playout and ending offsets are the first/last aligned target-speech ASR unit's PCM playback completion minus source sentence end. Negative values mean that speech point played before the source sentence ended. The displayed source sentence is only one member of a SEGALE group. “Non-null SEGALE group” is structural, not a semantic match: inspect the expanded full group source/reference/hypothesis before judging repetition, omission, or over-translation. XCOMET is scored on that full group and is repeated here only to make the group boundary visible.</p>
+<div class='case-tabs' role='tablist' aria-label='SEGALE case category'>{filter_tabs}</div>
 {"".join(entries)}
+<script>
+document.querySelectorAll('.case-filter').forEach((button) => {{
+  button.addEventListener('click', () => {{
+    const filter = button.dataset.filter;
+    document.querySelectorAll('.case-filter').forEach((item) => {{
+      const selected = item === button;
+      item.classList.toggle('active', selected);
+      item.setAttribute('aria-selected', selected ? 'true' : 'false');
+    }});
+    document.querySelectorAll('.case').forEach((item) => {{
+      item.hidden = filter !== 'all' && item.dataset.category !== filter;
+    }});
+  }});
+}});
+</script>
 </body></html>"""
 
 
@@ -569,6 +636,9 @@ def build_comparison_pages(
     for (language, system, provider, target_lang), rows in grouped.items():
         by_speed: dict[float, dict[int, dict[str, Any]]] = defaultdict(dict)
         references: dict[int, dict[str, Any]] = {}
+        over_translation_rows = [
+            row for row in rows if row["null_alignment_type"] == "over_translation"
+        ]
         for row in rows:
             run_dir = Path(row["run_dir"])
             ref_rows = read_jsonl(run_dir / "segale_alignment" / "ref.jsonl")
@@ -588,7 +658,14 @@ def build_comparison_pages(
                 }
                 by_speed[row["speed_factor"]][source_id] = source_case
                 source_sentence_cases.append(source_case)
-        page = render_speed_page(language, system, provider, target_lang, by_speed)
+        page = render_speed_page(
+            language,
+            system,
+            provider,
+            target_lang,
+            by_speed,
+            over_translation_rows,
+        )
         (output_dir / f"compare_{target_lang}_{provider}.html").write_text(page, encoding="utf-8")
         delta_rows.append(paired_delta_row(language, system, provider, target_lang, by_speed))
     source_sentence_cases.sort(

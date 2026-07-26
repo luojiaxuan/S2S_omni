@@ -489,6 +489,11 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
   group source/reference/hypothesis，不能把其中某一个 source sentence 与整段
   hypothesis 单独当作 matched pair。SEGALE 的 structural over-translation 只在
   source span 为空时计数；语义重复、错译或过译须结合完整 group 和 XCOMET 判断。
+- 2026-07-26：九个 `compare_*.html` detail 页新增
+  `All / Normal / Under-translation / Over-translation` tab。分类互斥：
+  任一倍速为 structural under 的 source case 归 Under，其余 source case 归
+  Normal；没有 source ID 的 structural over 单独作为 Over case 展示。此前未进入
+  source-member 页面循环的 3 个 over case 现已恢复。
 - `speed_delta_summary.tsv` 是同一句的 paired 分析：只在两档 speed 都有 SEGALE
   非空对齐和 timing 时计算，分别报告 XCOMET 变化、tail latency 的 mean/p50/p90
   变化和 first-speech-playout p50 变化。它不能替代正式主表，也不会以删除 null 的方式

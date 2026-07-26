@@ -804,6 +804,12 @@ reference-based XCOMET description. Do not use the historical table or its
   equivalent to that count. `speed_delta_summary.tsv` is paired on source
   sentence and excludes a pair only from timing deltas when either side is
   null; nulls remain zero-scored in the canonical BLEU/XCOMET table.
+- 2026-07-26 all nine `compare_*.html` pages added mutually exclusive
+  `All / Normal / Under-translation / Over-translation` tabs. A source case is
+  Under when any speed condition has a structural under alignment; otherwise it
+  is Normal. Structural over rows have no source ID and are rendered as separate
+  Over cards, restoring the three rows that the earlier source-member loop
+  omitted.
 - The dashboard also exposes talk-level target-speech final offset, PCM queue
   tail after the final packet arrival, and trailing audio after the final
   spoken ASR unit. Trailing audio is shown for audit but excluded from speech
