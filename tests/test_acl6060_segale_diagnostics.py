@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -94,3 +95,63 @@ def test_paired_delta_summary_excludes_null_alignments() -> None:
     assert result["ending_offset_delta_p50_ms_1p25x_vs_1x"] == -100.0
     assert result["valid_pairs_1p5x_vs_1x"] == 2
     assert result["ending_offset_delta_p50_ms_1p5x_vs_1x"] == 50.0
+
+
+def test_render_index_includes_enja_audio_sample_manifest(tmp_path: Path) -> None:
+    sample_dir = tmp_path / "audio_samples"
+    sample_dir.mkdir()
+    (sample_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "title": "En-Ja 1.5x audio sample",
+                "description": "Captured target speech.",
+                "sample_id": "2022.acl-long.117",
+                "speed_factor": 1.5,
+                "chunk_ms": 960,
+                "preview_duration_s": 90,
+                "tracks": [
+                    {
+                        "label": "Gemini target",
+                        "description": "No target time-stretch.",
+                        "path": "audio_samples/gemini.mp3",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    rendered = diagnostics.render_index(
+        [
+            {
+                "Language": "En-Ja",
+                "System": "Gemini",
+                "Speedup": "1.5x",
+                "provider": "gemini",
+                "target_lang": "ja",
+                "speed_factor": 1.5,
+                "bleu": 30,
+                "xcomet_xl": 0.6,
+                "valid_segments": 9,
+                "segments": 10,
+                "over_translation_alignments": 0,
+                "under_translation_alignments": 1,
+                "non_1to1_groups": 2,
+                "many_source_to_one_groups": 1,
+                "max_source_group_size": 2,
+                "ending_offset_mean_ms": 1,
+                "ending_offset_p50_ms": 1,
+                "ending_offset_p90_ms": 1,
+                "first_speech_playout_offset_p50_ms": 1,
+                "speech_playout_span_p50_ms": 1,
+                "talk_speech_final_offset_mean_ms": 1,
+                "target_audio_queue_tail_mean_ms": 1,
+                "target_audio_after_speech_mean_ms": 1,
+            }
+        ],
+        tmp_path,
+    )
+
+    assert "id='enja-1p5-audio'" in rendered
+    assert "src='audio_samples/gemini.mp3'" in rendered
+    assert "href='#enja-1p5-audio'>audio sample</a>" in rendered

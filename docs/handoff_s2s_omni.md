@@ -781,6 +781,11 @@ reference-based XCOMET description. Do not use the historical table or its
   GitHub Pages preview: `https://luojiaxuan.github.io/S2S_omni/`.
   It has all 27 cells and links to nine per-language/system pages comparing the
   same ACL source sentence at `1x`, `1.25x`, and `1.5x`.
+- 2026-07-26 the dashboard added a 90-second En-Ja `1.5x`
+  `2022.acl-long.117` listening sample with the same accelerated source and
+  unmodified GPT/Gemini/KIT target speech. Git tracks the MP3 previews,
+  SHA256 values, and provenance manifest under
+  `artifacts/acl6060_segale_diagnostics/audio_samples/`.
 - `cell_summary.tsv` reports per-cell `over_translation`,
   `under_translation`, total null alignment count, and sentence-level tail,
   first-speech-playout, and speech-playout-span distributions. It also reports

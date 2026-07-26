@@ -320,10 +320,41 @@ def write_speed_delta_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
+def render_audio_samples(output_dir: Path) -> str:
+    manifest_path = output_dir / "audio_samples" / "manifest.json"
+    if not manifest_path.exists():
+        return ""
+    manifest = read_json(manifest_path)
+    tracks = []
+    for track in manifest.get("tracks") or []:
+        tracks.append(
+            "<article class='audio-track'>"
+            f"<h3>{escaped(track['label'])}</h3>"
+            f"<p>{escaped(track.get('description'))}</p>"
+            f"<audio controls preload='metadata' src='{escaped(track['path'])}'></audio>"
+            "</article>"
+        )
+    return (
+        "<section class='audio-samples' id='enja-1p5-audio'>"
+        f"<h2>{escaped(manifest['title'])}</h2>"
+        f"<p>{escaped(manifest.get('description'))}</p>"
+        f"<div class='audio-grid'>{''.join(tracks)}</div>"
+        f"<p class='sample-meta'>Sample: <code>{escaped(manifest['sample_id'])}</code> · "
+        f"source speed: {number(float(manifest['speed_factor']), 1)}x · "
+        f"chunk: {int(manifest['chunk_ms'])} ms · "
+        f"preview: {number(float(manifest['preview_duration_s']), 0)} s from stream start · "
+        "<a href='audio_samples/manifest.json'>manifest</a></p>"
+        "</section>"
+    )
+
+
 def render_index(summary_rows: list[dict[str, Any]], output_dir: Path) -> str:
     rows = []
     for row in summary_rows:
         page = f"compare_{row['target_lang']}_{row['provider']}.html"
+        sample_link = ""
+        if row["target_lang"] == "ja" and math.isclose(float(row["speed_factor"]), 1.5):
+            sample_link = "<br><a href='#enja-1p5-audio'>audio sample</a>"
         rows.append(
             "<tr>"
             f"<td>{escaped(row['Language'])}</td><td>{escaped(row['System'])}</td>"
@@ -340,9 +371,10 @@ def render_index(summary_rows: list[dict[str, Any]], output_dir: Path) -> str:
             f"<td>{number(row['talk_speech_final_offset_mean_ms'])}</td>"
             f"<td>{number(row['target_audio_queue_tail_mean_ms'])}</td>"
             f"<td>{number(row['target_audio_after_speech_mean_ms'])}</td>"
-            f"<td><a href='{escaped(page)}'>sentence cases</a></td>"
+            f"<td><a href='{escaped(page)}'>sentence cases</a>{sample_link}</td>"
             "</tr>"
         )
+    audio_samples = render_audio_samples(output_dir)
     return f"""<!doctype html>
 <html><head><meta charset='utf-8'><title>ACL6060 SEGALE diagnostics</title>
 <style>
@@ -350,12 +382,18 @@ body{{font-family:Arial,sans-serif;margin:28px;color:#20242a;background:#fafbfc}
 p{{max-width:1200px;line-height:1.45}}table{{width:100%;border-collapse:collapse;background:#fff;font-size:13px}}
 th,td{{border:1px solid #d8dde3;padding:7px;text-align:right;vertical-align:top}}th{{background:#edf1f5;position:sticky;top:0}}th:nth-child(-n+3),td:nth-child(-n+3){{text-align:left}}a{{color:#075985}}
 .note{{background:#fff8db;border-left:4px solid #ca8a04;padding:10px;max-width:1200px}}
+.audio-samples{{margin:24px 0;max-width:1200px}}.audio-samples h2{{margin-bottom:6px}}
+.audio-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}}
+.audio-track{{background:#fff;border:1px solid #d8dde3;padding:12px;border-radius:6px}}
+.audio-track h3{{font-size:15px;margin:0 0 6px}}.audio-track p{{font-size:13px;min-height:38px;margin:0 0 8px}}
+.audio-track audio{{display:block;width:100%}}.sample-meta{{font-size:13px;color:#4b5563}}
 </style></head><body>
 <h1>ACL6060 SEGALE sentence diagnostics</h1>
 <p class='note'><strong>Latency semantics:</strong> first and ending offsets use target-speech ASR unit playback completion. Each ASR unit's target-audio position is mapped through the captured PCM packet arrival and zero-jitter playout queue; trailing silence after the final spoken unit is excluded.</p>
 <p class='note'><strong>Talk-level speech completion:</strong> “talk speech final” is the last spoken ASR unit's PCM playback completion minus the sped source duration. “queue tail” is full PCM playout end minus final packet arrival. “audio after speech” is full PCM playout end minus the last spoken ASR unit; it is excluded from speech completion and sentence latency.</p>
 <p class='note'><strong>XCOMET length caveat:</strong> XCOMET-XL is a sentence-trained metric with a 512-subword joint input limit. SEGALE non-1:1 groups, especially long N:1 groups, are out-of-distribution and may be truncated. Their group scores are diagnostics, not calibrated per-source-sentence scores.</p>
 <p><strong>Structural versus semantic:</strong> a non-null SEGALE group only means Vecalign linked non-empty source and hypothesis spans. It is not a semantic “matched” judgment. XCOMET assesses the full aligned group; non-1:1 and N:1 counts flag spans that must be inspected before attributing a group hypothesis to an individual source sentence. A null row is the only structural `over_translation`/`under_translation` count and is retained with XCOMET=0.0 but no latency.</p>
+{audio_samples}
 <table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>structural over</th><th>structural under</th><th>non-1:1</th><th>N:1 groups</th><th>max source span</th><th>ending mean ms</th><th>ending p50 ms</th><th>ending p90 ms</th><th>first speech p50 ms</th><th>speech playout span p50 ms</th><th>talk speech final mean ms</th><th>queue tail mean ms</th><th>audio after speech mean ms</th><th>details</th></tr></thead><tbody>
 {"".join(rows)}</tbody></table>
 <p>Machine-readable summaries: <a href='cell_summary.tsv'>per-cell TSV</a>, <a href='cell_summary.jsonl'>per-cell JSONL</a>, <a href='speed_delta_summary.tsv'>paired-speed TSV</a>, <a href='speed_delta_summary.jsonl'>paired-speed JSONL</a>, <a href='sentence_cases.jsonl'>all source-sentence cases</a>.</p>

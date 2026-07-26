@@ -1,0 +1,44 @@
+{
+  "title": "En-Ja 1.5x audio sample",
+  "description": "The same ACL6060 talk is shown as the exact 1.5x English source stream and three captured Japanese target-speech streams. Every preview starts at stream time 00:00, retains initial waiting time, and leaves target speech at the system's produced pace.",
+  "sample_id": "2022.acl-long.117",
+  "sample_index": 4,
+  "speed_factor": 1.5,
+  "chunk_ms": 960,
+  "preview_start_s": 0,
+  "preview_duration_s": 90,
+  "audio_codec": "MP3 mono 24 kHz 64 kbps",
+  "tracks": [
+    {
+      "label": "Source English (1.5x)",
+      "description": "Exact paced source stream sent to the systems.",
+      "path": "audio_samples/enja_speed1p5_2022.acl-long.117/source_en_1p5.mp3",
+      "full_stream_duration_s": 485.989708,
+      "sha256": "9af8f2e1188ef99b4549e87f0e117723fb3b963676c0053bd48e6dd6ec83bb26"
+    },
+    {
+      "label": "GPT-realtime-translate target",
+      "description": "Captured Japanese target speech; no target time-stretch.",
+      "path": "audio_samples/enja_speed1p5_2022.acl-long.117/gpt_realtime_translate_ja.mp3",
+      "run": "acl6060_live_enja_openai_chunk960_speed1p5",
+      "full_stream_duration_s": 505.0,
+      "sha256": "1ade74e18bbd6b89a9492116b995470a23e7dd7daf16e6d1c22d553e58437a41"
+    },
+    {
+      "label": "Gemini 3.5 Live Translate target",
+      "description": "Captured Japanese target speech; no target time-stretch.",
+      "path": "audio_samples/enja_speed1p5_2022.acl-long.117/gemini_3p5_live_translate_ja.mp3",
+      "run": "acl6060_live_enja_gemini_chunk960_speed1p5",
+      "full_stream_duration_s": 509.25,
+      "sha256": "3d829bb7b83b90ea97adbef5b047ec147ca255df363ca9cedfd7daba8a337d71"
+    },
+    {
+      "label": "KIT high-quality target",
+      "description": "Captured mixed/high_quality Japanese target speech; no target time-stretch.",
+      "path": "audio_samples/enja_speed1p5_2022.acl-long.117/kit_high_quality_ja.mp3",
+      "run": "acl6060_live_enja_kit_chunk960_speed1p5",
+      "full_stream_duration_s": 997.9,
+      "sha256": "258b2f1c96412dc91386542188cda5183ee5edc56b5b82b4a6f8025066df9169"
+    }
+  ]
+}
