@@ -1,44 +1,390 @@
 {
-  "title": "En-Ja 1.5x audio sample",
-  "description": "The same ACL6060 talk is shown as the exact 1.5x English source stream and three captured Japanese target-speech streams. Every preview starts at stream time 00:00, retains initial waiting time, and leaves target speech at the system's produced pace.",
+  "title": "ACL6060 multilingual source-speed audio samples",
+  "description": "The same ACL6060 talk is shown for En-Zh, En-De, and En-Ja at 1x, 1.25x, and 1.5x source speed. Each group contains the exact source stream plus GPT, Gemini, and KIT target speech.",
   "sample_id": "2022.acl-long.117",
   "sample_index": 4,
-  "speed_factor": 1.5,
   "chunk_ms": 960,
   "preview_start_s": 0,
-  "preview_duration_s": 90,
+  "preview_duration_s": 90.0,
   "audio_codec": "MP3 mono 24 kHz 64 kbps",
-  "tracks": [
+  "groups": [
     {
-      "label": "Source English (1.5x)",
-      "description": "Exact paced source stream sent to the systems.",
-      "path": "audio_samples/enja_speed1p5_2022.acl-long.117/source_en_1p5.mp3",
-      "full_stream_duration_s": 485.989708,
-      "sha256": "9af8f2e1188ef99b4549e87f0e117723fb3b963676c0053bd48e6dd6ec83bb26"
+      "language": "En-Zh",
+      "target_lang": "zh",
+      "target_language_name": "Chinese",
+      "speed_factor": 1.0,
+      "speed_label": "1x",
+      "anchor": "audio-zh-1",
+      "tracks": [
+        {
+          "label": "Source English (1x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/enzh_speed1_2022.acl-long.117/source_en_1.mp3",
+          "run": "acl6060_live_enzh_openai_chunk960_speed1",
+          "full_stream_duration_s": 729.013708,
+          "sha256": "547585a49c66e848193fff2a39be30e95a0e9d6c761b7c2b3eebb1e830957801"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1_2022.acl-long.117/gpt_realtime_translate_zh.mp3",
+          "run": "acl6060_live_enzh_openai_chunk960_speed1",
+          "full_stream_duration_s": 756.6,
+          "sha256": "dde410845ce111c85711b5de8b9d64b8988a99becd39262769e0b9c7bd0d42ea"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1_2022.acl-long.117/gemini_3p5_live_translate_zh.mp3",
+          "run": "acl6060_live_enzh_gemini_chunk960_speed1",
+          "full_stream_duration_s": 756.0,
+          "sha256": "a3e1b77cfa95b0af8c7480447daa45ac991d82ec5b1d3bc2516a6e4d20a0d47f"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1_2022.acl-long.117/kit_high_quality_zh.mp3",
+          "run": "acl6060_live_enzh_kit_chunk960_speed1",
+          "full_stream_duration_s": 815.775,
+          "sha256": "78d63dd9173acd54d39e7d352770766ffd427a1ba44a5bb0190168eda4602119"
+        }
+      ]
     },
     {
-      "label": "GPT-realtime-translate target",
-      "description": "Captured Japanese target speech; no target time-stretch.",
-      "path": "audio_samples/enja_speed1p5_2022.acl-long.117/gpt_realtime_translate_ja.mp3",
-      "run": "acl6060_live_enja_openai_chunk960_speed1p5",
-      "full_stream_duration_s": 505.0,
-      "sha256": "1ade74e18bbd6b89a9492116b995470a23e7dd7daf16e6d1c22d553e58437a41"
+      "language": "En-Zh",
+      "target_lang": "zh",
+      "target_language_name": "Chinese",
+      "speed_factor": 1.25,
+      "speed_label": "1.25x",
+      "anchor": "audio-zh-1p25",
+      "tracks": [
+        {
+          "label": "Source English (1.25x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/enzh_speed1p25_2022.acl-long.117/source_en_1p25.mp3",
+          "run": "acl6060_live_enzh_openai_chunk960_speed1p25",
+          "full_stream_duration_s": 583.178333,
+          "sha256": "cb91c5f307ed13ec366e59fd00d18eb2572d3c73931e9746c6ef2372238f250a"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1p25_2022.acl-long.117/gpt_realtime_translate_zh.mp3",
+          "run": "acl6060_live_enzh_openai_chunk960_speed1p25",
+          "full_stream_duration_s": 608.4,
+          "sha256": "f1086bceeddf48ebb887503218297c9c50c2ac5df8b22ebc3706a963118c857b"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1p25_2022.acl-long.117/gemini_3p5_live_translate_zh.mp3",
+          "run": "acl6060_live_enzh_gemini_chunk960_speed1p25",
+          "full_stream_duration_s": 614.25,
+          "sha256": "12ea07b4469d90b24f7ce1f67baabc7ecfb28e10406ab7fdadafe832dcaa0554"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1p25_2022.acl-long.117/kit_high_quality_zh.mp3",
+          "run": "acl6060_live_enzh_kit_chunk960_speed1p25",
+          "full_stream_duration_s": 803.225,
+          "sha256": "5a238bc4cb308661d9746ccf313149ca38f76fd26e74c1b169a392a1e39931ba"
+        }
+      ]
     },
     {
-      "label": "Gemini 3.5 Live Translate target",
-      "description": "Captured Japanese target speech; no target time-stretch.",
-      "path": "audio_samples/enja_speed1p5_2022.acl-long.117/gemini_3p5_live_translate_ja.mp3",
-      "run": "acl6060_live_enja_gemini_chunk960_speed1p5",
-      "full_stream_duration_s": 509.25,
-      "sha256": "3d829bb7b83b90ea97adbef5b047ec147ca255df363ca9cedfd7daba8a337d71"
+      "language": "En-Zh",
+      "target_lang": "zh",
+      "target_language_name": "Chinese",
+      "speed_factor": 1.5,
+      "speed_label": "1.5x",
+      "anchor": "audio-zh-1p5",
+      "tracks": [
+        {
+          "label": "Source English (1.5x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/enzh_speed1p5_2022.acl-long.117/source_en_1p5.mp3",
+          "run": "acl6060_live_enzh_openai_chunk960_speed1p5",
+          "full_stream_duration_s": 485.989708,
+          "sha256": "9af8f2e1188ef99b4549e87f0e117723fb3b963676c0053bd48e6dd6ec83bb26"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1p5_2022.acl-long.117/gpt_realtime_translate_zh.mp3",
+          "run": "acl6060_live_enzh_openai_chunk960_speed1p5",
+          "full_stream_duration_s": 505.85,
+          "sha256": "622e5367d3e872fcb4ffcc12724b9e7bd07a007c5c4fa755b187fac788623115"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1p5_2022.acl-long.117/gemini_3p5_live_translate_zh.mp3",
+          "run": "acl6060_live_enzh_gemini_chunk960_speed1p5",
+          "full_stream_duration_s": 511.25,
+          "sha256": "1b727fa7f5d5398aa5deed27be1de8434d4b1a32baac2fa4805fe682f79e0eda"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality Chinese target speech; no target time-stretch.",
+          "path": "audio_samples/enzh_speed1p5_2022.acl-long.117/kit_high_quality_zh.mp3",
+          "run": "acl6060_live_enzh_kit_chunk960_speed1p5",
+          "full_stream_duration_s": 814.3,
+          "sha256": "eb89c86dfdaf1e9d3536fce13886f7d6a9218ac784cfbed8c236e70758d4cc89"
+        }
+      ]
     },
     {
-      "label": "KIT high-quality target",
-      "description": "Captured mixed/high_quality Japanese target speech; no target time-stretch.",
-      "path": "audio_samples/enja_speed1p5_2022.acl-long.117/kit_high_quality_ja.mp3",
-      "run": "acl6060_live_enja_kit_chunk960_speed1p5",
-      "full_stream_duration_s": 997.9,
-      "sha256": "258b2f1c96412dc91386542188cda5183ee5edc56b5b82b4a6f8025066df9169"
+      "language": "En-De",
+      "target_lang": "de",
+      "target_language_name": "German",
+      "speed_factor": 1.0,
+      "speed_label": "1x",
+      "anchor": "audio-de-1",
+      "tracks": [
+        {
+          "label": "Source English (1x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/ende_speed1_2022.acl-long.117/source_en_1.mp3",
+          "run": "acl6060_live_ende_openai_chunk960_speed1",
+          "full_stream_duration_s": 729.013708,
+          "sha256": "547585a49c66e848193fff2a39be30e95a0e9d6c761b7c2b3eebb1e830957801"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1_2022.acl-long.117/gpt_realtime_translate_de.mp3",
+          "run": "acl6060_live_ende_openai_chunk960_speed1",
+          "full_stream_duration_s": 756.7,
+          "sha256": "f7cb8a7bef36a54f8b04d819e1df72214016bc9e6d6d26ab3de56fda27c59d98"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1_2022.acl-long.117/gemini_3p5_live_translate_de.mp3",
+          "run": "acl6060_live_ende_gemini_chunk960_speed1",
+          "full_stream_duration_s": 775.0,
+          "sha256": "2068a863569ec3b81af14abf2cbf9243243f79a37fb59ea4ff267e34fe810d1b"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1_2022.acl-long.117/kit_high_quality_de.mp3",
+          "run": "acl6060_live_ende_kit_chunk960_speed1",
+          "full_stream_duration_s": 928.40425,
+          "sha256": "da990fdad68b5e6e39c75eb03a2212a28d7f990c2a49b58097295307878aa2ae"
+        }
+      ]
+    },
+    {
+      "language": "En-De",
+      "target_lang": "de",
+      "target_language_name": "German",
+      "speed_factor": 1.25,
+      "speed_label": "1.25x",
+      "anchor": "audio-de-1p25",
+      "tracks": [
+        {
+          "label": "Source English (1.25x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/ende_speed1p25_2022.acl-long.117/source_en_1p25.mp3",
+          "run": "acl6060_live_ende_openai_chunk960_speed1p25",
+          "full_stream_duration_s": 583.178333,
+          "sha256": "cb91c5f307ed13ec366e59fd00d18eb2572d3c73931e9746c6ef2372238f250a"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1p25_2022.acl-long.117/gpt_realtime_translate_de.mp3",
+          "run": "acl6060_live_ende_openai_chunk960_speed1p25",
+          "full_stream_duration_s": 602.0,
+          "sha256": "e2b21cb228c42f1c739ba46d5f498644a22fbefdcce7d68fddb56f54605bee45"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1p25_2022.acl-long.117/gemini_3p5_live_translate_de.mp3",
+          "run": "acl6060_live_ende_gemini_chunk960_speed1p25",
+          "full_stream_duration_s": 613.75,
+          "sha256": "542caca4913cdd66871dd653e16456c0805cca24c57cdb5a2db03b7dd80e8f53"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1p25_2022.acl-long.117/kit_high_quality_de.mp3",
+          "run": "acl6060_live_ende_kit_chunk960_speed1p25",
+          "full_stream_duration_s": 919.207,
+          "sha256": "f4e6103aa2e5727c058d8dd14761af96b477a0b97e6eb1f6104957a6d5f5eb9d"
+        }
+      ]
+    },
+    {
+      "language": "En-De",
+      "target_lang": "de",
+      "target_language_name": "German",
+      "speed_factor": 1.5,
+      "speed_label": "1.5x",
+      "anchor": "audio-de-1p5",
+      "tracks": [
+        {
+          "label": "Source English (1.5x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/ende_speed1p5_2022.acl-long.117/source_en_1p5.mp3",
+          "run": "acl6060_live_ende_openai_chunk960_speed1p5",
+          "full_stream_duration_s": 485.989708,
+          "sha256": "9af8f2e1188ef99b4549e87f0e117723fb3b963676c0053bd48e6dd6ec83bb26"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1p5_2022.acl-long.117/gpt_realtime_translate_de.mp3",
+          "run": "acl6060_live_ende_openai_chunk960_speed1p5",
+          "full_stream_duration_s": 503.1,
+          "sha256": "4c9b3f8b34df53661adea6518cfcbe12e2619537142f0822b1432a2cd3f9bab8"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1p5_2022.acl-long.117/gemini_3p5_live_translate_de.mp3",
+          "run": "acl6060_live_ende_gemini_chunk960_speed1p5",
+          "full_stream_duration_s": 507.75,
+          "sha256": "462ae9750639c9b4dd63deb059392b47ec0605526049c54e73f28d598603fc01"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality German target speech; no target time-stretch.",
+          "path": "audio_samples/ende_speed1p5_2022.acl-long.117/kit_high_quality_de.mp3",
+          "run": "acl6060_live_ende_kit_chunk960_speed1p5",
+          "full_stream_duration_s": 933.4415,
+          "sha256": "1d53c365a8a65c2803c272b7fc7f0c094d44e9cd49a5e481dce8fa8a0041c5d3"
+        }
+      ]
+    },
+    {
+      "language": "En-Ja",
+      "target_lang": "ja",
+      "target_language_name": "Japanese",
+      "speed_factor": 1.0,
+      "speed_label": "1x",
+      "anchor": "audio-ja-1",
+      "tracks": [
+        {
+          "label": "Source English (1x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/enja_speed1_2022.acl-long.117/source_en_1.mp3",
+          "run": "acl6060_live_enja_openai_chunk960_speed1",
+          "full_stream_duration_s": 729.013708,
+          "sha256": "547585a49c66e848193fff2a39be30e95a0e9d6c761b7c2b3eebb1e830957801"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1_2022.acl-long.117/gpt_realtime_translate_ja.mp3",
+          "run": "acl6060_live_enja_openai_chunk960_speed1",
+          "full_stream_duration_s": 757.0,
+          "sha256": "ce91dbc8ea6984608dfdd5d1868fa7094db0c24b15418f80664b2612fbc8285f"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1_2022.acl-long.117/gemini_3p5_live_translate_ja.mp3",
+          "run": "acl6060_live_enja_gemini_chunk960_speed1",
+          "full_stream_duration_s": 761.5,
+          "sha256": "bb6ed9f5bdc9e7ea96b9eaf3922d88128f514476e697d6c878791efce16dc267"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1_2022.acl-long.117/kit_high_quality_ja.mp3",
+          "run": "acl6060_live_enja_kit_chunk960_speed1",
+          "full_stream_duration_s": 1006.425,
+          "sha256": "026b65e7df4f9946097657e02fd3205eabd66b1ac235049c15d3260101226693"
+        }
+      ]
+    },
+    {
+      "language": "En-Ja",
+      "target_lang": "ja",
+      "target_language_name": "Japanese",
+      "speed_factor": 1.25,
+      "speed_label": "1.25x",
+      "anchor": "audio-ja-1p25",
+      "tracks": [
+        {
+          "label": "Source English (1.25x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/enja_speed1p25_2022.acl-long.117/source_en_1p25.mp3",
+          "run": "acl6060_live_enja_openai_chunk960_speed1p25",
+          "full_stream_duration_s": 583.178333,
+          "sha256": "cb91c5f307ed13ec366e59fd00d18eb2572d3c73931e9746c6ef2372238f250a"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1p25_2022.acl-long.117/gpt_realtime_translate_ja.mp3",
+          "run": "acl6060_live_enja_openai_chunk960_speed1p25",
+          "full_stream_duration_s": 608.4,
+          "sha256": "94debd3520d96a6d495c4a8cf7de177e1c0c9ba4d1fc7f4f855386c12127fddb"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1p25_2022.acl-long.117/gemini_3p5_live_translate_ja.mp3",
+          "run": "acl6060_live_enja_gemini_chunk960_speed1p25",
+          "full_stream_duration_s": 614.25,
+          "sha256": "d8cb18fa274b060b028d0ac056029357064154f06e5deaa4f3ac37166b2570e3"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1p25_2022.acl-long.117/kit_high_quality_ja.mp3",
+          "run": "acl6060_live_enja_kit_chunk960_speed1p25",
+          "full_stream_duration_s": 1003.925,
+          "sha256": "b5d48fabcfe01be2594f5705d7b1a4cd21b95a2444207ea7c96576753112081a"
+        }
+      ]
+    },
+    {
+      "language": "En-Ja",
+      "target_lang": "ja",
+      "target_language_name": "Japanese",
+      "speed_factor": 1.5,
+      "speed_label": "1.5x",
+      "anchor": "audio-ja-1p5",
+      "tracks": [
+        {
+          "label": "Source English (1.5x)",
+          "description": "Exact paced source stream sent to the systems.",
+          "path": "audio_samples/enja_speed1p5_2022.acl-long.117/source_en_1p5.mp3",
+          "run": "acl6060_live_enja_openai_chunk960_speed1p5",
+          "full_stream_duration_s": 485.989708,
+          "sha256": "9af8f2e1188ef99b4549e87f0e117723fb3b963676c0053bd48e6dd6ec83bb26"
+        },
+        {
+          "label": "GPT-realtime-translate target",
+          "description": "Captured Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1p5_2022.acl-long.117/gpt_realtime_translate_ja.mp3",
+          "run": "acl6060_live_enja_openai_chunk960_speed1p5",
+          "full_stream_duration_s": 505.0,
+          "sha256": "1ade74e18bbd6b89a9492116b995470a23e7dd7daf16e6d1c22d553e58437a41"
+        },
+        {
+          "label": "Gemini 3.5 Live Translate target",
+          "description": "Captured Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1p5_2022.acl-long.117/gemini_3p5_live_translate_ja.mp3",
+          "run": "acl6060_live_enja_gemini_chunk960_speed1p5",
+          "full_stream_duration_s": 509.25,
+          "sha256": "3d829bb7b83b90ea97adbef5b047ec147ca255df363ca9cedfd7daba8a337d71"
+        },
+        {
+          "label": "KIT high-quality target",
+          "description": "Captured mixed/high_quality Japanese target speech; no target time-stretch.",
+          "path": "audio_samples/enja_speed1p5_2022.acl-long.117/kit_high_quality_ja.mp3",
+          "run": "acl6060_live_enja_kit_chunk960_speed1p5",
+          "full_stream_duration_s": 997.9,
+          "sha256": "258b2f1c96412dc91386542188cda5183ee5edc56b5b82b4a6f8025066df9169"
+        }
+      ]
     }
   ]
 }

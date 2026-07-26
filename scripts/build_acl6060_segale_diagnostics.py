@@ -325,22 +325,45 @@ def render_audio_samples(output_dir: Path) -> str:
     if not manifest_path.exists():
         return ""
     manifest = read_json(manifest_path)
-    tracks = []
-    for track in manifest.get("tracks") or []:
-        tracks.append(
-            "<article class='audio-track'>"
-            f"<h3>{escaped(track['label'])}</h3>"
-            f"<p>{escaped(track.get('description'))}</p>"
-            f"<audio controls preload='metadata' src='{escaped(track['path'])}'></audio>"
-            "</article>"
+    languages: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for group in manifest.get("groups") or []:
+        languages[str(group["language"])].append(group)
+    language_sections = []
+    for language, groups in languages.items():
+        speed_sections = []
+        for group in sorted(groups, key=lambda item: float(item["speed_factor"])):
+            tracks = []
+            for audio_track in group.get("tracks") or []:
+                tracks.append(
+                    "<article class='audio-track'>"
+                    f"<h4>{escaped(audio_track['label'])}</h4>"
+                    f"<p>{escaped(audio_track.get('description'))}</p>"
+                    f"<audio controls preload='metadata' "
+                    f"src='{escaped(audio_track['path'])}'></audio>"
+                    "</article>"
+                )
+            speed_sections.append(
+                f"<details class='audio-speed' id='{escaped(group['anchor'])}' open>"
+                f"<summary>{escaped(group['speed_label'])} source speed · "
+                f"{len(tracks)} tracks</summary>"
+                f"<div class='audio-grid'>{''.join(tracks)}</div>"
+                "</details>"
+            )
+        language_sections.append(
+            f"<section class='audio-language' id='audio-{escaped(groups[0]['target_lang'])}'>"
+            f"<h3>{escaped(language)}</h3>{''.join(speed_sections)}</section>"
         )
+    nav = " · ".join(
+        f"<a href='#audio-{escaped(groups[0]['target_lang'])}'>{escaped(language)}</a>"
+        for language, groups in languages.items()
+    )
     return (
-        "<section class='audio-samples' id='enja-1p5-audio'>"
+        "<section class='audio-samples' id='audio-samples'>"
         f"<h2>{escaped(manifest['title'])}</h2>"
         f"<p>{escaped(manifest.get('description'))}</p>"
-        f"<div class='audio-grid'>{''.join(tracks)}</div>"
+        f"<p class='audio-nav'>{nav}</p>"
+        f"{''.join(language_sections)}"
         f"<p class='sample-meta'>Sample: <code>{escaped(manifest['sample_id'])}</code> · "
-        f"source speed: {number(float(manifest['speed_factor']), 1)}x · "
         f"chunk: {int(manifest['chunk_ms'])} ms · "
         f"preview: {number(float(manifest['preview_duration_s']), 0)} s from stream start · "
         "<a href='audio_samples/manifest.json'>manifest</a></p>"
@@ -352,9 +375,10 @@ def render_index(summary_rows: list[dict[str, Any]], output_dir: Path) -> str:
     rows = []
     for row in summary_rows:
         page = f"compare_{row['target_lang']}_{row['provider']}.html"
-        sample_link = ""
-        if row["target_lang"] == "ja" and math.isclose(float(row["speed_factor"]), 1.5):
-            sample_link = "<br><a href='#enja-1p5-audio'>audio sample</a>"
+        speed_slug = {1.0: "1", 1.25: "1p25", 1.5: "1p5"}[float(row["speed_factor"])]
+        sample_link = (
+            f"<br><a href='#audio-{escaped(row['target_lang'])}-{speed_slug}'>audio sample</a>"
+        )
         rows.append(
             "<tr>"
             f"<td>{escaped(row['Language'])}</td><td>{escaped(row['System'])}</td>"
@@ -383,9 +407,12 @@ p{{max-width:1200px;line-height:1.45}}table{{width:100%;border-collapse:collapse
 th,td{{border:1px solid #d8dde3;padding:7px;text-align:right;vertical-align:top}}th{{background:#edf1f5;position:sticky;top:0}}th:nth-child(-n+3),td:nth-child(-n+3){{text-align:left}}a{{color:#075985}}
 .note{{background:#fff8db;border-left:4px solid #ca8a04;padding:10px;max-width:1200px}}
 .audio-samples{{margin:24px 0;max-width:1200px}}.audio-samples h2{{margin-bottom:6px}}
+.audio-nav{{font-weight:600}}.audio-language{{margin:20px 0}}.audio-language h3{{font-size:20px;margin:0 0 8px}}
+.audio-speed{{background:#fff;border:1px solid #d8dde3;border-radius:6px;margin:10px 0;padding:10px}}
+.audio-speed summary{{cursor:pointer;font-weight:700}}
 .audio-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}}
-.audio-track{{background:#fff;border:1px solid #d8dde3;padding:12px;border-radius:6px}}
-.audio-track h3{{font-size:15px;margin:0 0 6px}}.audio-track p{{font-size:13px;min-height:38px;margin:0 0 8px}}
+.audio-track{{border-top:1px solid #e5e7eb;padding:12px 0 0}}
+.audio-track h4{{font-size:15px;margin:0 0 6px}}.audio-track p{{font-size:13px;min-height:38px;margin:0 0 8px}}
 .audio-track audio{{display:block;width:100%}}.sample-meta{{font-size:13px;color:#4b5563}}
 </style></head><body>
 <h1>ACL6060 SEGALE sentence diagnostics</h1>

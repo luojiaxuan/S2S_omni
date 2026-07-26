@@ -465,10 +465,12 @@ artifacts/acl6060_segale_diagnostics/sentence_cases.jsonl
 artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
 ```
 
-- 2026-07-26：`index.html` 新增 En-Ja `1.5x` 的
-  `2022.acl-long.117` 90 秒试听样例，包含同一段加速 source 以及
-  GPT/Gemini/KIT 的原始 target speech；音频未做 target 变速，MP3、SHA256
-  和 provenance manifest 位于 `artifacts/acl6060_segale_diagnostics/audio_samples/`。
+- 2026-07-26：`index.html` 新增 `2022.acl-long.117` 的多语言、多倍速
+  90 秒试听样例，覆盖 En-Zh/En-De/En-Ja × `1x/1.25x/1.5x`。每个组合均包含
+  exact paced source 以及 GPT/Gemini/KIT 的原始 target speech；音频未做
+  target 变速，36 个 MP3、SHA256 和 provenance manifest 位于
+  `artifacts/acl6060_segale_diagnostics/audio_samples/`。复现入口为
+  `scripts/build_acl6060_audio_samples.py`。
 - `index.html` 的每个 cell 都给出 SEGALE `over_translation`、
   `under_translation`、总 null count，及单句 ending/first-speech-playout/
   speech-playout-span 的均值或分位数，也给出非 `1:1`、`N:1` 和最大 source span 的 structural

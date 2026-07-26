@@ -97,23 +97,31 @@ def test_paired_delta_summary_excludes_null_alignments() -> None:
     assert result["ending_offset_delta_p50_ms_1p5x_vs_1x"] == 50.0
 
 
-def test_render_index_includes_enja_audio_sample_manifest(tmp_path: Path) -> None:
+def test_render_index_includes_multilingual_audio_sample_manifest(tmp_path: Path) -> None:
     sample_dir = tmp_path / "audio_samples"
     sample_dir.mkdir()
     (sample_dir / "manifest.json").write_text(
         json.dumps(
             {
-                "title": "En-Ja 1.5x audio sample",
+                "title": "ACL6060 multilingual source-speed audio samples",
                 "description": "Captured target speech.",
                 "sample_id": "2022.acl-long.117",
-                "speed_factor": 1.5,
                 "chunk_ms": 960,
                 "preview_duration_s": 90,
-                "tracks": [
+                "groups": [
                     {
-                        "label": "Gemini target",
-                        "description": "No target time-stretch.",
-                        "path": "audio_samples/gemini.mp3",
+                        "language": "En-Ja",
+                        "target_lang": "ja",
+                        "speed_factor": 1.5,
+                        "speed_label": "1.5x",
+                        "anchor": "audio-ja-1p5",
+                        "tracks": [
+                            {
+                                "label": "Gemini target",
+                                "description": "No target time-stretch.",
+                                "path": "audio_samples/gemini.mp3",
+                            }
+                        ],
                     }
                 ],
             }
@@ -152,6 +160,7 @@ def test_render_index_includes_enja_audio_sample_manifest(tmp_path: Path) -> Non
         tmp_path,
     )
 
-    assert "id='enja-1p5-audio'" in rendered
+    assert "id='audio-samples'" in rendered
+    assert "id='audio-ja-1p5'" in rendered
     assert "src='audio_samples/gemini.mp3'" in rendered
-    assert "href='#enja-1p5-audio'>audio sample</a>" in rendered
+    assert "href='#audio-ja-1p5'>audio sample</a>" in rendered
