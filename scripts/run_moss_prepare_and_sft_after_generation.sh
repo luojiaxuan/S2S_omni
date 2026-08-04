@@ -52,6 +52,7 @@ validate_generation() {
 import json
 import sys
 import unicodedata
+from collections import Counter
 from pathlib import Path
 
 run = Path(sys.argv[1])
@@ -97,10 +98,11 @@ for split in ("train", "dev"):
 
     accepted_set = set(accepted_ids)
     rejected_set = set(rejected_ids)
+    id_counts = Counter(accepted_ids + rejected_ids)
     duplicates = [
         sample_id
-        for sample_id in sorted(set(accepted_ids + rejected_ids))
-        if accepted_ids.count(sample_id) + rejected_ids.count(sample_id) > 1
+        for sample_id, count in sorted(id_counts.items())
+        if count > 1
     ][:20]
     missing = sorted(request_set - accepted_set - rejected_set)[:20]
     unexpected = sorted((accepted_set | rejected_set) - request_set)[:20]

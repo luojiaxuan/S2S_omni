@@ -6,6 +6,7 @@ import glob
 import json
 import os
 import unicodedata
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -87,10 +88,11 @@ def split_counts(run_root: Path, split: str) -> dict[str, Any]:
 
     accepted_set = set(accepted_ids)
     rejected_set = set(rejected_ids)
+    id_counts = Counter(accepted_ids + rejected_ids)
     duplicates = [
         sample_id
-        for sample_id in sorted(set(accepted_ids + rejected_ids))
-        if accepted_ids.count(sample_id) + rejected_ids.count(sample_id) > 1
+        for sample_id, count in sorted(id_counts.items())
+        if count > 1
     ]
     return {
         "accepted": len(accepted_ids),
