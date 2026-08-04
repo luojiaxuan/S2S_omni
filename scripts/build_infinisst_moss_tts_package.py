@@ -31,6 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-dev-segments", type=int, default=0)
     parser.add_argument("--compression", choices=["zstd", "gzip", "none"], default="zstd")
     parser.add_argument("--zstd-level", type=int, default=6)
+    parser.add_argument("--skip-source-duration", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--skip-audio-tars", action=argparse.BooleanOptionalAction, default=False)
     return parser.parse_args()
 
@@ -80,6 +81,7 @@ def collect_split(
     split: str,
     jsonl_path: str,
     max_segments: int,
+    read_source_duration: bool,
 ) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
     rows: list[dict[str, Any]] = []
     audio_entries: list[tuple[str, str]] = []
@@ -103,7 +105,7 @@ def collect_split(
             sample_id = f"{split}_r{row_index:06d}_t{turn_index:03d}"
             source_wav_rel = f"source_wavs/{split}/{sample_id}.wav"
             target_wav_rel = f"target_wavs/{split}/{sample_id}.wav"
-            duration = audio_duration_s(source_path)
+            duration = audio_duration_s(source_path) if read_source_duration else None
             metadata = {
                 "source_jsonl": jsonl_path,
                 "source_row_index": row_index,
@@ -244,11 +246,13 @@ def main() -> None:
         split="train",
         jsonl_path=args.train_jsonl,
         max_segments=args.max_train_segments,
+        read_source_duration=not args.skip_source_duration,
     )
     dev_rows, dev_audio = collect_split(
         split="dev",
         jsonl_path=args.dev_jsonl,
         max_segments=args.max_dev_segments,
+        read_source_duration=not args.skip_source_duration,
     )
 
     write_jsonl(manifest_dir / "train_segments.jsonl", train_rows)
@@ -292,6 +296,7 @@ def main() -> None:
         "train_audio_entries": len(train_audio),
         "dev_audio_entries": len(dev_audio),
         "compression": args.compression,
+        "source_duration_read": not args.skip_source_duration,
         "audio_artifacts": artifacts,
     }
     (root / "dataset_summary.json").write_text(
