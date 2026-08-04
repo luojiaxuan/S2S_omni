@@ -333,14 +333,57 @@ v2 run root：`/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804`
   `MossTTSRealtimeSFTDataset` 打包通过（`input_ids (T,17)`；32 codebook
   被 dataset 裁到模型的 16 通道，与 v1 prepare 行为一致）。
 
-全量生成于 `2026-08-04T19:0xZ` 启动：4-way，速率 ~25 行/分钟，ETA ~8.5h。
-监控：host 侧 `monitor_moss_20260804/check_v2_generation.sh` + Mac 侧
-10 分钟轮询（shard 死亡/停滞/失败告警，小时级进度心跳，完成判定
-accepted+rejected == 12,854）。
+全量生成经历三次拓扑调整（hyper00 4-way -> hyper00 4 + hyper01 4 ->
+按 luojiaxuan 指示 hyper00 2 + hyper01 6），最终 `2026-08-04T22:0xZ`
+全部完成：**12,852/12,854 accepted，2 条合法 runaway reject，零跨机
+重复**。hyper01 环境为复制 hyper00 容器（`jaxanluo/sglang-omni:dev` +
+editable install PR1192 `caa77bf6` + 按 hyper00 pip freeze 补齐 62 个
+缺失包）。
 
-生成完成后的步骤：停 serving → `align_slice_moss_v2.py` 4 GPU 分片跑
-train+dev → `sft.py --train-jsonl RUN_ROOT/prepared/train_v2_*.jsonl`
-（sdpa，多 turn records）→ checkpoint 上传 HF。
+**事故记录（重要教训）**：第一次 rebalance 用 `kill $(cat pidfile)` 只杀了
+launcher 子 shell，4 个 stage1 python worker 成为孤儿继续运行；随后停掉
+GPU2/3 serving 时，孤儿 shard2/3 将 5,159 行烧成 `Connection refused`
+伪 reject（隔离于 `raw/quarantine_bogus_rejects_20260804/`），且当时的
+重分片把 rejected 当作 done 排除，这批行一度无人认领。修复：进程树 kill
+（先 TERM 后 KILL 遍历子进程）、以 accepted+合法 reject 重算未完成集、
+完成判定改为 worker 全部退出 + row_id 去重覆盖校验。**此后所有 worker
+停止必须树杀，且 reject 文件在重分片前必须人工过目。**
+
+align/slice 分两波流水线执行（wav 在哪台机器就在哪台对齐）：hyper00
+wave1 4,147 行（2 卡后按指示扩到 5 卡），hyper01 wave2 8,705 行
+（6 卡）。结果：train 12,498 行 / 62,373 turns，dev 354 行 / 798
+turns，**audit 零排除**，coverage 中位数 1.0（train p5=0.97 min=0.75）。
+wave2 prepared JSONL（493MB）经 Mac 中转合并回 hyper00。
+
+**v2 SFT 完成（2026-08-04T22:15Z）**：4x H200 DDP bf16 sdpa，1 epoch
+= 782 steps（多 turn 记录，总监督 token 与 v1 3,893 步相当），loss
+4.29 -> ~3.50，~5 分钟。checkpoint：
+`RUN_ROOT/checkpoints/moss_tts_realtime_infinisst_v2_multiturn/checkpoint-epoch-0`
+上传 HF private repo：
+`gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn`。
+
+## 完整链路 demo（2026-08-04）
+
+链路：自构造 50.6s 英文播客音频（10 句，MOSS 合成，逐句 offset 已知）
+-> Taurus 上 InfiniSST no-RAG baseline
+（`/mnt/gemini/data/jiaxuanluo/owaski/gigaspeech-zh-s_origin-bsz4` =
+HF `gavinlaw/infinisst-no-tmsft-origin-bsz4-zh`）经 RASST
+`20260524__batched_vllm_rag_eval.sh`（`DISABLE_RAG_OVERRIDE=1`，vllm
+TP4，0.96s chunk）流式推理，53 chunk 全部产出中文增量 -> 每段以对应
+0.96s 源切片为 ref 调 v1 finetuned TTS -> 拼接 70.1s 中文。
+
+- demo 资产：hyper00
+  `RUN_ROOT/demo/full_chain/`（源音频、runtime_chunks.jsonl、逐段
+  ref/tts wav、拼接结果、segment_table.json）；Taurus 输入与 runtime 在
+  `/mnt/gemini/data1/jiaxuanluo/moss_tts_full_chain_demo_20260804/`。
+- 观察：译文连贯正确；本次 53 段无 runaway（但 dev_r000002 对照 demo
+  中 v1 对 6 字符 fragment 曾跑出 14.7s，重试 0.88/4.0/6.0s，证明
+  runaway 随机且 v1 未根治）；源 50.6s -> 目标 70.1s（+38% backlog）。
+- v1/base/v2 式四路对照音频（dev_r000002）与本 demo 音频均已交付
+  luojiaxuan 试听。
+- v1 serving: hyper00 GPU5 port 45001；v2 serving: hyper00 GPU6 port
+  47111（单发 `/v1/audio/speech` 是无历史推理，与 v2 多 turn 训练形态
+  有 gap；真正的多 turn 增量推理接入是下一步）。
 
 ## 当前状态
 
