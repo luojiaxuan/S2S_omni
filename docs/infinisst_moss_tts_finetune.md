@@ -298,10 +298,49 @@ assistant turn 记录，生成第 k 段时能看到前 k-1 段音频历史。规
 12,500 行 / dev 355 行（比 62,707 次调用少一个量级）；超过 4096-frame
 上限的 row 按句群分段合成。
 
-**v2 待定决策（开放问题）**：ref_audio 用英文 source chunks 拼接
-（= 跨语言音色克隆，中文输出保留 source 说话人音色，匹配 live S2S 部署且
-与 v1 一致）还是固定中文 reference 音色（TTS 更稳、质量上限更高，但放弃
-音色迁移）。取决于部署时的 conditioning 形态，等 luojiaxuan 拍板。
+**v2 已拍板决策（luojiaxuan, 2026-08-04）**：
+1. **固定音色**，不做英语说话人音色克隆。固定 ref 用 MOSS 无条件生成的
+   中性中文段落（9.44s, 24kHz）：
+   `RUN_ROOT/fixed_ref/fixed_zh_ref.wav`，生成与训练全程复用同一条。
+2. **多 turn SFT**：一个 row 一条记录、N 个 assistant turn（各配 FA 切片
+   codes），生成第 k 段时能看到前 k-1 段音频历史，与流式推理一致。
+   `dataset.py` 原生支持（`ref_audio_codes` optional，多 turn 逐 turn 设
+   label）。
+
+## 2026-08-04 v2 pipeline 实施记录
+
+v2 run root：`/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804`
+
+脚本（commit `ea0f157`）：
+
+- `scripts/build_moss_v2_row_requests.py`：segment manifest 按 row 分组，
+  纯标点 segment 并入邻段，>400 字符的 row 按句末标点分组（本数据集全部
+  单组）。产出：train 12,500 行 / 62,375 段，dev 354 行 / 798 段。行长
+  分布：train max 197 可发声字符（约 55s 音频）、中位 80；dev max 86。
+- `scripts/run_moss_v2_serving_4way.sh`：GPU0-3 各一个 `sgl-omni serve`，
+  端口 `48731,49157,52391,54863`，`--allowed-local-media-path RUN_ROOT`。
+- `scripts/generate_moss_realtime_long_targets.py`：每 row 全文一次合成
+  （固定 ref），runaway 预算 `max(15s, 可发声字符×0.6s)`、重试 2 次，
+  按 row_id resume。
+- `scripts/align_slice_moss_v2.py`：zh CTC forced alignment
+  （`jonatasgrosman/wav2vec2-large-xlsr-53-chinese-zh-cn` +
+  `torchaudio.functional.forced_align`）→ 相邻 segment span 中点为切点 →
+  MOSS-Audio-Tokenizer 整行编码一次（实测 fps 恰好 12.5）→ codes 帧级
+  切片 → 直接产出多 turn prepared record（跳过 `prepare_data.py`）。
+  数字/拉丁字符不在 aligner 词表则跳过，整段无对齐字符按字符数比例插值；
+  coverage < 0.5 的 row 进 audit 排除。
+- 3 行 dev smoke 全绿：coverage 0.966-1.0，边界语言学上合理，record 经
+  `MossTTSRealtimeSFTDataset` 打包通过（`input_ids (T,17)`；32 codebook
+  被 dataset 裁到模型的 16 通道，与 v1 prepare 行为一致）。
+
+全量生成于 `2026-08-04T19:0xZ` 启动：4-way，速率 ~25 行/分钟，ETA ~8.5h。
+监控：host 侧 `monitor_moss_20260804/check_v2_generation.sh` + Mac 侧
+10 分钟轮询（shard 死亡/停滞/失败告警，小时级进度心跳，完成判定
+accepted+rejected == 12,854）。
+
+生成完成后的步骤：停 serving → `align_slice_moss_v2.py` 4 GPU 分片跑
+train+dev → `sft.py --train-jsonl RUN_ROOT/prepared/train_v2_*.jsonl`
+（sdpa，多 turn records）→ checkpoint 上传 HF。
 
 ## 当前状态
 
