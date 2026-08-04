@@ -384,6 +384,12 @@ TP4，0.96s chunk）流式推理，53 chunk 全部产出中文增量 -> 每段�
 - v1 serving: hyper00 GPU5 port 45001；v2 serving: hyper00 GPU6 port
   47111（单发 `/v1/audio/speech` 是无历史推理，与 v2 多 turn 训练形态
   有 gap；真正的多 turn 增量推理接入是下一步）。
+- v2 checkpoint 已上传 HF：
+  `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn`
+  （commit `0c478bb85680b00ca0124d0c89a934eabee10561`）。
+- v2 单发（固定中文 ref、无历史）复跑同 53 段：71.8s，无 runaway，与
+  v1 70.1s 相近——**单发推理吃不到多 turn 训练收益**，时长/韵律收益需
+  多 turn 增量推理接入后评估。三段音频（源/v1/v2）均已交付试听。
 
 ## 当前状态
 
