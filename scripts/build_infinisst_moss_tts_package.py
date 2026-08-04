@@ -32,6 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--compression", choices=["zstd", "gzip", "none"], default="zstd")
     parser.add_argument("--zstd-level", type=int, default=6)
     parser.add_argument("--skip-source-duration", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--trust-audio-paths", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--skip-audio-tars", action=argparse.BooleanOptionalAction, default=False)
     return parser.parse_args()
 
@@ -82,6 +83,7 @@ def collect_split(
     jsonl_path: str,
     max_segments: int,
     read_source_duration: bool,
+    trust_audio_paths: bool,
 ) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
     rows: list[dict[str, Any]] = []
     audio_entries: list[tuple[str, str]] = []
@@ -100,7 +102,7 @@ def collect_split(
             if not target_text:
                 continue
             source_path = Path(source_audio)
-            if not source_path.exists():
+            if not trust_audio_paths and not source_path.exists():
                 continue
             sample_id = f"{split}_r{row_index:06d}_t{turn_index:03d}"
             source_wav_rel = f"source_wavs/{split}/{sample_id}.wav"
@@ -247,12 +249,14 @@ def main() -> None:
         jsonl_path=args.train_jsonl,
         max_segments=args.max_train_segments,
         read_source_duration=not args.skip_source_duration,
+        trust_audio_paths=args.trust_audio_paths,
     )
     dev_rows, dev_audio = collect_split(
         split="dev",
         jsonl_path=args.dev_jsonl,
         max_segments=args.max_dev_segments,
         read_source_duration=not args.skip_source_duration,
+        trust_audio_paths=args.trust_audio_paths,
     )
 
     write_jsonl(manifest_dir / "train_segments.jsonl", train_rows)
@@ -297,6 +301,7 @@ def main() -> None:
         "dev_audio_entries": len(dev_audio),
         "compression": args.compression,
         "source_duration_read": not args.skip_source_duration,
+        "audio_paths_trusted": args.trust_audio_paths,
         "audio_artifacts": artifacts,
     }
     (root / "dataset_summary.json").write_text(
