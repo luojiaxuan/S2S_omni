@@ -296,6 +296,31 @@ that public repo is another InfiniSST zh variant (`args.json` shows LoRA rank
 16 and
 `train_s_zh_v4_ner_baseline_aligned_rate1.0_k20_enriched_with_negatives.sample_keep1.0.seed1.jsonl`.
 
+That exact baseline train JSONL is:
+
+```text
+/mnt/gemini/data1/jiaxuanluo/train_s_zh_v4_ner_baseline_aligned_rate1.0_k20_enriched_with_negatives.sample_keep1.0.seed1.jsonl
+```
+
+It is already Qwen3-Omni chat-format streaming S2T data, not a runtime RAG
+corpus. Each row has:
+
+```text
+messages: alternating system, user, assistant turns
+audios: one source wav path per user turn
+merge_multiplier: integer chunk merge factor
+utter_id: original source id
+gt_terms_by_chunk: optional per-chunk offline term list
+```
+
+The user content is `<audio>` plus an offline `term_map:` block, and the
+assistant content is the Chinese streaming output chunk. Full file stats checked
+on Taurus: 12,500 rows, 70,269 user/audio turns, 70,269 assistant turns, audio
+turn count matches message turn count for every row, 7,562 assistant turns are
+empty wait/no-output chunks. Therefore, for exact baseline-style inference, do
+not add an online RAG service. Use the streaming S2T runner with RAG disabled
+or feed the same chat-format audio turns directly.
+
 Taurus also has the original chunked streaming S2T inference stack:
 
 ```text
