@@ -17,6 +17,7 @@ LEARNING_RATE="${LEARNING_RATE:-1e-5}"
 NUM_EPOCHS="${NUM_EPOCHS:-1}"
 NUM_WORKERS="${NUM_WORKERS:-2}"
 POLL_INTERVAL_S="${POLL_INTERVAL_S:-60}"
+MAX_TARGET_DURATION_S="${MAX_TARGET_DURATION_S:-30}"
 
 mkdir -p "${RUN_ROOT}/raw" "${RUN_ROOT}/prepared" "${RUN_ROOT}/checkpoints" "${RUN_ROOT}/logs"
 
@@ -145,6 +146,75 @@ combine_split() {
   echo "[combine] ${split} rejected $(wc -l < "${rejected}") -> ${rejected}"
 }
 
+filter_split() {
+  # note (luojiaxuan): MOSS-TTS-Realtime occasionally runs away and generates
+  # target audio up to its 4096-frame cap (327.68s at 12.5Hz) for a short text
+  # segment. Such targets are garbage supervision and their L^2 attention cost
+  # OOMs prepare_data.py's audio tokenizer, so drop targets longer than
+  # MAX_TARGET_DURATION_S after coverage validation and keep an audit log.
+  local split="$1"
+  python3 - "${RUN_ROOT}" "${split}" "${MAX_TARGET_DURATION_S}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+run = Path(sys.argv[1])
+split = sys.argv[2]
+max_duration_s = float(sys.argv[3])
+
+raw = run / "raw" / f"{split}_moss_raw.jsonl"
+filtered = run / "raw" / f"{split}_moss_raw.filtered.jsonl"
+dropped = run / "raw" / f"{split}_dropped_overlong.jsonl"
+
+kept = removed = 0
+with raw.open(encoding="utf-8") as src, filtered.open(
+    "w", encoding="utf-8"
+) as out, dropped.open("w", encoding="utf-8") as drop:
+    for line in src:
+        line = line.strip()
+        if not line:
+            continue
+        row = json.loads(line)
+        duration = row["metadata"].get("target_duration_s")
+        text = str(row["conversations"][-1]["text"])
+        if duration is None or duration > max_duration_s:
+            removed += 1
+            drop.write(
+                json.dumps(
+                    {
+                        "id": row["id"],
+                        "target_duration_s": duration,
+                        "target_text_chars": len(text),
+                        "seconds_per_char": (
+                            round(duration / len(text), 3)
+                            if duration and text
+                            else None
+                        ),
+                        "reason": f"target_duration_s>{max_duration_s}",
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+        else:
+            kept += 1
+            out.write(line + "\n")
+print(
+    json.dumps(
+        {
+            "split": split,
+            "kept": kept,
+            "dropped_overlong": removed,
+            "max_target_duration_s": max_duration_s,
+            "filtered_jsonl": str(filtered),
+            "dropped_jsonl": str(dropped),
+        }
+    ),
+    flush=True,
+)
+PY
+}
+
 stop_moss_serving() {
   python3 - "${RUN_ROOT}" <<'PY'
 import os
@@ -197,7 +267,7 @@ PY
 
 prepare_split() {
   local split="$1"
-  local raw="${RUN_ROOT}/raw/${split}_moss_raw.jsonl"
+  local raw="${RUN_ROOT}/raw/${split}_moss_raw.filtered.jsonl"
   local prepared="${RUN_ROOT}/prepared/${split}_with_codes.jsonl"
   cd "${MOSS_TTS_ROOT}"
   CUDA_VISIBLE_DEVICES="${CUDA_DEVICES}" PYTHONPATH="${MOSS_TTS_ROOT}" \
@@ -235,6 +305,8 @@ wait_for_generation
 validate_generation
 combine_split train
 combine_split dev
+filter_split train
+filter_split dev
 stop_moss_serving
 prepare_split train
 prepare_split dev
