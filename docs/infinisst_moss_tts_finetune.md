@@ -219,9 +219,51 @@ python /data/S2S_omni/scripts/report_moss_tts_run_status.py \
 2. `moss_tts_realtime/finetuning/prepare_data.py`
 3. `moss_tts_realtime/finetuning/sft.py`
 
+## 2026-08-04 后半段修复记录
+
+上一段交接中 supervisor 卡住的原因已定位并修复，prepare + full SFT 已重新启动。
+
+1. **dev bad_reject_count=2 根因**：`dev_r000031_t000`（"你必须"）和
+   `dev_r000031_t001`（"指出来。"）的 ref wav 只有 `0.064s`（1024 samples @16k），
+   MOSS-Audio-Tokenizer 只编出一帧 reference codes，serving 报
+   `reference codes must be rank 2, got (16,)`。修复方式：用同一 podcast 集
+   （`POD1000000010`，clip 242，2.88s）的 `source_wavs/dev/dev_r000030_t000.wav`
+   作替代 ref 单独 regenerate 这两条，全部 accepted。原 rejected 行备份在
+   `raw/backup_bad_rejects_20260804/`，retry 输入在
+   `raw/dev_moss_requests_retry_r000031.jsonl`（metadata 里带
+   `ref_wav_original` 和 `ref_wav_substituted_reason`）。修复后：
+   train `accepted=62381 rejected=326 bad=0`，dev `accepted=798 rejected=3 bad=0`，
+   剩余 reject 全部是纯标点。
+
+2. **TTS runaway 导致 prepare OOM**：第一次重启 prepare_data.py 后 rank2 在
+   audio tokenizer attention 处 CUDA OOM（单次分配 128 GiB）。原因是 MOSS
+   偶发 runaway，把短 segment 生成到 4096-frame 上限（327.68s @12.5Hz）：
+   train 有 89 条 target >30s（其中 23 条顶到 327.7s，文本只有 18-75 字符），
+   dev 有 1 条（79.6s，9 字符）。修复：`run_moss_prepare_and_sft_after_generation.sh`
+   新增 `filter_split`（commit `e082d4e`），在 coverage validation 之后按
+   `MAX_TARGET_DURATION_S`（默认 30s）过滤，audit 记录写
+   `raw/{split}_dropped_overlong.jsonl`。本次运行：train kept `62292` / dropped
+   `89`，dev kept `797` / dropped `1`。
+
+3. **hyper00 checkout 是 sparse checkout**：只含 `/scripts/`、`/docs/`、
+   `/README.md`，导致 `configs/accelerate_ddp_4gpu.yaml` 在磁盘上不存在而
+   train 阶段必挂。已 `git sparse-checkout add /configs/` 并 fast-forward 到最新。
+
+4. **supervisor pidfile 陷阱**：`docker exec -d bash -c "cd RUN && ... & echo $! > pids/..."`
+   中 `echo` 在 `cd` 生效前的工作目录执行，相对路径写失败，pidfile 残留旧 PID。
+   已手工写入真实 PID；下次启动时 pidfile 用绝对路径。
+
+监控（独立于容器）：
+
+- host 侧只读状态脚本：`/data04/jaxan/S2S_omni_runs/monitor_moss_20260804/check_status.sh`
+  （输出 alive/stage/stale/prepared/full_ckpts/failure 计数/RAM/GPU/进度一行）。
+- Mac 侧 5 分钟轮询该脚本，阶段切换、failure signature、>15min 无日志进展、
+  RAM <300G、supervisor 退出时告警。
+- `/gpu-utilization-monitor`（10s 窗口，90% 阈值，3 连续低窗告警）同时在跑。
+
 ## 当前状态
 
-更新时间：`2026-08-04T17:13:00Z`
+更新时间：`2026-08-04T17:13:00Z`（后半段修复见上一节，其状态以上一节为准）
 
 当前 Git 分支：
 
@@ -285,8 +327,19 @@ moss-tts-infinisst
 
 ## 交接给下一个 Claude session
 
-下一 session 首要任务不是重跑 target generation，而是检查后半段 supervisor
-为什么没有进入 prepare/SFT。full target wav 生成已经覆盖完整 manifest。
+（2026-08-04 更新）dev bad rejects 已修复、overlong 过滤已加入、prepare + full
+SFT supervisor 已于 `2026-08-04T17:41Z` 左右重启（容器内 PID 见
+`pids/prepare_train_supervisor.pid`，环境 `CUDA_DEVICES=0,1,2,3 NUM_EPOCHS=1
+MAX_TARGET_DURATION_S=30`）。下一 session 接手时先跑 status 命令确认阶段：
+若 `logs/03_train.log` 存在且
+`checkpoints/moss_tts_realtime_infinisst_train/checkpoint-*` 已产出，则 full
+SFT 完成，下一步是把 checkpoint 上传 HF（模型参数以 HF 为 source of truth）
+并做 streaming segment 推理评测；若 supervisor 已死且无 checkpoint，先看
+`logs/99_prepare_train_supervisor.log`（attempt1/attempt2 历史保存在同目录
+`*.attempt1.log` / `*.attempt2.log`：attempt1 是 dev bad-reject validation
+失败，attempt2 是 runaway target 导致的 prepare OOM）。
+
+以下为历史交接内容（bad reject 检查已完成，不需重做）。
 
 必须先看的状态命令：
 

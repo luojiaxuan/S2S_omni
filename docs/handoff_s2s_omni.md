@@ -37,37 +37,33 @@ hyper00 dataset root: /data/datasets/infinisst-moss-tts-en-zh-segments-v1
 hyper00 run root: /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939
 ```
 
-截至 `2026-08-04T17:13:00Z`，full target generation 已覆盖完整
-train/dev manifest，但 `prepare_data.py` 和 full SFT 还没有真正开始。
-当前状态：
+截至 `2026-08-04T17:55Z`（本条为最新状态，取代上一段交接）：
+
+- dev 的 2 条 bad reject（`dev_r000031_t000/t001`）根因是 ref wav 只有
+  0.064s，已用同集 `dev_r000030_t000.wav`（2.88s）作替代 ref regenerate，
+  全部 accepted。
+- 新发现并处理了 MOSS TTS runaway：train 89 条 / dev 1 条 target >30s
+  （23 条顶到 4096-frame 上限 327.7s），会 OOM prepare 且是垃圾监督。
+  `run_moss_prepare_and_sft_after_generation.sh` 新增
+  `filter_split`（`MAX_TARGET_DURATION_S=30`，commit `e082d4e`）过滤，
+  audit 在 `raw/{split}_dropped_overlong.jsonl`。
+- prepare + full SFT supervisor 已重启并进入 prepare_train 阶段：
 
 ```text
-train accepted=62381 rejected=326 covered=62707/62707 missing_or_pending=0 bad_reject_count=0
-dev   accepted=796   rejected=5   covered=801/801   missing_or_pending=0 bad_reject_count=2
-prepared_jsonl_count=0
-full checkpoint: not produced
-only checkpoint present: smoke_1step/checkpoint-epoch-0/model.safetensors
+train accepted=62381 rejected=326 bad_reject_count=0 -> filtered kept=62292
+dev   accepted=798   rejected=3   bad_reject_count=0 -> filtered kept=797
+supervisor: alive, CUDA_DEVICES=0,1,2,3 NUM_EPOCHS=1
+logs: 99_prepare_train_supervisor.log (attempt1/2 历史同目录 *.attemptN.log)
+host 侧监控: /data04/jaxan/S2S_omni_runs/monitor_moss_20260804/check_status.sh
 ```
 
-下一 session 不要重跑全量 target generation。先检查：
-
-```bash
-python /data/S2S_omni/scripts/report_moss_tts_run_status.py \
-  --run-root /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939 \
-  --dataset-root /data/datasets/infinisst-moss-tts-en-zh-segments-v1
-
-tail -120 /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939/logs/99_prepare_train_supervisor.log
-
-for f in /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939/raw/dev_moss_rejected_shard*.jsonl; do
-  echo "===== $f"
-  tail -20 "$f"
-done
-```
-
-核心判断：dev 的 `bad_reject_count=2` 是合法无声标点/空白，还是有实际可发声
-内容。如果是前者，放宽 validation 或标成合法 reject 后只重跑
-`run_moss_prepare_and_sft_after_generation.sh`；如果是后者，单独 regenerate
-那几条 dev target wav/raw JSONL，再进入 prepare/SFT。
+下一 session 接手：先跑 status 命令 + host 侧 check_status.sh；若
+`checkpoints/moss_tts_realtime_infinisst_train/checkpoint-*` 已产出则 full
+SFT 完成，进入 checkpoint 上传 HF + streaming 推理评测；若中途死掉，看
+supervisor 日志定位后只重跑
+`run_moss_prepare_and_sft_after_generation.sh`（不要重跑全量 target
+generation）。细节见 `docs/infinisst_moss_tts_finetune.md` 的
+"2026-08-04 后半段修复记录"。
 
 ## Context
 
