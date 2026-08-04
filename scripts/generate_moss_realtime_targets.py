@@ -5,6 +5,7 @@ import argparse
 import concurrent.futures
 import json
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 import wave
@@ -29,6 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--path-mode", choices=["absolute", "relative"], default="absolute")
     parser.add_argument("--include-user-turn", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--allow-rejections", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--log-every", type=int, default=25)
     return parser.parse_args()
 
@@ -77,6 +79,10 @@ def audio_duration_s(path: Path) -> float | None:
             return float(frames) / float(rate) if rate else None
     except Exception:
         return None
+
+
+def has_spoken_content(text: str) -> bool:
+    return any(unicodedata.category(ch)[0] in {"L", "N"} for ch in text)
 
 
 def post_json_bytes(url: str, payload: dict[str, Any], timeout_s: float) -> bytes:
@@ -144,6 +150,8 @@ def generate_one(row: dict[str, Any], args: argparse.Namespace, root: Path) -> t
         target_text = str(row.get("target_text") or row.get("input") or "").strip()
         if not target_text:
             raise ValueError("empty target_text")
+        if not has_spoken_content(target_text):
+            raise ValueError("no spoken target_text")
         if not output_wav.exists() or output_wav.stat().st_size == 0:
             output_wav.parent.mkdir(parents=True, exist_ok=True)
             payload = {
@@ -241,7 +249,7 @@ def main() -> None:
         ),
         flush=True,
     )
-    if rejected:
+    if rejected and not args.allow_rejections:
         raise SystemExit(2)
 
 

@@ -54,6 +54,7 @@ for shard in "${!PORT_ARRAY[@]}"; do
         --timeout-s "${TIMEOUT_S}" \
         --path-mode "${PATH_MODE}" \
         --resume \
+        --allow-rejections \
         --log-every "${LOG_EVERY}"
     done
   ) > "${RUN_ROOT}/logs/01_generate_targets_full_shard${shard}.log" 2>&1 &

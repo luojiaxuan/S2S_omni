@@ -223,6 +223,8 @@ bash scripts/run_moss_target_generation_4way.sh
   - 3 条 dev target generation 全 accepted。
   - `prepare_data.py` 3 条 smoke 成功，输出带 `audio_codes` 的 JSONL。
   - `sft.py` 1-step smoke 成功，loss `3.2439`，checkpoint 写出。
+- target generation 中纯标点 segment 例如 `，` 会被本地 reject，不参与 TTS
+  训练。这类 chunk 没有可发声内容，不能强制 MOSS 生成 wav。
 - 当前 full target generation 正在 hyper00 运行，run root：
 
 ```text
