@@ -225,6 +225,9 @@ bash scripts/run_moss_target_generation_4way.sh
   - `sft.py` 1-step smoke 成功，loss `3.2439`，checkpoint 写出。
 - target generation 中纯标点 segment 例如 `，` 会被本地 reject，不参与 TTS
   训练。这类 chunk 没有可发声内容，不能强制 MOSS 生成 wav。
+- 后半段 supervisor 在进入 `prepare_data.py` 前会校验：
+  accepted + rejected 必须覆盖完整 manifest，且 rejected 只能是无发声字符
+  的纯标点 segment。
 - 当前 full target generation 正在 hyper00 运行，run root：
 
 ```text

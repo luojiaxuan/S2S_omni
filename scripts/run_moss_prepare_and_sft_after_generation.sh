@@ -47,6 +47,83 @@ wait_for_generation() {
   done
 }
 
+validate_generation() {
+  python3 - "${RUN_ROOT}" "${DATASET_ROOT}" <<'PY'
+import json
+import sys
+import unicodedata
+from pathlib import Path
+
+run = Path(sys.argv[1])
+dataset = Path(sys.argv[2])
+
+
+def has_spoken_content(text: str) -> bool:
+    return any(unicodedata.category(ch)[0] in {"L", "N"} for ch in text)
+
+
+for split in ("train", "dev"):
+    request_path = dataset / "manifest" / f"{split}_moss_requests.jsonl"
+    request_ids = []
+    with request_path.open(encoding="utf-8") as handle:
+        for line in handle:
+            row = json.loads(line)
+            request_ids.append(str(row["id"]))
+    request_set = set(request_ids)
+
+    accepted_ids = []
+    for path in sorted((run / "raw").glob(f"{split}_moss_raw_shard*.jsonl")):
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                accepted_ids.append(str(json.loads(line)["id"]))
+
+    rejected_ids = []
+    bad_rejects = []
+    for path in sorted((run / "raw").glob(f"{split}_moss_rejected_shard*.jsonl")):
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                row = json.loads(line)
+                sample_id = str(row["id"])
+                rejected_ids.append(sample_id)
+                target_text = str((row.get("row") or {}).get("target_text") or "").strip()
+                if has_spoken_content(target_text):
+                    bad_rejects.append(
+                        {
+                            "id": sample_id,
+                            "target_text": target_text,
+                            "error": row.get("error"),
+                        }
+                    )
+
+    accepted_set = set(accepted_ids)
+    rejected_set = set(rejected_ids)
+    duplicates = [
+        sample_id
+        for sample_id in sorted(set(accepted_ids + rejected_ids))
+        if accepted_ids.count(sample_id) + rejected_ids.count(sample_id) > 1
+    ][:20]
+    missing = sorted(request_set - accepted_set - rejected_set)[:20]
+    unexpected = sorted((accepted_set | rejected_set) - request_set)[:20]
+    overlap = sorted(accepted_set & rejected_set)[:20]
+
+    summary = {
+        "split": split,
+        "requests": len(request_ids),
+        "accepted": len(accepted_ids),
+        "rejected": len(rejected_ids),
+        "missing_first20": missing,
+        "unexpected_first20": unexpected,
+        "overlap_first20": overlap,
+        "duplicates_first20": duplicates,
+        "bad_rejects_first20": bad_rejects[:20],
+    }
+    print(json.dumps(summary, ensure_ascii=False), flush=True)
+
+    if missing or unexpected or overlap or duplicates or bad_rejects:
+        raise SystemExit(f"generation validation failed for {split}")
+PY
+}
+
 combine_split() {
   local split="$1"
   local raw="${RUN_ROOT}/raw/${split}_moss_raw.jsonl"
@@ -153,6 +230,7 @@ train_model() {
 }
 
 wait_for_generation
+validate_generation
 combine_split train
 combine_split dev
 stop_moss_serving
