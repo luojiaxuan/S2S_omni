@@ -105,6 +105,34 @@ infinisst-moss-tts-en-zh-segments-v1/
 gavinlaw/infinisst-moss-tts-en-zh-segments
 ```
 
+当前已上传为 private HF dataset：
+
+```text
+repo: https://huggingface.co/datasets/gavinlaw/infinisst-moss-tts-en-zh-segments
+commit: c54868f00916e26c7b3893149f2ce43aa13f9632
+```
+
+上传内容已在 Taurus 和 hyper00 校验：
+
+| artifact | bytes | sha256 | entries |
+| --- | ---: | --- | ---: |
+| `audio/train_source_wavs.tar.zst` | 5,988,633,489 | `b14f187af5c7f87788fc6dafa218887641df344457245ff9e041117ba4774fdb` | 62,707 |
+| `audio/dev_source_wavs.tar.zst` | 66,275,337 | `ae6f409d6278f5b9173c7a2ccc63f3f0bb6dcc2c7746a3d56de46be7cb15122f` | 801 |
+
+hyper00 local staging:
+
+```text
+/data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1
+```
+
+该目录已经解压 `source_wavs/train` 和 `source_wavs/dev`：
+
+```text
+train source wavs: 62,707
+dev source wavs: 801
+total local size after extraction: 13G
+```
+
 ## 生成数据包
 
 在 Taurus 上运行：
@@ -175,4 +203,7 @@ bash scripts/run_infinisst_moss_tts_hyper00.sh
 
 - 数据字段和 MOSS finetuning 格式已确认。
 - `source_text` 不是硬依赖：MOSS-Realtime serving 可以只用 `ref_audio`。
-- 需要继续执行：在 Taurus 生成 full tar.zst package，上传 HF，再在 hyper00 下载并启动 target generation / SFT。
+- Taurus 已生成 full tar.zst package，本机和 hyper00 校验通过。
+- HF private dataset 已上传，commit 为 `c54868f00916e26c7b3893149f2ce43aa13f9632`。
+- hyper00 已下载并解压 source wavs。
+- 需要继续执行：在 hyper00 启动 MOSS-TTS-Realtime serving，生成 target wav，再运行 `prepare_data.py` 和 `sft.py`。
