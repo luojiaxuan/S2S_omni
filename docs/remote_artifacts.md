@@ -279,6 +279,36 @@ speech with original `Qwen/Qwen3-Omni-30B-A3B-Instruct`, captures Omni-compatibl
 codes, aligns full target wav/text with MFA, and trains thinker+talker LoRA while
 freezing `code2wav`.
 
+Exact RASST / InfiniSST no-RAG baseline checkpoint registered as
+`model_infinisst_baseline`:
+
+```text
+/mnt/gemini/data/jiaxuanluo/Omni-30B-sampling-0107/keep1.0_r16/v3-20260121-021342-hf
+```
+
+The RASST manifest
+`/mnt/data2/jiaxuanluo/RASST/code/rasst/manifests/main_result_baseline_no_rag.global_cache30_30_20_20.json`
+records this as `hf_repo_id: gavinlaw/rasst-infinisst-baseline`, but this repo
+is not publicly listed/accessible as of 2026-08-04. Do not silently substitute
+`gavinlaw/infinisst-no-tmsft-origin-bsz4-zh` when reproducing the exact baseline:
+that public repo is another InfiniSST zh variant (`args.json` shows LoRA rank
+32 and `train_s_zh_origin.jsonl`), while the Taurus baseline args show LoRA rank
+16 and
+`train_s_zh_v4_ner_baseline_aligned_rate1.0_k20_enriched_with_negatives.sample_keep1.0.seed1.jsonl`.
+
+Taurus also has the original chunked streaming S2T inference stack:
+
+```text
+/mnt/data2/jiaxuanluo/RASST/code/rasst/scripts/eval_baseline.sh
+/mnt/data2/jiaxuanluo/RASST/code/rasst/eval/eval_density_unified.sh
+/mnt/data2/jiaxuanluo/RASST/code/rasst/eval/agents/infinisst_omni_vllm_maxsim_rag.py
+/mnt/data2/jiaxuanluo/RASST/code/rasst/eval/src/batched_vllm_rag_eval.py
+```
+
+The SimulEval agent writes `instances.log` plus `runtime_*.jsonl`; the runtime
+JSONL contains per-chunk `llm_output` records with `segment_idx` and generated
+Chinese text, which is the right hook for adding a downstream TTS stage.
+
 Planned Omni-compatible wav2codec self-domain pair data:
 
 ```text
