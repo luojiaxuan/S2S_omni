@@ -308,15 +308,28 @@ registers `model_infinisst_baseline` at:
 ```
 
 but its `args.json` points at the term-map/NER file above. For this project,
-prefer a no-term-map InfiniSST checkpoint. The public HF candidate is:
+do not use that checkpoint as the no-term-map baseline.
+
+The available no-term-map InfiniSST zh checkpoint is:
+
+```text
+/mnt/gemini/data/jiaxuanluo/owaski/gigaspeech-zh-s_origin-bsz4
+```
+
+It is a 66G HF-format `Qwen3OmniMoeForConditionalGeneration` directory with 15
+safetensors shards. Its public HF mirror is:
 
 ```text
 gavinlaw/infinisst-no-tmsft-origin-bsz4-zh
 ```
 
-Its `args.json` shows `train_s_zh_origin.jsonl` and no term-map training file.
-The previous manifest `hf_repo_id: gavinlaw/rasst-infinisst-baseline` is not
-publicly listed/accessible as of 2026-08-04.
+The local checkpoint and HF mirror have matching checksums for `args.json`,
+`config.json`, and `model.safetensors.index.json`. Its `args.json` shows
+`train_s_zh_origin.jsonl`, LoRA rank 32 / alpha 32, and no term-map training
+file. No local `args.json` checked so far points exactly at
+`train_s_zh_baseline.jsonl`; treat `train_s_zh_baseline.jsonl` as the local
+plain-data copy used by this project, and `train_s_zh_origin.jsonl` as the
+original training path recorded by the checkpoint.
 
 The soft-wav route generates target speech with original
 `Qwen/Qwen3-Omni-30B-A3B-Instruct`, captures Omni-compatible codes, aligns full
