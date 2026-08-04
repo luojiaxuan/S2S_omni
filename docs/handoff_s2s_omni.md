@@ -1,6 +1,6 @@
 # S2S_omni Handoff
 
-Last updated: 2026-07-25
+Last updated: 2026-08-04
 
 Repository:
 
@@ -13,6 +13,61 @@ Current local checkout:
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
 ```
+
+## Active Handoff: InfiniSST MOSS-TTS Finetuning
+
+当前接手优先级是 `en->zh` InfiniSST/RASST segment 到
+`OpenMOSS-Team/MOSS-TTS-Realtime` 的 TTS finetuning，不是 Qwen3-Omni E2E
+SFT，也不是 FLORAS benchmark。
+
+详细交接文档：
+
+```text
+docs/infinisst_moss_tts_finetune.md
+```
+
+关键 source-of-truth：
+
+```text
+GitHub repo: https://github.com/luojiaxuan/S2S_omni
+branch: moss-tts-infinisst
+HF dataset: https://huggingface.co/datasets/gavinlaw/infinisst-moss-tts-en-zh-segments
+HF commit: c54868f00916e26c7b3893149f2ce43aa13f9632
+hyper00 dataset root: /data/datasets/infinisst-moss-tts-en-zh-segments-v1
+hyper00 run root: /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939
+```
+
+截至 `2026-08-04T17:13:00Z`，full target generation 已覆盖完整
+train/dev manifest，但 `prepare_data.py` 和 full SFT 还没有真正开始。
+当前状态：
+
+```text
+train accepted=62381 rejected=326 covered=62707/62707 missing_or_pending=0 bad_reject_count=0
+dev   accepted=796   rejected=5   covered=801/801   missing_or_pending=0 bad_reject_count=2
+prepared_jsonl_count=0
+full checkpoint: not produced
+only checkpoint present: smoke_1step/checkpoint-epoch-0/model.safetensors
+```
+
+下一 session 不要重跑全量 target generation。先检查：
+
+```bash
+python /data/S2S_omni/scripts/report_moss_tts_run_status.py \
+  --run-root /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939 \
+  --dataset-root /data/datasets/infinisst-moss-tts-en-zh-segments-v1
+
+tail -120 /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939/logs/99_prepare_train_supervisor.log
+
+for f in /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939/raw/dev_moss_rejected_shard*.jsonl; do
+  echo "===== $f"
+  tail -20 "$f"
+done
+```
+
+核心判断：dev 的 `bad_reject_count=2` 是合法无声标点/空白，还是有实际可发声
+内容。如果是前者，放宽 validation 或标成合法 reject 后只重跑
+`run_moss_prepare_and_sft_after_generation.sh`；如果是后者，单独 regenerate
+那几条 dev target wav/raw JSONL，再进入 prepare/SFT。
 
 ## Context
 
