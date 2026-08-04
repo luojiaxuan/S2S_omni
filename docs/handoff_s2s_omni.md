@@ -57,13 +57,16 @@ logs: 99_prepare_train_supervisor.log (attempt1/2 历史同目录 *.attemptN.log
 host 侧监控: /data04/jaxan/S2S_omni_runs/monitor_moss_20260804/check_status.sh
 ```
 
-下一 session 接手：先跑 status 命令 + host 侧 check_status.sh；若
-`checkpoints/moss_tts_realtime_infinisst_train/checkpoint-*` 已产出则 full
-SFT 完成，进入 checkpoint 上传 HF + streaming 推理评测；若中途死掉，看
-supervisor 日志定位后只重跑
-`run_moss_prepare_and_sft_after_generation.sh`（不要重跑全量 target
-generation）。细节见 `docs/infinisst_moss_tts_finetune.md` 的
-"2026-08-04 后半段修复记录"。
+（`2026-08-04T18:30Z` 更新）v1 full SFT 已完成：1 epoch / 3,893 steps，
+loss 4.24 -> ~3.5-3.7，checkpoint 在
+`checkpoints/moss_tts_realtime_infinisst_train/checkpoint-epoch-0/`，
+上传 HF private repo `gavinlaw/moss-tts-realtime-infinisst-en-zh`。
+但 v1 数据是 per-segment 自蒸馏（每 segment 独立 TTS），**没有跨 chunk
+韵律连续性监督**，只作 baseline。下一步是 v2 数据 pipeline：完整 row
+target text 一次合成 long speech -> codec -> forced alignment 切 segment
+codes；开放决策是 ref_audio 用英文 source（音色克隆）还是固定中文音色。
+细节见 `docs/infinisst_moss_tts_finetune.md` 的 "2026-08-04 v1 full SFT
+完成 + v2 设计讨论" 一节。
 
 ## Context
 

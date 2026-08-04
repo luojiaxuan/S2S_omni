@@ -261,9 +261,51 @@ python /data/S2S_omni/scripts/report_moss_tts_run_status.py \
   RAM <300G、supervisor 退出时告警。
 - `/gpu-utilization-monitor`（10s 窗口，90% 阈值，3 连续低窗告警）同时在跑。
 
+## 2026-08-04 v1 full SFT 完成 + v2 设计讨论
+
+v1 full SFT（per-segment 数据）已完成：
+
+- 第一次 SFT 启动全 rank 崩溃：容器里存在一个残缺的 `flash_attn` 包
+  （import 可用但无 `__version__`），`sft.py` 的 `--attn-implementation auto`
+  因此解析为 `flash_attention_2`，触发 transformers flash-attn 集成层
+  `s_aux=None` 的 `.to()` AttributeError。修复（commit `622c559`）：训练
+  默认显式 `ATTN_IMPLEMENTATION=sdpa`（与已验证 smoke 一致），并给
+  `prepare_split` 加 skip-existing（rank 输出行数与 filtered 输入吻合即跳过）。
+- 训练：4 GPU DDP bf16 sdpa，per-device batch 1，grad accum 4，1 epoch =
+  3,893 steps，~0.37s/step（~43 samples/s），约 25 分钟跑完。loss 4.24 ->
+  ~3.5-3.7。注意日志后段 `lr=0.00e+00`，LR schedule 可能提前衰减到 0，
+  下次 run 检查 scheduler 的 total steps 配置。
+- checkpoint：
+  `checkpoints/moss_tts_realtime_infinisst_train/checkpoint-epoch-0/`
+  （`model.safetensors` 4.66GB）。已上传 HF private model repo：
+  `gavinlaw/moss-tts-realtime-infinisst-en-zh`（v1 per-segment baseline，
+  provenance 见 repo README）。
+
+**v1 数据的定位（重要）**：v1 target 是 base MOSS 对每个 segment **独立**
+生成的（input=中文 segment 文本，ref_audio=对应英文 source chunk），属于
+per-segment 自蒸馏。它能教模型接受 segment 形态输入、抑制 fragment runaway，
+但监督里没有跨 chunk 韵律连续性——segment 边界处的韵律正是"普通完整句
+TTS 节奏"。v1 checkpoint 只作 baseline/消融项。
+
+**v2 设计（luojiaxuan 提出，待执行）**：用完整 row target text 一次调
+MOSS-Realtime 合成 long speech reference -> 过 MOSS-Audio-Tokenizer 得连续
+codec codes（只编一次）-> 中文 segment 文本对 long speech 做 forced
+alignment（文本是 TTS 精确输入，无 ASR 误差；MFA mandarin 或 zh CTC
+aligner，只需 segment 边界时间戳）-> 在 codec 帧级（12.5Hz）切片得到每个
+segment 的 target codes。这样半句/跨 chunk 边界的监督是"句中"韵律，与
+streaming 推理背靠背播放的形态一致。可选升级：一个 row 写成一条多
+assistant turn 记录，生成第 k 段时能看到前 k-1 段音频历史。规模：train
+12,500 行 / dev 355 行（比 62,707 次调用少一个量级）；超过 4096-frame
+上限的 row 按句群分段合成。
+
+**v2 待定决策（开放问题）**：ref_audio 用英文 source chunks 拼接
+（= 跨语言音色克隆，中文输出保留 source 说话人音色，匹配 live S2S 部署且
+与 v1 一致）还是固定中文 reference 音色（TTS 更稳、质量上限更高，但放弃
+音色迁移）。取决于部署时的 conditioning 形态，等 luojiaxuan 拍板。
+
 ## 当前状态
 
-更新时间：`2026-08-04T17:13:00Z`（后半段修复见上一节，其状态以上一节为准）
+更新时间：`2026-08-04T17:13:00Z`（后续进展见上两节，以上两节为准）
 
 当前 Git 分支：
 
