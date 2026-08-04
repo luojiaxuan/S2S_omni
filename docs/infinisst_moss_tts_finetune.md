@@ -232,4 +232,15 @@ bash scripts/run_moss_target_generation_4way.sh
 ```
 
 - 需要继续执行：等待 full target wav 生成完成，合并 raw shards，运行
-  `prepare_data.py`，再运行 4-GPU `sft.py`。
+  `prepare_data.py`，再运行 4-GPU `sft.py`。后半段可用：
+
+```bash
+RUN_ROOT=/data/S2S_omni_runs/moss_tts_infinisst_20260804_0939 \
+DATASET_ROOT=/data/datasets/infinisst-moss-tts-en-zh-segments-v1 \
+S2S_OMNI_ROOT=/data/S2S_omni \
+MOSS_TTS_ROOT=/data/MOSS-TTS \
+CUDA_DEVICES=0,1,2,3 \
+NUM_EPOCHS=1 \
+nohup bash /data/S2S_omni/scripts/run_moss_prepare_and_sft_after_generation.sh \
+  > /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939/logs/99_prepare_train_supervisor.log 2>&1 &
+```
