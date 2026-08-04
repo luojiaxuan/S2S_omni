@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DATASET_ROOT="${DATASET_ROOT:-/data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1}"
-S2S_OMNI_ROOT="${S2S_OMNI_ROOT:-/data/jaxan/S2S_omni}"
-MOSS_TTS_ROOT="${MOSS_TTS_ROOT:-/data/jaxan/MOSS-TTS}"
-RUN_ROOT="${RUN_ROOT:-/data/jaxan/S2S_omni_runs/moss_tts_infinisst_$(date +%Y%m%d_%H%M%S)}"
+DATASET_ROOT="${DATASET_ROOT:-/data/datasets/infinisst-moss-tts-en-zh-segments-v1}"
+S2S_OMNI_ROOT="${S2S_OMNI_ROOT:-/data/S2S_omni}"
+MOSS_TTS_ROOT="${MOSS_TTS_ROOT:-/data/MOSS-TTS}"
+RUN_ROOT="${RUN_ROOT:-/data/S2S_omni_runs/moss_tts_infinisst_$(date +%Y%m%d_%H%M%S)}"
 
 SPLIT="${SPLIT:-train}"
 MOSS_BASE_URL="${MOSS_BASE_URL:-http://127.0.0.1:8000}"
 MODEL_PATH="${MODEL_PATH:-OpenMOSS-Team/MOSS-TTS-Realtime}"
 CODEC_PATH="${CODEC_PATH:-OpenMOSS-Team/MOSS-Audio-Tokenizer}"
 
-PREP_NUM_PROCESSES="${PREP_NUM_PROCESSES:-8}"
-ACCELERATE_CONFIG_FILE="${ACCELERATE_CONFIG_FILE:-moss_tts_realtime/finetuning/configs/accelerate_ddp_8gpu.yaml}"
+PREP_NUM_PROCESSES="${PREP_NUM_PROCESSES:-4}"
+ACCELERATE_CONFIG_FILE="${ACCELERATE_CONFIG_FILE:-${S2S_OMNI_ROOT}/configs/accelerate_ddp_4gpu.yaml}"
 PER_DEVICE_BATCH_SIZE="${PER_DEVICE_BATCH_SIZE:-1}"
 GRADIENT_ACCUMULATION_STEPS="${GRADIENT_ACCUMULATION_STEPS:-4}"
 LEARNING_RATE="${LEARNING_RATE:-1e-5}"

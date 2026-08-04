@@ -53,7 +53,9 @@ https://github.com/sgl-project/sglang-omni/pull/1192
 }
 ```
 
-PR 当前限制是 one active request，所以 target wav 生成默认串行。
+单个 serving 进程按 one active request 使用；hyper00 当前采用同一 container
+内 4 个 serving 进程并行，分别绑定物理 GPU0-3 和端口
+`48731,49157,52391,54863`。
 
 ## 数据来源
 
@@ -122,7 +124,7 @@ commit: c54868f00916e26c7b3893149f2ce43aa13f9632
 hyper00 local staging:
 
 ```text
-/data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1
+/data/datasets/infinisst-moss-tts-en-zh-segments-v1
 ```
 
 该目录已经解压 `source_wavs/train` 和 `source_wavs/dev`：
@@ -159,16 +161,16 @@ python scripts/build_infinisst_moss_tts_package.py \
 
 ## hyper00 训练流程
 
-先把 HF dataset 下载并解压到：
+先把 HF dataset 下载并解压到 container 内：
 
 ```text
-/data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1
+/data/datasets/infinisst-moss-tts-en-zh-segments-v1
 ```
 
 解压 source wav：
 
 ```bash
-cd /data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1
+cd /data/datasets/infinisst-moss-tts-en-zh-segments-v1
 tar --zstd -xf audio/train_source_wavs.tar.zst
 tar --zstd -xf audio/dev_source_wavs.tar.zst
 ```
@@ -179,18 +181,28 @@ tar --zstd -xf audio/dev_source_wavs.tar.zst
 sgl-omni serve \
   --model-path OpenMOSS-Team/MOSS-TTS-Realtime \
   --config examples/configs/moss_tts_realtime.yaml \
-  --allowed-local-media-path /data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1 \
+  --allowed-local-media-path /data/datasets/infinisst-moss-tts-en-zh-segments-v1 \
   --port 8000
 ```
 
 然后运行：
 
 ```bash
-DATASET_ROOT=/data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1 \
-S2S_OMNI_ROOT=/data/jaxan/S2S_omni \
-MOSS_TTS_ROOT=/data/jaxan/MOSS-TTS \
+DATASET_ROOT=/data/datasets/infinisst-moss-tts-en-zh-segments-v1 \
+S2S_OMNI_ROOT=/data/S2S_omni \
+MOSS_TTS_ROOT=/data/MOSS-TTS \
 MOSS_BASE_URL=http://127.0.0.1:8000 \
 bash scripts/run_infinisst_moss_tts_hyper00.sh
+```
+
+当前 full target generation 使用 4-way launcher：
+
+```bash
+DATASET_ROOT=/data/datasets/infinisst-moss-tts-en-zh-segments-v1 \
+S2S_OMNI_ROOT=/data/S2S_omni \
+RUN_ROOT=/data/S2S_omni_runs/moss_tts_infinisst_20260804_0939 \
+PORTS=48731,49157,52391,54863 \
+bash scripts/run_moss_target_generation_4way.sh
 ```
 
 该 launcher 会执行：
@@ -206,4 +218,16 @@ bash scripts/run_infinisst_moss_tts_hyper00.sh
 - Taurus 已生成 full tar.zst package，本机和 hyper00 校验通过。
 - HF private dataset 已上传，commit 为 `c54868f00916e26c7b3893149f2ce43aa13f9632`。
 - hyper00 已下载并解压 source wavs。
-- 需要继续执行：在 hyper00 启动 MOSS-TTS-Realtime serving，生成 target wav，再运行 `prepare_data.py` 和 `sft.py`。
+- hyper00 已启动 MOSS-TTS-Realtime serving smoke：
+  - `/v1/models` ready。
+  - 3 条 dev target generation 全 accepted。
+  - `prepare_data.py` 3 条 smoke 成功，输出带 `audio_codes` 的 JSONL。
+  - `sft.py` 1-step smoke 成功，loss `3.2439`，checkpoint 写出。
+- 当前 full target generation 正在 hyper00 运行，run root：
+
+```text
+/data/S2S_omni_runs/moss_tts_infinisst_20260804_0939
+```
+
+- 需要继续执行：等待 full target wav 生成完成，合并 raw shards，运行
+  `prepare_data.py`，再运行 4-GPU `sft.py`。
