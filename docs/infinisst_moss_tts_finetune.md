@@ -205,6 +205,14 @@ PORTS=48731,49157,52391,54863 \
 bash scripts/run_moss_target_generation_4way.sh
 ```
 
+状态检查：
+
+```bash
+python /data/S2S_omni/scripts/report_moss_tts_run_status.py \
+  --run-root /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939 \
+  --dataset-root /data/datasets/infinisst-moss-tts-en-zh-segments-v1
+```
+
 该 launcher 会执行：
 
 1. `scripts/generate_moss_realtime_targets.py`
