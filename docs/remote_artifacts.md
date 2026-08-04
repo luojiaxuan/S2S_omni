@@ -273,53 +273,55 @@ Plain RASST baseline zh data used by the soft-wav route:
 ```
 
 These are 12,500 train rows and 355 dev rows, with ordinary assistant Chinese
-chunk targets. They are not the term-map/tagged files used by the
-`model_infinisst_baseline` checkpoint args. The soft-wav route generates target
-speech with original `Qwen/Qwen3-Omni-30B-A3B-Instruct`, captures Omni-compatible
-codes, aligns full target wav/text with MFA, and trains thinker+talker LoRA while
-freezing `code2wav`.
-
-Exact RASST / InfiniSST no-RAG baseline checkpoint registered as
-`model_infinisst_baseline`:
+chunk targets. They are the correct no-term-map InfiniSST baseline data for the
+current S2T -> TTS chain. Checked on Taurus:
 
 ```text
-/mnt/gemini/data/jiaxuanluo/Omni-30B-sampling-0107/keep1.0_r16/v3-20260121-021342-hf
+train rows=12500, user/audio turns=70269, assistant turns=70269, user_term_map=0
+dev rows=355, user/audio turns=891, assistant turns=891, user_term_map=0
 ```
 
-The RASST manifest
-`/mnt/data2/jiaxuanluo/RASST/code/rasst/manifests/main_result_baseline_no_rag.global_cache30_30_20_20.json`
-records this as `hf_repo_id: gavinlaw/rasst-infinisst-baseline`, but this repo
-is not publicly listed/accessible as of 2026-08-04. Do not silently substitute
-`gavinlaw/infinisst-no-tmsft-origin-bsz4-zh` when reproducing the exact baseline:
-that public repo is another InfiniSST zh variant (`args.json` shows LoRA rank
-32 and `train_s_zh_origin.jsonl`), while the Taurus baseline args show LoRA rank
-16 and
-`train_s_zh_v4_ner_baseline_aligned_rate1.0_k20_enriched_with_negatives.sample_keep1.0.seed1.jsonl`.
+Each user turn is just `<audio>`, and the system prompt is:
 
-That exact baseline train JSONL is:
+```text
+You are a professional simultaneous interpreter. You will be given chunks of English audio and you need to translate the audio into Chinese text.
+```
+
+Do not use term-map/tagged files for the InfiniSST baseline. In particular, this
+file is not baseline for the current chain:
 
 ```text
 /mnt/gemini/data1/jiaxuanluo/train_s_zh_v4_ner_baseline_aligned_rate1.0_k20_enriched_with_negatives.sample_keep1.0.seed1.jsonl
 ```
 
-It is already Qwen3-Omni chat-format streaming S2T data, not a runtime RAG
-corpus. Each row has:
+It contains offline `term_map:` blocks in the user prompt and `gt_terms_by_chunk`
+metadata, so it belongs to a term-map/NER variant, not the no-term-map baseline.
+Any checkpoint whose `args.json` points at this file should not be treated as the
+current InfiniSST baseline.
+
+The old RASST manifest
+`/mnt/data2/jiaxuanluo/RASST/code/rasst/manifests/main_result_baseline_no_rag.global_cache30_30_20_20.json`
+registers `model_infinisst_baseline` at:
 
 ```text
-messages: alternating system, user, assistant turns
-audios: one source wav path per user turn
-merge_multiplier: integer chunk merge factor
-utter_id: original source id
-gt_terms_by_chunk: optional per-chunk offline term list
+/mnt/gemini/data/jiaxuanluo/Omni-30B-sampling-0107/keep1.0_r16/v3-20260121-021342-hf
 ```
 
-The user content is `<audio>` plus an offline `term_map:` block, and the
-assistant content is the Chinese streaming output chunk. Full file stats checked
-on Taurus: 12,500 rows, 70,269 user/audio turns, 70,269 assistant turns, audio
-turn count matches message turn count for every row, 7,562 assistant turns are
-empty wait/no-output chunks. Therefore, for exact baseline-style inference, do
-not add an online RAG service. Use the streaming S2T runner with RAG disabled
-or feed the same chat-format audio turns directly.
+but its `args.json` points at the term-map/NER file above. For this project,
+prefer a no-term-map InfiniSST checkpoint. The public HF candidate is:
+
+```text
+gavinlaw/infinisst-no-tmsft-origin-bsz4-zh
+```
+
+Its `args.json` shows `train_s_zh_origin.jsonl` and no term-map training file.
+The previous manifest `hf_repo_id: gavinlaw/rasst-infinisst-baseline` is not
+publicly listed/accessible as of 2026-08-04.
+
+The soft-wav route generates target speech with original
+`Qwen/Qwen3-Omni-30B-A3B-Instruct`, captures Omni-compatible codes, aligns full
+target wav/text with MFA, and trains thinker+talker LoRA while freezing
+`code2wav`.
 
 Taurus also has the original chunked streaming S2T inference stack:
 
@@ -330,9 +332,11 @@ Taurus also has the original chunked streaming S2T inference stack:
 /mnt/data2/jiaxuanluo/RASST/code/rasst/eval/src/batched_vllm_rag_eval.py
 ```
 
-The SimulEval agent writes `instances.log` plus `runtime_*.jsonl`; the runtime
-JSONL contains per-chunk `llm_output` records with `segment_idx` and generated
-Chinese text, which is the right hook for adding a downstream TTS stage.
+For no-term-map baseline inference, run this stack with RAG disabled and do not
+inject a `term_map` block. The SimulEval agent writes `instances.log` plus
+`runtime_*.jsonl`; the runtime JSONL contains per-chunk `llm_output` records
+with `segment_idx` and generated Chinese text, which is the right hook for
+adding a downstream TTS stage.
 
 Planned Omni-compatible wav2codec self-domain pair data:
 
