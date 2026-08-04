@@ -18,6 +18,11 @@ NUM_EPOCHS="${NUM_EPOCHS:-1}"
 NUM_WORKERS="${NUM_WORKERS:-2}"
 POLL_INTERVAL_S="${POLL_INTERVAL_S:-60}"
 MAX_TARGET_DURATION_S="${MAX_TARGET_DURATION_S:-30}"
+# note (luojiaxuan): the container has a broken flash_attn install (spec exists
+# but the package is unusable), so sft.py's "auto" resolves to flash_attention_2
+# and crashes in transformers' flash-attn integration (s_aux=None .to() bug).
+# The validated smoke run used sdpa; keep that the default.
+ATTN_IMPLEMENTATION="${ATTN_IMPLEMENTATION:-sdpa}"
 
 mkdir -p "${RUN_ROOT}/raw" "${RUN_ROOT}/prepared" "${RUN_ROOT}/checkpoints" "${RUN_ROOT}/logs"
 
@@ -269,6 +274,15 @@ prepare_split() {
   local split="$1"
   local raw="${RUN_ROOT}/raw/${split}_moss_raw.filtered.jsonl"
   local prepared="${RUN_ROOT}/prepared/${split}_with_codes.jsonl"
+  # note (luojiaxuan): prepare is expensive GPU encoding; skip it on relaunch
+  # when the existing rank outputs already cover the filtered input exactly.
+  local expected existing
+  expected="$(wc -l < "${raw}")"
+  existing="$(cat "${RUN_ROOT}/prepared/${split}_with_codes."rank*.jsonl 2>/dev/null | wc -l)"
+  if [[ "${expected}" -gt 0 && "${existing}" -eq "${expected}" ]]; then
+    echo "[prepare] ${split} already prepared (${existing}/${expected} records), skipping"
+    return
+  fi
   cd "${MOSS_TTS_ROOT}"
   CUDA_VISIBLE_DEVICES="${CUDA_DEVICES}" PYTHONPATH="${MOSS_TTS_ROOT}" \
   accelerate launch --num_processes "${PREP_NUM_PROCESSES}" \
@@ -298,6 +312,7 @@ train_model() {
     --num-epochs "${NUM_EPOCHS}" \
     --num-workers "${NUM_WORKERS}" \
     --mixed-precision bf16 \
+    --attn-implementation "${ATTN_IMPLEMENTATION}" \
     2>&1 | tee "${RUN_ROOT}/logs/03_train.log"
 }
 
