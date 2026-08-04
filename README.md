@@ -33,6 +33,7 @@ data/examples/
 docs/
   eval_plan.md                  # literature-backed metric plan
   hibiki_zero_backlog_route.md  # Hibiki-Zero cascade data and baseline route
+  infinisst_moss_tts_finetune.md # InfiniSST en->zh MOSS-TTS finetune route
   remote_artifacts.md           # remote data/checkpoint path index
   handoff_s2s_omni.md           # project context, results, and next steps
 s2s_omni/
@@ -66,6 +67,9 @@ scripts/
   hibiki_zero_generate_tts_targets.py # MOSS/Higgs/Qwen3-TTS target speech HTTP
   hibiki_zero_slice_mfa_chunks.py # English MFA word-boundary target chunking
   hibiki_zero_run_baseline.py    # run official hibiki-zero generate baseline
+  build_infinisst_moss_tts_package.py # package en->zh segment/ref-audio data
+  generate_moss_realtime_targets.py # synthesize MOSS target wav raw SFT JSONL
+  run_infinisst_moss_tts_hyper00.sh # hyper00 target generation + SFT launcher
   run_smoke.sh                  # quick local/remote smoke test
 ```
 

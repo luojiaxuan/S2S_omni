@@ -1,0 +1,178 @@
+# InfiniSST en->zh MOSS-TTS-Realtime Finetuning
+
+## 目标
+
+本任务只做 `en -> zh`。目标不是提升 TTS 拟人程度，而是让
+`OpenMOSS-Team/MOSS-TTS-Realtime` 适应 InfiniSST / RASST streaming
+speech-to-text 翻译 segment 的中文 token 节奏：短 chunk、半句、跨 chunk
+断句都应该被自然读出，而不是按普通完整句 TTS 的节奏强行重断句。
+
+## 已确认接口
+
+MOSS-TTS upstream finetuning 目录：
+
+```text
+https://github.com/OpenMOSS/MOSS-TTS/tree/main/moss_tts_realtime/finetuning
+```
+
+其 raw JSONL 格式是：
+
+```json
+{
+  "id": "sample",
+  "ref_wav": "source_wavs/train/sample.wav",
+  "conversations": [
+    {
+      "role": "assistant",
+      "text": "中文翻译segment",
+      "wav": "target_wavs/train/sample.wav"
+    }
+  ]
+}
+```
+
+`prepare_data.py` 会把 `ref_wav` 和每个 turn 的 `wav` 编成
+`OpenMOSS-Team/MOSS-Audio-Tokenizer` 的 16-codebook `audio_codes`。
+`sft.py` 训练时只对 assistant turn 的 audio codes 设 label。
+
+SGLang-Omni PR serving：
+
+```text
+https://github.com/sgl-project/sglang-omni/pull/1192
+```
+
+当前 PR 提供 `/v1/audio/speech`，支持：
+
+```json
+{
+  "model": "OpenMOSS-Team/MOSS-TTS-Realtime",
+  "voice": "default",
+  "input": "中文翻译segment",
+  "ref_audio": "/path/to/source.wav",
+  "response_format": "wav"
+}
+```
+
+PR 当前限制是 one active request，所以 target wav 生成默认串行。
+
+## 数据来源
+
+当前使用 plain RASST / InfiniSST baseline zh 数据：
+
+```text
+train: /mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline.jsonl
+dev:   /mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline_dev.jsonl
+```
+
+Taurus 上已检查：
+
+| split | rows | turns | non-empty assistant turns | unique source wav | source wav size |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| train | 12,500 | 70,269 | 62,707 | 62,707 | 6.873 GiB |
+| dev | 355 | 891 | 801 | 801 | 0.073 GiB |
+
+这些 JSONL 只有 source speech chunk 和中文 assistant text chunk；没有真实
+target speech。因此 target wav 用 MOSS-TTS-Realtime serving 从中文 segment
+生成，`ref_audio` 使用对应 source wav。
+
+## 数据包设计
+
+为了避免跨机器传输大量小文件，HF 上传的是 compact source package：
+
+```text
+infinisst-moss-tts-en-zh-segments-v1/
+  README.md
+  dataset_summary.json
+  manifest/
+    train_segments.jsonl
+    dev_segments.jsonl
+    train_moss_requests.jsonl
+    dev_moss_requests.jsonl
+    train_moss_raw_unresolved.jsonl
+    dev_moss_raw_unresolved.jsonl
+  audio/
+    train_source_wavs.tar.zst
+    dev_source_wavs.tar.zst
+```
+
+其中 `*_moss_requests.jsonl` 是 target wav 生成输入；
+`*_moss_raw_unresolved.jsonl` 是 MOSS raw finetuning shape，但
+`target_wavs/...` 需要在 hyper00 上生成后才存在。
+
+计划 HF dataset repo：
+
+```text
+gavinlaw/infinisst-moss-tts-en-zh-segments
+```
+
+## 生成数据包
+
+在 Taurus 上运行：
+
+```bash
+cd /mnt/data/jiaxuanluo/S2S_omni
+python scripts/build_infinisst_moss_tts_package.py \
+  --train-jsonl /mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline.jsonl \
+  --dev-jsonl /mnt/gemini/data1/jiaxuanluo/train_s_zh_baseline_dev.jsonl \
+  --output-dir /mnt/data/jiaxuanluo/S2S_omni_data \
+  --dataset-id infinisst-moss-tts-en-zh-segments-v1 \
+  --compression zstd \
+  --zstd-level 6
+```
+
+先做 smoke 可以限制数量：
+
+```bash
+python scripts/build_infinisst_moss_tts_package.py \
+  --output-dir /mnt/data/jiaxuanluo/S2S_omni_data_smoke \
+  --max-train-segments 100 \
+  --max-dev-segments 20
+```
+
+## hyper00 训练流程
+
+先把 HF dataset 下载并解压到：
+
+```text
+/data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1
+```
+
+解压 source wav：
+
+```bash
+cd /data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1
+tar --zstd -xf audio/train_source_wavs.tar.zst
+tar --zstd -xf audio/dev_source_wavs.tar.zst
+```
+
+启动 MOSS-TTS-Realtime serving 时要允许读取数据目录：
+
+```bash
+sgl-omni serve \
+  --model-path OpenMOSS-Team/MOSS-TTS-Realtime \
+  --config examples/configs/moss_tts_realtime.yaml \
+  --allowed-local-media-path /data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1 \
+  --port 8000
+```
+
+然后运行：
+
+```bash
+DATASET_ROOT=/data/jaxan/datasets/infinisst-moss-tts-en-zh-segments-v1 \
+S2S_OMNI_ROOT=/data/jaxan/S2S_omni \
+MOSS_TTS_ROOT=/data/jaxan/MOSS-TTS \
+MOSS_BASE_URL=http://127.0.0.1:8000 \
+bash scripts/run_infinisst_moss_tts_hyper00.sh
+```
+
+该 launcher 会执行：
+
+1. `scripts/generate_moss_realtime_targets.py`
+2. `moss_tts_realtime/finetuning/prepare_data.py`
+3. `moss_tts_realtime/finetuning/sft.py`
+
+## 当前状态
+
+- 数据字段和 MOSS finetuning 格式已确认。
+- `source_text` 不是硬依赖：MOSS-Realtime serving 可以只用 `ref_audio`。
+- 需要继续执行：在 Taurus 生成 full tar.zst package，上传 HF，再在 hyper00 下载并启动 target generation / SFT。
