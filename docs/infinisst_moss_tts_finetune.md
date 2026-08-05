@@ -567,3 +567,48 @@ post-generation stage。
 - 不要把 smoke checkpoint 当 full checkpoint。
 - 不要把 target wavs 或 checkpoints 提交进 Git；大 artifact 应上传 HF。
 - 不要使用超过 4 张 hyper00 GPU，除非用户明确授权。
+
+
+## ACL6060 benchmark 与 serving PR 计划（2026-08-05 进行中）
+
+luojiaxuan 指示：(1) 滑动窗口多 turn session 包进 sglang-omni PR 1192；
+(2) 用 ACL6060 canonical benchmark（5 talks，与 GPT/Gemini 同表）测
+InfiniSST + v2 TTS cascade；(3) 多用 GPU。
+
+**ACL 推理阵地转移**：Taurus 8 卡被 zili 的
+`ucsb_qwen_gpu_placeholder.py`（8x44GB、5s 采样全程 0%）占住，符合回收
+授权但无 sudo 杀不掉他人裸进程（授权与 Unix 权限冲突，已记录在
+`/mnt/gemini/data1/jiaxuanluo/moss_tts_full_chain_demo_20260804/reclaim_log.txt`）。
+改在 hyper01 跑：H200 单卡装下 30B（免 TP）。准备（进行中）：
+- RASST eval 代码（2.2MB）已拷到 hyper01 `/data/RASST_eval/code/rasst`
+  （源：Taurus `/mnt/data2/jiaxuanluo/RASST`，remote `LeiLiLab/RASST`）。
+- 容器内独立 venv `/data/venvs/vllm_eval`：vllm==0.13.0（对齐 Taurus
+  spaCyEnv），不碰 sglang 主环境。
+- HF 下载：`gavinlaw/infinisst-no-tmsft-origin-bsz4-zh`（~60GB）+
+  `gavinlaw/rasst-main-result-data` 的 acl6060 音频与 acl_zh inputs。
+
+ACL 跑法（与 demo 相同 launcher，改指 acl_zh 全量 inputs）：
+`20260524__batched_vllm_rag_eval.sh` + `DISABLE_RAG_OVERRIDE=1`、
+`LMS_OVERRIDE=1`、TP1/单卡或 TP2、`SKIP_OFFLINE_EVAL_OVERRIDE=1`；
+runtime chunks -> v2 多 turn TTS（滑动窗口）-> 与
+`projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.tsv` 的
+GPT/Gemini En-Zh 1x 行对比。质量分先出（SEGALE BLEU / XCOMET-XL，脚本
+`scripts/run_acl6060_metric_pipeline.py` 系），LongYAAL/Ending Offset 需
+v2 playout 协议的 arrival 时间线，第二步再接。
+
+**serving PR 滑动窗口设计**（sglang-omni PR 1192，branch
+`luojiaxuan/moss-tts-realtime`，实现待做）：
+- API：`/v1/audio/speech` 增加可选 `session_id` + `session_window`
+  （默认 ~8 turns）。带 session_id 的请求在 pipeline 侧维护
+  per-session 历史（每 turn 的 text + 生成的 audio codes）。
+- 请求构造：ensemble(ref codes) + 最近 W-1 turns 的
+  `<|im_start|>assistant\n text ⊕ codes <|im_end|>\n` + 新 turn
+  header，一次 prefill 后自回归生成（与
+  `scripts/moss_multiturn_infer.py` 的布局一致，滑动窗口=重建 prompt，
+  无需无限 KV）。
+- 入口文件：`sglang_omni/models/moss_tts/request_builders.py`
+  （`_build_processor_message` / `MossTTSState`）+ pipeline 的
+  session store；`serve/test_speech_protocol.py` 加用例。
+- 效率动机：sglang 引擎带 cuda graph，逐帧生成远快于脚本级
+  transformers 推理（dev 实测 ~38s/turn 太慢，ACL 5 talks ~4k chunks
+  必须走优化引擎或大幅并行）。
