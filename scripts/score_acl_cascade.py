@@ -26,6 +26,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--talk-wav-dir", required=True, help="dir with 2022.acl-long.<talk>.wav sources")
     parser.add_argument("--output-json", required=True)
     parser.add_argument("--whisper-model", default="large-v3")
+    parser.add_argument("--openai-key-file", default=None,
+                        help="use gpt-4o-mini-transcribe windowed ASR (canonical) instead of whisper")
     parser.add_argument("--device", default="cuda")
     return parser.parse_args()
 
@@ -58,10 +60,54 @@ def concat_run(bench: Path, talk: int, chunk: str) -> tuple[Path, float]:
     return out_path, duration
 
 
+def transcribe_openai_windows(wav_path: Path, key: str, window_s: float = 120.0) -> str:
+    """Canonical ASR: gpt-4o-mini-transcribe over <=120s windows, concatenated."""
+    import io
+    import urllib.request
+
+    with wave.open(str(wav_path), "rb") as handle:
+        rate = handle.getframerate()
+        pcm = handle.readframes(handle.getnframes())
+    window_bytes = int(window_s * rate) * 2
+    texts = []
+    for start in range(0, len(pcm), window_bytes):
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(rate)
+            w.writeframes(pcm[start : start + window_bytes])
+        body = buf.getvalue()
+        boundary = "----acl6060cascade"
+        parts = []
+        for name, value in (("model", "gpt-4o-mini-transcribe"), ("language", "zh")):
+            parts.append(
+                f"--{boundary}\r\nContent-Disposition: form-data; name=\"{name}\"\r\n\r\n{value}\r\n".encode()
+            )
+        parts.append(
+            f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; "
+            f"filename=\"win.wav\"\r\nContent-Type: audio/wav\r\n\r\n".encode()
+            + body
+            + b"\r\n"
+        )
+        parts.append(f"--{boundary}--\r\n".encode())
+        data = b"".join(parts)
+        req = urllib.request.Request(
+            "https://api.openai.com/v1/audio/transcriptions",
+            data=data,
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            texts.append(json.loads(resp.read())["text"].strip())
+    return "".join(texts)
+
+
 def main() -> None:
     args = parse_args()
     import sacrebleu
-    import whisper
 
     bench = Path(args.bench_dir)
     talk_order = [int(t) for t in args.source_order.split(",")]
@@ -70,7 +116,16 @@ def main() -> None:
         for talk, line in zip(talk_order, handle):
             refs_by_talk[talk] = line.strip()
 
-    model = whisper.load_model(args.whisper_model, device=args.device)
+    openai_key = None
+    if args.openai_key_file:
+        openai_key = Path(args.openai_key_file).read_text().strip()
+        model = None
+        asr_label = "gpt-4o-mini-transcribe-120swin"
+    else:
+        import whisper
+
+        model = whisper.load_model(args.whisper_model, device=args.device)
+        asr_label = f"whisper-{args.whisper_model}"
     results = []
     for chunk in ("096", "192"):
         hyps, refs = [], []
@@ -79,8 +134,11 @@ def main() -> None:
             wav_path, target_s = concat_run(bench, talk, chunk)
             with wave.open(str(Path(args.talk_wav_dir) / f"2022.acl-long.{talk}.wav"), "rb") as handle:
                 source_s = handle.getnframes() / handle.getframerate()
-            asr = model.transcribe(str(wav_path), language="zh", temperature=0.0)
-            hyp = asr["text"].strip()
+            if openai_key:
+                hyp = transcribe_openai_windows(wav_path, openai_key)
+            else:
+                asr = model.transcribe(str(wav_path), language="zh", temperature=0.0)
+                hyp = asr["text"].strip()
             hyps.append(hyp)
             refs.append(refs_by_talk[talk])
             rows_out.append(
@@ -99,7 +157,7 @@ def main() -> None:
         results.append(
             {
                 "system": f"infinisst_mossv2_chunk{chunk}",
-                "asr": f"whisper-{args.whisper_model}",
+                "asr": asr_label,
                 "bleu_zh_approx": round(bleu.score, 2),
                 "chrf_approx": round(chrf.score, 2),
                 "talks": rows_out,
