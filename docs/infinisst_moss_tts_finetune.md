@@ -731,3 +731,27 @@ XCOMET-XL reference-free source+hypothesis）。
 runaway 重试与末轮 flush；重跑两档后更新本表。latency 列（LongYAAL/
 Ending Offset）仍为 uniform proxy timing，不可比，待 speech-playout v2
 协议接入。
+
+
+## v2.1 重复鲁棒性增强（2026-08-05）
+
+滑窗推理暴露的音频循环自强化问题（详见上节），四个推理侧补丁臂
+（A: repetition_window 375/1.15、B: n-gram 检测清窗、C: 检测+重生成、
+D: 音频秒/字符比检测清窗）在 probe268（talk 268 前 100 轮）上 CER
+0.39-0.69，均无法根治——n-gram/token 级手段失效的根因是循环音频在
+RVQ codes 上不逐字复现。luojiaxuan 决策转训练侧。
+
+**v2.1 方案**：`scripts/augment_moss_v2_repetition.py` 对 ~20% 训练行
+在中间某轮 audio codes 内拼接复制 8-24 帧短语（模拟跳针历史），该轮标
+`context_only` 不进 loss（finetuning `dataset.py` 已打局部补丁：
+`is_assistant and not turn.get("context_only")`），后续轮保持干净监督。
+12,498 原行 + 2,205 增强行 = 14,703 条，1 epoch 919 步重训（超参同 v2）。
+checkpoint：`RUN_ROOT/checkpoints/moss_tts_realtime_infinisst_v21_repaug/`。
+
+probe268 对照（裸滑窗，无推理补丁）：
+- v2: CER 0.52-0.69，中段病态锁死循环
+- **v2.1: CER 0.396，锁死循环消失**，仅剩局部小结巴
+
+（v2.1 + ratio 检测组合探针进行中；MOSS-TTS 本地补丁清单：
+`modeling_mossttsrealtime_local.py` create_causal_mask 适配 transformers
+5.6 签名、`dataset.py` context_only，均留 .bak。）
