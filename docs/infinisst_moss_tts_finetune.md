@@ -696,3 +696,38 @@ serving `model_runner` 的 delay 处理 vs 上游
 **决策**：ACL benchmark 的 TTS 采用已验证的
 `scripts/moss_multiturn_infer.py` 脚本路径（dev CER 0.089、时长比
 0.996）；serving history 特性留 PR 继续修，不阻塞 benchmark。
+
+
+## ACL6060 canonical 首轮结果与诊断（2026-08-05）
+
+SEGALE 流水线已在 hyper00 打通（venv `/data/venvs/segale_eval2`，坑：
+vecalign 为 Speech-to-Speech-Latency 仓库内置需 `.pth`+Cython+bin shim、
+setuptools<81 保 pkg_resources、COMET 需补 click/rich/typer、spaCy 需
+zh_core_web_sm）。对齐与打分均为 canonical 协议（pinned `d0041438`，
+spacy+LaBSE+vecalign max_size=8，BLEU tokenize=zh 保留标点 null 记零，
+XCOMET-XL reference-free source+hypothesis）。
+
+| 系统 (En-Zh 1x) | BLEU | XCOMET-XL | null 率 |
+| --- | ---: | ---: | ---: |
+| GPT-realtime (主表) | 32.70 | 0.628 | ~8% |
+| Gemini 3.5-live (主表) | 40.39 | 0.586 | ~8% |
+| KIT (主表) | 34.76 | 0.588 | ~8% |
+| cascade chunk=1.92s | 23.96 | 0.291 | 28% (under 72/320) |
+| cascade chunk=0.96s | 6.86(无效) | 0.140 | 48% (under 130/284) |
+
+诊断：
+- **0.96 档数字无效**：sglang client 在小增量+16/8 修剪下触发重复翻译
+  退化（talk 268 假设 9,164 字符 vs 参考 3,532）。1.92 档文本量与参考
+  一致，确认是 client 修剪/续译语义与 RASST 原实现的偏差被小 chunk 放大。
+  另 `extra_body.top_k` 对 server 无效（OpenAI 客户端库概念）。
+- **1.92 档为下界**：BLEU 23.96 主要损失是 22.5% under-translation
+  （7 个 TTS runaway session 丢音频 + session 末尾 deferred 音频未 flush
+  + ASR 损耗）。
+- 产物：`RUN_ROOT/acl_bench/rundirs/acl6060_live_enzh_cascade_mossv2_
+  chunk{096,192}_speed1/`（instances.log、segale_alignment、
+  bleu_summary.json、xcomet_summary.json、xcomet_segments.jsonl）。
+
+修复计划：0.96 client 与 Taurus RASST runtime 逐 prompt 对拍；TTS 补
+runaway 重试与末轮 flush；重跑两档后更新本表。latency 列（LongYAAL/
+Ending Offset）仍为 uniform proxy timing，不可比，待 speech-playout v2
+协议接入。
