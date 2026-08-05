@@ -44,6 +44,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-seconds-per-char", type=float, default=0.6)
     parser.add_argument("--min-runaway-floor-s", type=float, default=8.0)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--sliding-window", type=int, default=0,
+                        help="keep the last N-1 completed turns as context and rebuild the prompt "
+                             "every turn (reset_cache each turn) instead of one growing session")
     parser.add_argument("--log-every", type=int, default=10)
     return parser.parse_args()
 
@@ -99,6 +102,47 @@ def main() -> None:
     ensemble = processor.make_ensemble(prompt_tokens)
     first_turn_ids = np.concatenate([ensemble, header_grid("<|im_start|>assistant\n")], axis=0)
     next_turn_ids = header_grid("<|im_end|>\n<|im_start|>assistant\n")
+
+    channels = processor.channels
+    pad = processor.audio_channel_pad
+    delay = processor.delay_tokens_len
+
+    def history_turn_rows(text: str, codes: np.ndarray, leading_break: bool) -> np.ndarray:
+        # note (luojiaxuan): same completed-turn layout as the finetuning packer
+        # (text channel padded with <|text_pad|>, audio delayed by delay_tokens_len,
+        # BOS before / EOS after the codes); zero-frame turns keep BOS+EOS adjacent.
+        prefill = "<|im_end|>\n<|im_start|>assistant\n" if leading_break else ""
+        text_tokens = tokenizer(text)["input_ids"]
+        start = len(tokenizer(prefill)["input_ids"]) if prefill else 0
+        audio_len = int(codes.shape[0])
+        if len(text_tokens) >= delay:
+            padded = audio_len + delay - len(text_tokens) + 1
+            ch1 = tokenizer(prefill + text + "<|text_pad|>" * max(0, padded))["input_ids"]
+            rows = np.full((len(ch1), channels + 1), pad, dtype=np.int64)
+            rows[:, 0] = ch1
+            a0 = start + delay
+            rows[a0 : a0 + audio_len, 1:] = codes
+            rows[a0 - 1, 1] = 1025
+            rows[a0 + audio_len, 1] = 1026
+        else:
+            padded = audio_len + 1
+            ch1 = tokenizer(prefill + text + "<|text_pad|>" * padded)["input_ids"]
+            rows = np.full((len(ch1), channels + 1), pad, dtype=np.int64)
+            rows[:, 0] = ch1
+            if audio_len:
+                rows[-(audio_len + 1) : -1, 1:] = codes
+            rows[-(audio_len + 2), 1] = 1025
+            rows[-1, 1] = 1026
+        return rows
+
+    def window_prompt_ids(history: list[tuple[str, np.ndarray]]) -> np.ndarray:
+        parts = [ensemble]
+        for idx, (h_text, h_codes) in enumerate(history):
+            parts.append(history_turn_rows(h_text, h_codes, leading_break=idx > 0))
+        parts.append(
+            header_grid("<|im_end|>\n<|im_start|>assistant\n" if history else "<|im_start|>assistant\n")
+        )
+        return np.concatenate(parts, axis=0)
 
     inferencer = MossTTSRealtimeInference(model, tokenizer, max_length=args.max_length)
     audio_eos_token = int(getattr(inferencer, "audio_eos_token", 1026))
@@ -160,6 +204,7 @@ def main() -> None:
         turn_results = []
         row_pcm: list[np.ndarray] = []
         failure = None
+        window: list[tuple[str, np.ndarray]] = []
         inferencer.reset_generation_state(keep_cache=False)
         with torch.inference_mode():
             for k, seg in enumerate(segments):
@@ -167,11 +212,18 @@ def main() -> None:
                 budget_frames = int(
                     max(args.min_runaway_floor_s, spoken_chars(text) * args.max_seconds_per_char) * 12.5
                 )
-                session.reset_turn(
-                    input_ids=first_turn_ids if k == 0 else next_turn_ids,
-                    include_system_prompt=False,
-                    reset_cache=(k == 0),
-                )
+                if args.sliding_window > 0:
+                    session.reset_turn(
+                        input_ids=window_prompt_ids(window),
+                        include_system_prompt=False,
+                        reset_cache=True,
+                    )
+                else:
+                    session.reset_turn(
+                        input_ids=first_turn_ids if k == 0 else next_turn_ids,
+                        include_system_prompt=False,
+                        reset_cache=(k == 0),
+                    )
                 decoder = AudioStreamDecoder(
                     codec,
                     chunk_frames=3,
@@ -181,6 +233,7 @@ def main() -> None:
                 )
                 turn_frames = 0
                 turn_pcm: list[np.ndarray] = []
+                turn_codes: list[torch.Tensor] = []
 
                 def consume(frames_list) -> bool:
                     nonlocal turn_frames
@@ -189,6 +242,7 @@ def main() -> None:
                         if tokens.numel() == 0:
                             continue
                         turn_frames += tokens.shape[0]
+                        turn_codes.append(tokens.detach().cpu())
                         decoder.push_tokens(tokens.detach())
                         for chunk in decoder.audio_chunks():
                             if chunk.numel():
@@ -215,6 +269,14 @@ def main() -> None:
                     np.concatenate(turn_pcm) if turn_pcm else np.zeros(0, dtype=np.float32)
                 )
                 row_pcm.append(turn_audio)
+                if args.sliding_window > 0:
+                    codes_np = (
+                        torch.cat(turn_codes, dim=0).numpy().astype(np.int64)
+                        if turn_codes
+                        else np.zeros((0, 16), dtype=np.int64)
+                    )
+                    window.append((text, codes_np))
+                    window = window[-(args.sliding_window - 1) :]
                 turn_results.append(
                     {
                         "segment_id": seg.get("id"),
