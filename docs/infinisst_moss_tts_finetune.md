@@ -387,6 +387,46 @@ TP4，0.96s chunk）流式推理，53 chunk 全部产出中文增量 -> 每段�
 - v2 checkpoint 已上传 HF：
   `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn`
   （commit `0c478bb85680b00ca0124d0c89a934eabee10561`）。
+
+## 多 turn 增量推理与 dev 正式评测（2026-08-04/05）
+
+多 turn 增量推理已接入：`scripts/moss_multiturn_infer.py`（commit
+`854d214`）。复用上游 `MossTTSRealtimeStreamingSession`：assistant-only
+turn 通过自定义 `input_ids` 实现（turn header 与 finetuning packer 逐
+字节一致），固定音色 voice prompt 进 ensemble，KV cache 跨 turn 保留，
+`prefill_text_len=delay_tokens_len` 保持轮内 text/audio delay 交错与
+训练一致，逐 turn runaway 帧预算保护。**训推一致性说明**：训练侧的
+"改动"就是 v2 多 turn 记录格式本身，两侧遵循同一上游序列约定；残余
+gap 是 exposure bias（标准教师强制差距）、会话长度外推（训练行 ≤~13
+turns）、历史音频音源（训练=base 整行合成切片 vs 推理=v2 自产）。
+
+dev 354 行正式评测（`scripts/eval_moss_dev_systems.py`，commit
+`34de262`；whisper large-v3 zh ASR，参考=InfiniSST segment 文本拼接，
+BLEU tokenize=zh；duration ratio = target 音频/源音频时长）：
+
+| 指标 | v1 per-segment | v2 multi-turn |
+| --- | ---: | ---: |
+| rows scored / failed | 353 / 1 | 352 / 2 |
+| BLEU(zh) | 72.31 | **74.96** |
+| chrF | 65.95 | **69.73** |
+| CER mean / median | 0.1646 / 0.0919 | **0.1341** / 0.0892 |
+| duration ratio mean | 1.156 | **0.996** |
+| duration ratio median | 1.050 | **0.883** |
+| duration ratio p90 | 1.667 | **1.333** |
+| runaway turns | 4 / 796 | **0 / 774** |
+
+结论：v2 + 多 turn 推理把 dev 平均时长比压到 ~1.0（v1 为 1.16、p90
+1.67），**774 turns 零 runaway**，同时可懂度（BLEU/chrF/CER）反而更好
+——连贯性没有以保真度为代价。smoke 例证：dev_r000002 v1 逐段 30.2s ->
+v2 多 turn 13.4s（整行合成参考 12.2s）。
+
+已知限制：demo 的 53-turn 单会话在 turn 47 两次 runaway（floor 8s 与
+15s 各一次）——远超训练行长（≤~13 turns）的分布外失稳，对应部署对策
+是每 ~10-12 turns 重置 session，数据侧对策是 v3 拼接长会话训练。
+
+评测产物：`RUN_ROOT/eval_v1_dev/`、`RUN_ROOT/eval_v2_multiturn/`
+（per-row scored JSONL + report JSON + 全部 wav）。
+
 - v2 单发（固定中文 ref、无历史）复跑同 53 段：71.8s，无 runaway，与
   v1 70.1s 相近——**单发推理吃不到多 turn 训练收益**，时长/韵律收益需
   多 turn 增量推理接入后评估。三段音频（源/v1/v2）均已交付试听。
