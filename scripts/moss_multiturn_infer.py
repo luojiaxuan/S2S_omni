@@ -44,6 +44,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-seconds-per-char", type=float, default=0.6)
     parser.add_argument("--min-runaway-floor-s", type=float, default=8.0)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--loop-detect", choices=["none", "reset", "regen"], default="none",
+                        help="on audio-loop detection: clear the sliding window (reset) or also "
+                             "regenerate the looping turn once at higher temperature (regen)")
     parser.add_argument("--sliding-window", type=int, default=0,
                         help="keep the last N-1 completed turns as context and rebuild the prompt "
                              "every turn (reset_cache each turn) instead of one growing session")
@@ -134,6 +137,24 @@ def main() -> None:
             rows[-(audio_len + 2), 1] = 1025
             rows[-1, 1] = 1026
         return rows
+
+    def book1_ngrams(codes: np.ndarray, n: int = 8) -> set[tuple[int, ...]]:
+        seq = codes[:, 0].tolist()
+        return {tuple(seq[i : i + n]) for i in range(len(seq) - n + 1)}
+
+    def loop_detected(codes: np.ndarray, prev: np.ndarray | None) -> bool:
+        # note (luojiaxuan): phrase loops recur as long book-1 n-grams either
+        # inside the turn or against the previous turn's codes.
+        if codes.shape[0] >= 16:
+            seq = codes[:, 0].tolist()
+            grams = [tuple(seq[i : i + 8]) for i in range(len(seq) - 7)]
+            if len(set(grams)) / max(1, len(grams)) < 0.6:
+                return True
+        if prev is not None and prev.shape[0] >= 8 and codes.shape[0] >= 8:
+            cur = book1_ngrams(codes)
+            if cur and len(cur & book1_ngrams(prev)) / len(cur) > 0.5:
+                return True
+        return False
 
     def window_prompt_ids(history: list[tuple[str, np.ndarray]]) -> np.ndarray:
         parts = [ensemble]
@@ -275,6 +296,53 @@ def main() -> None:
                         if turn_codes
                         else np.zeros((0, 16), dtype=np.int64)
                     )
+                    prev_codes = window[-1][1] if window else None
+                    if args.loop_detect != "none" and loop_detected(codes_np, prev_codes):
+                        turn_results.append(
+                            {"segment_id": seg.get("id"), "loop_detected": True}
+                        ) if False else None
+                        window = []
+                        if args.loop_detect == "regen" and not getattr(seg, "_retried", False):
+                            # regenerate this turn once with a clean window
+                            session.temperature = min(1.0, args.temperature + 0.2)
+                            session.reset_turn(
+                                input_ids=window_prompt_ids(window),
+                                include_system_prompt=False,
+                                reset_cache=True,
+                            )
+                            decoder2 = AudioStreamDecoder(
+                                codec, chunk_frames=3, overlap_frames=0,
+                                decode_kwargs={"chunk_duration": -1}, device=device,
+                            )
+                            turn_frames = 0
+                            turn_pcm = []
+                            turn_codes = []
+                            decoder = decoder2
+                            with codec.streaming(batch_size=1):
+                                ok2 = consume(session.push_text(text)) and consume(session.end_text())
+                                while ok2:
+                                    frames = session.drain(max_steps=1)
+                                    if not frames:
+                                        break
+                                    ok2 = consume(frames)
+                                    if session.inferencer.is_finished:
+                                        break
+                                final2 = decoder.flush()
+                                if final2 is not None and final2.numel():
+                                    turn_pcm.append(final2.detach().float().cpu().numpy().reshape(-1))
+                            session.temperature = args.temperature
+                            turn_audio = (
+                                np.concatenate(turn_pcm) if turn_pcm else np.zeros(0, dtype=np.float32)
+                            )
+                            row_pcm[-1] = turn_audio
+                            codes_np = (
+                                torch.cat(turn_codes, dim=0).numpy().astype(np.int64)
+                                if turn_codes
+                                else np.zeros((0, 16), dtype=np.int64)
+                            )
+                            turn_results[-1]["duration_s"] = round(len(turn_audio) / codec_sr, 3)
+                            turn_results[-1]["regenerated"] = True
+                        turn_results[-1]["loop_reset"] = True
                     window.append((text, codes_np))
                     window = window[-(args.sliding_window - 1) :]
                 turn_results.append(
