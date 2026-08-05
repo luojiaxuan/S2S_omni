@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="/Users/luojiaxuan/Documents/Codex/2026-06-20/s"
-REPO="${ROOT}/work/S2S_omni"
-PYTHON_BIN="${ROOT}/outputs/floras_test_preview/.venv/bin/python"
-DATASET_ROOT="/tmp/rasst_main_result_data"
-OUTPUT_BASE="/tmp/acl6060_live_sweep"
-ARTIFACT_BASE="${REPO}/projects/acl6060_s2s_metrics_seed/artifacts"
-OPENAI_KEY_FILE="/tmp/acl6060_keys/openai.key"
-GEMINI_KEY_FILE="/tmp/acl6060_keys/gemini.key"
-REMOTE_BASE="/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_full_table_20260723"
-REMOTE_RASST="/mnt/data2/jiaxuanluo/RASST"
-REMOTE_PYTHON="/mnt/taurus/home/jiaxuanluo/miniconda3/envs/spaCyEnv/bin/python"
-REMOTE_FBK="/mnt/taurus/home/jiaxuanluo/FBK-fairseq"
-REMOTE_MWER="/mnt/taurus/home/jiaxuanluo/mwerSegmenter"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+DATASET_ROOT="${DATASET_ROOT:-/tmp/rasst_main_result_data}"
+OUTPUT_BASE="${OUTPUT_BASE:-/tmp/acl6060_live_sweep}"
+ARTIFACT_BASE="${ARTIFACT_BASE:-${REPO}/projects/acl6060_s2s_metrics_seed/artifacts}"
+OPENAI_KEY_FILE="${OPENAI_KEY_FILE:-/tmp/acl6060_keys/openai.key}"
+GEMINI_KEY_FILE="${GEMINI_KEY_FILE:-/tmp/acl6060_keys/gemini.key}"
+REMOTE_BASE="${REMOTE_BASE:-/mnt/data2/jiaxuanluo/tmp/s2s_omni_acl6060_full_table_20260723}"
+REMOTE_RASST="${REMOTE_RASST:-/mnt/data2/jiaxuanluo/RASST}"
+REMOTE_PYTHON="${REMOTE_PYTHON:-/mnt/taurus/home/jiaxuanluo/miniconda3/envs/spaCyEnv/bin/python}"
+REMOTE_FBK="${REMOTE_FBK:-/mnt/taurus/home/jiaxuanluo/FBK-fairseq}"
+REMOTE_MWER="${REMOTE_MWER:-/mnt/taurus/home/jiaxuanluo/mwerSegmenter}"
 PROVIDERS="openai,gemini"
 TARGET_LANGS="zh,de,ja"
 CHUNKS="960"
@@ -36,6 +36,7 @@ usage() {
 Usage: scripts/run_acl6060_live_compare.sh [options]
 
 Options:
+  --python-bin PATH
   --providers openai,gemini
   --target-langs zh,de,ja
   --chunks 960,1920
@@ -62,6 +63,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --python-bin) PYTHON_BIN="$2"; shift 2 ;;
     --providers) PROVIDERS="$2"; shift 2 ;;
     --target-langs) TARGET_LANGS="$2"; shift 2 ;;
     --chunks) CHUNKS="$2"; shift 2 ;;

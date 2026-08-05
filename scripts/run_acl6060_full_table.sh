@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="/Users/luojiaxuan/Documents/Codex/2026-06-20/s"
-REPO="${ROOT}/work/S2S_omni"
-PYTHON_BIN="${ROOT}/outputs/floras_test_preview/.venv/bin/python"
-OMNISTEVAL_BIN="${ROOT}/outputs/floras_test_preview/.venv/bin/omnisteval"
-DATASET_ROOT="/tmp/rasst_main_result_data"
-ARTIFACT_BASE="${REPO}/projects/acl6060_s2s_metrics_seed/artifacts"
-OPENAI_KEY_FILE="/tmp/acl6060_keys/openai.key"
-GEMINI_KEY_FILE="/tmp/acl6060_keys/gemini.key"
-KIT_COOKIE_HEADER_FILE="${ROOT}/outputs/floras_live_pilot_refs/kit_shorten_60s_chunk1920/.lt2srv_cookie_header"
-OUTPUT_BASE="/tmp/acl6060_live_sweep"
-KIT_OUTPUT_BASE="/tmp/acl6060_kit_live_sweep"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+OMNISTEVAL_BIN="${OMNISTEVAL_BIN:-omnisteval}"
+SPEECH_LATENCY_REPO="${SPEECH_LATENCY_REPO:-}"
+DATASET_ROOT="${DATASET_ROOT:-/tmp/rasst_main_result_data}"
+ARTIFACT_BASE="${ARTIFACT_BASE:-${REPO}/projects/acl6060_s2s_metrics_seed/artifacts}"
+OPENAI_KEY_FILE="${OPENAI_KEY_FILE:-/tmp/acl6060_keys/openai.key}"
+GEMINI_KEY_FILE="${GEMINI_KEY_FILE:-/tmp/acl6060_keys/gemini.key}"
+KIT_COOKIE_HEADER_FILE="${KIT_COOKIE_HEADER_FILE:-}"
+OUTPUT_BASE="${OUTPUT_BASE:-/tmp/acl6060_live_sweep}"
+KIT_OUTPUT_BASE="${KIT_OUTPUT_BASE:-/tmp/acl6060_kit_live_sweep}"
 CHUNK_MS="960"
 RUN_GPT_GEMINI="1"
 RUN_KIT="1"
@@ -23,6 +24,9 @@ usage() {
 Usage: scripts/run_acl6060_full_table.sh [options]
 
 Options:
+  --python-bin PATH
+  --omnisteval-bin PATH
+  --speech-latency-repo PATH
   --dataset-root PATH
   --artifact-base PATH
   --openai-key-file PATH
@@ -40,6 +44,9 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --python-bin) PYTHON_BIN="$2"; shift 2 ;;
+    --omnisteval-bin) OMNISTEVAL_BIN="$2"; shift 2 ;;
+    --speech-latency-repo) SPEECH_LATENCY_REPO="$2"; shift 2 ;;
     --dataset-root) DATASET_ROOT="$2"; shift 2 ;;
     --artifact-base) ARTIFACT_BASE="$2"; shift 2 ;;
     --openai-key-file) OPENAI_KEY_FILE="$2"; shift 2 ;;
@@ -67,6 +74,14 @@ need_file() {
   local path="$1"
   if [[ ! -f "${path}" ]]; then
     echo "Missing required file: ${path}" >&2
+    exit 3
+  fi
+}
+
+need_executable() {
+  local executable="$1"
+  if [[ ! -x "${executable}" ]] && ! command -v "${executable}" >/dev/null 2>&1; then
+    echo "Missing required executable: ${executable}" >&2
     exit 3
   fi
 }
@@ -138,6 +153,7 @@ run_kit_row() {
 }
 
 mkdir -p "${OUTPUT_BASE}" "${KIT_OUTPUT_BASE}" "${ARTIFACT_BASE}"
+need_executable "${PYTHON_BIN}"
 
 if [[ "${RUN_GPT_GEMINI}" == "1" || "${RUN_KIT}" == "1" ]]; then
   need_file "${OPENAI_KEY_FILE}"
@@ -148,10 +164,15 @@ fi
 if [[ "${RUN_KIT}" == "1" ]]; then
   need_file "${KIT_COOKIE_HEADER_FILE}"
 fi
+if [[ "${RUN_METRICS}" == "1" && ! -d "${SPEECH_LATENCY_REPO}" ]]; then
+  echo "Missing SEGALE repository; pass --speech-latency-repo PATH" >&2
+  exit 3
+fi
 
 if [[ "${RUN_GPT_GEMINI}" == "1" ]]; then
   run_step "gpt/gemini en-zh missing 1.25x" \
     "${REPO}/scripts/run_acl6060_live_compare.sh" \
+      --python-bin "${PYTHON_BIN}" \
       --providers openai,gemini \
       --target-langs zh \
       --chunks "${CHUNK_MS}" \
@@ -166,6 +187,7 @@ if [[ "${RUN_GPT_GEMINI}" == "1" ]]; then
       --resume
   run_step "gpt/gemini en-de/en-ja all speeds" \
     "${REPO}/scripts/run_acl6060_live_compare.sh" \
+      --python-bin "${PYTHON_BIN}" \
       --providers openai,gemini \
       --target-langs de,ja \
       --chunks "${CHUNK_MS}" \
@@ -195,9 +217,10 @@ if [[ "${RUN_METRICS}" == "1" ]]; then
     --chunk-ms "${CHUNK_MS}"
     --python-bin "${PYTHON_BIN}"
     --omnisteval-bin "${OMNISTEVAL_BIN}"
+    --speech-latency-repo "${SPEECH_LATENCY_REPO}"
   )
   if [[ "${RUN_XCOMET}" == "1" ]]; then
-    metric_cmd+=(--run-xcomet)
+    metric_cmd+=(--run-xcomet --reference-free-xcomet)
   else
     metric_cmd+=(--no-run-xcomet)
   fi
