@@ -645,3 +645,34 @@ serving 已停止，ACL benchmark 只跑 v2 臂。
 执行顺序：serving PR 滑动窗口 session -> InfiniSST serving + client ->
 5 talks cascade -> 指标流水线。InfiniSST checkpoint 与 ACL 数据已在
 hyper00/hyper01 双机 HF cache 就位。
+
+
+## serving PR 滑动窗口实现地图（2026-08-05，实现中）
+
+benchmark 配置确认（luojiaxuan）：no-RAG，chunk size 测 0.96s 和 1.92s
+两档。
+
+sglang-omni PR 现状：`WS /v1/audio/speech/stream`
+（`sglang_omni/serve/speech_ws.py`, `SpeechWebSocketSession`）是传输级
+session——`_handle_input_text` -> `_pop_complete_segments` ->
+`_generate_sentence`，每句作为独立单发请求进 pipeline，**无模型级
+多 turn 历史**。
+
+实现改动点（3 处）：
+1. `serve/speech_ws.py`：session 内维护滑动窗口历史
+   `[(text, audio_codes), ...]`（最近 W-1 turns，`session.config` 增加
+   `multiturn: true` / `session_window`，默认 8）；每句生成完把
+   (text, codes) 入队。生成的 codes 需从 pipeline 结果带回（tts_engine
+   stage 在 vocoder 前就有 codes，加 `return_codes` 透传）。
+2. `models/moss_tts/payload_types.py` + `request_builders.py`：
+   `MossTTSState` 增加 `history` 字段；prompt 构造 = ensemble(ref) +
+   最近 W-1 turns 的 `<|im_start|>assistant\n text ⊕ codes
+   <|im_end|>\n` + 新 turn header + 新文本（布局与
+   `scripts/moss_multiturn_infer.py` / finetuning packer 逐 token 一致）。
+3. `tests/unit_test/serve/test_speech_protocol.py`：multiturn 会话用例。
+
+S2T client（步骤 2）：对 sgl-omni serve 的 InfiniSST Qwen3-Omni 起
+chunked streaming client，协议参数抄 RASST
+`batched_vllm_rag_eval.py`（no-RAG prompt policy、cache 16/8 chunks、
+max_new_tokens 40 lm_scaled、temperature 0.6/top_p 0.95/top_k 20），
+chunk 0.96s 与 1.92s 两档各跑 5 talks。
