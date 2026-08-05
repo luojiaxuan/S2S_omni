@@ -44,7 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-seconds-per-char", type=float, default=0.6)
     parser.add_argument("--min-runaway-floor-s", type=float, default=8.0)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--loop-detect", choices=["none", "reset", "regen"], default="none",
+    parser.add_argument("--loop-detect", choices=["none", "reset", "regen", "ratio"], default="none",
                         help="on audio-loop detection: clear the sliding window (reset) or also "
                              "regenerate the looping turn once at higher temperature (regen)")
     parser.add_argument("--sliding-window", type=int, default=0,
@@ -141,6 +141,15 @@ def main() -> None:
     def book1_ngrams(codes: np.ndarray, n: int = 8) -> set[tuple[int, ...]]:
         seq = codes[:, 0].tolist()
         return {tuple(seq[i : i + n]) for i in range(len(seq) - n + 1)}
+
+    def ratio_loop_detected(window_hist: list[tuple[str, np.ndarray]], codes: np.ndarray, text: str) -> bool:
+        # note (luojiaxuan): loops emit audio without advancing text; detect via
+        # rolling audio-seconds-per-spoken-char over the last few turns.
+        frames = codes.shape[0] + sum(c.shape[0] for _, c in window_hist[-3:])
+        chars = spoken_chars(text) + sum(spoken_chars(t) for t, _ in window_hist[-3:])
+        if chars < 8:
+            return False
+        return (frames / 12.5) / chars > 0.42
 
     def loop_detected(codes: np.ndarray, prev: np.ndarray | None) -> bool:
         # note (luojiaxuan): phrase loops recur as long book-1 n-grams either
@@ -297,7 +306,12 @@ def main() -> None:
                         else np.zeros((0, 16), dtype=np.int64)
                     )
                     prev_codes = window[-1][1] if window else None
-                    if args.loop_detect != "none" and loop_detected(codes_np, prev_codes):
+                    trigger = False
+                    if args.loop_detect == "ratio":
+                        trigger = ratio_loop_detected(window, codes_np, text)
+                    elif args.loop_detect != "none":
+                        trigger = loop_detected(codes_np, prev_codes)
+                    if trigger:
                         turn_results.append(
                             {"segment_id": seg.get("id"), "loop_detected": True}
                         ) if False else None
