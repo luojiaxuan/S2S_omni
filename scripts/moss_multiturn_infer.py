@@ -292,13 +292,36 @@ def main() -> None:
                     final = decoder.flush()
                     if final is not None and final.numel():
                         turn_pcm.append(final.detach().float().cpu().numpy().reshape(-1))
+                runaway_skipped = False
                 if not ok:
-                    failure = f"turn{k} runaway: frames>{budget_frames}"
-                    break
+                    if args.sliding_window > 0:
+                        # note (luojiaxuan): in sliding-window mode a runaway
+                        # turn is truncated at its budget, the window is
+                        # cleared (detox), and the row continues — a whole
+                        # talk must not die on one bad turn.
+                        runaway_skipped = True
+                        window = []
+                    else:
+                        failure = f"turn{k} runaway: frames>{budget_frames}"
+                        break
                 turn_audio = (
                     np.concatenate(turn_pcm) if turn_pcm else np.zeros(0, dtype=np.float32)
                 )
+                if runaway_skipped:
+                    turn_audio = turn_audio[: int(budget_frames / 12.5 * codec_sr)]
                 row_pcm.append(turn_audio)
+                if args.sliding_window > 0 and runaway_skipped:
+                    # polluted codes stay out of the (already cleared) window
+                    turn_results.append(
+                        {
+                            "segment_id": seg.get("id"),
+                            "text": text,
+                            "duration_s": round(len(turn_audio) / codec_sr, 3),
+                            "frames": turn_frames,
+                            "runaway_skipped": True,
+                        }
+                    )
+                    continue
                 if args.sliding_window > 0:
                     codes_np = (
                         torch.cat(turn_codes, dim=0).numpy().astype(np.int64)
