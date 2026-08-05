@@ -622,3 +622,26 @@ v1（per-segment 自蒸馏 + source-chunk ref）在当前链路**宣告死刑**�
 （固定音色 + 滑动窗口 session）。v1 checkpoint 仅作历史 baseline 保留在
 HF `gavinlaw/moss-tts-realtime-infinisst-en-zh`，hyper00 GPU5 的 v1
 serving 已停止，ACL benchmark 只跑 v2 臂。
+
+
+## ACL benchmark 架构修正（luojiaxuan, 2026-08-05）
+
+放弃独立 vllm venv 方案（两台机器的安装已停止清理）。全 serving 化：
+
+1. **S2T**：`sgl-omni serve` 直接起 InfiniSST checkpoint
+   （`gavinlaw/infinisst-no-tmsft-origin-bsz4-zh`，Qwen3-Omni-30B，单
+   H200）。RASST 代码只作协议参考（0.96s chunk、cache 16/8、增量续写
+   prompt，见 hyper00 `/data/RASST_eval/code/rasst/eval/src/
+   batched_vllm_rag_eval.py`），另写轻量 streaming client。
+2. **TTS**：v2 多 turn 走 sglang-omni PR 1192 的滑动窗口 session（先
+   实现任务 #12，benchmark 直接消费）。
+3. **评测**：`kit-lecture-translator` 分支的 portable 入口
+   （`run_acl6060_full_table.sh` / `run_acl6060_metric_pipeline.py`，
+   remote HEAD `881ee3f`，18 个 GPT/Gemini cell 审计齐全），本地
+   checkout `/Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/
+   S2S_omni-acl6060-sot`。主表对比行：`acl6060_full_table.tsv` 的
+   En-Zh 1x GPT/Gemini。
+
+执行顺序：serving PR 滑动窗口 session -> InfiniSST serving + client ->
+5 talks cascade -> 指标流水线。InfiniSST checkpoint 与 ACL 数据已在
+hyper00/hyper01 双机 HF cache 就位。
