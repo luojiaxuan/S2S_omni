@@ -755,3 +755,41 @@ probe268 对照（裸滑窗，无推理补丁）：
 （v2.1 + ratio 检测组合探针进行中；MOSS-TTS 本地补丁清单：
 `modeling_mossttsrealtime_local.py` create_causal_mask 适配 transformers
 5.6 签名、`dataset.py` context_only，均留 .bak。）
+
+
+## ACL6060 benchmark 终局汇总（2026-08-05）
+
+| 系统 (En-Zh 1x, canonical SEGALE BLEU / XCOMET-XL) | BLEU | XCOMET | 备注 |
+| --- | ---: | ---: | --- |
+| GPT-realtime (主表) | 32.70 | 0.628 | |
+| Gemini 3.5-live (主表) | 40.39 | 0.586 | |
+| KIT (主表) | 34.76 | 0.588 | |
+| **cascade v2 + session-reset, chunk=1.92s** | **23.96** | **0.291** | **当前操作点** |
+| cascade v2 + 滑窗 | 4.80 | 0.172 | 循环自强化 |
+| cascade v2.1(repaug) + 滑窗 | 6.61 | 0.162 | 轻度增强不足 |
+| cascade chunk=0.96s | 无效 | 无效 | client 修剪语义缺陷待修 |
+
+结论与教训：
+- v2.1 的 20% 单轮 context_only 污染在 100 轮探针上显著改善
+  （CER 0.52-0.69 -> 0.396、锁死循环消失），但 300+ 轮整 talk 尺度仍
+  退化（时长比膨胀至 ~1.25，BLEU 6.61）——**探针尺度会低估自强化循环，
+  结论必须以整 talk 验证为准**。
+- 推理侧四臂（长回看 token 惩罚 / n-gram 检测 / 检测重生成 / 秒字符比
+  检测）均不能根治；RVQ codes 不逐字复现使精确匹配类手段失效。
+- **当前对外可引用数字：v2 + session-reset(11 轮) chunk=1.92s，
+  BLEU 23.96 / XCOMET 0.291**（含 22.5% under-translation，为 cascade
+  下界；latency 列 timing 为 proxy 不可比）。
+
+v3 计划（根治方向，按优先级）：
+1. 训练数据拼接长会话（10-30+ 轮，覆盖整 talk 尺度的窗口滑动形态）；
+2. 更强污染增强：fraction 0.5+、多轮污染、跨轮循环模式（不只轮内
+   拼接）、污染位置含窗口边界；
+3. scheduled sampling：训练历史混入模型自产 codes；
+4. 0.96 InfiniSST client 与 RASST 原实现逐 prompt 对拍修复后补 0.96 档；
+5. TTS runaway 行级中止改轮级跳过 + 自动重试（117 曾在倒数第 5 轮
+   全行报废）。
+
+产物：v2.1 checkpoint
+`RUN_ROOT/checkpoints/moss_tts_realtime_infinisst_v21_repaug/`（未上传
+HF——非操作点，留本地；如需消融可后补），全部 run dirs 与分数在
+`RUN_ROOT/acl_bench/rundirs/`。
