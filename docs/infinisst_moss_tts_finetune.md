@@ -612,3 +612,13 @@ v2 playout 协议的 arrival 时间线，第二步再接。
 - 效率动机：sglang 引擎带 cuda graph，逐帧生成远快于脚本级
   transformers 推理（dev 实测 ~38s/turn 太慢，ACL 5 talks ~4k chunks
   必须走优化引擎或大幅并行）。
+
+
+## v1 弃用决定（luojiaxuan, 2026-08-05）
+
+v1（per-segment 自蒸馏 + source-chunk ref）在当前链路**宣告死刑**：dev
+评测全面落后（时长比 1.156 vs 0.996、runaway 4 vs 0、BLEU/chrF/CER 均
+劣于 v2），且其监督形态无法提供跨 chunk 连续性。此后主打 **v2 多 turn**
+（固定音色 + 滑动窗口 session）。v1 checkpoint 仅作历史 baseline 保留在
+HF `gavinlaw/moss-tts-realtime-infinisst-en-zh`，hyper00 GPU5 的 v1
+serving 已停止，ACL benchmark 只跑 v2 臂。
