@@ -793,3 +793,39 @@ v3 计划（根治方向，按优先级）：
 `RUN_ROOT/checkpoints/moss_tts_realtime_infinisst_v21_repaug/`（未上传
 HF——非操作点，留本地；如需消融可后补），全部 run dirs 与分数在
 `RUN_ROOT/acl_bench/rundirs/`。
+
+
+## v3 结果：cascade 追平商用系统档位（2026-08-05）
+
+v3 训练（`scripts/build_moss_v3_dataset.py`，commit `fb45fdb`）：12,498
+原行 + 1,987 条 20-35 轮长会话 + 6,355 条强污染副本（轮内跳针/跨轮
+carry-over/整轮 replay，均 context_only）= 20,840 条，3xH200 1 epoch
+1,390 步。推理侧同步落地 runaway 轮级跳过（滑窗模式下截断+清窗继续，
+整 talk 不再因单轮报废）。
+
+ACL6060 canonical 四象限终表（En-Zh，chunk=1.92s，SEGALE BLEU /
+XCOMET-XL reference-free）：
+
+| 系统 | BLEU | XCOMET | null 率 |
+| --- | ---: | ---: | ---: |
+| GPT-realtime (主表) | 32.70 | 0.628 | ~8% |
+| Gemini 3.5-live (主表) | 40.39 | 0.586 | ~8% |
+| KIT (主表) | 34.76 | 0.588 | ~8% |
+| cascade v2 + reset | 23.96 | 0.291 | 28% |
+| cascade v2 + 滑窗 | 4.80 | 0.172 | 34% |
+| cascade v3 + 滑窗 | 16.41 | 0.303 | 22% |
+| **cascade v3 + reset（新操作点）** | **34.69** | **0.554** | **6.8%** |
+
+**v3 + session-reset：BLEU 34.69 超过 GPT-realtime（32.70）、贴平 KIT
+（34.76），XCOMET 0.554 进入商用档位，null 率 6.8% 与主表系统持平，
+160 session 零失败。** 长会话+强污染训练同时修复了段内质量与
+under-translation；reset 模式则隔绝循环自强化——组合即当前最优。
+滑窗模式在 v3 下也大幅回血（4.8 -> 16.4）但仍逊于 reset，彻底滑窗化
+留给 v4（scheduled sampling / 更强长程训练）。
+
+checkpoint：`gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess`
+（上传中，commit 见 HF）；本地
+`RUN_ROOT/checkpoints/moss_tts_realtime_infinisst_v3/`。run dir：
+`acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_reset_chunk192_speed1/`。
+仍未完成：0.96 档 client 对拍、latency 列 speech-playout 协议接入、
+serving PR parity（v3 checkpoint 下需复验）。
