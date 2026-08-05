@@ -676,3 +676,23 @@ chunked streaming client，协议参数抄 RASST
 `batched_vllm_rag_eval.py`（no-RAG prompt policy、cache 16/8 chunks、
 max_new_tokens 40 lm_scaled、temperature 0.6/top_p 0.95/top_k 20），
 chunk 0.96s 与 1.92s 两档各跑 5 talks。
+
+
+## serving 滑动窗口 session 现状（2026-08-05）
+
+已实现并推送（sglang-omni `luojiaxuan/moss-tts-realtime`，commits
+`fc3f599` 增加 `/v1/audio/speech` history 字段 + prompt 渲染，
+`c962dbc`/`8780781` 单帧与零帧历史轮规范化，`79260d8` 零长度轮布局）。
+机械层通过：13 轮链式请求全程 200，prefix cache 生效。
+
+**质量未达标（experimental）**：13 轮 session 总时长 9.5s（脚本参考
+13.4s），5 轮零帧 deferred，whisper CER 0.669（脚本路径 dev 中位
+0.089），语音内容损坏。疑因：serving 引擎当前轮 BOS 放在
+`min(len(text),12)` 处、model_runner 的 delay 流式机制与训练 packer 的
+短文本分支布局不一致；零帧历史轮也是训练分布外。**待调试**：diff
+serving `model_runner` 的 delay 处理 vs 上游
+`streaming_mossttsrealtime` session，短文本轮对齐训练布局。
+
+**决策**：ACL benchmark 的 TTS 采用已验证的
+`scripts/moss_multiturn_infer.py` 脚本路径（dev CER 0.089、时长比
+0.996）；serving history 特性留 PR 继续修，不阻塞 benchmark。
