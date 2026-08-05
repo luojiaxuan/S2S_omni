@@ -734,7 +734,8 @@ reference-based XCOMET description. Do not use the historical table or its
   and `.jsonl`. It covers all 27 conditions (En-Zh/En-De/En-Ja x
   1x/1.25x/1.5x x GPT/Gemini/KIT).
 - Source of truth: GitHub `https://github.com/luojiaxuan/S2S_omni`, branch
-  `kit-lecture-translator`, speech-playout artifact snapshot `38c4911`.
+  `kit-lecture-translator`, speech-playout artifact snapshot `38c4911`, current
+  complete audit snapshot `a2845e5`.
   Direct dashboard: `https://luojiaxuan.github.io/S2S_omni/`.
   Google Sheet:
   `https://docs.google.com/spreadsheets/d/1_HUxgwe8jqgoL9GRuVR1HZz__GOK2lfjFbqnFhweimM/edit?gid=0#gid=0`.
@@ -771,6 +772,19 @@ reference-based XCOMET description. Do not use the historical table or its
   `scripts/run_acl6060_metric_pipeline.py`, and
   `scripts/build_acl6060_segale_diagnostics.py`. Combined QE artifacts are in
   `artifacts/acl6060_xcomet_xl_segale/`.
+- 2026-08-04 Git audit: all 18 canonical GPT/Gemini cells (3 languages x 3
+  speeds x 2 systems) have tracked run configs, instances/responses, target
+  speech timing, SEGALE alignment, LongYAAL, and XCOMET-XL input/segment/summary
+  files. `scripts/run_acl6060_live_compare.sh` is the GPT/Gemini collection
+  entrypoint; `scripts/run_acl6060_full_table.sh` is the 27-cell orchestration
+  entrypoint. Both now derive the repository from their own location and accept
+  explicit Python/runtime paths. The full-table entrypoint requires
+  `--speech-latency-repo` for SEGALE and uses reference-free XCOMET whenever
+  `--run-xcomet` is enabled.
+- The 6.1 GB raw target WAV and packet/source-send traces remain outside Git at
+  the persistent staging path documented above, with status
+  `PENDING_HF_UPLOAD`; this does not affect inspection of the tracked metrics or
+  GitHub Pages diagnostics.
 - On 2026-07-25 the canonical 27 rows were written to the `ACL 60/60 Dev`
   Google Sheet ranges `D2:H10`, `D12:H20`, and `D22:H30`. Each block was copied
   back from Sheets and matched `acl6060_full_table.tsv` semantically.

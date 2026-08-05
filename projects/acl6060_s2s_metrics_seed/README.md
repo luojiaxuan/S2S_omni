@@ -378,6 +378,7 @@ Source of Truth：
 - GitHub: `https://github.com/luojiaxuan/S2S_omni`
 - Branch: `kit-lecture-translator`
 - 27-cell speech-playout artifact snapshot: `38c4911`
+- 当前完整审计 snapshot（指标、diagnostics、portable runners）: `a2845e5`
 - 直接预览: `https://luojiaxuan.github.io/S2S_omni/`
 - Google Sheet: `https://docs.google.com/spreadsheets/d/1_HUxgwe8jqgoL9GRuVR1HZz__GOK2lfjFbqnFhweimM/edit?gid=0#gid=0`
 
@@ -418,6 +419,50 @@ Gemini Live / KIT Lecture Translator 共 27 个条件。全局 XCOMET-XL QE 值�
   fallback。
 
 ### 可复现入口与审计
+
+2026-08-04 对远端 `kit-lecture-translator@a2845e5` 做了 Git 完整性审计：主表中的
+18 个 GPT/Gemini cell（3 个语言 x 3 个 speed x 2 个 system）均有对应的 tracked
+run directory，没有缺失下列 canonical 文件：
+
+```text
+run_config.json
+instances.log
+responses.jsonl
+target_speech_timing.jsonl
+target_speech_timing_summary.json
+segale_alignment/quality_summary.json
+segale_alignment/hyp/aligned_spacy_hyp.jsonl
+segale_longyaal/scores.resegmented.csv
+segale_longyaal/summary.json
+xcomet_xl/input.jsonl
+xcomet_xl/segments.jsonl
+xcomet_xl/summary.json
+```
+
+重新采集 GPT/Gemini full-wav 输出的入口为：
+
+```bash
+scripts/run_acl6060_live_compare.sh \
+  --python-bin /path/to/python \
+  --providers openai,gemini \
+  --target-langs zh,de,ja \
+  --chunks 960 \
+  --speeds 1,1.25,1.5 \
+  --no-score --download-hf --resume
+```
+
+只从现有 tracked run artifacts 重建 SEGALE、LongYAAL、reference-free XCOMET
+和主表，不重新调用 GPT/Gemini/KIT API：
+
+```bash
+scripts/run_acl6060_full_table.sh \
+  --python-bin /path/to/python \
+  --speech-latency-repo /path/to/Speech-to-Speech-Latency \
+  --skip-gpt-gemini --skip-kit --run-xcomet
+```
+
+两个 shell 入口均从自身路径定位 repo，不再依赖某个 Codex worktree 的绝对路径。
+`--run-xcomet` 固定传入 `--reference-free-xcomet`，与当前主表协议一致。
 
 ```bash
 scripts/run_acl6060_metric_pipeline.py \
