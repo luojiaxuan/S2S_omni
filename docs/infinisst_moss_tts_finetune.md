@@ -420,6 +420,11 @@ BLEU tokenize=zh；duration ratio = target 音频/源音频时长）：
 ——连贯性没有以保真度为代价。smoke 例证：dev_r000002 v1 逐段 30.2s ->
 v2 多 turn 13.4s（整行合成参考 12.2s）。
 
+session-reset 对策已验证：demo 53 轮按每 11 轮重置 session（5 个会话，
+`demo_rows_sessionreset.jsonl`），全部完成零 runaway，总时长 58.4s
+（源 50.6s，时长比 1.15；对比 v1 逐段 70.1s/1.39、v2 单发 71.8s/1.42），
+输出 `demo/full_chain/demo_full_chain_v2_multiturn.wav`。
+
 已知限制：demo 的 53-turn 单会话在 turn 47 两次 runaway（floor 8s 与
 15s 各一次）——远超训练行长（≤~13 turns）的分布外失稳，对应部署对策
 是每 ~10-12 turns 重置 session，数据侧对策是 v3 拼接长会话训练。
