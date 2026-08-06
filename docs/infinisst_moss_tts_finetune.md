@@ -829,3 +829,22 @@ checkpoint：`gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess`
 `acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_reset_chunk192_speed1/`。
 仍未完成：0.96 档 client 对拍、latency 列 speech-playout 协议接入、
 serving PR parity（v3 checkpoint 下需复验）。
+
+
+## serving PR 拆分（2026-08-06）
+
+按 luojiaxuan 要求把 serving 侧工作拆为两层：
+
+1. **框架贡献（可上游）**：多 turn `history` 支持从 PR 1192 分支剥离为
+   独立 feature 分支 `moss-tts-realtime-history`（squash 为单 commit
+   `e034b57` + 布局单测 5/5 通过，
+   `tests/unit_test/moss_tts_realtime/test_history_prompt.py`）。该特性
+   不含级联特有假设（窗口/reset 策略由 client 决定），适用于任何对话式
+   多轮 TTS。待 v3 checkpoint 复验 serving parity 后作为 follow-up PR。
+2. **PR 1192 本体复位**：`luojiaxuan/moss-tts-realtime` 分支 force-push
+   回 `caa77bf`（MOSS-TTS 系列 serving 框架支持的干净范围，不再携带
+   experimental 提交）。
+3. **级联特有部分**（InfiniSST client、session-reset/滑窗策略、固定
+   音色工作流、benchmark 链）保持在 S2S_omni 仓库，不进 serving PR。
+
+hyper00 容器 checkout 已切到 `moss-tts-realtime-history`。
