@@ -60,8 +60,15 @@ def concat_run(bench: Path, talk: int, chunk: str) -> tuple[Path, float]:
     return out_path, duration
 
 
-def transcribe_openai_windows(wav_path: Path, key: str, window_s: float = 120.0) -> str:
-    """Canonical ASR: gpt-4o-mini-transcribe over <=120s windows, concatenated."""
+def transcribe_openai_windows(
+    wav_path: Path,
+    key: str | None,
+    window_s: float = 120.0,
+    base_url: str = "https://api.openai.com",
+    model: str = "gpt-4o-mini-transcribe",
+) -> str:
+    """Windowed ASR over <=120s chunks against any OpenAI-compatible
+    transcriptions endpoint (OpenAI cloud or a self-hosted Qwen3-ASR)."""
     import io
     import urllib.request
 
@@ -80,7 +87,7 @@ def transcribe_openai_windows(wav_path: Path, key: str, window_s: float = 120.0)
         body = buf.getvalue()
         boundary = "----acl6060cascade"
         parts = []
-        for name, value in (("model", "gpt-4o-mini-transcribe"), ("language", "zh")):
+        for name, value in (("model", model), ("language", "zh")):
             parts.append(
                 f"--{boundary}\r\nContent-Disposition: form-data; name=\"{name}\"\r\n\r\n{value}\r\n".encode()
             )
@@ -92,13 +99,13 @@ def transcribe_openai_windows(wav_path: Path, key: str, window_s: float = 120.0)
         )
         parts.append(f"--{boundary}--\r\n".encode())
         data = b"".join(parts)
+        headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
+        if key:
+            headers["Authorization"] = f"Bearer {key}"
         req = urllib.request.Request(
-            "https://api.openai.com/v1/audio/transcriptions",
+            base_url.rstrip("/") + "/v1/audio/transcriptions",
             data=data,
-            headers={
-                "Authorization": f"Bearer {key}",
-                "Content-Type": f"multipart/form-data; boundary={boundary}",
-            },
+            headers=headers,
         )
         with urllib.request.urlopen(req, timeout=300) as resp:
             texts.append(json.loads(resp.read())["text"].strip())
