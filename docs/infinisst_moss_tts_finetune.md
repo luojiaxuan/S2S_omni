@@ -848,3 +848,40 @@ serving PR parity（v3 checkpoint 下需复验）。
    音色工作流、benchmark 链）保持在 S2S_omni 仓库，不进 serving PR。
 
 hyper00 容器 checkout 已切到 `moss-tts-realtime-history`。
+
+
+## 加速评测 + Qwen3-ASR 切换（2026-08-06）
+
+ASR 切换（luojiaxuan 决策，成本原因）：打分 ASR 从 gpt-4o-mini-transcribe
+换为自托管 Qwen3-ASR-1.7B（plain sglang 起服务，`sgl-omni serve` 的 ASR
+路径与容器 sglang 0.5.12 存在 `cuda_graph_max_bs` 参数不兼容暂绕行）。
+同批 v3-1x 音频校准：BLEU 34.69 -> 29.75（**ASR 切换本身耗 ~4.9 BLEU**，
+1.7B 转写噪声伤表面 n-gram），XCOMET 0.554 -> 0.556（**语义度量完全
+稳健**）。系列内对比同尺有效；与主表跨对比 BLEU 需 +~5 校准或直接看
+XCOMET。
+
+加速协议：ffmpeg atempo（保音高）加速源音频后过 cascade
+（InfiniSST 1.92s chunk -> v3+reset TTS -> Qwen3-ASR -> SEGALE/XCOMET），
+与 canonical runner 的 atempo-before-chunking 一致。10 个加速 TTS run
+零失败。
+
+| speed | BLEU(Qwen3-ASR) | XCOMET | null | under | 主表参照 (BLEU / XCOMET) |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 1x | 29.75 | 0.556 | 5.6% | 21/309 | GPT 32.70/0.628, Gemini 40.39/0.586, KIT 34.76/0.588 |
+| 1.25x | 29.47 | 0.597 | 3.9% | 11/310 | GPT 32.37/0.622, Gemini 42.16/0.615, KIT 33.99/0.552 |
+| 1.5x | 29.81 | **0.619** | 3.0% | 9/302 | GPT 30.84/0.609, Gemini 43.25/0.633, KIT 29.01/0.488 |
+
+结论：
+- **cascade 对源加速质量稳健**：BLEU 三速度持平（~29.5-29.8），XCOMET
+  随速度上升（0.556 -> 0.619）、null/under 同步下降——与主表 Gemini 的
+  "QE 随速度升"现象同型（每 chunk 语言内容更密可能利于 InfiniSST）。
+- **XCOMET 直接可比口径下，1.5x 我们超过 GPT（0.609）与 KIT（0.488），
+  仅次 Gemini（0.633）**；BLEU 加 ~5 校准后 1.5x ≈ 34.8，同样高于该速
+  的 GPT/KIT。
+- 代价在 latency：目标时长比随加速升至 ~1.2（1.25x）/~1.4（1.5x）——
+  质量保住了，但不压缩内容时 backlog 随源加速增长，这正是后续压缩
+  策略研究的切入点（latency 列仍为 proxy timing 不可比）。
+
+产物：`acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_reset_
+speed{1,125,150}_qwen3asr/`，加速源音频 `acl_bench/speed_wavs/`，
+TTS `acl_bench/tts_wavs_speed/`。
