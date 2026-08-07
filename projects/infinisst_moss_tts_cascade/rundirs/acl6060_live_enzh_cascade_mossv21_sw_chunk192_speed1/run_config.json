@@ -1,0 +1,14 @@
+{
+ "provider": "cascade_infinisst_mossv2_slidingwindow_v21_repaug",
+ "target_lang": "zh",
+ "lang_code": "zh",
+ "speed_factor": 1.0,
+ "chunk_ms": 1920,
+ "dataset_root": "/root/.cache/huggingface/hub/datasets--gavinlaw--rasst-main-result-data/snapshots/96b44797d8926d14ef7535e831b861b6af05a28e",
+ "source_text_file": "/root/.cache/huggingface/hub/datasets--gavinlaw--rasst-main-result-data/snapshots/96b44797d8926d14ef7535e831b861b6af05a28e/main_result/inputs/acl_zh/source_text.txt",
+ "ref_file": "/root/.cache/huggingface/hub/datasets--gavinlaw--rasst-main-result-data/snapshots/96b44797d8926d14ef7535e831b861b6af05a28e/main_result/inputs/acl_zh/ref.txt",
+ "audio_yaml": "/root/.cache/huggingface/hub/datasets--gavinlaw--rasst-main-result-data/snapshots/96b44797d8926d14ef7535e831b861b6af05a28e/main_result/inputs/acl_zh/audio.yaml",
+ "asr": "gpt-4o-mini-transcribe-120swin",
+ "timing_protocol": "uniform_proxy_NOT_comparable",
+ "tts": "v2-multiturn sliding-window 11, fixed zh ref, dynamo off"
+}

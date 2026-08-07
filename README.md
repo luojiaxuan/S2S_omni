@@ -10,6 +10,64 @@ The first milestone is text-side and transcript-side infrastructure:
 - run heuristic and LLM-as-judge evaluation
 - keep Qwen3-Omni speech serving and LoRA SFT entrypoints ready for the next pass
 
+
+## InfiniSST × MOSS-TTS-Realtime 级联（branch: moss-tts-infinisst）
+
+本分支的当前主线：`InfiniSST(S2T) -> MOSS-TTS-Realtime(v3 finetune)` 级联，
+在 ACL6060 canonical benchmark（SEGALE BLEU / XCOMET-XL，
+gpt-4o-mini-transcribe target-speech ASR）上的最终结果：
+
+| speed | ours (v3+reset) | GPT-realtime | Gemini 3.5-live | KIT |
+| --- | --- | --- | --- | --- |
+| 1x | **34.69** / 0.554 | 32.70 / 0.628 | 40.39 / 0.586 | 34.76 / 0.588 |
+| 1.25x | 32.62 / 0.537 | 32.37 / 0.622 | 42.16 / 0.615 | 33.99 / 0.552 |
+| 1.5x | **36.14** / **0.614** | 30.84 / 0.609 | 43.25 / 0.633 | 29.01 / 0.488 |
+
+（单元格为 `BLEU / XCOMET-XL`；1.5x 时 ours 超 GPT/KIT、次于 Gemini。
+latency 列未列出：本级联目前为 proxy timing，不可与主表比。）
+
+完整过程记录、事故与教训、v1/v2/v2.1/v3 演进：
+`docs/infinisst_moss_tts_finetune.md`。
+
+### Source of Truth
+
+代码（Git，本分支）：pipeline 脚本在 `scripts/`（数据构建
+`build_moss_v2_row_requests.py`/`build_moss_v3_dataset.py`、生成
+`generate_moss_realtime_long_targets.py`、对齐切片
+`align_slice_moss_v2.py`、多 turn 推理 `moss_multiturn_infer.py`、
+InfiniSST 流式 client `run_infinisst_sglang_stream.py`、打分
+`score_acl_cascade.py`）；评测记录在
+`projects/infinisst_moss_tts_cascade/`（全部 run dirs：instances、
+SEGALE 对齐、BLEU/XCOMET summaries + InfiniSST runtime chunks）。
+
+模型（HF，private）：
+
+| checkpoint | repo | 状态 |
+| --- | --- | --- |
+| **v3（operating point）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
+| v2 multi-turn | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn` | uploaded |
+| v2.1 repaug（消融） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-1-repaug` | uploaded |
+| v1 per-segment（已弃用） | `gavinlaw/moss-tts-realtime-infinisst-en-zh` | uploaded |
+| InfiniSST baseline（S2T 侧） | `gavinlaw/infinisst-no-tmsft-origin-bsz4-zh` | uploaded |
+
+数据（HF dataset，private）：
+
+| dataset | repo | 内容 |
+| --- | --- | --- |
+| 多 turn 训练数据 | `gavinlaw/infinisst-moss-tts-en-zh-multiturn` | prepared v2/v3（jsonl.zst）、固定音色 ref、row manifests、ACL talk 级级联音频（三速度） |
+| 源 segment 包 | `gavinlaw/infinisst-moss-tts-en-zh-segments` | 原始 source wavs + manifests（`c54868f0`） |
+
+serving（sglang-omni fork `luojiaxuan/sglang-omni`）：
+
+| branch | 用途 |
+| --- | --- |
+| `luojiaxuan/moss-tts-realtime` | 上游 PR sgl-project/sglang-omni#1192（MOSS-TTS-Realtime serving + FA3 融合核） |
+| `moss-tts-realtime-history` | 上游 draft PR #1368（多 turn history，stacked on #1192） |
+
+本地暂存（未上传，可再生）：v1 全量 target wavs（13G，已弃用不传）、
+v2 整行合成 row wavs（可由 prepared + scripts 再生）、hyper00 run root
+`/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804`。
+
 ## Problem
 
 When the source speaker is too dense or too fast, a speech-to-speech translator has

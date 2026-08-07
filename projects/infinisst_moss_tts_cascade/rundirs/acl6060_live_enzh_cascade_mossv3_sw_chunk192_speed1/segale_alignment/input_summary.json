@@ -1,0 +1,13 @@
+{
+  "alignment_backend": "SEGALE",
+  "run_dir": "/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_sw_chunk192_speed1",
+  "target_lang": "zh",
+  "speed_factor": 1.0,
+  "documents": 5,
+  "source_segments": 468,
+  "hypothesis_documents": 5,
+  "ref_jsonl": "/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_sw_chunk192_speed1/segale_alignment/ref.jsonl",
+  "hyp_jsonl": "/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_sw_chunk192_speed1/segale_alignment/hyp.jsonl",
+  "latency_instances_jsonl": "/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_sw_chunk192_speed1/segale_alignment/instances.segale.jsonl",
+  "scaled_yaml": "/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_sw_chunk192_speed1/segale_alignment/audio.scaled.basename.yaml"
+}
