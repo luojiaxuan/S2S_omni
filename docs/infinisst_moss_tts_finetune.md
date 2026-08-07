@@ -885,3 +885,25 @@ XCOMET。
 产物：`acl_bench/rundirs/acl6060_live_enzh_cascade_mossv3_reset_
 speed{1,125,150}_qwen3asr/`，加速源音频 `acl_bench/speed_wavs/`，
 TTS `acl_bench/tts_wavs_speed/`。
+
+
+## 加速档 GPT-ASR canonical 补跑（2026-08-06）
+
+luojiaxuan 确认成本可忽略（10 个目标 wav 共 ~104.5 分钟音频，
+gpt-4o-mini-transcribe ~$0.003/分钟，总计 ~$0.31）后补跑，得到与主表
+**同 ASR 口径直接可比**的加速行：
+
+| speed | ours (canonical) | GPT | Gemini | KIT |
+| --- | --- | --- | --- | --- |
+| 1x | BLEU 34.69 / XC 0.554 | 32.70 / 0.628 | 40.39 / 0.586 | 34.76 / 0.588 |
+| 1.25x | BLEU 32.62 / XC 0.537 | 32.37 / 0.622 | 42.16 / 0.615 | 33.99 / 0.552 |
+| **1.5x** | **BLEU 36.14 / XC 0.614** | 30.84 / 0.609 | 43.25 / 0.633 | 29.01 / 0.488 |
+
+- **1.5x：BLEU 36.14 超 GPT +5.3、超 KIT +7.1，XCOMET 0.614 同样双超
+  ——除 Gemini 外全场最佳**；且我们随速度崩得最慢（GPT/KIT 随速降，
+  我们 1.5x 反而是三速最高 BLEU）。
+- 1.25x 是相对最弱点（BLEU 32.62 ≈ GPT，null 11.8% 偏高）——非单调，
+  疑似单点对齐/ASR 方差，可加种子重复实验确认。
+- ASR 校准差值实测随条件波动（1x: 4.9, 1.25x: 3.2, 1.5x: 6.3 BLEU）：
+  **"+5 校准"只作粗估，正式跨系统对比一律用本节 GPT-ASR 数字**；
+  Qwen3-ASR 行用于日常低成本回归（XCOMET 两口径互通）。
