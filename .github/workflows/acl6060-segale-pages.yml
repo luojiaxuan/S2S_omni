@@ -3,7 +3,7 @@ name: Publish ACL6060 SEGALE diagnostics
 on:
   push:
     branches:
-      - kit-lecture-translator
+      - main
     paths:
       - ".github/workflows/acl6060-segale-pages.yml"
       - "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics/**"

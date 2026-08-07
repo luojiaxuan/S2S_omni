@@ -376,7 +376,7 @@ projects/acl6060_s2s_metrics_seed/artifacts/acl6060_full_table.jsonl
 Source of Truth：
 
 - GitHub: `https://github.com/luojiaxuan/S2S_omni`
-- Branch: `kit-lecture-translator`
+- Branch: `main`（原 `kit-lecture-translator` 项目线，2026-08-06 并入 main，此后在 main 开发）
 - 27-cell speech-playout artifact snapshot: `38c4911`
 - 当前完整审计 snapshot（指标、diagnostics、portable runners）: `a2845e5`
 - 直接预览: `https://luojiaxuan.github.io/S2S_omni/`
@@ -532,7 +532,7 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
   `artifacts/acl6060_segale_diagnostics/target_speech/index.html`
   （Pages: `https://luojiaxuan.github.io/S2S_omni/target_speech/`）。
   覆盖 9 个 cell：GPT Realtime、Gemini Live 与我们的 InfiniSST+MOSS v3
-  session-reset 级联（来自 `moss-tts-infinisst` 分支
+  session-reset 级联（来自本仓库
   `projects/infinisst_moss_tts_cascade/rundirs/`），各 `1x/1.25x/1.5x`、
   全部 5 个 talk。每个 cell 提供整场 64kbps mono MP3（45 个，SHA256 见
   `target_speech/audio_manifest.sha256`）、逐句 SEGALE 对齐表（null

@@ -11,7 +11,7 @@ The first milestone is text-side and transcript-side infrastructure:
 - keep Qwen3-Omni speech serving and LoRA SFT entrypoints ready for the next pass
 
 
-## InfiniSST × MOSS-TTS-Realtime 级联（branch: moss-tts-infinisst）
+## InfiniSST × MOSS-TTS-Realtime 级联
 
 本分支的当前主线：`InfiniSST(S2T) -> MOSS-TTS-Realtime(v3 finetune)` 级联，
 在 ACL6060 canonical benchmark（SEGALE BLEU / XCOMET-XL，
