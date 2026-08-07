@@ -1,0 +1,27 @@
+<style>
+body{font-family:Arial,sans-serif;margin:24px;color:#20242a;background:#fafbfc}
+h1{margin-bottom:6px}h2{margin-top:34px}p{max-width:1200px;line-height:1.45}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:13px;margin-top:8px}
+th,td{border:1px solid #d8dde3;padding:6px;text-align:left;vertical-align:top}
+th{background:#edf1f5;position:sticky;top:0}
+tr.null td{background:#fde8e8}
+td.num,th.num{text-align:right}
+audio{width:640px;max-width:100%}
+.note{background:#fff8db;border-left:4px solid #ca8a04;padding:10px;max-width:1200px}
+details{margin:8px 0;max-width:1200px}summary{cursor:pointer;color:#075985}
+pre{white-space:pre-wrap;background:#f4f6f8;padding:10px;font-size:12px}
+a{color:#075985}
+</style><h1>ACL6060 En-Zh target speech &amp; SEGALE segmentation browser</h1>
+<p>每个 cell 提供整场 target speech（64kbps mono mp3）和 SEGALE 切分/对齐的逐句中间结果，用于审计：(1) under-translation 中有多少是 SEGALE 对齐失败；(2) source speedup 下 BLEU 非单调（Ours 34.69 → 32.62 → 36.14；Gemini 单调上升 40.39 → 42.16 → 43.25；GPT 单调下降）。所有 BLEU/XCOMET 均为 SEGALE 管线 + gpt-4o-mini-transcribe canonical ASR 的可比数字。</p><p><a href='../index.html'>&larr; 返回 SEGALE diagnostics 总览</a></p>
+<table><tr><th>Cell</th><th>Speed</th><th class='num'>BLEU</th><th class='num'>XCOMET-XL</th><th class='num'>segments</th><th class='num'>null aligns</th><th>逐句页面</th></tr>
+<tr><td>GPT Realtime</td><td>1x</td><td class='num'>32.70</td><td class='num'>0.628</td><td class='num'>318</td><td class='num'>9</td><td><a href='seg_enzh_openai_1.html'>audio + segmentation</a></td></tr>
+<tr><td>GPT Realtime</td><td>1.25x</td><td class='num'>32.37</td><td class='num'>0.622</td><td class='num'>284</td><td class='num'>4</td><td><a href='seg_enzh_openai_1p25.html'>audio + segmentation</a></td></tr>
+<tr><td>GPT Realtime</td><td>1.5x</td><td class='num'>30.84</td><td class='num'>0.609</td><td class='num'>296</td><td class='num'>9</td><td><a href='seg_enzh_openai_1p5.html'>audio + segmentation</a></td></tr>
+<tr><td>Gemini Live</td><td>1x</td><td class='num'>40.39</td><td class='num'>0.586</td><td class='num'>309</td><td class='num'>7</td><td><a href='seg_enzh_gemini_1.html'>audio + segmentation</a></td></tr>
+<tr><td>Gemini Live</td><td>1.25x</td><td class='num'>42.16</td><td class='num'>0.615</td><td class='num'>315</td><td class='num'>2</td><td><a href='seg_enzh_gemini_1p25.html'>audio + segmentation</a></td></tr>
+<tr><td>Gemini Live</td><td>1.5x</td><td class='num'>43.25</td><td class='num'>0.633</td><td class='num'>317</td><td class='num'>0</td><td><a href='seg_enzh_gemini_1p5.html'>audio + segmentation</a></td></tr>
+<tr><td>Ours cascade v3+reset</td><td>1x</td><td class='num'>34.69</td><td class='num'>0.554</td><td class='num'>309</td><td class='num'>21</td><td><a href='seg_enzh_cascade_1.html'>audio + segmentation</a></td></tr>
+<tr><td>Ours cascade v3+reset</td><td>1.25x</td><td class='num'>32.62</td><td class='num'>0.537</td><td class='num'>322</td><td class='num'>38</td><td><a href='seg_enzh_cascade_1p25.html'>audio + segmentation</a></td></tr>
+<tr><td>Ours cascade v3+reset</td><td>1.5x</td><td class='num'>36.14</td><td class='num'>0.614</td><td class='num'>336</td><td class='num'>21</td><td><a href='seg_enzh_cascade_1p5.html'>audio + segmentation</a></td></tr>
+</table>
+<p>源 wav（未压缩 24kHz）：GPT/Gemini 来自 speech-playout raw bundle（本地 staging，PENDING_HF_UPLOAD → gavinlaw/acl6060-s2s-speech-playout-raw）；级联来自 hyper00 acl_bench tts_wavs_v3reset / tts_wavs_speed。mp3 sha256 见 <a href='audio_manifest.sha256'>audio_manifest.sha256</a>。</p>

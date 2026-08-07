@@ -528,6 +528,24 @@ artifacts/acl6060_segale_diagnostics/compare_{zh,de,ja}_{openai,gemini,kit}.html
   重复在它覆盖的每个 source sentence 下，并以 `source:hypothesis` 明示该事实；
   九个 `compare_*.html` 页面让同一个 ACL source sentence 横向比较
   `1x/1.25x/1.5x`，包括 null case。
+- 2026-08-06：新增 En-Zh 整场 target speech + SEGALE 分段浏览器
+  `artifacts/acl6060_segale_diagnostics/target_speech/index.html`
+  （Pages: `https://luojiaxuan.github.io/S2S_omni/target_speech/`）。
+  覆盖 9 个 cell：GPT Realtime、Gemini Live 与我们的 InfiniSST+MOSS v3
+  session-reset 级联（来自 `moss-tts-infinisst` 分支
+  `projects/infinisst_moss_tts_cascade/rundirs/`），各 `1x/1.25x/1.5x`、
+  全部 5 个 talk。每个 cell 提供整场 64kbps mono MP3（45 个，SHA256 见
+  `target_speech/audio_manifest.sha256`）、逐句 SEGALE 对齐表（null
+  alignment 红色高亮）、切分前完整 ASR 转写和原始
+  `aligned_spacy_hyp.jsonl`/`instances.segale.jsonl` 下载，用于审计
+  under-translation 是否为 SEGALE 对齐失败，以及 source speedup 下 BLEU
+  非单调（Ours BLEU 34.69→32.62→36.14，null alignment 比例
+  21/309→38/322→21/336 即 6.8%→11.8%→6.3%，与 BLEU 凹陷同构；Gemini 单调升，
+  GPT 单调降）。
+  源 wav：GPT/Gemini 为 speech-playout raw bundle（本地 staging，
+  PENDING_HF_UPLOAD → `gavinlaw/acl6060-s2s-speech-playout-raw`）；级联为
+  hyper00 `acl_bench/tts_wavs_v3reset`、`tts_wavs_speed`。复现入口
+  `scripts/build_acl6060_target_speech_browser.py`。
 - 看板里的 `non-null SEGALE group` **不是** “该 source sentence 翻对了”。它只表示
   Vecalign 找到非空 source span 与非空 hypothesis span；`7:1` 表示七个连续
   source sentences 对一段 hypothesis。每个 detail 会展示评分实际使用的完整
