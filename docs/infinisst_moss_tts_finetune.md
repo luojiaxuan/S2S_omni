@@ -907,3 +907,27 @@ gpt-4o-mini-transcribe ~$0.003/分钟，总计 ~$0.31）后补跑，得到与主
 - ASR 校准差值实测随条件波动（1x: 4.9, 1.25x: 3.2, 1.5x: 6.3 BLEU）：
   **"+5 校准"只作粗估，正式跨系统对比一律用本节 GPT-ASR 数字**；
   Qwen3-ASR 行用于日常低成本回归（XCOMET 两口径互通）。
+
+## 2026-08-06 target speech + SEGALE 分段审计看板（同事复核请求）
+
+同事对两点提出复核：(a) BLEU 随 source speedup 非单调；(b) 之前网页里部分
+under-translation 疑似 SEGALE 对齐失败而非真实漏译。为此在
+`kit-lecture-translator` 分支新增整场 target speech + 逐句 SEGALE 浏览器
+（commit `f277a3b`，builder `scripts/build_acl6060_target_speech_browser.py`），
+已随 GitHub Pages 发布：
+
+- 入口：<https://luojiaxuan.github.io/S2S_omni/target_speech/>（主看板首页也有链接）
+- 覆盖 9 个 cell：GPT Realtime / Gemini Live / 本级联（v3+session reset，
+  rundir 数据取自本分支 `projects/infinisst_moss_tts_cascade/rundirs/`）×
+  `1x/1.25x/1.5x`，全部 5 个 talk；整场 64kbps mono MP3（45 个 + SHA256
+  manifest）、逐句对齐表（null alignment 红色高亮）、切分前完整 ASR 转写、
+  原始 `aligned_spacy_hyp.jsonl`/`instances.segale.jsonl` 下载。
+- 与非单调直接相关的观察：本级联 null alignment 比例随速度为
+  21/309（6.8%）→ 38/322（11.8%）→ 21/336（6.3%），与 BLEU
+  34.69 → 32.62 → 36.14 的凹陷同构。null 在 SEGALE 里按空译文计 0 分，
+  因此 1.25x 的 BLEU 下凹相当一部分可能由对齐失败而非真实漏译贡献——
+  正是同事怀疑的方向，可在看板逐句核对（红行 + Ctrl-F 完整转写）。
+
+HF 上传补记：`gavinlaw/infinisst-moss-tts-en-zh-multiturn` revision
+`cdd04fde`、`gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-1-repaug` revision
+`67f58658` 均已上传完成（README SoT 表已回填）。

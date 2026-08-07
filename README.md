@@ -46,7 +46,7 @@ SEGALE 对齐、BLEU/XCOMET summaries + InfiniSST runtime chunks）。
 | --- | --- | --- |
 | **v3（operating point）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
 | v2 multi-turn | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn` | uploaded |
-| v2.1 repaug（消融） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-1-repaug` | uploaded |
+| v2.1 repaug（消融） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-1-repaug` | uploaded（`67f58658`） |
 | v1 per-segment（已弃用） | `gavinlaw/moss-tts-realtime-infinisst-en-zh` | uploaded |
 | InfiniSST baseline（S2T 侧） | `gavinlaw/infinisst-no-tmsft-origin-bsz4-zh` | uploaded |
 
@@ -54,7 +54,7 @@ SEGALE 对齐、BLEU/XCOMET summaries + InfiniSST runtime chunks）。
 
 | dataset | repo | 内容 |
 | --- | --- | --- |
-| 多 turn 训练数据 | `gavinlaw/infinisst-moss-tts-en-zh-multiturn` | prepared v2/v3（jsonl.zst）、固定音色 ref、row manifests、ACL talk 级级联音频（三速度） |
+| 多 turn 训练数据 | `gavinlaw/infinisst-moss-tts-en-zh-multiturn` | prepared v2/v3（jsonl.zst）、固定音色 ref、row manifests、ACL talk 级级联音频（三速度）；`cdd04fde` |
 | 源 segment 包 | `gavinlaw/infinisst-moss-tts-en-zh-segments` | 原始 source wavs + manifests（`c54868f0`） |
 
 serving（sglang-omni fork `luojiaxuan/sglang-omni`）：
