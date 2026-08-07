@@ -1,6 +1,6 @@
 # S2S_omni Handoff
 
-Last updated: 2026-07-25
+Last updated: 2026-08-04
 
 Repository:
 
@@ -13,6 +13,60 @@ Current local checkout:
 ```text
 /Users/luojiaxuan/Documents/Codex/2026-06-20/s/work/S2S_omni
 ```
+
+## Active Handoff: InfiniSST MOSS-TTS Finetuning
+
+当前接手优先级是 `en->zh` InfiniSST/RASST segment 到
+`OpenMOSS-Team/MOSS-TTS-Realtime` 的 TTS finetuning，不是 Qwen3-Omni E2E
+SFT，也不是 FLORAS benchmark。
+
+详细交接文档：
+
+```text
+docs/infinisst_moss_tts_finetune.md
+```
+
+关键 source-of-truth：
+
+```text
+GitHub repo: https://github.com/luojiaxuan/S2S_omni
+branch: moss-tts-infinisst
+HF dataset: https://huggingface.co/datasets/gavinlaw/infinisst-moss-tts-en-zh-segments
+HF commit: c54868f00916e26c7b3893149f2ce43aa13f9632
+hyper00 dataset root: /data/datasets/infinisst-moss-tts-en-zh-segments-v1
+hyper00 run root: /data/S2S_omni_runs/moss_tts_infinisst_20260804_0939
+```
+
+截至 `2026-08-04T17:55Z`（本条为最新状态，取代上一段交接）：
+
+- dev 的 2 条 bad reject（`dev_r000031_t000/t001`）根因是 ref wav 只有
+  0.064s，已用同集 `dev_r000030_t000.wav`（2.88s）作替代 ref regenerate，
+  全部 accepted。
+- 新发现并处理了 MOSS TTS runaway：train 89 条 / dev 1 条 target >30s
+  （23 条顶到 4096-frame 上限 327.7s），会 OOM prepare 且是垃圾监督。
+  `run_moss_prepare_and_sft_after_generation.sh` 新增
+  `filter_split`（`MAX_TARGET_DURATION_S=30`，commit `e082d4e`）过滤，
+  audit 在 `raw/{split}_dropped_overlong.jsonl`。
+- prepare + full SFT supervisor 已重启并进入 prepare_train 阶段：
+
+```text
+train accepted=62381 rejected=326 bad_reject_count=0 -> filtered kept=62292
+dev   accepted=798   rejected=3   bad_reject_count=0 -> filtered kept=797
+supervisor: alive, CUDA_DEVICES=0,1,2,3 NUM_EPOCHS=1
+logs: 99_prepare_train_supervisor.log (attempt1/2 历史同目录 *.attemptN.log)
+host 侧监控: /data04/jaxan/S2S_omni_runs/monitor_moss_20260804/check_status.sh
+```
+
+（`2026-08-04T18:30Z` 更新）v1 full SFT 已完成：1 epoch / 3,893 steps，
+loss 4.24 -> ~3.5-3.7，checkpoint 在
+`checkpoints/moss_tts_realtime_infinisst_train/checkpoint-epoch-0/`，
+上传 HF private repo `gavinlaw/moss-tts-realtime-infinisst-en-zh`。
+但 v1 数据是 per-segment 自蒸馏（每 segment 独立 TTS），**没有跨 chunk
+韵律连续性监督**，只作 baseline。下一步是 v2 数据 pipeline：完整 row
+target text 一次合成 long speech -> codec -> forced alignment 切 segment
+codes；开放决策是 ref_audio 用英文 source（音色克隆）还是固定中文音色。
+细节见 `docs/infinisst_moss_tts_finetune.md` 的 "2026-08-04 v1 full SFT
+完成 + v2 设计讨论" 一节。
 
 ## Context
 

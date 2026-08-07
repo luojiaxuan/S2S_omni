@@ -1,0 +1,14 @@
+{
+  "xcomet_xl": 0.14030670900632378,
+  "xcomet_xl_model": "Unbabel/XCOMET-XL",
+  "xcomet_xl_mode": "source_hypothesis",
+  "alignment_backend": "SEGALE",
+  "segments": 284,
+  "valid_segments": 147,
+  "null_alignments": 137,
+  "null_alignment_ratio": 0.4823943661971831,
+  "null_alignment_score": 0.0,
+  "aggregation": "arithmetic_mean_including_null_alignment_zeros",
+  "input_jsonl": "/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench/rundirs/acl6060_live_enzh_cascade_mossv2_chunk096_speed1/xcomet_input.jsonl",
+  "output_jsonl": "/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench/rundirs/acl6060_live_enzh_cascade_mossv2_chunk096_speed1/xcomet_segments.jsonl"
+}
