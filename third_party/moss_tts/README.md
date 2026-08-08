@@ -9,7 +9,15 @@ source of truth，便于在 Tilde 等新机器上复现：
 
 1. `moss_tts_realtime/finetuning/dataset.py` —— `context_only` turn 只进
    上下文、不进 loss。v2.1/v3 的重复污染增强和 v4 的自生成历史都依赖它。
-2. `moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py`
+2. `moss_tts_realtime/finetuning/sft.py` —— 修正 LR scheduler 步进。
+   `accelerator.prepare()` 会让 scheduler 每个 optimizer step 推进
+   `num_processes` 次，而上游传给 `get_scheduler` 的步数没有乘回来，导致
+   调度提前 `num_processes` 倍跑完（实测 3 进程时学习率在约 1/3 处就归零，
+   后 2/3 训练等于零学习率空转）。补丁把 `num_warmup_steps` 与
+   `num_training_steps` 都乘上 `accelerator.num_processes`。
+   **注意**：打了这个补丁后训练动力学会变，与 2026-08-08 之前的
+   v1/v2/v2.1/v3 checkpoint 不再同源，跨版本对比需重新建立基线。
+3. `moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py`
    —— 适配 transformers 5.6 的 `create_causal_mask` 签名
    （`input_embeds` → `inputs_embeds`，去掉 `cache_position`）。不打这个
    补丁，多 turn 滑窗推理会在 local transformer 处直接抛错。
