@@ -50,6 +50,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sliding-window", type=int, default=0,
                         help="keep the last N-1 completed turns as context and rebuild the prompt "
                              "every turn (reset_cache each turn) instead of one growing session")
+    parser.add_argument("--reset-carry-seconds", type=float, default=0.0,
+                        help="in reset mode, carry the previous session's last N seconds of codes "
+                             "into the next session as a short prosodic anchor (0 = hard reset)")
     parser.add_argument("--log-every", type=int, default=10)
     return parser.parse_args()
 
@@ -228,10 +231,17 @@ def main() -> None:
     if args.max_rows > 0:
         rows = rows[: args.max_rows]
 
+    # note (luojiaxuan): 韵律锚点。硬 reset 每 11 轮把上下文清零，代价是边界
+    # 处丢失音色/语调的衔接。这里只把上一段结尾的极短一截 codes 带过去当锚点
+    # ——足以接住韵律，但太短、撑不起一个音频循环重新自我强化（保留整轮历史
+    # 会重开污染通道，实测比硬切差 6-8 BLEU，见实验台账 4.1）。
+    carry: tuple[str, np.ndarray] | None = None
+
     for processed, row in enumerate(rows, 1):
         row_id = str(row["row_id"])
         segments = row["segments"]
         turn_results = []
+        last_turn: tuple[str, np.ndarray] | None = None
         row_pcm: list[np.ndarray] = []
         failure = None
         window: list[tuple[str, np.ndarray]] = []
@@ -249,8 +259,19 @@ def main() -> None:
                         reset_cache=True,
                     )
                 else:
+                    if k == 0 and carry is not None:
+                        anchor_ids = np.concatenate(
+                            [
+                                ensemble,
+                                history_turn_rows(carry[0], carry[1], leading_break=False),
+                                header_grid("<|im_end|>\n<|im_start|>assistant\n"),
+                            ],
+                            axis=0,
+                        )
+                    else:
+                        anchor_ids = first_turn_ids
                     session.reset_turn(
-                        input_ids=first_turn_ids if k == 0 else next_turn_ids,
+                        input_ids=anchor_ids if k == 0 else next_turn_ids,
                         include_system_prompt=False,
                         reset_cache=(k == 0),
                     )
@@ -310,6 +331,13 @@ def main() -> None:
                 if runaway_skipped:
                     turn_audio = turn_audio[: int(budget_frames / 12.5 * codec_sr)]
                 row_pcm.append(turn_audio)
+                if args.sliding_window == 0 and args.reset_carry_seconds > 0 and not runaway_skipped:
+                    last_turn = (
+                        text,
+                        torch.cat(turn_codes, dim=0).numpy().astype(np.int64)
+                        if turn_codes
+                        else np.zeros((0, channels), dtype=np.int64),
+                    )
                 if args.sliding_window > 0 and runaway_skipped:
                     # polluted codes stay out of the (already cleared) window
                     turn_results.append(
@@ -390,6 +418,22 @@ def main() -> None:
                         "frames": turn_frames,
                     }
                 )
+
+        if args.sliding_window == 0 and args.reset_carry_seconds > 0:
+            # note (luojiaxuan): 只留尾部 N 秒的 codes，文本按帧数比例截同样
+            # 长度的尾巴，避免 text/audio 长度严重错配落到训练分布之外。
+            # runaway/失败的行不传递锚点，免得把坏音频带进下一段。
+            if failure is not None or last_turn is None:
+                carry = None
+            else:
+                keep = int(args.reset_carry_seconds * 12.5)
+                c_text, c_codes = last_turn
+                if c_codes.shape[0] <= keep:
+                    carry = (c_text, c_codes)
+                else:
+                    frac = keep / c_codes.shape[0]
+                    n_ch = max(1, int(round(len(c_text) * frac)))
+                    carry = (c_text[-n_ch:], c_codes[-keep:])
 
         record = {
             "row_id": row_id,
