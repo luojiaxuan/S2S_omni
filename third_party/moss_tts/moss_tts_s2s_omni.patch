@@ -1,0 +1,30 @@
+diff --git a/moss_tts_realtime/finetuning/dataset.py b/moss_tts_realtime/finetuning/dataset.py
+index 2008032..d854ff2 100644
+--- a/moss_tts_realtime/finetuning/dataset.py
++++ b/moss_tts_realtime/finetuning/dataset.py
+@@ -192,7 +192,9 @@ class MossTTSRealtimeSFTDataset(Dataset):
+             else:
+                 prefill_temp = "<|im_end|>\n<|im_start|>" + role + "\n"
+ 
+-            is_assistant = (role == "assistant")
++            # note (luojiaxuan): context_only turns (repetition-augmented
++            # history) contribute context but no loss.
++            is_assistant = (role == "assistant") and not turn.get("context_only")
+             turn_input, turn_label = self._build_turn(
+                 text, audio_codes, prefill_temp, is_assistant=is_assistant,
+             )
+diff --git a/moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py b/moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py
+index 6d204fe..5028918 100644
+--- a/moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py
++++ b/moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py
+@@ -348,9 +348,8 @@ class MossTTSRealtimeLocalTransformer(MossTTSRealtimeLocalTransformerPreTrainedM
+ 
+         causal_mask = create_causal_mask(
+             config=self.config,
+-            input_embeds=inputs_embeds,
++            inputs_embeds=inputs_embeds,
+             attention_mask=attention_mask,
+-            cache_position=cache_position,
+             past_key_values=past_key_values,
+             position_ids=position_ids,
+         )
