@@ -110,7 +110,8 @@ def main() -> None:
     processor = MossTTSRealtimeProcessor(tokenizer)
     model = (
         MossTTSRealtime.from_pretrained(
-            args.model_path, attn_implementation="sdpa", torch_dtype=torch.bfloat16
+            args.model_path, attn_implementation="sdpa", torch_dtype=torch.bfloat16,
+            trust_remote_code=True,
         )
         .to(device)
         .eval()
