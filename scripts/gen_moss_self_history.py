@@ -28,6 +28,7 @@ from collections import deque
 from pathlib import Path
 
 import numpy as np
+import soundfile
 import torch
 import torchaudio
 
@@ -120,7 +121,11 @@ def main() -> None:
     codec_sr = int(getattr(codec.config, "sampling_rate", 24000))
 
     with torch.inference_mode():
-        wav, sr = torchaudio.load(args.fixed_ref)
+        # note (luojiaxuan): soundfile instead of torchaudio.load — torchaudio 2.11
+        # routes load() through torchcodec, which needs system FFmpeg shared libs
+        # that Tilde's compute nodes do not carry. The fixed ref is a plain wav.
+        data, sr = soundfile.read(args.fixed_ref, dtype="float32", always_2d=True)
+        wav = torch.from_numpy(data.T)
         if wav.shape[0] > 1:
             wav = wav.mean(dim=0, keepdim=True)
         if sr != codec_sr:
