@@ -931,3 +931,40 @@ under-translation 疑似 SEGALE 对齐失败而非真实漏译。为此在
 HF 上传补记：`gavinlaw/infinisst-moss-tts-en-zh-multiturn` revision
 `cdd04fde`、`gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-1-repaug` revision
 `67f58658` 均已上传完成（README SoT 表已回填）。
+
+## 原生 MOSS-TTS-Realtime baseline：量化 SFT 的净收益（2026-08-08）
+
+同事问「不做 SFT 的原生 MOSS 在这条级联里表现如何」。跑了一个严格受控的
+对照：除 `--model-path` 换成 `OpenMOSS-Team/MOSS-TTS-Realtime` 外，其余
+逐字对齐 v3 操作点——同一份 InfiniSST chunk=1.92s 文本、同一固定中文音色
+ref、同样 11-turn session reset、同样 runaway floor、同一自建 Qwen3-ASR、
+同一 SEGALE canonical 协议。唯一变量是 checkpoint。
+
+| En-Zh 1x（Qwen3-ASR 口径） | BLEU | XCOMET-XL | null 率 | 崩溃 session |
+| --- | ---: | ---: | ---: | ---: |
+| 原生 MOSS（无 SFT） | 23.14 | 0.246 | 121/379（31.9%） | **46/160（28.8%）** |
+| v3 + session reset | **29.75** | **0.556** | 17/304（5.6%） | **0/160（0%）** |
+
+SFT 的净收益：**+6.61 BLEU、+0.31 XCOMET、null 率 31.9%→5.6%、
+session 崩溃率 28.8%→0%**。
+
+最值得注意的不是 BLEU 而是**崩溃率**：原生模型在 160 个 11-turn 会话里有
+46 个触发 runaway（`turn{k} runaway: frames>N`），整段作废没有音频输出，
+拼接时只能跳过——这是 null 率高达 31.9% 的主因，也说明原生模型根本没有
+在这种「多轮 assistant-only、每轮短文本、共享固定音色」的形态下稳定生成
+的能力。XCOMET 0.246 也印证：活下来的音频质量同样远低于微调后。
+
+产物：`acl_bench/tts_wavs_base/`、run dir
+`rundirs/acl6060_live_enzh_cascade_mossbase_reset_chunk192_speed1/`
+（含 `session_qa.json` 记录逐 talk 崩溃 session 数）；打分脚本
+`acl_bench/score_base.py` + `score_base_chain.sh`。
+
+补充说明——**为什么用 session reset 而不是滑动窗口**（同事问是不是因为
+ACL 长语音超了 MOSS 的长度上限）：不是长度问题。整场 talk 约 330 turn，
+确实不可能塞进一个会话，但滑动窗口同样把上下文限定在 W 轮内，两者都能
+满足长度约束。选 reset 的真正原因是**闭环自强化**：滑窗会把模型自己生成
+的历史持续往前传，一旦出现音频循环就会自我放大（v2 滑窗 BLEU 4.80 直接
+塌缩，v3 滑窗回血到 16.41 仍远低于 v3 reset 的 34.69）；reset 每 11 轮
+硬切一次，循环活不过边界。代价是每个边界丢失跨段韵律连续性。换句话说
+reset 是绕过 exposure bias 的工程手段，不是长度限制的产物——真正的修法
+是 v4 的 scheduled sampling。
