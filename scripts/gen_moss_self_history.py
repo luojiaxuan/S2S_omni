@@ -216,6 +216,7 @@ def main() -> None:
     started = time.time()
     rows_done = 0
     turns_done = 0
+    rounds = 0
 
     def emit(state: RowState) -> None:
         sink.write(json.dumps({
@@ -244,6 +245,7 @@ def main() -> None:
         text_ids = [tokenizer.encode(st.texts[st.turn_idx], add_special_tokens=False) for st in inflight]
         budgets = [st.budget_frames(args.min_runaway_floor_s, args.max_seconds_per_char) for st in inflight]
 
+        round_t0 = time.time()
         inferencer.reset_generation_state(keep_cache=False)
         with torch.inference_mode():
             first = inferencer.prefill(
@@ -270,6 +272,16 @@ def main() -> None:
                     repetition_window=args.repetition_window,
                 ))
                 step_i += 1
+
+        # note (luojiaxuan): 每帧 = 1 次 backbone + 16 次 frame-local 前向，全是
+        # 极小 kernel，吞吐受 launch 开销支配而非算力；逐轮打点用来选 batch 大小。
+        round_s = time.time() - round_t0
+        rounds += 1
+        print(json.dumps({
+            "shard": args.shard_id, "round": rounds, "batch": len(inflight),
+            "steps": len(frames), "round_s": round(round_s, 1),
+            "frames_per_s": round(len(frames) * len(inflight) / max(round_s, 1e-6), 1),
+        }), flush=True)
 
         # [T, B, channels] -> per-row codes, cut at that row's EOS or budget
         stacked = torch.stack(frames, dim=0).cpu().numpy()
