@@ -968,3 +968,50 @@ ACL 长语音超了 MOSS 的长度上限）：不是长度问题。整场 talk �
 硬切一次，循环活不过边界。代价是每个边界丢失跨段韵律连续性。换句话说
 reset 是绕过 exposure bias 的工程手段，不是长度限制的产物——真正的修法
 是 v4 的 scheduled sampling。
+
+## v4 scheduled sampling 第一阶段验证：搬到 Tilde 8xH100（2026-08-08）
+
+### 集群约束（Tilde 是 Slurm，不是裸 GPU 机）
+`tilde` 解析到无 GPU 的登录节点；`main` 分区全是 H100 80GB（每节点 8 卡 /
+128 CPU / 1.5TB RAM）。账户 `guests` + QoS `guest-dev`：**GrpTRES
+gres/gpu=8（正好一个节点）、MaxWall 24 小时、优先级 10、
+`PreemptMode=REQUEUE`**。因此所有作业必须可断点续跑，状态一律写
+`/home/guests/zhen`（持久盘），不依赖计算节点本地盘或 `/tmp`。
+
+环境：`~/miniconda3/envs/s2s_v4`（torch 2.11.0+cu130 / transformers 5.6.0 /
+accelerate 1.14.0，与 hyper00 已验证栈一致）。MOSS-TTS 从上游
+`58b20a0` clone 后打 `third_party/moss_tts/moss_tts_s2s_omni.patch`——该补丁
+（context_only loss mask + transformers 5.6 causal-mask 签名）此前只存在于
+hyper00 工作区，现已进 Git 作为 SoT。数据与 checkpoint 经 HF Hub 中转，
+不走本地 Mac。踩坑：torchaudio 2.11 的 `load()` 走 torchcodec，需要计算节点
+没有的系统 FFmpeg 共享库，改用 soundfile 读参考音频。
+
+### 关键性能发现：生成是 launch-bound，不是算力-bound
+MOSS 每帧 = 1 次 backbone 前向 + 16 次 frame-local 前向，全是极小 kernel。
+实测 **steps/s 恒定在 ~12，batch 从 12 到 128 几乎不变**——纯粹被 kernel
+launch 和 Python 开销支配。所以加大 batch 近乎线性提升吞吐：batch 128 下
+约 9.7 turns/s/GPU，8 卡约 77 turns/s。原先担心的"单流 38s/turn 跑不完"
+因此不成立：**14,485 行 / 124,733 个 turn 全量闭环生成只用了约 25 分钟**
+（job 134000，8 卡，零错误）。
+
+### 自生成历史质量
+- runaway 率 **24/63,397 = 0.04%**（v3 在 turn 级闭环下非常稳）
+- self/gt 帧数比：p10=0.41、**中位数 1.00**、p90=1.38、均值 1.05
+- 通过漂移护栏（0.5–2.0x 且非 runaway）可替换的 turn：**80.6%**
+
+### v4 数据集与训练
+`build_moss_v4_dataset.py --fraction 0.5 --replace-prob 0.5 --max-drift 2.0`
+产出 **19,993 行 = 14,485 干净行（与 v3 完全相同的原始行+长会话）+ 5,508
+自历史副本（21,641 个 turn 被换成模型自己的输出并标 context_only）**，
+规模与 v3 的 20,840 行相当，唯一差别就是污染来源。
+
+训练 job 134001 在同一节点同时跑处理组与对照组，两边 global batch 都是 15
+（照抄 `ckpt_v3/finetune_args.json`：per-device 1、lr 1e-5、wd 0.1、
+betas 0.9/0.95、warmup_ratio 0.03、linear、1 epoch、seed 42、bf16、sdpa）：
+- GPU 0-4：v4 数据集，1 x 5 x 3 = 15
+- GPU 5-7：v3 数据集，1 x 3 x 5 = 15（重训对照组，排除硬件/栈/数据顺序差异）
+
+判据：训完后两个 checkpoint 经 HF 转到 hyper 评测，**主要看滑动窗口模式**
+——v3 滑窗现为 16.41、reset 为 34.69。若 v4 滑窗推到 25+ 则 exposure bias
+假设坐实，值得进入第二阶段（DAgger 式多轮迭代）；若只动两三分，说明瓶颈
+另有其人，止损。
