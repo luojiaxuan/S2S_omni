@@ -36,7 +36,13 @@ def parse_args() -> argparse.Namespace:
                         help="per-turn probability of swapping in self-generated codes")
     parser.add_argument("--max-drift", type=float, default=2.0,
                         help="skip swap when self_frames/gt_frames is outside [1/max_drift, max_drift]")
-    parser.add_argument("--keep-clean-copies", action="store_true", default=True)
+    # note (luojiaxuan): DAgger 多轮聚合时要能只产副本、不重复输出干净行
+    # （否则第二轮会把 14,485 行干净数据再写一遍）。原来写成 store_true +
+    # default=True，标志只能置真、关不掉，是个 bug。
+    parser.add_argument("--keep-clean-copies", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--id-suffix", default="_v4self",
+                        help="suffix for generated copies; use a distinct one per DAgger round "
+                             "so ids from different rounds do not collide")
     parser.add_argument("--seed", type=int, default=11)
     return parser.parse_args()
 
@@ -52,7 +58,8 @@ def load_self_history(paths: list[str]) -> dict[str, list[dict]]:
 
 
 def build_self_copy(rng: random.Random, row: dict, self_turns: list[dict],
-                    replace_prob: float, max_drift: float) -> dict | None:
+                    replace_prob: float, max_drift: float,
+                    id_suffix: str = "_v4self") -> dict | None:
     turns = row["conversations"]
     if len(self_turns) < len(turns):
         return None
@@ -81,7 +88,7 @@ def build_self_copy(rng: random.Random, row: dict, self_turns: list[dict],
     if swapped == 0:
         return None
     out = dict(row)
-    out["id"] = f"{row['id']}_v4self"
+    out["id"] = f"{row['id']}{id_suffix}"
     out["conversations"] = new_turns
     meta = dict(row.get("metadata") or {})
     meta["v4_self_history_turns"] = swapped
@@ -116,7 +123,8 @@ def main() -> None:
                     if rng.random() >= args.fraction:
                         continue
                     copy = build_self_copy(rng, row, self_turns,
-                                           args.replace_prob, args.max_drift)
+                                           args.replace_prob, args.max_drift,
+                                           args.id_suffix)
                     if copy is None:
                         stats["skipped_no_swap"] += 1
                         continue
