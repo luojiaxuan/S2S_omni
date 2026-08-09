@@ -50,6 +50,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sliding-window", type=int, default=0,
                         help="keep the last N-1 completed turns as context and rebuild the prompt "
                              "every turn (reset_cache each turn) instead of one growing session")
+    parser.add_argument("--min-frames-per-char", type=float, default=0.0,
+                        help="sliding mode only: regenerate a turn once if it produced fewer than "
+                             "this many codec frames per spoken character (0 = off). Diagnosed "
+                             "failure mode: in a continuous session short turns get swallowed by "
+                             "the previous utterance's prosody — sliding emits 11x more zero-frame "
+                             "turns than session-reset. 1.5 sits below reset's 5th percentile (2.0)")
+    parser.add_argument("--min-chars-for-short-check", type=int, default=3,
+                        help="skip the short-turn check for texts below this many spoken chars")
     parser.add_argument("--reset-carry-seconds", type=float, default=0.0,
                         help="in reset mode, carry the previous session's last N seconds of codes "
                              "into the next session as a short prosodic anchor (0 = hard reset)")
@@ -330,6 +338,45 @@ def main() -> None:
                 )
                 if runaway_skipped:
                     turn_audio = turn_audio[: int(budget_frames / 12.5 * codec_sr)]
+                # note (luojiaxuan): 短 turn 被吞并的护栏。滑窗模式下模型会把很短的
+                # turn 并进上一句的韵律流里，产出畸短甚至零帧音频（实测滑窗零帧
+                # turn 34 个 vs reset 3 个）。这里就地重生成一次；窗口重建、缓存
+                # 重置，所以被吞的那次尝试不会留在上下文里。
+                short_regen = False
+                n_spoken = spoken_chars(text)
+                if (args.sliding_window > 0 and args.min_frames_per_char > 0
+                        and not runaway_skipped
+                        and n_spoken >= args.min_chars_for_short_check
+                        and turn_frames < args.min_frames_per_char * n_spoken):
+                    short_regen = True
+                    session.reset_turn(
+                        input_ids=window_prompt_ids(window),
+                        include_system_prompt=False,
+                        reset_cache=True,
+                    )
+                    decoder = AudioStreamDecoder(
+                        codec, chunk_frames=3, overlap_frames=0,
+                        decode_kwargs={"chunk_duration": -1}, device=device,
+                    )
+                    turn_frames = 0
+                    turn_pcm = []
+                    turn_codes = []
+                    with codec.streaming(batch_size=1):
+                        ok_s = consume(session.push_text(text)) and consume(session.end_text())
+                        while ok_s:
+                            frames_s = session.drain(max_steps=1)
+                            if not frames_s:
+                                break
+                            ok_s = consume(frames_s)
+                            if session.inferencer.is_finished:
+                                break
+                        final_s = decoder.flush()
+                        if final_s is not None and final_s.numel():
+                            turn_pcm.append(final_s.detach().float().cpu().numpy().reshape(-1))
+                    turn_audio = (
+                        np.concatenate(turn_pcm) if turn_pcm else np.zeros(0, dtype=np.float32)
+                    )
+
                 row_pcm.append(turn_audio)
                 if args.sliding_window == 0 and args.reset_carry_seconds > 0 and not runaway_skipped:
                     last_turn = (
@@ -416,6 +463,7 @@ def main() -> None:
                         "text": text,
                         "duration_s": round(len(turn_audio) / codec_sr, 3),
                         "frames": turn_frames,
+                        **({"short_regen": True} if short_regen else {}),
                     }
                 )
 
