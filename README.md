@@ -31,9 +31,12 @@ gpt-4o-mini-transcribe target-speech ASR）上的结果。
 其余系统为单次测量。**仅次于 Gemini，超过 KIT 与 GPT-realtime，漏译率也更低。**
 滑窗（真正的流式形态，无 reset 边界的音色跳变）也已超过 GPT-realtime。
 
-**reset 与滑窗的 4.1 分差距主要是测量伪影**：绕过 SEGALE 切分做整场对整场，
-两者只差 0.17 docBLEU / 0.09 chrF，输出字符量几乎相同——滑窗韵律更连贯导致
-ASR 少插句号、SEGALE 合并成更长 span，句级指标因此受罚。
+**reset 与滑窗的 4.1 分差距是真实的内容代价，不是纯测量伪影。**
+用与切分无关的内容召回（逐条 reference 句的字符 4-gram 落在整场转写里的比例）
+检验：被 SEGALE 罚分的 107 句，reset 召回 0.312 而滑窗 0.239（−23%），
+判持平/更好的句子则几乎无差别。切分因素确实存在（滑窗韵律更连贯 → ASR 少插
+句号 → SEGALE 合并成更长 span），但只解释一部分。
+滑窗换来的是无边界音色跳变与语速鲁棒性，代价是约 4 BLEU 的内容完整性。
 
 多语速（GPT-ASR，单元格为 BLEU）：
 
