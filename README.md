@@ -13,21 +13,37 @@ The first milestone is text-side and transcript-side infrastructure:
 
 ## InfiniSST × MOSS-TTS-Realtime 级联
 
-本分支的当前主线：`InfiniSST(S2T) -> MOSS-TTS-Realtime(v3 finetune)` 级联，
+本分支的当前主线：`InfiniSST(S2T) -> MOSS-TTS-Realtime(finetune)` 级联，
 在 ACL6060 canonical benchmark（SEGALE BLEU / XCOMET-XL，
-gpt-4o-mini-transcribe target-speech ASR）上的最终结果：
+gpt-4o-mini-transcribe target-speech ASR）上的结果。
 
-| speed | ours (v3+reset) | GPT-realtime | Gemini 3.5-live | KIT |
-| --- | --- | --- | --- | --- |
-| 1x | **34.69** / 0.554 | 32.70 / 0.628 | 40.39 / 0.586 | 34.76 / 0.588 |
-| 1.25x | 32.62 / 0.537 | 32.37 / 0.622 | 42.16 / 0.615 | 33.99 / 0.552 |
-| 1.5x | **36.14** / **0.614** | 30.84 / 0.609 | 43.25 / 0.633 | 29.01 / 0.488 |
+**当前操作点 = v4lrfix**（自生成历史训练 + 修复 LR 调度缺陷），En-Zh 1x：
 
-（单元格为 `BLEU / XCOMET-XL`；1.5x 时 ours 超 GPT/KIT、次于 Gemini。
-latency 列未列出：本级联目前为 proxy timing，不可与主表比。）
+| 系统 | BLEU | XCOMET-XL | null（漏译）率 |
+| --- | ---: | ---: | ---: |
+| Gemini 3.5-live | 40.39 | 0.586 | ~8% |
+| **ours: v4lrfix + reset** | **37.80** | **0.623** | **1.3%** |
+| KIT | 34.76 | 0.588 | ~8% |
+| **ours: v4lrfix + 滑窗 w=11** | **33.19** | 0.541 | 5.3% |
+| GPT-realtime | 32.70 | 0.628 | ~8% |
 
-完整过程记录、事故与教训、v1/v2/v2.1/v3 演进：
-`docs/infinisst_moss_tts_finetune.md`。
+**仅次于 Gemini，超过 KIT 与 GPT-realtime；漏译率 1.3% 远低于三者的约 8%。**
+滑窗（真正的流式形态，无 reset 边界断点）也已超过 GPT-realtime。
+
+多语速结果目前仍是上一代 v3+reset 的数字（1.25x 32.62 / 1.5x 36.14），
+尚未用 v4lrfix 重测。
+
+**两个重要的方法论结论**（细节见台账）：
+- 本项目最大的单项收益来自**修一个 LR 调度 bug**（`sft.py` 未按
+  `num_processes` 缩放调度步数，导致每次训练后约 2/3 的步数在 lr=0 下空转），
+  不是任何数据或架构改动；此前 v1/v2/v2.1/v3 全部受此影响。
+- **打分管线本身对同一段音频有约 1.8 BLEU 方差**（GPT-ASR 非确定性经切句与
+  对齐放大），小于约 2 BLEU 的差值需重复打分才能下结论。
+
+完整过程记录、事故与教训、v1→v4 演进：
+`docs/infinisst_moss_tts_finetune.md`；
+**可审计实验台账（含生效假设、已剪枝项、我犯过的错）**：
+`docs/experiment_ledger_moss_tts_cascade_20260808.md`。
 
 ### Source of Truth
 
