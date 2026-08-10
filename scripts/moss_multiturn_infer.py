@@ -51,6 +51,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sliding-window", type=int, default=0,
                         help="keep the last N-1 completed turns as context and rebuild the prompt "
                              "every turn (reset_cache each turn) instead of one growing session")
+    parser.add_argument("--pin-first-turn", action="store_true",
+                        help="sliding mode only: always keep the talk's first turn at the head of "
+                             "the window (window = turn_0 + last N-2). Diagnostic for the silence-"
+                             "anchor hypothesis (台账 4.-9 / 4.-10): every training row starts at "
+                             "frame 0 of a synthesized passage, so its first context turn carries a "
+                             "silence->speech onset; a sliding window never does. Turn 0 is the one "
+                             "turn in a talk that does start from silence, so pinning it restores "
+                             "the anchor at inference time without retraining.")
     parser.add_argument("--min-frames-per-char", type=float, default=0.0,
                         help="sliding mode only: regenerate a turn once if it produced fewer than "
                              "this many codec frames per spoken character (0 = off). Diagnosed "
@@ -258,6 +266,10 @@ def main() -> None:
         row_pcm: list[np.ndarray] = []
         failure = None
         window: list[tuple[str, np.ndarray]] = []
+        # note (luojiaxuan): 第一个完成的 turn 会被记成锚点。它跨 loop-reset
+        # 存活（reset 只清 window），因为它代表的是"从静音起音"这个形态，
+        # 不是最近上下文。
+        anchor_turn: tuple[str, np.ndarray] | None = None
         inferencer.reset_generation_state(keep_cache=False)
         with torch.inference_mode():
             for k, seg in enumerate(segments):
@@ -461,7 +473,14 @@ def main() -> None:
                             turn_results[-1]["regenerated"] = True
                         turn_results[-1]["loop_reset"] = True
                     window.append((text, codes_np))
-                    window = window[-(args.sliding_window - 1) :]
+                    if args.pin_first_turn and anchor_turn is not None:
+                        tail = max(0, args.sliding_window - 2)
+                        recent = [t for t in window if t is not anchor_turn][-tail:]
+                        window = [anchor_turn] + recent
+                    else:
+                        window = window[-(args.sliding_window - 1) :]
+                    if anchor_turn is None and window:
+                        anchor_turn = window[0]
                 turn_results.append(
                     {
                         "segment_id": seg.get("id"),

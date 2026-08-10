@@ -14,6 +14,11 @@ cd /data/S2S_omni
 # 的平均历史长度都约 5 轮，唯一差别是 sliding 永不清零、reset 周期性清零。
 case "$mode" in
   sliding)  rows_suffix="swrow"; extra="--sliding-window 11" ;;
+  # note (luojiaxuan): slidingpin = 滑窗 w=11，但首位固定为整场第一个 turn。
+  # 窗口长度不变，唯一变量是首位那个 turn 自带"从静音起音"。用来在不重训的
+  # 前提下检验静音锚点假设（台账 4.-9 / 4.-10）。必须排在 sliding* 之前，
+  # 否则会被当成窗口大小解析成 --sliding-window pin。
+  slidingpin) rows_suffix="swrow"; extra="--sliding-window 11 --pin-first-turn" ;;
   sliding*) rows_suffix="swrow"; extra="--sliding-window ${mode#sliding}" ;;
   *)        rows_suffix="rows";  extra="" ;;
 esac
