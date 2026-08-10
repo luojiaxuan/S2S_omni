@@ -18,6 +18,7 @@ import wave
 from pathlib import Path
 
 import numpy as np
+import soundfile
 import torch
 import torchaudio
 
@@ -100,7 +101,11 @@ def main() -> None:
     codebook_size = int(getattr(codec.config, "codebook_size", 1024))
 
     with torch.inference_mode():
-        wav, sr = torchaudio.load(args.fixed_ref)
+        # note (luojiaxuan): torchaudio 2.11 的 load() 走 torchcodec，需要计算节点
+        # 未必装的系统 FFmpeg 共享库（Tilde 上就没有）。参考音频只是普通 wav，
+        # 用 soundfile 读即可，顺便让这个脚本能在 Tilde 上直接跑。
+        data, sr = soundfile.read(args.fixed_ref, dtype="float32", always_2d=True)
+        wav = torch.from_numpy(data.T)
         if wav.shape[0] > 1:
             wav = wav.mean(dim=0, keepdim=True)
         if sr != codec_sr:
