@@ -113,6 +113,23 @@ GPT、贴平 KIT，未及 Gemini。
 
 ## 4. 实验台账（时间倒序）
 
+### 4.-16 新 canonical 打分口径（用户裁定 2026-08-11，进行中）
+
+- **裁定内容**：(1) BLEU 维持 SEGALE 句级、null 保留为空假设不剔除；
+  (2) XCOMET-XL 改 **reference-based**（对齐 Open-LiveTranslate 的模式），
+  但 null 主动置零（`fixed_null_alignment_penalty` 既有机制）；
+  (3) ASR 换自托管 **Qwen3-ASR-1.7B**（成本；2026-08-06 校准：ASR 切换
+  本身约 −4.9 BLEU 表面噪声，XCOMET 稳健，见 finetune 文档该节）。
+- **范围**：我方 11 个 run 重打——v4lrfix reset/sliding、v5 sliding、
+  v6 sliding/soft3 ×三速、soft2/soft5。rundir 无 `_gptasr` 后缀，与旧
+  canonical 并存不覆盖。链：`score_chain_refbased.sh`。
+- **预期读法**：BLEU 整体较 GPT-ASR 口径低约 5（仪器噪声，系列内可比）；
+  XCOMET 换模式后数值尺度会变（ref-based 通常高于 QE），跨口径不可比，
+  以新口径内部的相对差为准。Qwen3-ASR 折叠重复的风险（6.3）仍在：
+  对退化输出的惩罚偏轻，解读滑窗类 run 时注意。
+- **执行**：等 hyper00 空卡（0–3 被他人占用，4–7 属另一任务），
+  task-scoped 容器 + plain sglang 起 ASR 服务于 47500。
+
 ### 4.-15 全局拼接 doc BLEU：仲裁口径，重排了与基线的相对位置（2026-08-11）
 
 - **背景**：与 Open-LiveTranslate PR#2 对比时发现其上游把漏译句从 BLEU
