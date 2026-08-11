@@ -11,7 +11,9 @@ g="$1"; tag="$2"; mode="$3"
 BENCH=/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench
 RUN=acl6060_live_enzh_cascade_moss${tag}_${mode}_chunk192_speed1
 RD=$BENCH/rundirs/$RUN
-SEG_PY=/data/venvs/segale_eval2/bin/python
+# note (luojiaxuan): hyper01 上的 SEGALE venv 叫 acl6060-segale，路径不同，
+# 用 SEG_PY 环境变量覆盖；缺省仍指 hyper00 的 segale_eval2。
+SEG_PY="${SEG_PY:-/data/venvs/segale_eval2/bin/python}"
 cd /data/S2S_omni
 
 echo "[1/5] Qwen3-ASR"
