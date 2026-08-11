@@ -257,6 +257,17 @@ def build_run(
         "speech_playout_span_p50_ms": percentile(spans, 0.5),
         **target_timing,
     }
+    # note (luojiaxuan): run 级 LongYAAL 一直躺在 segale_longyaal/summary.json
+    # 里没有被表面化——dashboard 只展示派生的 playout 统计，主延迟指标反而
+    # 缺席（用户 2026-08-11 指出）。缺文件时置 None，老 run 不至于崩。
+    longyaal_path = run_dir / "segale_longyaal" / "summary.json"
+    if longyaal_path.exists():
+        longyaal = read_json(longyaal_path)
+        summary["longyaal_cu_ms"] = float(longyaal["longyaal_cu"])
+        summary["longyaal_ca_ms"] = float(longyaal["longyaal_ca"])
+    else:
+        summary["longyaal_cu_ms"] = None
+        summary["longyaal_ca_ms"] = None
     return summary, sentence_rows
 
 
@@ -280,6 +291,8 @@ def write_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         "many_source_to_one_groups",
         "max_source_group_size",
         "ending_offset_mean_ms",
+        "longyaal_cu_ms",
+        "longyaal_ca_ms",
         "ending_offset_p50_ms",
         "ending_offset_p90_ms",
         "first_speech_playout_offset_p50_ms",
@@ -387,14 +400,11 @@ def render_index(summary_rows: list[dict[str, Any]], output_dir: Path) -> str:
             f"<td>{row['over_translation_alignments']}</td><td>{row['under_translation_alignments']}</td>"
             f"<td>{row['non_1to1_groups']}</td><td>{row['many_source_to_one_groups']}</td>"
             f"<td>{row['max_source_group_size']}</td>"
+            f"<td><strong>{number(row['longyaal_cu_ms'])}</strong></td>"
+            f"<td>{number(row['longyaal_ca_ms'])}</td>"
             f"<td>{number(row['ending_offset_mean_ms'])}</td>"
             f"<td>{number(row['ending_offset_p50_ms'])}</td>"
             f"<td>{number(row['ending_offset_p90_ms'])}</td>"
-            f"<td>{number(row['first_speech_playout_offset_p50_ms'])}</td>"
-            f"<td>{number(row['speech_playout_span_p50_ms'])}</td>"
-            f"<td>{number(row['talk_speech_final_offset_mean_ms'])}</td>"
-            f"<td>{number(row['target_audio_queue_tail_mean_ms'])}</td>"
-            f"<td>{number(row['target_audio_after_speech_mean_ms'])}</td>"
             f"<td><a href='{escaped(page)}'>sentence cases</a>{sample_link}</td>"
             "</tr>"
         )
@@ -416,12 +426,11 @@ th,td{{border:1px solid #d8dde3;padding:7px;text-align:right;vertical-align:top}
 .audio-track audio{{display:block;width:100%}}.sample-meta{{font-size:13px;color:#4b5563}}
 </style></head><body>
 <h1>ACL6060 SEGALE sentence diagnostics</h1>
-<p class='note'><strong>Latency semantics:</strong> first and ending offsets use target-speech ASR unit playback completion. Each ASR unit's target-audio position is mapped through the captured PCM packet arrival and zero-jitter playout queue; trailing silence after the final spoken unit is excluded.</p>
-<p class='note'><strong>Talk-level speech completion:</strong> “talk speech final” is the last spoken ASR unit's PCM playback completion minus the sped source duration. “queue tail” is full PCM playout end minus final packet arrival. “audio after speech” is full PCM playout end minus the last spoken ASR unit; it is excluded from speech completion and sentence latency.</p>
+<p class='note'><strong>Latency semantics:</strong> LongYAAL is the SEGALE-resegmented long-form average lagging over target-speech ASR units (cu = source-consumption delays, ca = wall-clock elapsed); ending offset is target speech completion minus sped source duration. Both use target-speech ASR unit playback completion. Each ASR unit's target-audio position is mapped through the captured PCM packet arrival and zero-jitter playout queue; trailing silence after the final spoken unit is excluded.</p>
 <p class='note'><strong>XCOMET length caveat:</strong> XCOMET-XL is a sentence-trained metric with a 512-subword joint input limit. SEGALE non-1:1 groups, especially long N:1 groups, are out-of-distribution and may be truncated. Their group scores are diagnostics, not calibrated per-source-sentence scores.</p>
 <p><strong>Structural versus semantic:</strong> a non-null SEGALE group only means Vecalign linked non-empty source and hypothesis spans. It is not a semantic “matched” judgment. XCOMET assesses the full aligned group; non-1:1 and N:1 counts flag spans that must be inspected before attributing a group hypothesis to an individual source sentence. A null row is the only structural `over_translation`/`under_translation` count and is retained with XCOMET=0.0 but no latency.</p>
 {audio_samples}
-<table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>structural over</th><th>structural under</th><th>non-1:1</th><th>N:1 groups</th><th>max source span</th><th>ending mean ms</th><th>ending p50 ms</th><th>ending p90 ms</th><th>first speech p50 ms</th><th>speech playout span p50 ms</th><th>talk speech final mean ms</th><th>queue tail mean ms</th><th>audio after speech mean ms</th><th>details</th></tr></thead><tbody>
+<table><thead><tr><th>language</th><th>system</th><th>speed</th><th>BLEU</th><th>XCOMET</th><th>valid/all</th><th>structural over</th><th>structural under</th><th>non-1:1</th><th>N:1 groups</th><th>max source span</th><th>LongYAAL cu ms</th><th>LongYAAL ca ms</th><th>ending mean ms</th><th>ending p50 ms</th><th>ending p90 ms</th><th>details</th></tr></thead><tbody>
 {"".join(rows)}</tbody></table>
 <p>Machine-readable summaries: <a href='cell_summary.tsv'>per-cell TSV</a>, <a href='cell_summary.jsonl'>per-cell JSONL</a>, <a href='speed_delta_summary.tsv'>paired-speed TSV</a>, <a href='speed_delta_summary.jsonl'>paired-speed JSONL</a>, <a href='sentence_cases.jsonl'>all source-sentence cases</a>.</p>
 </body></html>"""
