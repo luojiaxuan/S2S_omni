@@ -17,15 +17,16 @@ The first milestone is text-side and transcript-side infrastructure:
 在 ACL6060 canonical benchmark（SEGALE BLEU / XCOMET-XL，
 gpt-4o-mini-transcribe target-speech ASR）上的结果。
 
-**当前操作点 = v6 + 恒定滑窗 w=11**（用户裁定 2026-08-11：软 reset 的
-keep 值敏感、打分链对其高语速音频不稳定，操作点取更简单稳健的恒定滑窗；
-软 reset 的质量增益保留为分析发现，见下）。En-Zh 1x：
+**当前操作点 = v6 + 恒定滑窗 w=11，与软 reset keep=3 并报**（用户裁定
+2026-08-11：部署默认取更简单稳健的恒定滑窗——soft reset 的 keep 值敏感、
+其高语速音频令打分链漏译数双峰；论文两者并报，soft3 承担机制论证，
+1× 上它的质量显著更高）。En-Zh 1x：
 
 | 系统 | BLEU | XCOMET-XL | null（漏译）率 |
 | --- | ---: | ---: | ---: |
 | Gemini 3.5-live | 40.39 | 0.586 | ~8% |
 | ours: v4lrfix + reset（上界参考） | 37.50 ± 0.35 | 0.615 | ~3.9% |
-| ours: v6 + 软 reset keep=3（分析发现） | 34.89 ± 0.68 | 0.604 ± 0.016 | ~3.5% |
+| ours: v6 + 软 reset keep=3（并报） | 34.89 ± 0.68 | 0.604 ± 0.016 | ~3.5% |
 | **ours: v6 + 恒定滑窗 w=11（操作点）** | **34.82 ± 0.40** | 0.543 | ~7.4% |
 | KIT | 34.76 | 0.588 | ~8% |
 | ours: v5 + 滑窗 w=11 | 34.08 ± 0.20 | 0.542 | ~8.4% |
@@ -42,7 +43,8 @@ keep 值敏感、打分链对其高语速音频不稳定，操作点取更简单
 不可区分）**。机制是"上下文周期性变短且时间连贯"——软 reset 从不清零、
 不含静音，却追平了 reset，据此排除了静音锚点解释（4.-10/4.-11 的两个
 阴性实验也与此一致）。缩窗边界保留最近 3 个 turn，上下文连贯，理论上
-无 reset 的硬边界音色跳变；人工听辨与 keep 值敏感性验证进行中。
+无 reset 的硬边界音色跳变。keep 敏感性已测：keep=3 是尖峰（keep=2/5
+分别掉 0.043/0.062 XCOMET），引用时需报敏感性表；边界人工听辨待用户。
 
 剩余的 −2.6 BLEU（对 reset）在充分度持平的前提下判为切分/表层差异。
 **引用 v5/v6 数据侧改动的 BLEU 增益时**仍须注明：+1.46 BLEU 无配对质量
@@ -109,7 +111,8 @@ SEGALE 对齐、BLEU/XCOMET summaries + InfiniSST runtime chunks）。
 
 | checkpoint | repo | 状态 |
 | --- | --- | --- |
-| **v3（operating point）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
+| **v6 midstart（当前操作点 checkpoint）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v6-midstart` | uploading |
+| v3 longsess（历史操作点） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
 | v2 multi-turn | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn` | uploaded |
 | v2.1 repaug（消融） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-1-repaug` | uploaded（`67f58658`） |
 | v1 per-segment（已弃用） | `gavinlaw/moss-tts-realtime-infinisst-en-zh` | uploaded |
