@@ -17,15 +17,16 @@ The first milestone is text-side and transcript-side infrastructure:
 在 ACL6060 canonical benchmark（SEGALE BLEU / XCOMET-XL，
 gpt-4o-mini-transcribe target-speech ASR）上的结果。
 
-**当前操作点 = v6 + 滑窗 w=11 + 周期性软 reset（keep=3）**：滑窗长满 10 个
-历史 turn 后不清零、缩到最近 3 个，上下文长度按 3→10 循环。En-Zh 1x：
+**当前操作点 = v6 + 恒定滑窗 w=11**（用户裁定 2026-08-11：软 reset 的
+keep 值敏感、打分链对其高语速音频不稳定，操作点取更简单稳健的恒定滑窗；
+软 reset 的质量增益保留为分析发现，见下）。En-Zh 1x：
 
 | 系统 | BLEU | XCOMET-XL | null（漏译）率 |
 | --- | ---: | ---: | ---: |
 | Gemini 3.5-live | 40.39 | 0.586 | ~8% |
 | ours: v4lrfix + reset（上界参考） | 37.50 ± 0.35 | 0.615 | ~3.9% |
-| **ours: v6 + 软 reset keep=3（操作点）** | **34.89 ± 0.68** | **0.604 ± 0.016** | **~3.5%** |
-| ours: v6 + 恒定滑窗 w=11 | 34.82 ± 0.40 | 0.543 | ~7.4% |
+| ours: v6 + 软 reset keep=3（分析发现） | 34.89 ± 0.68 | 0.604 ± 0.016 | ~3.5% |
+| **ours: v6 + 恒定滑窗 w=11（操作点）** | **34.82 ± 0.40** | 0.543 | ~7.4% |
 | KIT | 34.76 | 0.588 | ~8% |
 | ours: v5 + 滑窗 w=11 | 34.08 ± 0.20 | 0.542 | ~8.4% |
 | ours: v4lrfix + 滑窗 w=11 | 33.36 ± 0.59 | 0.539 | ~6.0% |
