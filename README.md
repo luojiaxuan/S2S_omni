@@ -73,6 +73,22 @@ gpt-4o-mini-transcribe target-speech ASR）上的结果。
 34.5–34.9，恒定滑窗 34.3–35.9，两者在 1.25×/1.5× 上统计不可区分
 （1.5× 差 −1.02，t=−1.56；XCOMET 差 −0.0099，t=−0.64）。
 
+延迟（LongYAAL / ending offset，单位秒，SEGALE 重切分口径）：
+
+| 配置 | 1× | 1.25× | 1.5× |
+| --- | ---: | ---: | ---: |
+| ours 恒定滑窗（仿真下界） | 14.2 / +14.6 | 7.7 / +2.7 | 6.0 / −0.2 |
+| ours soft3（仿真下界） | 4.8 / +5.0 | 0.6 / −3.7 | 3.6 / −2.3 |
+| GPT-realtime（实测） | 6.6 / 6.7 | 11.9 / 11.9 | 15.2 / 14.9 |
+| Gemini（实测） | 7.7 / 7.7 | 8.9 / 8.9 | 9.9 / 9.9 |
+| KIT（实测） | 53.3 / 51.3 | 37.5 / 37.8 | 46.4 / 44.9 |
+
+**⚠️ 口径**：ours 为 playout 仿真（turn 音频块在 InfiniSST 发射时刻到达，
+zero-jitter FIFO；**不含 InfiniSST/TTS 计算与网络，是下界**）；基线为 live
+实测。soft3 各档比恒定滑窗低 2.4–7.1s（少生成 9% 音频 → 积压少）；其速度
+档的负 ending offset 是"提前说完"（内容压缩），不是更快。KIT 的 37–53s
+在另一个量级，此结论对口径差异稳健。细节与产物见台账 4.-14。
+
 **⚠️ 语速档的打分方差远大于 1×**（BLEU sd 最高 2.66、XCOMET sd 最高
 0.039，vs 1× 的 0.2–0.7 / 0.004–0.016），**语速档单次打分数字不可用**。
 这也溯源了旧表的"BLEU 跨速档非单调"之谜：v4lrfix reset 的
@@ -111,7 +127,7 @@ SEGALE 对齐、BLEU/XCOMET summaries + InfiniSST runtime chunks）。
 
 | checkpoint | repo | 状态 |
 | --- | --- | --- |
-| **v6 midstart（当前操作点 checkpoint）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v6-midstart` | uploading |
+| **v6 midstart（当前操作点 checkpoint）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v6-midstart` | uploaded（`82b58902`） |
 | v3 longsess（历史操作点） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
 | v2 multi-turn | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn` | uploaded |
 | v2.1 repaug（消融） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-1-repaug` | uploaded（`67f58658`） |

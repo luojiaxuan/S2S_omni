@@ -113,7 +113,51 @@ GPT、贴平 KIT，未及 Gemini。
 
 ## 4. 实验台账（时间倒序）
 
-### 4.-13 软 reset 收尾验证：keep 敏感性 + 语速档（2026-08-11，进行中）
+### 4.-14 级联延迟指标补齐：LongYAAL + ending offset（2026-08-11）
+
+- **背景**：级联 run 的 instances.log 一直只有线性占位 delays，从未报过
+  延迟（挂账的 speech-playout latency protocol）。用户要求把 LongAAL 与
+  ending offset 带进最终表。
+- **改动**：`build_cascade_speech_timing.py`（commit `3d5ac0c`）——复用
+  canonical v2 协议全部实现（whisper-1 词时间戳、canonical 转写单调对齐、
+  zero-jitter FIFO playout、unit 映射），级联侧以 **turn 块仿真** packet
+  到达：turn k 的音频块在 InfiniSST 发射时刻（swrow `delay_ms`，加速时钟
+  的 chunk 边界）整块到达。源侧为 1.92s chunk 实时推送时间线。
+- **口径警告（引用必须带）**：级联数字是 **computation-simulated 下界**
+  ——不含 InfiniSST 计算、TTS 计算与网络；基线（KIT/GPT/Gemini）是 live
+  实测。二者并排只能做量级对比。级联延迟为单次测量（词时间戳 ASR 有
+  随机性，但延迟由音频时长与到达时刻主导，方差远小于 BLEU）。
+- **结果（LongYAAL_cu / ending_offset_cu，单位秒）**：
+
+  | 配置 | 1× | 1.25× | 1.5× |
+  | --- | ---: | ---: | ---: |
+  | 恒定滑窗 | 14.2 / +14.6 | 7.7 / +2.7 | 6.0 / −0.2 |
+  | soft3 | 4.8 / +5.0 | 0.6 / −3.7 | 3.6 / −2.3 |
+  | GPT-realtime（实测） | 6.6 / 6.7 | 11.9 / 11.9 | 15.2 / 14.9 |
+  | Gemini（实测） | 7.7 / 7.7 | 8.9 / 8.9 | 9.9 / 9.9 |
+  | KIT（实测） | 53.3 / 51.3 | 37.5 / 37.8 | 46.4 / 44.9 |
+
+- **判断**：
+  1. **soft3 的时长优势直接变成延迟优势**：各速度档 LongYAAL 比恒定滑窗
+     低 2.4–7.1 秒（1×：14.2→4.8）。机制与 4.-13 一致——少生成约 9% 音频
+     → FIFO 积压更少。恒定滑窗 1× 的 14.2s 是它过度生成（重复尾巴）的
+     直接代价，与其 XCOMET 低 0.06 同源。
+  2. **soft3 在速度档的负 ending offset（−3.7/−2.3s）是"提前说完"**：
+     目标播放先于源结束，配合其速度档漏译偏高（7%），本质是内容压缩
+     ——这就是 README 问题陈述里的第三种失败模式（silently drop content）
+     的轻度版本。引用时不可把负值当"更快"吹。
+  3. 对基线的量级结论安全：即使给级联加上计算与网络开销，KIT 的
+     37–53s 仍在另一个量级；我们与 GPT/Gemini 同档（个位数秒）。
+- **过程中修掉的两个 bug**（未流入任何对外数字）：
+  (a) longyaal 依赖 `segale_alignment/quality_summary.json`，而质量链把它
+  重定向到 bleu_summary.json，延迟链需补一次缺省位置构建；
+  (b) 速度档 swrow 的 delay_ms 在加速时钟里，源时长必须除以速度因子——
+  首轮数字因此假性为负（soft3@1.25× ending −63~−137s/talk），逐 talk
+  核验（最后 turn 发射时刻 ≈ 原时长/因子）后定位并修复。
+- **产物**：各 `rundirs/*_gptasr_latency/segale_longyaal/summary.json`；
+  延迟 run 与质量 run 严格分离（延迟链会覆盖 instances.log 的 ASR）。
+
+### 4.-13 软 reset 收尾验证：keep 敏感性 + 语速档（2026-08-11，已完成）
 
 - **要回答的两个问题**：(1) keep=3 是不是孤点——keep=2/5 的 XCOMET 若都在
   0.60 附近说明是宽平台，操作点稳健；(2) 软 reset 会不会丢掉恒定滑窗的
