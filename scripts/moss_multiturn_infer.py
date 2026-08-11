@@ -59,6 +59,14 @@ def parse_args() -> argparse.Namespace:
                              "silence->speech onset; a sliding window never does. Turn 0 is the one "
                              "turn in a talk that does start from silence, so pinning it restores "
                              "the anchor at inference time without retraining.")
+    parser.add_argument("--soft-reset-keep", type=int, default=0,
+                        help="sliding mode only: when the window reaches its cap, shrink it to the "
+                             "most recent N turns instead of sliding one-out-one-in (0 = off). "
+                             "Context length then cycles N..cap (mean ~(N+cap)/2) — periodically "
+                             "short like reset, but never empty, so no hard boundary / timbre jump. "
+                             "Tests whether reset's edge over sliding (台账 4.1: +8 BLEU at matched "
+                             "mean history) comes from periodically-short coherent context rather "
+                             "than the silence anchor, which 4.-10/4.-11 already ruled out.")
     parser.add_argument("--min-frames-per-char", type=float, default=0.0,
                         help="sliding mode only: regenerate a turn once if it produced fewer than "
                              "this many codec frames per spoken character (0 = off). Diagnosed "
@@ -473,7 +481,12 @@ def main() -> None:
                             turn_results[-1]["regenerated"] = True
                         turn_results[-1]["loop_reset"] = True
                     window.append((text, codes_np))
-                    if args.pin_first_turn and anchor_turn is not None:
+                    if args.soft_reset_keep > 0:
+                        # note (luojiaxuan): 软 reset——长满就缩到最近 N 个，
+                        # 未满就整窗保留（每轮只 append 一个，长度最多超上限 1）。
+                        if len(window) > args.sliding_window - 1:
+                            window = window[-args.soft_reset_keep :]
+                    elif args.pin_first_turn and anchor_turn is not None:
                         tail = max(0, args.sliding_window - 2)
                         recent = [t for t in window if t is not anchor_turn][-tail:]
                         window = [anchor_turn] + recent

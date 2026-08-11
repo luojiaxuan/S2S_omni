@@ -22,6 +22,10 @@ case "$mode" in
   # 前提下检验静音锚点假设（台账 4.-9 / 4.-10）。必须排在 sliding* 之前，
   # 否则会被当成窗口大小解析成 --sliding-window pin。
   slidingpin) rows_suffix="swrow"; extra="--sliding-window 11 --pin-first-turn" ;;
+  # note (luojiaxuan): slidingsoftN = 滑窗 w=11 + 周期性软 reset（长满缩到最近
+  # N 个 turn）。台账 7.12 候选 d：检验 reset 的优势是否来自"周期性短且连贯
+  # 的上下文"本身。必须排在 sliding* 之前。
+  slidingsoft*) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep ${mode#slidingsoft}" ;;
   sliding*) rows_suffix="swrow"; extra="--sliding-window ${mode#sliding}" ;;
   # anchorNN = reset + 韵律锚点，NN 为十分之一秒（anchor10 = 1.0s）
   anchor*)  rows_suffix="rows";  extra="--reset-carry-seconds $(awk "BEGIN{print ${mode#anchor}/10}")" ;;
