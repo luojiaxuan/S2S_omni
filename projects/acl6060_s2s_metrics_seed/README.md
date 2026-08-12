@@ -355,9 +355,9 @@ window 不能作为 Git 大文件提交。它们已从 `/tmp` 迁移到本机 pe
 ```
 
 该目录共约 `6.1 GB`，包含 270 个 WAV、90 份 OpenAI/Gemini
-`target_audio_packets.jsonl` 和 45 份 KIT `audio_chunks.jsonl`。预定 Hugging
-Face dataset repo 为 `gavinlaw/acl6060-s2s-speech-playout-raw`，当前状态
-`PENDING_HF_UPLOAD`。Git 中保留无需原始 WAV 即可直接预览和审计的 27-cell
+`target_audio_packets.jsonl` 和 45 份 KIT `audio_chunks.jsonl`。Hugging Face dataset repo：`gavinlaw/acl6060-s2s-speech-playout-raw`
+（private，rev `40422642`，2026-08-12 全量 27 cell 上传完成，欠账清零；
+本地目录自此降级为缓存副本）。Git 中保留无需原始 WAV 即可直接预览和审计的 27-cell
 timing summaries、SEGALE/XCOMET/LongYAAL traces 与 HTML。
 
 ## 2026-07-25 ACL6060 SEGALE 重评（当前 canonical）
