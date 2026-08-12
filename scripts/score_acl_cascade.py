@@ -78,6 +78,18 @@ def transcribe_openai_windows(
     window_bytes = int(window_s * rate) * 2
     texts = []
     for start in range(0, len(pcm), window_bytes):
+        # note (luojiaxuan): 近静音窗直接记空串，不发请求。OpenAI baseline 的
+        # target 语音稀疏，存在整窗静音；sglang 的 Qwen3-ASR 对零特征音频会
+        # 崩掉整个 scheduler（Insufficient multimodal embedding length），
+        # 一个静音窗能带死服务并让后续所有请求 RemoteDisconnected。
+        # 静音转写为空本来就是语义正确的行为。阈值 30 ≈ int16 满量程 0.1%。
+        import array as _array
+        _samples = _array.array("h")
+        _samples.frombytes(pcm[start : start + window_bytes])
+        _sub = _samples[::16] or _array.array("h", [0])
+        if (sum(v * v for v in _sub) / len(_sub)) ** 0.5 < 30.0:
+            texts.append("")
+            continue
         buf = io.BytesIO()
         with wave.open(buf, "wb") as w:
             w.setnchannels(1)
