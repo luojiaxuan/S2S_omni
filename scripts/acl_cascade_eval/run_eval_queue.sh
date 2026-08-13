@@ -16,7 +16,10 @@ cd /data/S2S_omni
 # 窗口大小——回答"reset 不硬切、保留一半历史"是否可行：sliding6 与 reset11
 # 的平均历史长度都约 5 轮，唯一差别是 sliding 永不清零、reset 周期性清零。
 case "$mode" in
-  sliding)  rows_suffix="swrow"; extra="--sliding-window 11" ;;
+  # note (luojiaxuan): 2026-08-12 起 --soft-reset-keep 默认 3，所以历史 mode 名
+  # "sliding"（恒定长度窗口）必须显式 opt-out，否则同一个名字会跑出不同架构，
+  # 让此前所有 sliding 数字变得不可复现。
+  sliding)  rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep 0" ;;
   # note (luojiaxuan): slidingpin = 滑窗 w=11，但首位固定为整场第一个 turn。
   # 窗口长度不变，唯一变量是首位那个 turn 自带"从静音起音"。用来在不重训的
   # 前提下检验静音锚点假设（台账 4.-9 / 4.-10）。必须排在 sliding* 之前，
@@ -26,11 +29,11 @@ case "$mode" in
   # N 个 turn）。台账 7.12 候选 d：检验 reset 的优势是否来自"周期性短且连贯
   # 的上下文"本身。必须排在 sliding* 之前。
   slidingsoft*) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep ${mode#slidingsoft}" ;;
-  sliding*) rows_suffix="swrow"; extra="--sliding-window ${mode#sliding}" ;;
+  sliding*) rows_suffix="swrow"; extra="--sliding-window ${mode#sliding} --soft-reset-keep 0" ;;
   # anchorNN = reset + 韵律锚点，NN 为十分之一秒（anchor10 = 1.0s）
   anchor*)  rows_suffix="rows";  extra="--reset-carry-seconds $(awk "BEGIN{print ${mode#anchor}/10}")" ;;
   # note (luojiaxuan): guard = 滑窗 w=11 + 短 turn 吞并护栏（阈值 1.5 帧/字）
-  guard)    rows_suffix="swrow"; extra="--sliding-window 11 --min-frames-per-char 1.5" ;;
+  guard)    rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep 0 --min-frames-per-char 1.5" ;;
   *)        rows_suffix="rows";  extra="" ;;
 esac
 

@@ -59,14 +59,22 @@ def parse_args() -> argparse.Namespace:
                              "silence->speech onset; a sliding window never does. Turn 0 is the one "
                              "turn in a talk that does start from silence, so pinning it restores "
                              "the anchor at inference time without retraining.")
-    parser.add_argument("--soft-reset-keep", type=int, default=0,
-                        help="sliding mode only: when the window reaches its cap, shrink it to the "
-                             "most recent N turns instead of sliding one-out-one-in (0 = off). "
-                             "Context length then cycles N..cap (mean ~(N+cap)/2) — periodically "
-                             "short like reset, but never empty, so no hard boundary / timbre jump. "
-                             "Tests whether reset's edge over sliding (台账 4.1: +8 BLEU at matched "
-                             "mean history) comes from periodically-short coherent context rather "
-                             "than the silence anchor, which 4.-10/4.-11 already ruled out.")
+    parser.add_argument("--soft-reset-keep", type=int, default=3,
+                        help="sliding mode: when the window reaches its cap, shrink it to the most "
+                             "recent N turns instead of sliding one-out-one-in. Context length then "
+                             "cycles N..cap — periodically short like reset, but never empty, so no "
+                             "hard boundary / timbre jump. THIS IS THE DEFAULT (N=3); pass 0 to opt "
+                             "out and get a constant-length window that evicts one turn per step. "
+                             "Why it is the default: the constant window changes its prompt prefix "
+                             "every single turn, so the TTS KV cache is never reusable — measured "
+                             "~478 prompt rows re-prefilled to decode ~24 new rows, a 20:1 blowup. "
+                             "Soft reset only appends while growing (prompt_t is a strict prefix of "
+                             "prompt_t+1, since a turn's leading break equals the previous header), "
+                             "so the cache stays valid and is invalidated once per cycle instead of "
+                             "once per turn — roughly an order of magnitude less prefill work. "
+                             "Quality caveat: under the GPT-ASR op N=3 beat the constant window "
+                             "(paired XCOMET t=+9.7); under the Qwen3-ASR canonical op it loses "
+                             "(BLEU 26.5 vs 30.3). See 台账 4.-12 / 4.-16 before quoting either.")
     parser.add_argument("--min-frames-per-char", type=float, default=0.0,
                         help="sliding mode only: regenerate a turn once if it produced fewer than "
                              "this many codec frames per spoken character (0 = off). Diagnosed "
@@ -481,16 +489,22 @@ def main() -> None:
                             turn_results[-1]["regenerated"] = True
                         turn_results[-1]["loop_reset"] = True
                     window.append((text, codes_np))
-                    if args.soft_reset_keep > 0:
-                        # note (luojiaxuan): 软 reset——长满就缩到最近 N 个，
-                        # 未满就整窗保留（每轮只 append 一个，长度最多超上限 1）。
-                        if len(window) > args.sliding_window - 1:
-                            window = window[-args.soft_reset_keep :]
-                    elif args.pin_first_turn and anchor_turn is not None:
+                    if args.pin_first_turn and anchor_turn is not None:
+                        # note (luojiaxuan): 诊断模式，优先级最高——它与软 reset
+                        # 互斥，而软 reset 现在是默认值，不显式排前面就永远进不来。
                         tail = max(0, args.sliding_window - 2)
                         recent = [t for t in window if t is not anchor_turn][-tail:]
                         window = [anchor_turn] + recent
+                    elif args.soft_reset_keep > 0:
+                        # note (luojiaxuan): 软 reset（默认）——长满就缩到最近 N 个，
+                        # 未满就整窗保留（每轮只 append 一个，长度最多超上限 1）。
+                        # 未满的那些轮是纯追加，prompt 严格扩展上一轮，KV cache 可复用；
+                        # 只有缩窗那一刻前缀变化、需要重建。
+                        if len(window) > args.sliding_window - 1:
+                            window = window[-args.soft_reset_keep :]
                     else:
+                        # note (luojiaxuan): --soft-reset-keep 0 的 opt-out：恒定长度
+                        # 窗口，每轮挤掉最老的一个 turn。前缀每轮都变，KV cache 全废。
                         window = window[-(args.sliding_window - 1) :]
                     if anchor_turn is None and window:
                         anchor_turn = window[0]

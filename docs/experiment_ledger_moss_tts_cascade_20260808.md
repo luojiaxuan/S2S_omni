@@ -113,6 +113,37 @@ GPT、贴平 KIT，未及 Gemini。
 
 ## 4. 实验台账（时间倒序）
 
+### 4.-18 架构裁定：软 reset 成为默认（KV cache，2026-08-12 用户裁定）
+
+- **裁定**：`moss_multiturn_infer.py` 的 `--soft-reset-keep` 默认由 0 改为
+  **3**——即窗口涨到 10 后一次缩到最近 3 个 turn，再继续 append；恒定长度
+  滑窗降为 opt-out（`--soft-reset-keep 0`）。理由不是质量，是**服务成本**。
+- **依据（本轮实测/仿真）**：恒定滑窗 stride=1，每轮挤掉最老 turn → prompt
+  前缀每轮都变 → KV cache 全废。实测每轮重算 ensemble 118 行 + 10 个历史
+  turn 约 360 行 = **约 478 行 prefill，只为解码约 24 行新内容（20:1）**。
+  软 reset 在"涨"的阶段是纯追加（一个 turn 的 leading break 恰等于上一轮的
+  header，故 prompt_t 是 prompt_{t+1} 的严格前缀），cache 全程有效，只在缩窗
+  那一刻失效一次。30 轮仿真总 prefill：恒定 9440 行 → keep=3 **1420 行
+  （6.6×）**，keep=5 1910 行（4.9×）。
+- **为什么取 keep=3 而非用户提的"前一半"keep=5**：(a) 周期更长（7 轮 vs
+  5 轮）→ cache 失效更少；(b) 质量上 GPT-ASR 口径 keep=3 明显最好
+  （34.89/0.604，keep=5 只有 31.29/0.5414），Qwen 口径三者并列。两项都指向
+  3。keep=5 一个参数即可切换，README 已注明。
+- **⚠️ 与既有结论的冲突（如实记录）**：新 canonical（Qwen3-ASR）口径下
+  soft3 明显劣于恒定滑窗（BLEU 26.47 vs 30.32，漏译 19.2% vs 8.1%，4.-16）；
+  GPT-ASR 口径下则相反（配对 XCOMET t=+9.74，4.-12）。两个仪器互相矛盾且
+  无法裁决，用户以**部署成本**作为第三条依据打破僵局。这是一个知情裁定，
+  不是被数据支持的选择——**论文报数字时仍须按 4.-16 的口径如实呈现**，
+  不得用"默认配置"暗示它质量更优。
+- **防回归**：`run_eval_queue.sh` 的历史 mode 名 `sliding` / `slidingN` /
+  `guard` 全部显式加 `--soft-reset-keep 0`。默认值变更若不这样钉住，同一个
+  mode 名会跑出不同架构，让此前所有 sliding 数字不可复现。
+- **仍未做**：真正的 cache 复用需要推理侧支持增量 prefill（当前实现每轮
+  仍 `reset_generation_state`，软 reset 只是让"可复用"在架构上成立）。
+  三条后续：ensemble 118 行固定前缀走 RadixAttention 共享；
+  StreamingLLM 式位置重索引让头部剔除不失效；服务化落在 sglang-omni #1368。
+  **本条的收益目前是理论值，未在端到端 wall-clock 上验证。**
+
 ### 4.-17 基线新口径重打分 + playout wav 清欠账（2026-08-12）
 
 - **背景**：4.-16 后新口径缺基线数字；target wav 一直在 Mac 暂存
