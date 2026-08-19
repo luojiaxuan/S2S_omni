@@ -113,6 +113,31 @@ GPT、贴平 KIT，未及 Gemini。
 
 ## 4. 实验台账（时间倒序）
 
+### 4.-19 v7 数据扩充：lab 轨迹语料（2026-08-19，进行中）
+
+- **数据**：用户提供 `train_en_utt_robust_asr-filtered_zh_metricx-qe3.0_align.tsv`
+  （lab GigaSpeech/FLORAS 管线 stage-7 产物，已上传
+  `gavinlaw/infinisst-moss-tts-en-zh-multiturn` 的 source_manifests/）。
+  体检：6385/6387 行可用，60.6h，0.96s chunk，trajectory 拼接与 tgt_text
+  100% 一致；**turn 中位 4–5 字、共 157,887 个 turn**——粒度比 InfiniSST
+  的 1.92s turn 细一倍，正面补"滑窗吞短句"的历史弱点（4.-6）。
+- **管线**：`build_moss_rows_from_trajectory.py`（非空增量即 turn，标点并邻、
+  句末分组，复用 v2 约定）→ **in-process 整段合成**
+  `synth_moss_rows_inprocess.py`（v2 的 serving 栈埋在 hyper00 旧容器可写层
+  不可复现；引擎混用先例：v4 起自历史音频即 in-process）→ align_slice →
+  v6 checkpoint 闭环自历史 → mix + midstart → 与 v6 数据聚合训 v7。
+- **执行**：Tilde 配额被 cc-joint 整占（22h+），按规则顺延 hyper01。
+  发现两条**陈旧 map 记录**（容器已死未清），已删；6 卡 task 容器
+  `20260819-233815`，6 分片合成中（冒烟 3/3，约 250 行/时/卡，预计 4–5h）。
+- **过程 bug（重要，症状极具误导性）**：合成器初版漏移植 sanitize——
+  BOS/EOS（1025/1026 ≥ codebook 1024）流进 codec embedding 查表，
+  device-side assert 毒掉 CUDA context，后续一切报错变成 cuDNN/cuBLAS
+  "unable to find an engine"，酷似环境损坏。为此做了一整圈错误归因
+  （新旧容器、hyper00/01 双主机、驱动版本、线程模型全部排除），最后靠
+  "历史可用脚本此刻仍可用"的对照收敛回代码层。**同一根因解释了 4.-18 期间
+  bistream server 的死亡，该 server 可用同一补丁复活。**教训：遇
+  device-side assert，第一步应离线校验送入 embedding 的索引范围，
+  而不是怀疑环境。
 ### 4.-18 架构裁定：软 reset 成为默认（KV cache，2026-08-12 用户裁定）
 
 - **裁定**：`moss_multiturn_infer.py` 的 `--soft-reset-keep` 默认由 0 改为
