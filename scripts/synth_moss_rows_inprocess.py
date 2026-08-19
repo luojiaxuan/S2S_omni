@@ -121,6 +121,30 @@ def main() -> None:
     first_prompt = np.concatenate([ensemble, header_grid("<|im_start|>assistant\n")], axis=0)
 
     inferencer = MossTTSRealtimeInference(model, tokenizer, max_length=args.max_length)
+    audio_eos_token = int(getattr(inferencer, "audio_eos_token", 1026))
+    codebook_size = int(getattr(codec.config, "codebook_size", 1024))
+
+    def sanitize(tokens: torch.Tensor) -> torch.Tensor:
+        # note (luojiaxuan): 与 moss_multiturn_infer 相同——EOS 行与任何越界值
+        # （BOS/EOS 1025/1026 ≥ codebook 1024）处截断，防止控制符流进 codec
+        # 的 embedding 查表。漏掉它的症状极具误导性：device-side assert 毒掉
+        # CUDA context 后，后续报错全是 cuDNN/cuBLAS "unable to find an
+        # engine"，看起来像环境坏了（我为此追了一整圈主机/容器归因）。
+        if tokens.dim() == 3:
+            tokens = tokens[0]
+        if tokens.dim() == 1:
+            tokens = tokens.unsqueeze(0)
+        if tokens.numel() == 0:
+            return tokens
+        eos_rows = (tokens[:, 0] == audio_eos_token).nonzero(as_tuple=False)
+        invalid = ((tokens < 0) | (tokens >= codebook_size)).any(dim=1)
+        stop = None
+        if eos_rows.numel() > 0:
+            stop = int(eos_rows[0].item())
+        if invalid.any():
+            inv = int(invalid.nonzero(as_tuple=False)[0].item())
+            stop = inv if stop is None else min(stop, inv)
+        return tokens[:stop] if stop is not None else tokens
     session = MossTTSRealtimeStreamingSession(
         inferencer, processor, codec=codec, codec_sample_rate=codec_sr,
         codec_encode_kwargs={}, prefill_text_len=processor.delay_tokens_len,
@@ -142,11 +166,7 @@ def main() -> None:
             def consume(frames_list) -> bool:
                 nonlocal frames
                 for frame in frames_list:
-                    tok = frame if isinstance(frame, torch.Tensor) else torch.as_tensor(frame)
-                    if tok.dim() == 3:
-                        tok = tok[0]
-                    if tok.dim() == 1:
-                        tok = tok.unsqueeze(0)
+                    tok = sanitize(frame if isinstance(frame, torch.Tensor) else torch.as_tensor(frame))
                     if tok.numel() == 0:
                         continue
                     frames += int(tok.shape[0])
