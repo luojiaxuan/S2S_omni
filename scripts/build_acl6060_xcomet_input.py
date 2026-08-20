@@ -149,6 +149,18 @@ def main() -> None:
     over_count = sum(row["null_alignment_type"] == "over_translation" for row in rows)
     under_count = sum(row["null_alignment_type"] == "under_translation" for row in rows)
     null_count = over_count + under_count
+    # note (luojiaxuan): 漏译率改按固定参考句归一（用户裁定 2026-08-20，
+    # 台账 4.-21）：旧口径的分母 len(rows) 是模型依赖的 SEGALE 对齐块数
+    # （同一 talk v7 可碎成 91 块而 v6 只有 63），且把 over/under 合并，
+    # 跨模型不可比。新口径：分子 = under 块覆盖的去重 source_segment_ids，
+    # 分母 = input_summary 的固定 source_segments；over 单列块数。
+    source_total = int(input_summary["source_segments"])
+    under_source_ids: set = set()
+    for row in rows:
+        if row["null_alignment_type"] == "under_translation":
+            under_source_ids.update(row["source_segment_ids"])
+    if not source_total:
+        raise SystemExit(f"input_summary source_segments is 0 for {args.run_dir}")
     write_jsonl(args.output_jsonl, rows)
     summary = {
         "alignment_backend": "SEGALE",
@@ -162,6 +174,9 @@ def main() -> None:
         "over_translation_alignments": over_count,
         "under_translation_alignments": under_count,
         "null_alignment_ratio": null_count / len(rows) if rows else 0.0,
+        "source_segments": source_total,
+        "under_translation_source_segments": len(under_source_ids),
+        "under_translation_source_ratio": len(under_source_ids) / source_total,
         "null_alignment_score": 0.0,
         "bleu": corpus_bleu(rows, tokenizer),
         "bleu_tokenizer": tokenizer,

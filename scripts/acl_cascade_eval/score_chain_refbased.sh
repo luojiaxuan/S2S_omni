@@ -33,10 +33,13 @@ CUDA_VISIBLE_DEVICES="$g" "$SEG_PY" scripts/run_acl6060_xcomet_xl.py \
   --input-jsonl "$RD/xcomet_input.jsonl" --output-jsonl "$RD/xcomet_segments.jsonl" \
   --summary-json "$RD/xcomet_summary.json" --batch-size 4 || exit 6
 
+# note (luojiaxuan): 漏译率报固定参考句口径（台账 4.-21）；块级口径保留在
+# summary 里但不再作为 headline。字段缺失就 KeyError 失败，不兜底。
 python3 -c "
 import json
 b=json.load(open('$RD/bleu_summary.json')); x=json.load(open('$RD/xcomet_summary.json'))
-print('NEWOP_RESULT $tag $mode  BLEU %.2f  XCOMET-ref %.4f  null %d/%d (%.1f%%)' % (
-  b['bleu'], x['xcomet_xl'], b['null_alignments'], b['segments'], 100*b['null_alignment_ratio']))
+print('NEWOP_RESULT $tag $mode  BLEU %.2f  XCOMET-ref %.4f  under %d/%d (%.1f%%)  over_blocks %d' % (
+  b['bleu'], x['xcomet_xl'], b['under_translation_source_segments'], b['source_segments'],
+  100*b['under_translation_source_ratio'], b['over_translation_alignments']))
 "
 echo "NEWOP_CHAIN_DONE $tag $mode"
