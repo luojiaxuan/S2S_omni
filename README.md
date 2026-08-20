@@ -104,7 +104,7 @@ zero-jitter FIFO；**不含 InfiniSST/TTS 计算与网络，是下界**）；基
 GPT-realtime 约 4 分。外部对比（如 Open-LiveTranslate，其上游把漏译句
 从分母剔除）应以本列为准。台账 4.-15。
 
-**🎧 音频浏览**：[v7_audio_browser.html](https://luojiaxuan.github.io/S2S_omni/docs/v7_audio_browser.html)——v7@1×/v7@1.5×/v6@1.5× 三个 run 的整场音频（公开 HF 托管）+ 逐 turn 输入文本与独立 ASR 对照、保真度着色、点击跳播；吞轮/回读样例可直接听（台账 4.-21b 的 ③）。
+**🎧 音频浏览**：[v7_audio_browser.html](https://luojiaxuan.github.io/S2S_omni/v7_audio_browser.html)——v7@1×/v7@1.5×/v6@1.5× 三个 run 的整场音频（公开 HF 托管）+ 逐 turn 输入文本与独立 ASR 对照、保真度着色、点击跳播；吞轮/回读样例可直接听（台账 4.-21b 的 ③）。
 
 ### 新 canonical 口径（2026-08-11 起）：Qwen3-ASR + XCOMET-ref
 
