@@ -104,7 +104,7 @@ zero-jitter FIFO；**不含 InfiniSST/TTS 计算与网络，是下界**）；基
 GPT-realtime 约 4 分。外部对比（如 Open-LiveTranslate，其上游把漏译句
 从分母剔除）应以本列为准。台账 4.-15。
 
-**🎧 音频浏览**：[v7_audio_browser.html](https://luojiaxuan.github.io/S2S_omni/v7_audio_browser.html)——v7@1×/v7@1.5×/v6@1.5× 三个 run 的整场音频（公开 HF 托管）+ 逐 turn 输入文本与独立 ASR 对照、保真度着色、点击跳播；吞轮/回读样例可直接听（台账 4.-21b 的 ③）。
+**🎧 音频浏览**：[v7_audio_browser.html](https://luojiaxuan.github.io/S2S_omni/v7_audio_browser.html)——v7 恒定滑窗与 soft3 各两档（1×/1.5×）+ v6@1.5× 对照，共五个 run 的整场音频（公开 HF 托管）+ 逐 turn 输入文本与独立 ASR 对照、保真度着色、点击跳播；吞轮/回读样例可直接听（台账 4.-21b 的 ③）。
 
 ### 新 canonical 口径（2026-08-11 起）：Qwen3-ASR + XCOMET-ref
 
@@ -125,6 +125,7 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 | **ours v7 恒定滑窗（操作点）** | **31.03 / 0.652 / 1.3%** | 30.12 / 0.604 / 6.4% | 30.73 / 0.589 / 7.5% |
 | ours v6 恒定滑窗 | 30.32 / 0.586 / 5.3% | **30.28 / 0.619 / 4.5%** | **31.21 / 0.609 / 3.0%** |
 | ours v4lrfix reset | 29.78 / 0.617 / 4.1% | — | — |
+| ours v7 soft3 | 28.51 / 0.604 / 6.8% | — | 30.47 / 0.648 / **3.8%** |
 | ours v6 soft3 | 26.47 / 0.528 / 13.7% | 27.19 / 0.553 / 10.9% | 29.04 / 0.623 / 4.7% |
 
 三个要点：
