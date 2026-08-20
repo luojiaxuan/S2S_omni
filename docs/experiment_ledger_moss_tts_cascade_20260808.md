@@ -232,6 +232,29 @@ GPT、贴平 KIT，未及 Gemini。
   长 turn 覆盖），目标从"修内容回退"修正为"修边界韵律的仪器耦合 +
   数据缺陷"；加数据不再以 BLEU 为目标函数。
 
+### 4.-21c 句级口径的级联天花板 + v7 soft3 补测（2026-08-20，进行中）
+
+- **背景**：用户裁定 BLEU 结论只用句级口径（doc BLEU 仅辅助仲裁），
+  且指出浏览页音频听感不连贯、问是否没做 soft3——确实：canonical 评测
+  的 "sliding" 模式全部显式 `--soft-reset-keep 0`（恒定滑窗），v7+soft3
+  从未生成过（soft 系列只在 v6 上测过）。
+- **天花板（InfiniSST 文本直通 canonical 句级链，无 TTS/ASR；rundir
+  `acl6060_live_enzh_textceiling_*`）**：
+  1× = **46.12 / 0.7846 / 漏译 0/468**；1.5× = **46.22 / 0.7914 / 0/468**。
+  三个推论：(a) 上游文本质量不随语速退化，cascade 的全部速度档退化都在
+  语音侧；(b) 漏译全部产生于语音化→ASR→对齐段；(c) TTS+ASR 链句级损耗
+  ~15 BLEU（doc 口径 ~9.5，差额=句级对齐对 ASR 断句的敏感性）。
+  BLEU 提升空间几乎全在上游与仪器，TTS 数据侧不再以 BLEU 为目标。
+- **事故（口径同步失误）**：hyper01 容器内 /data/S2S_omni 未拉取当日
+  口径修复 commit，text-ceiling 首跑在报告步骤 KeyError 挂掉且未写信号，
+  soft3 runner 空等约 1.5h。已 reset --hard origin/main 补跑。教训：
+  跨机改口径脚本后，先同步再发依赖它的作业。
+- **v7+soft3 全链进行中**：生成（1×/1.5×）→ canonical 打分 → 逐 turn
+  ASR → mp3 上传 → 浏览页加 tab。听感假设：soft reset 周期内纯 append、
+  缓存连续，接缝远少于恒定滑窗（旁证：恒定滑窗转写内 8-gram 重复率
+  ~2× 于 soft3）。若听感显著更好，待用户裁决是否把操作点叙事换回
+  soft3（打分侧的 soft3 劣势有 null-flip 工具可论证为仪器假象）。
+
 ### 4.-20 v7 语速档 + v7b 自历史轮：一平一负（2026-08-20）
 
 - **v7 语速档（新口径，单次；对照 v6 同速档）**：
