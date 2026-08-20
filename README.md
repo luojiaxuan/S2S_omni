@@ -104,6 +104,8 @@ zero-jitter FIFO；**不含 InfiniSST/TTS 计算与网络，是下界**）；基
 GPT-realtime 约 4 分。外部对比（如 Open-LiveTranslate，其上游把漏译句
 从分母剔除）应以本列为准。台账 4.-15。
 
+**🎧 音频浏览**：[v7_audio_browser.html](https://luojiaxuan.github.io/S2S_omni/docs/v7_audio_browser.html)——v7@1×/v7@1.5×/v6@1.5× 三个 run 的整场音频（公开 HF 托管）+ 逐 turn 输入文本与独立 ASR 对照、保真度着色、点击跳播；吞轮/回读样例可直接听（台账 4.-21b 的 ③）。
+
 ### 新 canonical 口径（2026-08-11 起）：Qwen3-ASR + XCOMET-ref
 
 用户裁定的新打分口径：ASR 换自托管 Qwen3-ASR-1.7B（成本），BLEU 维持
@@ -140,8 +142,11 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
    22–25%）见台账 6.3 / 4.-16 / 4.-17；跨仪器数字永不互比。
 4. **v7 的 1.5× 漏译回退（v6 3.0% → v7 7.5%，重生成复现 3.6%/8.8%）是
    blocker**：用户裁定最终只交付单一 version，不允许按速档分 checkpoint。
-   归因（生成侧吞轮/回读 + 训练数据低帧监督与采样等价性缺陷，经外部
-   审计与逐层剖检证实）与修复路线（v7c）见台账 4.-21。
+   **null-flip 判别（台账 4.-21b）**：v7 的 35 个 null 中 20 个内容其实
+   在音频里（逐 turn 独立 ASR 可复原）、真漏仅 2 个（v6 为 1 个）——
+   回退主体是 1.5× 边界韵律（吞轮/回读）与 ASR→对齐链的**仪器耦合**，
+   不是内容损失；修复路线（v7c：slicer reject 版 + 0.6/30 采样 +
+   语速/长 turn 覆盖）见台账 4.-21/4.-21b。
 
 **⚠️ 语速档的打分方差远大于 1×**（BLEU sd 最高 2.66、XCOMET sd 最高
 0.039，vs 1× 的 0.2–0.7 / 0.004–0.016），**语速档单次打分数字不可用**。
