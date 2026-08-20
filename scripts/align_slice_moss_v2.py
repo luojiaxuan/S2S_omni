@@ -122,26 +122,25 @@ def align_row(
         seg_end[seg_idx] = end_s
         scores.append(float(span.score))
 
-    # interpolate unaligned segments proportionally by char count
+    # note (luojiaxuan): 2026-08-20 起未对齐段不再插值兜底，整行 reject
+    # （用户裁定 no-fallback；台账 4.-21）。旧插值实现还有实质 bug：
+    # gap_segs 收集的是全行所有缺失段而非当前连续缺口，再全部塞进第一个
+    # 缺口的区间——v7 traj 超短 turn 大量触发，产出 0–3 帧坏训练目标，
+    # 教会模型吞轮。ChatGPT 外部审计发现，本地证实。
     n = len(segments)
     starts = [seg_start.get(i) for i in range(n)]
     ends = [seg_end.get(i) for i in range(n)]
-    for i in range(n):
-        if starts[i] is None:
-            prev_end = next((ends[j] for j in range(i - 1, -1, -1) if ends[j] is not None), 0.0)
-            next_start = next((starts[j] for j in range(i + 1, n) if starts[j] is not None), duration_s)
-            gap_segs = [j for j in range(n) if starts[j] is None and prev_end is not None]
-            span_chars = sum(len(segments[j]["text"]) for j in gap_segs) or 1
-            offset = prev_end
-            for j in gap_segs:
-                width = (next_start - prev_end) * len(segments[j]["text"]) / span_chars
-                starts[j] = offset
-                ends[j] = offset + width
-                offset += width
-            break
-
+    unaligned = [i for i in range(n) if starts[i] is None]
     coverage = len(spans) / max(1, total_spoken)
     mean_score = sum(scores) / max(1, len(scores))
+    if unaligned:
+        return {
+            "coverage": round(coverage, 4),
+            "duration_s": duration_s,
+            "spans": None,
+            "mean_score": round(mean_score, 4),
+            "error": f"unaligned_segments {len(unaligned)}/{n} idx={unaligned[:8]}",
+        }
     return {
         "coverage": round(coverage, 4),
         "duration_s": duration_s,
@@ -210,6 +209,8 @@ def main() -> None:
         }
         if qa["spans"] is None or qa["coverage"] < args.min_coverage:
             audit["excluded"] = True
+            if qa.get("error"):
+                audit["error"] = qa["error"]
             excluded += 1
             append_jsonl(audit_jsonl, audit)
             continue
@@ -231,6 +232,15 @@ def main() -> None:
         for k in range(1, len(frame_cuts)):  # every turn keeps at least one frame
             if frame_cuts[k] <= frame_cuts[k - 1]:
                 frame_cuts[k] = min(total_frames, frame_cuts[k - 1] + 1)
+        # note (luojiaxuan): 上面的前向修复在触到 total_frames 后无法再推进，
+        # 尾部 turn 会拿到 0 帧目标（= 教模型立即 EOS）。2026-08-20 起这种
+        # 行直接 reject 而不是产出坏目标（用户裁定 no-fallback；台账 4.-21）。
+        if any(frame_cuts[k] <= frame_cuts[k - 1] for k in range(1, len(frame_cuts))):
+            audit["excluded"] = True
+            audit["error"] = "frame_budget_exhausted: zero-frame turn after repair"
+            excluded += 1
+            append_jsonl(audit_jsonl, audit)
+            continue
 
         conversations = []
         for k, seg in enumerate(segments):
