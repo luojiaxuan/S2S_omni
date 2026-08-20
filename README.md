@@ -116,7 +116,8 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 | Gemini 3.5-live | 36.86 / 0.614 / 5.8% | 27.23 / 0.578 / 10.1% | 24.32 / 0.483 / 28.9% |
 | GPT-realtime | 32.16 / **0.690** / 3.0% | 24.18 / 0.566 / 16.3% | 18.54 / 0.487 / 29.7% |
 | KIT | 31.13 / 0.608 / 15.0% | 30.35 / 0.567 / 19.2% | 25.60 / 0.487 / 32.5% |
-| **ours v6 恒定滑窗（操作点）** | 30.32 / 0.586 / 8.1% | **30.28 / 0.619 / 6.7%** | **31.21 / 0.609 / 5.2%** |
+| **ours v7 恒定滑窗（新操作点）** | **31.03 / 0.652 / 2.0%** | — | — |
+| ours v6 恒定滑窗 | 30.32 / 0.586 / 8.1% | **30.28 / 0.619 / 6.7%** | **31.21 / 0.609 / 5.2%** |
 | ours v4lrfix reset | 29.78 / 0.617 / 6.5% | — | — |
 | ours v6 soft3 | 26.47 / 0.528 / 19.2% | 27.19 / 0.553 / 16.5% | 29.04 / 0.623 / 7.8% |
 
@@ -173,7 +174,8 @@ SEGALE 对齐、BLEU/XCOMET summaries + InfiniSST runtime chunks）。
 
 | checkpoint | repo | 状态 |
 | --- | --- | --- |
-| **v6 midstart（当前操作点 checkpoint）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v6-midstart` | uploaded（`82b58902`） |
+| **v7 traj（当前操作点 checkpoint）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj` | uploaded（`1947001d`） |
+| v6 midstart | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v6-midstart` | uploaded（`82b58902`） |
 | v3 longsess（历史操作点） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
 | v2 multi-turn | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn` | uploaded |
 | v2.1 repaug（消融） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-1-repaug` | uploaded（`67f58658`） |

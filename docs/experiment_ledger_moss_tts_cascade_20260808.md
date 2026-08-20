@@ -113,7 +113,7 @@ GPT、贴平 KIT，未及 Gemini。
 
 ## 4. 实验台账（时间倒序）
 
-### 4.-19 v7 数据扩充：lab 轨迹语料（2026-08-19，进行中）
+### 4.-19 v7 数据扩充：lab 轨迹语料——全面提升，漏译降四倍（2026-08-20 完成）
 
 - **数据**：用户提供 `train_en_utt_robust_asr-filtered_zh_metricx-qe3.0_align.tsv`
   （lab GigaSpeech/FLORAS 管线 stage-7 产物，已上传
@@ -129,6 +129,26 @@ GPT、贴平 KIT，未及 Gemini。
 - **执行**：Tilde 配额被 cc-joint 整占（22h+），按规则顺延 hyper01。
   发现两条**陈旧 map 记录**（容器已死未清），已删；6 卡 task 容器
   `20260819-233815`，6 分片合成中（冒烟 3/3，约 250 行/时/卡，预计 4–5h）。
+- **结果（新 canonical 口径，恒定滑窗 1×，单次）**：
+
+  | | BLEU | XCOMET-ref | 漏译率 |
+  | --- | ---: | ---: | ---: |
+  | v6 | 30.32 | 0.5860 | 8.1% |
+  | **v7** | **31.03** | **0.6517** | **2.0%** |
+
+  配对复核（468 同源句）：**+0.0505 ± 0.0130（t=+3.87，182 胜 126）**，
+  真实逐句提升；漏译大幅下降也排除了选择效应方向。
+- **判断**：轨迹数据的短 turn 分布（中位 4–5 字 × 157,887 turn）正中
+  滑窗吞短句的病根——漏译 8.1% → **2.0%，成为全表最低**（含全部基线）。
+  XCOMET-ref 0.6517 超过 reset 上界（0.6175）、KIT（0.608）、Gemini
+  （0.614），仅次 GPT-realtime（0.690）。BLEU 追平 KIT（31.03 vs 31.13）。
+- **训练细节**：49,047 行 = v6 全量 36,529 + traj 本体 6,385 + traj
+  midstart 6,133；gbs 15 与 v6 同几何（5 进程 × accum 3，LR 补丁下进程数
+  不再影响调度）；3,270 步，final loss 3.4647（v6: 3.4726）。合成/对齐/
+  训练全程零拒绝零排除。**新数据未做自历史轮**（效率三问的裁剪，可逆）；
+  v7b 候选：traj 自历史轮 + 语速档评测 + soft3 组合。
+- **产物**：ckpt `gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj`
+  （rev `1947001d`）；train_v7 组件均在 HF multiturn repo。
 - **过程 bug（重要，症状极具误导性）**：合成器初版漏移植 sanitize——
   BOS/EOS（1025/1026 ≥ codebook 1024）流进 codec embedding 查表，
   device-side assert 毒掉 CUDA context，后续一切报错变成 cuDNN/cuBLAS
