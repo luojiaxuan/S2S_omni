@@ -65,11 +65,16 @@ def parse_args() -> argparse.Namespace:
     # 再开口；首轮 runaway 下限单独收紧。置 0 关闭合并。
     parser.add_argument("--first-turn-min-tokens", type=int, default=12)
     parser.add_argument("--first-turn-floor-s", type=float, default=3.0)
-    # note (luojiaxuan): 2026-08-21 接缝短交叉淡化（用户裁定）——逐 turn 硬拼
-    # 是"断断续续"听感的工程性成分，整行 wav 在接缝处做 overlap-add。
-    # 只影响整行试听 wav；per-turn wav 与 frames 记账不变，canonical 打分
-    # 自行拼接、不受影响。置 0 关闭。
-    parser.add_argument("--seam-crossfade-ms", type=float, default=12.0)
+    # note (luojiaxuan): 2026-08-21 句级缓冲合成——"断断续续"的治本方向：
+    # 增量攒到句末标点（或 --sentence-merge-max-chars 上限）再合成，接缝
+    # 从每 turn 一条降到每句一条且落在自然停顿处。改变延迟语义，属科学
+    # 参数，显式 opt-in；canonical 评测维持 turn 级。
+    parser.add_argument("--sentence-merge", action="store_true")
+    parser.add_argument("--sentence-merge-max-chars", type=int, default=60)
+    # note (luojiaxuan): 接缝交叉淡化实验后被用户否决（2026-08-21："治标
+    # 不治本，听起来也很奇怪"）——默认关闭，仅留作诊断选项。治本方向是
+    # 句级缓冲合成（--sentence-merge）。
+    parser.add_argument("--seam-crossfade-ms", type=float, default=0.0)
     parser.add_argument("--soft-reset-keep", type=int, default=3,
                         help="sliding mode: when the window reaches its cap, shrink it to the most "
                              "recent N turns instead of sliding one-out-one-in. Context length then "
@@ -297,6 +302,21 @@ def main() -> None:
     for processed, row in enumerate(rows, 1):
         row_id = str(row["row_id"])
         segments = row["segments"]
+        if args.sentence_merge and segments:
+            grouped, cur_text, cur_id, cur_n = [], "", None, 0
+            for s in segments:
+                if cur_id is None:
+                    cur_id = s.get("id")
+                cur_text += s["text"]
+                cur_n += 1
+                stripped = cur_text.rstrip()
+                if (stripped and stripped[-1] in SENTENCE_FINAL) or \
+                        len(cur_text) >= args.sentence_merge_max_chars:
+                    grouped.append({"id": cur_id, "text": cur_text, "merged_turns": cur_n})
+                    cur_text, cur_id, cur_n = "", None, 0
+            if cur_text:
+                grouped.append({"id": cur_id, "text": cur_text, "merged_turns": cur_n})
+            segments = grouped
         if args.first_turn_min_tokens > 0 and segments:
             # note (luojiaxuan): 首轮缓冲——合并到 ≥N token 或句末为止
             merged_text, j = "", 0

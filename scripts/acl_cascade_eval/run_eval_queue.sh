@@ -28,6 +28,8 @@ case "$mode" in
   # note (luojiaxuan): slidingsoftN = 滑窗 w=11 + 周期性软 reset（长满缩到最近
   # N 个 turn）。台账 7.12 候选 d：检验 reset 的优势是否来自"周期性短且连贯
   # 的上下文"本身。必须排在 sliding* 之前。
+  # note (luojiaxuan): 句级缓冲档——必须排在 slidingsoft* 通配之前
+  slidingsoft3sent) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep 3 --sentence-merge" ;;
   slidingsoft*) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep ${mode#slidingsoft}" ;;
   sliding*) rows_suffix="swrow"; extra="--sliding-window ${mode#sliding} --soft-reset-keep 0" ;;
   # anchorNN = reset + 韵律锚点，NN 为十分之一秒（anchor10 = 1.0s）
