@@ -207,11 +207,11 @@ InfiniSST 流式 client `run_infinisst_sglang_stream.py`、打分
 `projects/infinisst_moss_tts_cascade/`（全部 run dirs：instances、
 SEGALE 对齐、BLEU/XCOMET summaries + InfiniSST runtime chunks）。
 
-模型（HF，private）：
+模型（HF；v7-traj 已转 public，其余 private）：
 
 | checkpoint | repo | 状态 |
 | --- | --- | --- |
-| **v7 traj（当前操作点 checkpoint）** | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj` | uploaded（`1947001d`） |
+| **v7 traj（当前操作点 checkpoint，public + model card）** | [gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj](https://huggingface.co/gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj) | uploaded（`1947001d`），2026-08-21 转 public |
 | v6 midstart | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v6-midstart` | uploaded（`82b58902`） |
 | v3 longsess（历史操作点） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
 | v2 multi-turn | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn` | uploaded |
