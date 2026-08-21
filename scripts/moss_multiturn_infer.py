@@ -59,6 +59,12 @@ def parse_args() -> argparse.Namespace:
                              "silence->speech onset; a sliding window never does. Turn 0 is the one "
                              "turn in a talk that does start from silence, so pinning it restores "
                              "the anchor at inference time without retraining.")
+    # note (luojiaxuan): 2026-08-20 turn-0 启动修复（ChatGPT 审计 #2）：微型
+    # 首轮（如"大家好，这是"）在无会话先验 + 15s 预算下会触发话语先验幻觉
+    # （编播客开场白并复读）。首轮不足 min-tokens 且未到句末时并入后续增量
+    # 再开口；首轮 runaway 下限单独收紧。置 0 关闭合并。
+    parser.add_argument("--first-turn-min-tokens", type=int, default=12)
+    parser.add_argument("--first-turn-floor-s", type=float, default=3.0)
     parser.add_argument("--soft-reset-keep", type=int, default=3,
                         help="sliding mode: when the window reaches its cap, shrink it to the most "
                              "recent N turns instead of sliding one-out-one-in. Context length then "
@@ -150,11 +156,14 @@ def main() -> None:
     pad = processor.audio_channel_pad
     delay = processor.delay_tokens_len
 
-    def history_turn_rows(text: str, codes: np.ndarray, leading_break: bool) -> np.ndarray:
+    def history_turn_rows(text: str, codes: np.ndarray, prefill: str) -> np.ndarray:
         # note (luojiaxuan): same completed-turn layout as the finetuning packer
         # (text channel padded with <|text_pad|>, audio delayed by delay_tokens_len,
         # BOS before / EOS after the codes); zero-frame turns keep BOS+EOS adjacent.
-        prefill = "<|im_end|>\n<|im_start|>assistant\n" if leading_break else ""
+        # 2026-08-20 修复（ChatGPT 审计 #2 发现）：重建窗口的最老一轮此前以
+        # leading_break=False 直贴 ensemble，缺 "<|im_start|>assistant\n" 头，
+        # 与训练排布不符。现在由调用方显式传 prefill：首个历史轮传
+        # "<|im_start|>assistant\n"，其余传 "<|im_end|>\n<|im_start|>assistant\n"。
         text_tokens = tokenizer(text)["input_ids"]
         start = len(tokenizer(prefill)["input_ids"]) if prefill else 0
         audio_len = int(codes.shape[0])
@@ -208,7 +217,11 @@ def main() -> None:
     def window_prompt_ids(history: list[tuple[str, np.ndarray]]) -> np.ndarray:
         parts = [ensemble]
         for idx, (h_text, h_codes) in enumerate(history):
-            parts.append(history_turn_rows(h_text, h_codes, leading_break=idx > 0))
+            parts.append(history_turn_rows(
+                h_text, h_codes,
+                prefill="<|im_end|>\n<|im_start|>assistant\n" if idx > 0
+                else "<|im_start|>assistant\n",
+            ))
         parts.append(
             header_grid("<|im_end|>\n<|im_start|>assistant\n" if history else "<|im_start|>assistant\n")
         )
@@ -274,14 +287,38 @@ def main() -> None:
     # 会重开污染通道，实测比硬切差 6-8 BLEU，见实验台账 4.1）。
     carry: tuple[str, np.ndarray] | None = None
 
+    SENTENCE_FINAL = "。！？!?…"
+
     for processed, row in enumerate(rows, 1):
         row_id = str(row["row_id"])
         segments = row["segments"]
+        if args.first_turn_min_tokens > 0 and segments:
+            # note (luojiaxuan): 首轮缓冲——合并到 ≥N token 或句末为止
+            merged_text, j = "", 0
+            while j < len(segments):
+                merged_text += segments[j]["text"]
+                j += 1
+                enough = len(tokenizer(merged_text)["input_ids"]) >= args.first_turn_min_tokens
+                stripped = merged_text.rstrip()
+                at_boundary = bool(stripped) and stripped[-1] in SENTENCE_FINAL
+                if enough or at_boundary:
+                    break
+            if j > 1:
+                segments = (
+                    [{"id": segments[0].get("id"), "text": merged_text,
+                      "merged_turns": j}] + segments[j:]
+                )
         turn_results = []
         last_turn: tuple[str, np.ndarray] | None = None
         row_pcm: list[np.ndarray] = []
         failure = None
         window: list[tuple[str, np.ndarray]] = []
+        # note (luojiaxuan): 2026-08-20 真 KV 复用（ChatGPT 审计 #2：此前
+        # soft 模式每轮 reset_cache=True 全重建，"缩窗省 prefill"从未落地）。
+        # kv_valid=True 表示 KV 里就是当前 window 的连续轨迹，可只追加
+        # next_turn_ids 继续；缩窗/runaway/regen 任何一种破坏连续性都置 False
+        # 并整窗重建。上游 prefill 原生支持 past_key_values 拼接。
+        kv_valid = False
         # note (luojiaxuan): 第一个完成的 turn 会被记成锚点。它跨 loop-reset
         # 存活（reset 只清 window），因为它代表的是"从静音起音"这个形态，
         # 不是最近上下文。
@@ -290,21 +327,32 @@ def main() -> None:
         with torch.inference_mode():
             for k, seg in enumerate(segments):
                 text = seg["text"]
+                floor_s = args.first_turn_floor_s if k == 0 else args.min_runaway_floor_s
                 budget_frames = int(
-                    max(args.min_runaway_floor_s, spoken_chars(text) * args.max_seconds_per_char) * 12.5
+                    max(floor_s, spoken_chars(text) * args.max_seconds_per_char) * 12.5
                 )
                 if args.sliding_window > 0:
-                    session.reset_turn(
-                        input_ids=window_prompt_ids(window),
-                        include_system_prompt=False,
-                        reset_cache=True,
-                    )
+                    if args.soft_reset_keep > 0 and kv_valid:
+                        # 增长期纯追加：只送新轮 header，KV/mask 原地延续
+                        session.reset_turn(
+                            input_ids=next_turn_ids,
+                            include_system_prompt=False,
+                            reset_cache=False,
+                        )
+                    else:
+                        session.reset_turn(
+                            input_ids=window_prompt_ids(window),
+                            include_system_prompt=False,
+                            reset_cache=True,
+                        )
+                        kv_valid = args.soft_reset_keep > 0
                 else:
                     if k == 0 and carry is not None:
                         anchor_ids = np.concatenate(
                             [
                                 ensemble,
-                                history_turn_rows(carry[0], carry[1], leading_break=False),
+                                history_turn_rows(carry[0], carry[1],
+                                                  prefill="<|im_start|>assistant\n"),
                                 header_grid("<|im_end|>\n<|im_start|>assistant\n"),
                             ],
                             axis=0,
@@ -363,6 +411,7 @@ def main() -> None:
                         # talk must not die on one bad turn.
                         runaway_skipped = True
                         window = []
+                        kv_valid = False
                     else:
                         failure = f"turn{k} runaway: frames>{budget_frames}"
                         break
@@ -387,6 +436,7 @@ def main() -> None:
                         include_system_prompt=False,
                         reset_cache=True,
                     )
+                    kv_valid = args.soft_reset_keep > 0
                     decoder = AudioStreamDecoder(
                         codec, chunk_frames=3, overlap_frames=0,
                         decode_kwargs={"chunk_duration": -1}, device=device,
@@ -447,6 +497,7 @@ def main() -> None:
                             {"segment_id": seg.get("id"), "loop_detected": True}
                         ) if False else None
                         window = []
+                        kv_valid = False
                         if args.loop_detect == "regen" and not getattr(seg, "_retried", False):
                             # regenerate this turn once with a clean window
                             session.temperature = min(1.0, args.temperature + 0.2)
@@ -455,6 +506,7 @@ def main() -> None:
                                 include_system_prompt=False,
                                 reset_cache=True,
                             )
+                            kv_valid = args.soft_reset_keep > 0
                             decoder2 = AudioStreamDecoder(
                                 codec, chunk_frames=3, overlap_frames=0,
                                 decode_kwargs={"chunk_duration": -1}, device=device,
@@ -502,6 +554,7 @@ def main() -> None:
                         # 只有缩窗那一刻前缀变化、需要重建。
                         if len(window) > args.sliding_window - 1:
                             window = window[-args.soft_reset_keep :]
+                            kv_valid = False  # 缩窗即前缀变化，唯一重建点
                     else:
                         # note (luojiaxuan): --soft-reset-keep 0 的 opt-out：恒定长度
                         # 窗口，每轮挤掉最老的一个 turn。前缀每轮都变，KV cache 全废。
