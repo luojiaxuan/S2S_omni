@@ -65,6 +65,11 @@ def parse_args() -> argparse.Namespace:
     # 再开口；首轮 runaway 下限单独收紧。置 0 关闭合并。
     parser.add_argument("--first-turn-min-tokens", type=int, default=12)
     parser.add_argument("--first-turn-floor-s", type=float, default=3.0)
+    # note (luojiaxuan): 2026-08-21 接缝短交叉淡化（用户裁定）——逐 turn 硬拼
+    # 是"断断续续"听感的工程性成分，整行 wav 在接缝处做 overlap-add。
+    # 只影响整行试听 wav；per-turn wav 与 frames 记账不变，canonical 打分
+    # 自行拼接、不受影响。置 0 关闭。
+    parser.add_argument("--seam-crossfade-ms", type=float, default=12.0)
     parser.add_argument("--soft-reset-keep", type=int, default=3,
                         help="sliding mode: when the window reaches its cap, shrink it to the most "
                              "recent N turns instead of sliding one-out-one-in. Context length then "
@@ -595,7 +600,24 @@ def main() -> None:
             "failure": failure,
         }
         if failure is None:
-            audio = np.clip(np.concatenate(row_pcm) if row_pcm else np.zeros(1, dtype=np.float32), -1.0, 1.0)
+            ov = int(args.seam_crossfade_ms / 1000.0 * codec_sr)
+            if ov > 0 and len(row_pcm) > 1:
+                merged = row_pcm[0].astype(np.float32, copy=True)
+                for piece in row_pcm[1:]:
+                    p = piece.astype(np.float32)
+                    n = min(ov, len(merged), len(p))
+                    if n > 0:
+                        ramp = np.linspace(0.0, 1.0, n, dtype=np.float32)
+                        merged[-n:] = merged[-n:] * (1.0 - ramp) + p[:n] * ramp
+                        merged = np.concatenate([merged, p[n:]])
+                    else:
+                        merged = np.concatenate([merged, p])
+                audio = np.clip(merged, -1.0, 1.0)
+            else:
+                audio = np.clip(
+                    np.concatenate(row_pcm) if row_pcm else np.zeros(1, dtype=np.float32),
+                    -1.0, 1.0,
+                )
             wav_path = out_dir / f"{row_id}.wav"
             with wave.open(str(wav_path), "wb") as wf:
                 wf.setnchannels(1)
