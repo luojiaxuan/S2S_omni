@@ -53,7 +53,49 @@ chunk 数量与每 chunk 的音频 patch 数一字不动。
    **但随即撞到 `flash_attn_2_cuda` 与 torch 2.7 的 ABI 不匹配**
    （`undefined symbol: _ZN3c105Error...`）。
 
-### 下一步（三选一，按代价排序）
+### 环境坑已全部修完（2026-08-28 晚）
+
+4. ~~transformers 4.57 vs 代码需要的 4.46~~ → 旁路 `/mnt/gemini/data2/jiaxuanluo/tf446`
+5. ~~flash_attn ABI 不匹配~~ → torch 2.7 是 **cxx11abi=TRUE**，env 里装的是
+   abiFALSE 编译版。从官方 release 取 `cu12torch2.7cxx11abiTRUE-cp310` wheel，
+   **解包**到 `/mnt/gemini/data2/jiaxuanluo/fa_abitrue`（`pip install --target`
+   会因 env 已有同版本而跳过）
+6. ~~torch.load 默认 weights_only=True~~ → `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1`
+7. ~~hydra 1.0.4 + omegaconf 2.1.2 不匹配~~ → 旁路装
+   `omegaconf==2.0.6 + hydra-core==1.0.7` 到 `/mnt/gemini/data2/jiaxuanluo/hydra_fs`
+8. ~~仓库 bug：`train/main.py` 用了 `DeepSpeedStrategy` 但只 import 了
+   `DDPStrategy`~~ → 补导入
+9. 新增 `--resume_from_last`（显式开关，缺 last.ckpt 直接报错，不隐式回退），
+   `trainer.fit(..., ckpt_path=...)`
+
+完整 PYTHONPATH（顺序重要，仓库必须在最前，否则 fairseq 根目录的
+`train.py` 会抢占 `train` 包名）：
+```
+$PWD:/mnt/gemini/data2/jiaxuanluo/hydra_fs:/mnt/gemini/data2/jiaxuanluo/fa_abitrue:/mnt/gemini/data2/jiaxuanluo/tf446:/mnt/aries/data6/jiaxuanluo/fairseq-0.12.2
+```
+
+### 调度：aries/taurus 是 Slurm 集群（2026-08-28 用户裁定）
+
+**教训**：我先前直接 ssh 上 taurus 用 nohup 起训练占了 8 张 A6000——
+而 `sinfo` 显示 taurus 当时是 `alloc`，整机已分配给别人的作业 48278，
+等于抢了他的算力。已停并写入全局规则：这两台机占 GPU 必须走 sbatch/srun。
+
+**当前状态**：作业 `48282`（分区 aries,taurus,gemini）PENDING，因为三个
+节点都没有可调度 GPU：aries 被管理员 `drng`（`Kill task failed
+[root@2026-08-28T06:47:41]`）、taurus `alloc`、gemini 8 卡全占。
+aries 实际有 2 张空闲卡且本作业只要 2 张，**唯一拦路的是 DRAIN 标记**：
+`sudo scontrol update nodename=aries state=resume`（需管理员）。
+另一条路是结束我方另一 session 的占位作业 48237（`hold.sbatch`，占 6 卡，
+当前 0% 利用率）——属别的 session 资源，待用户裁决。
+
+### 数据量修正（用户指出）
+
+原 80k 行子集 = **440.9 小时**音频（全量 243,065 行 = 1299.9 小时，
+平均 19.3s/行）——对"只教 write 时机策略的 LoRA 续训"是 4.4 倍浪费。
+已改为 `train_phrase100h.tsv`：18,600 行 = **103.3 小时** ≈ 9,300 batch。
+错在我按"填满时间窗口"倒推子集大小，而非按任务需要正推。
+
+### 历史备选（三选一，按代价排序）
 
 1. 装一个匹配 torch 2.7/cu126 的 flash-attn wheel 到 `tf446` 目录，
    PYTHONPATH 前置后重跑 `train_phrase.sh`（预计 10–20 分钟）；
