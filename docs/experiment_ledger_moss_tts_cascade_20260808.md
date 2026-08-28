@@ -398,6 +398,36 @@ GPT、贴平 KIT，未及 Gemini。
 - **修正**：4.-21f 中"整句连续韵律让 Qwen 几乎不断句"的机制表述作废，
   以本条测量为准。
 
+### 4.-22 phrase-boundary 策略：turn 结构改造（2026-08-28）
+
+- **来源**：用户与同事的诊断——音色跳变的根因是 InfiniSST 输出增量太碎
+  且切在短语中间，应在 InfiniSST SFT 阶段把 write 限制在 phrase boundary
+  并合并过短增量，再用其文本重训 TTS。
+- **碎片化实测**（真实训练 manifest，jieba 判词边界）：现役档（mult=2）
+  增量中位 7 字、31% ≤5 字、**70% 结尾不在任何标点处**；切点从不切断词
+  （词对齐来的），但完全不看目标侧句法——诊断精确命中。
+- **数据核验（用户特别要求）**：历史"末尾 chunk 音文错位"的根因是
+  `model/model.py:224` 的 `validate()`（断言 len(trajectory) == 音频
+  chunk 数）**被注释掉**。核验 2 万行：该不变量 **0 违例**；各 multiplier
+  下文本/音频 chunk 数 **0 不一致**；phrase 重分配文本 **0 例不守恒**、
+  chunk 数 **0 例变化**。改造设计上只在同一 chunk 网格重分配文本，
+  结构上杜绝该 bug。
+- **两条实现路径**：
+  1. **训练侧**（`train/dataset.py` 的 collator 补丁，已完成）：未到边界
+     的 chunk 目标置空串让模型学会 hold；推理侧零改动（`agents/infinisst.py`
+     已有 `if translation != '' or source_finished`）。**训练未能在窗口内
+     启动**——环境有 4 个版本坑，前 3 个已修，卡在 flash_attn 与 torch 2.7
+     的 ABI 不匹配。详见 `docs/handoff_infinisst_phrase_20260828.md`。
+  2. **输出侧等价档**（`--phrase-merge`，已完成并评测）：把增量攒到短语
+     边界（含句内标点）、≥6 字成一个 TTS turn、最多 hold 8 个增量。与
+     重训模型的 write 行为等价（同一批增量、同样的 hold 规则、同样的
+     延迟口径），区别只在译文不会随策略重新措辞。
+- **turn 结构实测**（ACL6060 真实流）：talk110 359→119 turns（中位 8→19
+  字）、talk117 369→119、talk268 373→126；**97% 的 turn 结尾落在标点上**
+  （现役 36%），文本逐字守恒。介于句级档（71–95 turns）与现役之间。
+- **状态**：评测（hyper00 GPU0 H200，容器 `sglang-omni-jaxan-phr-1`）
+  生成中，打分链已挂钩自动触发。
+
 ### 4.-20 v7 语速档 + v7b 自历史轮：一平一负（2026-08-20）
 
 - **v7 语速档（新口径，单次；对照 v6 同速档）**：
