@@ -30,6 +30,7 @@ case "$mode" in
   # 的上下文"本身。必须排在 sliding* 之前。
   # note (luojiaxuan): 句级缓冲档——必须排在 slidingsoft* 通配之前
   slidingsoft3sent) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep 3 --sentence-merge" ;;
+  slidingsoft3phr) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep 3 --phrase-merge" ;;
   slidingsoft*) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep ${mode#slidingsoft}" ;;
   sliding*) rows_suffix="swrow"; extra="--sliding-window ${mode#sliding} --soft-reset-keep 0" ;;
   # anchorNN = reset + 韵律锚点，NN 为十分之一秒（anchor10 = 1.0s）

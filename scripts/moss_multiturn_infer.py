@@ -71,6 +71,12 @@ def parse_args() -> argparse.Namespace:
     # 参数，显式 opt-in；canonical 评测维持 turn 级。
     parser.add_argument("--sentence-merge", action="store_true")
     parser.add_argument("--sentence-merge-max-chars", type=int, default=60)
+    # note (luojiaxuan): phrase 档——短语边界（含逗号顿号等句内标点）合并，
+    # 比句级温和：≥min-chars 且落在标点上才成一个 turn，最多 hold N 个增量。
+    # 与 InfiniSST 重训后的 write 策略等价（同一批增量、同样的 hold 规则）。
+    parser.add_argument("--phrase-merge", action="store_true")
+    parser.add_argument("--phrase-min-chars", type=int, default=6)
+    parser.add_argument("--phrase-max-hold", type=int, default=8)
     # note (luojiaxuan): 接缝交叉淡化实验后被用户否决（2026-08-21："治标
     # 不治本，听起来也很奇怪"）——默认关闭，仅留作诊断选项。治本方向是
     # 句级缓冲合成（--sentence-merge）。
@@ -298,10 +304,28 @@ def main() -> None:
     carry: tuple[str, np.ndarray] | None = None
 
     SENTENCE_FINAL = "。！？!?…"
+    PHRASE_PUNCT = "。！？!?…，,、；;：:"
 
     for processed, row in enumerate(rows, 1):
         row_id = str(row["row_id"])
         segments = row["segments"]
+        if args.phrase_merge and segments:
+            grouped, cur, cur_id, held, n = [], "", None, 0, 0
+            for seg in segments:
+                if cur_id is None:
+                    cur_id = seg.get("id")
+                cur += seg["text"]
+                n += 1
+                held += 1
+                stripped = cur.rstrip()
+                n_chars = spoken_chars(cur)
+                at_bound = bool(stripped) and stripped[-1] in PHRASE_PUNCT and n_chars >= args.phrase_min_chars
+                if at_bound or held >= args.phrase_max_hold:
+                    grouped.append({"id": cur_id, "text": cur, "merged_turns": n})
+                    cur, cur_id, held, n = "", None, 0, 0
+            if cur:
+                grouped.append({"id": cur_id, "text": cur, "merged_turns": n})
+            segments = grouped
         if args.sentence_merge and segments:
             grouped, cur_text, cur_id, cur_n = [], "", None, 0
             for s in segments:
