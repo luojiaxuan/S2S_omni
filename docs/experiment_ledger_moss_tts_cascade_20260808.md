@@ -446,8 +446,20 @@ GPT、贴平 KIT，未及 Gemini。
   （3316s vs 现役 3215s）。canonical 口径下 phrase 30.61 居中，其漏译
   7.9% 与 BC 的 0.2% 的巨大落差再次确认：canonical 的漏译对连贯韵律
   是系统性惩罚，跨 turn 粒度不可比。
-- **未完成**：phrase 档的 XCOMET（hyper00 的 comet 2.2.7 不认
-  `Unbabel/XCOMET-XL`，hyper01 的 venv 可以，留待补算）；1.5× 档生成中。
+- **1.5× 档（补齐，5 talks）**：canonical BLEU 30.57 / 漏译 6.0%；
+  **BC BLEU 39.88 / 漏译 0/468**；420 turns（84/talk）、吞轮 2、超长 0、
+  时长 3274s。
+
+  **语速鲁棒性是本轮最重要的发现**——BC 口径下 phrase 两档几乎相同
+  （39.85 vs 39.88），而其他配置都随速度漂移（滑窗 33.30→35.45、
+  soft3 34.11→36.50、句级 41.68→41.03）。更关键：**phrase@1.5× 的
+  BC 漏译为 0/468**，而 v7 在 1.5× 的漏译回退正是"单一 version"裁定
+  下的 blocker（台账 4.-21/4.-21e）。turn 结构改造把这个 blocker 直接
+  消掉了：1× 与 1.5× 内容保真度等同，不再需要按速档分 checkpoint。
+- **未完成**：phrase 档的 XCOMET——hyper00 上 XCOMET-XL 权重根本没下载
+  （缓存仅 56K：README+LICENSE），且该容器 comet 2.2.7 的注册表不认
+  `Unbabel/XCOMET-XL`。补算走 hyper01 现成 venv 或在 hyper00 下 14GB
+  权重。BLEU 与固定口径漏译不受影响。
 - **执行插曲**：hyper00 缺参考数据（先补 inputs 又漏源音频，两次补拉）、
   缺 vecalign（.pth 指向 SEGALE 与 SEGALE/vecalign 后可导入）——
   跨主机复用打分链的三个隐性依赖已记录。
