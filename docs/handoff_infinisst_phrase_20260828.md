@@ -133,3 +133,31 @@ TTS turn，最多 hold 8 个增量。这与重训后模型的 write 行为等价
 - 评测：hyper00 容器 `sglang-omni-jaxan-phr-1`（GPU0 H200），
   产物 `/data04/jaxan/S2S_omni_runs/moss_tts_infinisst_v2_20260804/`
 - taurus 8× A6000 当时全空；hyper01 被他人占满
+
+## 5. 训练已完成（2026-08-28 21:00 UTC）
+
+按用户裁定改用 **aries + Docker 直跑**（Slurm 三个节点当时都无可调度 GPU：
+aries `drng`、taurus `alloc`、gemini 满载；作业 48282 已取消）。
+
+- 容器 `infinisst-phrase-jaxan-1`（aries，GPU 0–3，避开被占位作业占显存的 4/5），
+  镜像 `nvidia/cuda:12.6.0-devel-ubuntu22.04`（base 镜像缺 gcc 与 nvcc，
+  triton JIT 需要；把主机 CUDA 挂进去会破坏 nvidia-container-cli 的 compat 处理，
+  且主机是 11.8 与 torch cu126 不匹配）
+- 数据 `train_phrase100h.tsv`（18,600 行 = 103.3 h）
+- **一个 epoch 41 分钟跑完**，`Trainer.fit stopped: max_epochs=1 reached`，
+  exit 0。注意进度条总数 9296 只是 Lightning 对 dataloader 长度的估计，
+  真实 SpeechSampler（按音频时长分桶）产出 2324 个 batch，样本全部训过。
+- 产物：`/mnt/gemini/data2/jiaxuanluo/runs/infinisst_phrase_v1/last.ckpt`
+  （DeepSpeed 分片 17G）→ `zero_to_fp32.py` 转出 380 MB LoRA
+  → 稳定路径 **`/mnt/gemini/data2/jiaxuanluo/stage2_phrase_v1_lora.bin`**
+  （9,509 万参数，与现役 stage2 同量级）
+- 旧的 taurus 8 卡/80k 数据 checkpoint 已归档到
+  `runs/archive-20260828-taurus80k/`（未删）——它与 4 卡/100h 的 DeepSpeed
+  分片不兼容，续训会直接崩。
+
+### 下一步
+
+用新 LoRA（配现役 stage1）跑 ACL6060 推理 → 新 turn 流 → TTS（v7 + soft3）
+→ canonical + BC 双口径评测，与输出侧等价档（BC 39.85/39.88，+6.6 BLEU）
+对比，量出"真重训"额外拿到多少（模型可针对短语边界重新措辞，而不只是
+把现有增量攒起来）。
