@@ -464,6 +464,51 @@ GPT、贴平 KIT，未及 Gemini。
   缺 vecalign（.pth 指向 SEGALE 与 SEGALE/vecalign 后可导入）——
   跨主机复用打分链的三个隐性依赖已记录。
 
+### 4.-23 InfiniSST phrase-boundary 重训：阴性，根因是我引入的 multiplier 稀释（2026-08-29）
+
+- **做了什么**：在 aries 容器(4×A6000)上用 103h 子集对现役 stage1+stage2
+  做 LoRA 续训（一个 epoch 41 分钟），产出
+  `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_v1_lora.bin`；随后在 ACL6060
+  五个 talk 上做严格 A/B：同音频、同解码参数、同 stage1 底座，只换 LoRA。
+- **结果（turn 结构，5 talks）**：
+
+  | | turns | 中位字 | ≤5 字 | 结尾在标点 |
+  | --- | ---: | ---: | ---: | ---: |
+  | baseline 现役 | 1684 | 7 | 30.3% | 32.6% |
+  | phrase 新训 | 1742 | 8 | 25.3% | 37.9% |
+  | 目标(输出侧等价档) | ~560 | 19 | 1.3% | 96% |
+
+  文本侧：BLEU 54.12 → 50.35（-3.8），LAAL 5716 → 3948 ms（-1.8s）。
+  **方向对但幅度远不够**：标点收尾只从 32.6% 挪到 37.9%，turn 数反而略增。
+- **根因（我的设计缺陷，不是模型学不会）**：`--phrase_max_hold_s 7.68` 以
+  **秒**换算成 chunk 数 `max_hold_steps = max(1, round(7.68/(0.96*m)))`，
+  而训练时 multiplier 在 1..12 随机采样。**m≥6 时 max_hold_steps=1，
+  `held>=1` 立即成立 → 完全不 hold**。12 个取值里 7 个如此，
+  **58% 的训练 batch 在教"永远立即写出"**，与 hold 策略直接冲突；
+  只有 m=1/2 拿到有意义的 hold 预算（8/4 步）。
+- **推理侧机制无误**：`agents/infinisst.py:936` 的
+  `if translation != '' or source_finished` 确实会把空串转成 ReadAction，
+  空输出→hold 的通道是通的。
+- **修复方向（择一或叠加）**：① `max_hold` 直接以 **chunk 数**给定而非秒，
+  保证任何 multiplier 都有 hold 预算；② 干脆按部署档固定
+  `trajectory_max_multiplier=2` 训练，让全部监督都落在 1.92s 粒度；
+  ③ 加大训练量/学习率。**推荐 ②+①**：部署就是固定 multiplier，
+  随机化本身对本任务没有收益，只带来矛盾监督。
+- **不影响既有结论**：输出侧等价档（`--phrase-merge`）已经确定性地拿到
+  全部收益（BC BLEU 39.85/39.88，+6.6 vs 现役，漏译趋零，见 4.-22），
+  且无需训练。重训是为了额外拿"模型按短语边界重新措辞"那一块，
+  目前尚未兑现。
+- **执行侧教训**：中途多次因残留孤儿进程把新旧产物混在同一目录
+  （`phrase/` 里出现过 llama31 时代的空 instances.log）。已改为
+  "先杀→验进程数为零→删目录→单跑一个 tag"，并把完成判据从日志字符串
+  改为**产物本身**（日志里的旧行会误触发监控）。
+- **另一个真 bug（已修）**：`agents/infinisst.py` 的 `--model-type` 默认
+  `w2v2_llama31`，用它加载 Qwen2.5 权重会输出乱码（BLEU 0.137）。
+  正确参考是 `scripts/infer/infinisst_iwslt_zh_norm0_qwen.sh`
+  （带 `--model-type w2v2_qwen25`），不是 LLaMA 时代的 acl6060 脚本。
+  **这个错是被 instances→turn 转换器的"字符数守恒"断言挡下来的**——
+  若当初写成"对不上就跳过"的兜底，乱码会一路流进 TTS 与评测。
+
 ### 4.-20 v7 语速档 + v7b 自历史轮：一平一负（2026-08-20）
 
 - **v7 语速档（新口径，单次；对照 v6 同速档）**：
