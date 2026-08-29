@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import runpy
 import sys
 from pathlib import Path
@@ -26,6 +27,7 @@ def run_script(path: Path, arguments: list[str]) -> None:
 
 def main() -> None:
     args = parse_args()
+    os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
     config = json.loads(Path(args.config).read_text())
     run_script(Path(config["generate_script"]), config["generate_arguments"])
     run_script(Path(config["evaluate_script"]), config["evaluate_arguments"])
