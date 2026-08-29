@@ -6,6 +6,7 @@
 usage: score_generic.py <tag> <mode>
 """
 import glob
+import os
 import json
 import sys
 import wave
@@ -42,11 +43,15 @@ rows_suffix = "swrow" if mode.startswith(("sliding", "guard")) else "rows"
 # note (luojiaxuan): mode 形如 "sliding" / "reset" / "sliding_speed125"。
 # 后一种带速度档，输入文件与 wav 文件名前缀要跟着换成 speed125，
 # 之前这里写死 chunk192，速度档一律读错文件。
+# note (luojiaxuan): PREFIX 决定读哪一份 rows 与 summary。默认按 mode 后缀推
+# 速度档；换了文本来源（例如重训后的 InfiniSST）时 rows 是另一套文件，用
+# PREFIX 环境变量显式指定，与 run_eval_queue.sh 的同名变量保持一致。
 PREFIX = "chunk192"
 for _sp in ("speed125", "speed150"):
     if mode.endswith("_" + _sp):
         PREFIX = _sp
         break
+PREFIX = os.environ.get("PREFIX", PREFIX)
 run_name = f"acl6060_live_enzh_cascade_moss{tag}_{mode}_chunk192_speed1{_suffix}"
 run_dir = bench / "rundirs" / run_name
 run_dir.mkdir(parents=True, exist_ok=True)
