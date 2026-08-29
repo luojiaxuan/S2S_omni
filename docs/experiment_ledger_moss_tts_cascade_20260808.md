@@ -464,6 +464,52 @@ GPT、贴平 KIT，未及 Gemini。
   缺 vecalign（.pth 指向 SEGALE 与 SEGALE/vecalign 后可导入）——
   跨主机复用打分链的三个隐性依赖已记录。
 
+### 4.-26 **4.-23 的 v1 阴性结论作废**：LoRA 从未被加载（2026-08-29）
+
+- **怎么发现的**：v2 的 epoch-1 早读，结构与 BLEU 与 v1 **逐位相同**——
+  turns 1742、结尾标点 37.9%、BLEU 50.347、LAAL 3947.983，三位小数全一致。
+  两个不同权重不可能给出完全相同的分数，遂逐字段比对：`prediction` 与
+  `delays` **逐字节相同**，只有 `elapsed`（墙钟）不同。
+- **根因**：Lightning 把 SpeechLLM 挂在 `self.model` 属性下，
+  checkpoint 存出的键因此多一层 `model.` 前缀：
+
+  ```
+  现役 stage2:  base_model.model.model.layers.0.self_attn.q_proj.lora_A.lora_adapter.weight
+  训练产出:     model.base_model.model.model.layers.0.self_attn.q_proj.lora_A.lora_adapter.weight
+  ```
+
+  而 `agents/infinisst.py:594/667` 用
+  `self.model.load_state_dict(lora_state_dict, strict=False)` 加载，
+  **返回的 missing/unexpected 被直接丢弃**。684 个键无一匹配 →
+  适配器完全没加上 → 跑的是"stage1 + 无 stage2 适配器"的模型，
+  全程零报错。v1 与 v2ep1 两次跑的都是同一个模型，所以输出相同。
+- **训练侧无恙**：`model/model.py:499` 加载 `--lora_path` 时，目标是 peft
+  包装后的 `model`（键为 `base_model....`），与现役文件格式一致，能正常载入。
+  **所以 v2 确实是从现役 stage2 续训的，训练本身没有白跑**；坏的只有
+  "保存 → 推理加载"这一段。
+- **作废范围**：
+  - **4.-23 的全部数字与结论作废**。"phrase v1: turns 1742 / 结尾标点 37.9% /
+    BLEU 50.35 / LAAL 3948" 不是重训模型的表现，而是**无适配器模型**的表现。
+  - **"重训没学会 hold" 这个结论作废**——v1 到底学没学会，此前从未被测量。
+  - **4.-23 的根因分析（multiplier 退化 58%）本身仍然成立**，它是从代码直接
+    推出的事实（`max_hold_steps=1` 时 `held>=1` 立即成立），与这次的加载 bug
+    无关。但**"该退化导致了 v1 阴性"这个因果链断了**——因为 v1 的阴性是
+    测量假象。退化是否真的有害，要等 v1-fixed 的结果。
+  - baseline（现役 stage2，BLEU 54.121）**有效**，它的键名格式本来就对。
+- **副产物（一个有效但当初贴错标签的测量）**：拿掉 stage2 适配器后，
+  BLEU 54.12 → 50.35，LAAL 5716 → 3948 ms。这是"没有 stage2"的代价，
+  不是"重训"的代价。
+- **修复与防复发**：
+  1. `strip_lightning_prefix.py`：剥前缀，并**强制要求结果键集与参考文件
+     逐键相同**，不同即抛错；
+  2. `check_lora_keys.py` + `run_infer.sh` 里的前置校验：**推理前键名对不上
+     就拒绝运行**，不再依赖操作者记得检查。
+- **为什么之前没被发现**：v1 的输出与 baseline 确实不同（1684 vs 1742 turns），
+  看起来"换了权重就有变化"，于是我把它当成了重训生效的证据。实际上那个差异
+  只是"有无 stage2 适配器"的差异。**教训：换权重后"结果变了"不等于
+  "换上了我以为的那个权重"**；应当直接验证加载本身（键匹配数、
+  或与已知对照跑出可区分的结果），而不是从"有变化"倒推。
+
 ### 4.-25 BC 偏差归因：不是强补句号，是逐 turn ASR 在极短音频上崩（2026-08-29）
 
 - **假设（4.-24 提出的）**：BC 在 turn 边界强补句号，把碎 turn 切成残句，
