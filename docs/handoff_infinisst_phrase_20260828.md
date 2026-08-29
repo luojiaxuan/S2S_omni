@@ -161,3 +161,71 @@ aries `drng`、taurus `alloc`、gemini 满载；作业 48282 已取消）。
 → canonical + BC 双口径评测，与输出侧等价档（BC 39.85/39.88，+6.6 BLEU）
 对比，量出"真重训"额外拿到多少（模型可针对短语边界重新措辞，而不只是
 把现有增量攒起来）。
+
+## 6. v1 阴性与 v2 修正（2026-08-29）
+
+### v1 的 A/B 结果：方向对，幅度远不够
+
+同音频、同解码参数（`--model-type w2v2_qwen25 --source-segment-size 1920
+--latency-multiplier 2 --beam 4 --no-repeat-ngram-size 5
+--repetition-penalty 1.2`）、同 stage1 底座，只换 LoRA：
+
+| | turns | 中位字 | ≤2 字 | ≤5 字 | 结尾在标点 | BLEU | LAAL |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| baseline 现役 | 1684 | 7 | 7.2% | 30.3% | 32.6% | 54.12 | 5716 ms |
+| phrase v1 | 1742 | 8 | 6.0% | 25.3% | 37.9% | 50.35 | 3948 ms |
+| 目标（输出侧等价档） | ~560 | 19 | — | 1.3% | 96% | — | — |
+
+### 根因：hold 预算按秒换算，遇上随机 multiplier 大面积退化
+
+`max_hold_steps = max(1, round(phrase_max_hold_s / (speech_segment_size*0.08*m)))`。
+训练时 `m ~ U{1..12}`（`np.random.randint(1, max+1)`，dataset.py:1561）。
+m≥6 时该式化简为 1，而 `_phrase_redistribute` 里 `held += 1` 后立刻满足
+`held >= max_hold_steps`，**等价于完全不 hold**。12 个取值里 7 个如此，
+**58% 的训练 batch 在教「立即写出」**，与 phrase 策略正面冲突；
+只有 m=1/2 拿到有意义的预算（8/4 步）。
+
+推理侧机制无误：`agents/infinisst.py:936` 的
+`if translation != '' or states.source_finished` 会把空串转成 `ReadAction`，
+「空输出 = hold」的通道是通的，模型只是没学会。
+
+### v2 改了什么（只动两个变量）
+
+1. `--trajectory_max_multiplier 12 → 2`。部署档固定 multiplier=2，
+   多档随机化对本任务无收益，只制造矛盾监督。m∈{1,2} 的 hold 预算为 8/4，
+   全部有效。
+2. `--max_epochs 1 → 2`。v1 距目标太远，需要余量；单 epoch 41 分钟，代价可接受。
+
+叠加效应：每 epoch 的有效 hold 监督从 42% 的 batch 升到 100%（2.4×），
+两个 epoch 合计约 4.8× 于 v1。
+
+### 顺带修的可观测性（防止同类 bug 再次静默）
+
+`train/dataset.py` 的 collator `__init__` 现在会打印各 multiplier 的 hold
+预算表与退化计数：
+
+```
+phrase hold budget per multiplier: m=1:8 m=2:4
+phrase degenerate (max_hold_steps==1, 永不 hold): 0/2 multipliers
+```
+
+v1 若有这两行，启动 30 秒内就能看出 7/12 退化。**没有加兜底逻辑**——
+按用户裁定，配置不合理应当可见，而不是被默认值悄悄修正。
+
+### 决策日志（本可以问用户但按默认推进的）
+
+| 问题 | 我选的默认 | 理由 | 如何推翻 |
+| --- | --- | --- | --- |
+| v1 阴性后是重训还是直接上输出侧档 | 重训 v2 | 容器与环境已热，一轮 85 分钟；输出侧档已验证收益在手，重训只是加码，风险仅为时间 | 丢弃 v2 LoRA，回到输出侧 `--phrase-merge`，无需回滚任何代码 |
+| multiplier 收窄到 2 会不会伤多档鲁棒性 | 接受 | 部署固定 m=2；多档能力本就来自 stage1/stage2，LoRA 续训只改 write 时机 | 换回 `--trajectory_max_multiplier 12` 并改用 chunk 数计的 hold 预算重训 |
+| epoch 从 1 加到 2 引入第二个变量 | 接受 | v1 距目标 58 个百分点，隔离单变量的价值低于尽快拿到可用模型 | 若 v2 成功且想归因，用 v2 的 epoch-1 checkpoint（`--save_step 200` 有中间产物）单独评一次 |
+| 容器只剩 1 张卡 | 重建为 4 卡 | 推理阶段我把它重建成了单卡，与 v1 的 4 卡有效 batch 不可比；容器内无进程，数据全在 mount 上 | 无需回滚；重建代价约 1 分钟 |
+
+### 容器与产物
+
+- 容器 `infinisst-phrase-jaxan-1`（aries，`--gpus '"device=0,1,2,3"'`，
+  GPU 4/5 属他人占位作业，未触碰）
+- v2 日志/产物 `/mnt/gemini/data2/jiaxuanluo/runs/infinisst_phrase_v2/`
+- v1 LoRA 保留在 `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_v1_lora.bin`（对照用）
+- 容器外存活监控已挂（poll 5 分钟，告警覆盖容器消失 / 无进程 / Traceback /
+  OOM / Killed / 非零退出，不只匹配成功行）
