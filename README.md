@@ -213,6 +213,9 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
   Claude 交接及 phrase-boundary 脚本基线为 `main@ec60bfb`。
 - 当前交接：`docs/handoff_codex_20260830.md`；可审计实验台账：
   `docs/experiment_ledger_moss_tts_cascade_20260808.md`。
+- codec decoder 跨 turn context 的根因、复现与修复建议：
+  `docs/moss_realtime_codec_context_issue.md`；上游跟踪
+  [sgl-project/sglang-omni#1812](https://github.com/sgl-project/sglang-omni/issues/1812)。
 - phrase-boundary 流水线：`scripts/infinisst_phrase/`；TTS 多 turn 推理与队列：
   `scripts/moss_multiturn_infer.py`、`scripts/acl_cascade_eval/run_eval_queue.sh`。
 - 外部 `LeiLiLab/InfiniSST@54f3471` 的三文件改动已锁为可应用 patch：

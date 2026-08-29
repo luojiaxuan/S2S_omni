@@ -509,6 +509,8 @@ GPT、贴平 KIT，未及 Gemini。
 - **听感裁定**：用户确认 B 明显更稳定，speaker 跳变大幅减少。因此在 talk110
   上，codec decoder reset 是直接原因。修复应跨 turn 保留 decoder state；
   phrase boundary 仍可减少边界并改善韵律，但不再是修音色的必要条件。
+- **上游跟踪**：sglang-omni issue
+  <https://github.com/sgl-project/sglang-omni/issues/1812>。
 
 ### 4.-31 v3 证伪"内容密度"诊断；参数扫描显示规则档本可调（2026-08-29）
 

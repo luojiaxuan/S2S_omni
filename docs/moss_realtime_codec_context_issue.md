@@ -35,3 +35,7 @@ PR 1368 已经支持把历史 text 和 audio codes 放回 MOSS TTS generator pro
 实验报告：`projects/infinisst_moss_tts_cascade/artifacts/codec_decoder_context_ab_talk110/report.json`
 
 完整 A/B 暂存在 `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`，状态为 `PENDING_HF_UPLOAD`。
+
+## 上游跟踪
+
+sglang-omni issue：<https://github.com/sgl-project/sglang-omni/issues/1812>
