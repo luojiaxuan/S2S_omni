@@ -37,6 +37,11 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="optional directory for one compressed NPZ of generated audio codes per row",
     )
+    parser.add_argument(
+        "--output-stem",
+        default="",
+        help="artifact filename stem; allowed only when this invocation selects one row",
+    )
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--num-shards", type=int, default=1)
     parser.add_argument("--shard-id", type=int, default=0)
@@ -304,6 +309,8 @@ def main() -> None:
     rows = [r for r in rows if str(r["row_id"]) not in done]
     if args.max_rows > 0:
         rows = rows[: args.max_rows]
+    if args.output_stem and len(rows) != 1:
+        raise ValueError("--output-stem requires exactly one selected row")
 
     # note (luojiaxuan): 韵律锚点。硬 reset 每 11 轮把上下文清零，代价是边界
     # 处丢失音色/语调的衔接。这里只把上一段结尾的极短一截 codes 带过去当锚点
@@ -316,6 +323,7 @@ def main() -> None:
 
     for processed, row in enumerate(rows, 1):
         row_id = str(row["row_id"])
+        artifact_stem = args.output_stem or row_id
         segments = row["segments"]
         if args.phrase_merge and segments:
             grouped, cur, cur_id, held, n = [], "", None, 0, 0
@@ -667,7 +675,7 @@ def main() -> None:
                 raise RuntimeError(
                     f"{row_id}: code/turn count mismatch {len(row_codes)} != {len(turn_results)}"
                 )
-            codes_path = codes_out_dir / f"{row_id}.npz"
+            codes_path = codes_out_dir / f"{artifact_stem}.npz"
             np.savez_compressed(
                 codes_path,
                 **{f"turn_{idx:05d}": codes for idx, codes in enumerate(row_codes)},
@@ -693,7 +701,7 @@ def main() -> None:
                     np.concatenate(row_pcm) if row_pcm else np.zeros(1, dtype=np.float32),
                     -1.0, 1.0,
                 )
-            wav_path = out_dir / f"{row_id}.wav"
+            wav_path = out_dir / f"{artifact_stem}.wav"
             with wave.open(str(wav_path), "wb") as wf:
                 wf.setnchannels(1)
                 wf.setsampwidth(2)

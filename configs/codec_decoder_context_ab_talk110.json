@@ -1,0 +1,31 @@
+{
+  "generate_script": "generate.py",
+  "generate_arguments": [
+    "--model-path", "../assets/a",
+    "--codec-path", "../assets/b",
+    "--moss-tts-root", "../assets/c",
+    "--fixed-ref", "../input/b.wav",
+    "--rows-jsonl", "../input/a.jsonl",
+    "--out-dir", "../outputs/generation",
+    "--summary-jsonl", "../outputs/summary.jsonl",
+    "--codes-out-dir", "../outputs/codes",
+    "--output-stem", "c",
+    "--device", "cuda",
+    "--max-rows", "1",
+    "--sliding-window", "11",
+    "--soft-reset-keep", "3",
+    "--min-runaway-floor-s", "15",
+    "--log-every", "20"
+  ],
+  "evaluate_script": "evaluate.py",
+  "evaluate_arguments": [
+    "--codec-path", "../assets/b",
+    "--moss-tts-root", "../assets/c",
+    "--codes-npz", "../outputs/codes/c.npz",
+    "--turn-summary-jsonl", "../outputs/summary.jsonl",
+    "--out-dir", "../outputs/result",
+    "--device", "cuda",
+    "--chunk-frames", "3",
+    "--clip-seconds", "2"
+  ]
+}
