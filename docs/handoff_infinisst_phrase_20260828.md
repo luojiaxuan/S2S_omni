@@ -308,3 +308,60 @@ v2ep1(multiplier<=2)  14.7%
 两者非零且互不相同，说明训练确实改了权重，且 v2 移动更远——与"收窄
 multiplier 后每 epoch 的 hold 监督翻倍"一致。**这一步若早做，就不会浪费
 一轮推理和一份错误结论。**
+
+## 10. 结束状态与定版（2026-08-29）
+
+### 定版配置
+
+```
+scripts/moss_multiturn_infer.py --sliding-window 11 --soft-reset-keep 3 \
+    --phrase-merge --phrase-min-chars 6 --phrase-max-hold 4
+```
+
+评测队列模式名 `slidingsoft3phr4`（已加入 `run_eval_queue.sh`）。
+**不需要重训 InfiniSST**，沿用现役 stage1+stage2 权重。
+
+相对现役的净收益：BC BLEU +5.1（1×）/ +5.0（1.5×），XCOMET +0.166 / +0.142，
+碎 turn（≤5 字）30.3% → 0.3%，**最坏静默与现役持平（均 9.6 s）**。
+完整对比与取舍理由见台账 4.-32。
+
+### 重训线的处置：阴性，但保留可复现性
+
+两版重训（v2 multiplier 1-2、v3 multiplier 1-4）在 1× 上都做出了很强的短语
+结构（85.2% / 80.2% 结尾标点），但**都无法迁移到 1.5×**（71-73%），级联质量
+低于现役。被 `max_hold=4` 这一个参数全面超越。
+
+保留物（`/mnt/gemini/data2/jiaxuanluo/`）：
+- `stage2_phrase_v2ep1_fixed.bin`、`stage2_phrase_v3_fixed.bin`（键名已对齐，
+  可直接用 `--lora-path` 加载）
+- `runs/infinisst_phrase_v{2,3}/aries_train.log`
+- `phrase_pipeline/`（推理、转换、键名校验、结构对比、延迟计算脚本）
+
+**未上 HF**：按 SoT 规则模型权重应上 HF，但这两个是阴性结果且不进入交付，
+暂留本地；若要清盘，删除前需先上传或确认放弃可复现性。**这是一笔未结的欠账。**
+
+### 资源收尾（已完成并核实）
+
+| 主机 | 容器 | 状态 |
+| --- | --- | --- |
+| aries | `infinisst-phrase-jaxan-1/2` | 已删，GPU 0/1/2 归零 |
+| hyper00 | `sglang-omni-jaxan-phr-1/2` | 已删，GPU 0/4/6 归零，ASR server 已停 |
+| hyper01 | `sglang-omni-jaxan-1` | 已删 |
+| moss | `sglang-omni-jaxan-tts` | 已删，数据与脚本清空 |
+
+`$HOME/jiaxuanluo-map.txt` 中本任务条目已全部清除（残留计数 0）。
+
+### moss 迁移的实测约束（供任务 #20 参考，**与先前记录不符，以此为准**）
+
+| 端点 | 宿主 | 容器内 |
+| --- | --- | --- |
+| huggingface.co | 不通 | 不通 |
+| hf-mirror.com | **需 unset 代理才通** | 直接通 |
+| 清华 pypi | 通 | 不通 |
+
+宿主设有 `HTTP(S)_PROXY=23.252.104.141:3128`，该代理对 hf-mirror 的
+`api/` 与 `resolve/` 路径 reset 连接；容器不继承代理变量故直连可用。
+**但镜像站对大文件实测仅 229 B/s，不可用于搬 GB 级权重。**
+hyper00→moss 的直传可行（SSH agent 转发，无需在主机装密钥），但会话一断
+即停，两次尝试各只传了 100-240 MB。**结论：迁移前需先解决大文件通道，
+否则不要开工。**
