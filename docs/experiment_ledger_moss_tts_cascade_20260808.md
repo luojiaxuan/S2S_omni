@@ -487,7 +487,7 @@ GPT、贴平 KIT，未及 Gemini。
   XCOMET +0.166 / +0.142，碎 turn（≤5 字）从 30.3% 降到 0.3%
   ——即用户最初指出的音色跳变来源，**最坏静默与现役持平（均 9.6 s）**。
 
-### 4.-33 固定 codes 验证 codec decoder reset（2026-08-29，待听感裁定）
+### 4.-33 固定 codes 验证 codec decoder reset（2026-08-29，已听感确认）
 
 - **假设**：当前推理在每个 turn 新建 `AudioStreamDecoder`，并重新进入
   `codec.streaming()`；即使 TTS generator 保留了 text/audio-code 历史，codec
@@ -506,9 +506,9 @@ GPT、贴平 KIT，未及 Gemini。
   `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`，状态
   `PENDING_HF_UPLOAD`。远端可恢复运行根为 hyper00
   `/data04/jaxan/bundles/20260829-214351-438141000/`。
-- **当前判据**：先由用户听完整 A/B 与边界短片。若 B 明显消除音色跳变，才把
-  根因定为 codec decoder reset，并把跨 turn 保留 decoder state 作为修复；在
-  听感裁定前不把频谱接缝排序当作 speaker 指标，也不宣布根因成立。
+- **听感裁定**：用户确认 B 明显更稳定，speaker 跳变大幅减少。因此在 talk110
+  上，codec decoder reset 是直接原因。修复应跨 turn 保留 decoder state；
+  phrase boundary 仍可减少边界并改善韵律，但不再是修音色的必要条件。
 
 ### 4.-31 v3 证伪"内容密度"诊断；参数扫描显示规则档本可调（2026-08-29）
 
