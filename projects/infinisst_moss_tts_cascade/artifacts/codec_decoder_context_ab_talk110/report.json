@@ -1,0 +1,14 @@
+{
+  "audio_code_sha256": "20a157efc7a5bd7ded58d52ad958ed5f521ed41bb7bb85568ea415892b46a029",
+  "num_turns": 194,
+  "num_boundaries": 193,
+  "sample_rate": 24000,
+  "samples_per_frame": 1920,
+  "total_code_frames": 8581,
+  "a_samples": 16475520,
+  "b_samples": 16475520,
+  "a_duration_s": 686.48,
+  "b_duration_s": 686.48,
+  "a_definition": "new AudioStreamDecoder and codec.streaming state for every turn",
+  "b_definition": "one AudioStreamDecoder and one codec.streaming state for all turns"
+}

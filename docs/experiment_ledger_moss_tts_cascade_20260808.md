@@ -487,6 +487,29 @@ GPT、贴平 KIT，未及 Gemini。
   XCOMET +0.166 / +0.142，碎 turn（≤5 字）从 30.3% 降到 0.3%
   ——即用户最初指出的音色跳变来源，**最坏静默与现役持平（均 9.6 s）**。
 
+### 4.-33 固定 codes 验证 codec decoder reset（2026-08-29，待听感裁定）
+
+- **假设**：当前推理在每个 turn 新建 `AudioStreamDecoder`，并重新进入
+  `codec.streaming()`；即使 TTS generator 保留了 text/audio-code 历史，codec
+  decoder 的因果状态仍被清空，这可能是 speaker 音色在 turn 边界跳变的直接原因。
+- **受控设计**：只跑 talk110 的 InfiniSST phrase v2-ep1 turns；MOSS-TTS 只采样
+  一次并冻结 194 个 turn 的原始 codes。A 对每个 turn 单独创建 decoder/streaming
+  state，B 把同一批 codes 按顺序送入一个 decoder 和一次 streaming state。
+  不重跑 InfiniSST，A/B 之间也不重新采样 TTS。
+- **完整性**：共 8,581 code frames，内容 SHA256
+  `20a157efc7a5bd7ded58d52ad958ed5f521ed41bb7bb85568ea415892b46a029`；
+  A/B 都严格得到 16,475,520 samples（24 kHz、686.48 秒），每帧均为 1,920
+  samples；任务容器 exit 0。
+- **产物**：轻量报告在
+  `projects/infinisst_moss_tts_cascade/artifacts/codec_decoder_context_ab_talk110/report.json`；
+  完整 A/B、12 组边界短片、codes 与 summary 暂存在 Mac
+  `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`，状态
+  `PENDING_HF_UPLOAD`。远端可恢复运行根为 hyper00
+  `/data04/jaxan/bundles/20260829-214351-438141000/`。
+- **当前判据**：先由用户听完整 A/B 与边界短片。若 B 明显消除音色跳变，才把
+  根因定为 codec decoder reset，并把跨 turn 保留 decoder state 作为修复；在
+  听感裁定前不把频谱接缝排序当作 speaker 指标，也不宣布根因成立。
+
 ### 4.-31 v3 证伪"内容密度"诊断；参数扫描显示规则档本可调（2026-08-29）
 
 - **v3（multiplier 1-4，1 epoch）结果**：
