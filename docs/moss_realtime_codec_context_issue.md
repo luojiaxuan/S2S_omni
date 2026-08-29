@@ -36,10 +36,25 @@ PR 1410 的 `_CodecStreamSession` 确实只进入一次 `codec.streaming()`，�
 
 实验报告：`projects/infinisst_moss_tts_cascade/artifacts/codec_decoder_context_ab_talk110/report.json`
 
-完整 A/B 暂存在 `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`，状态为 `PENDING_HF_UPLOAD`。
+用于上游复核的 60 秒 A/B 取完全相同的 sample 区间
+`[8,565,120, 10,005,120)`，24 kHz 单声道 PCM，中心是 386.88 秒的
+boundary 109：
+
+- A，每个 application-level turn 重置 decoder：
+  <https://github.com/luojiaxuan/S2S_omni/releases/download/talk110-codec-context-ab-20260829/talk110_boundary109_60s_reset.wav>
+  （SHA256 `2b210c58f4d978fade417aca49c0404003d80d97080d617c20a9068d219aff6b`）
+- B，跨 turn 保留同一个 decoder context：
+  <https://github.com/luojiaxuan/S2S_omni/releases/download/talk110-codec-context-ab-20260829/talk110_boundary109_60s_continuous.wav>
+  （SHA256 `ea28198d87251984448d924b04fed79ce1315df46497a45a87645ff82e37774f`）
+
+GitHub Release：<https://github.com/luojiaxuan/S2S_omni/releases/tag/talk110-codec-context-ab-20260829>
+
+完整 A/B 暂存在 `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`，状态为 `PENDING_HF_UPLOAD`；GitHub Release 只托管上述诊断片段。
 
 ## 上游跟踪
 
 sglang-omni issue：<https://github.com/sgl-project/sglang-omni/issues/1812>
+
+60 秒 A/B comment：<https://github.com/sgl-project/sglang-omni/issues/1812#issuecomment-5465326690>
 
 当前实现：<https://github.com/sgl-project/sglang-omni/pull/1410>

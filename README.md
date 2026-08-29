@@ -257,7 +257,7 @@ MOSS-TTS-Realtime serving 上游状态：
 | Artifact | Staging location | Intended destination | Status |
 | --- | --- | --- | --- |
 | **InfiniSST phrase v2 ep1 LoRA（方案 A 交付候选）** | Aries `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_v2ep1_fixed.bin` | HF model repo TBD | `PENDING_HF_UPLOAD`；380,489,319 B；SHA256 `1f2c795f8500d1d8c78e5d93e09d09bb43c6d7941cfc16cddb81a01af189a617` |
-| talk110 codec decoder context A/B | Mac `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`；hyper00 `/data04/jaxan/bundles/20260829-214351-438141000/` | HF dataset repo TBD | `PENDING_HF_UPLOAD`；同一份 8,581-frame codes，A/B 各 686.48 秒；用户确认连续 decoder 的 B 明显更稳定 |
+| talk110 codec decoder context A/B | Mac `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`；hyper00 `/data04/jaxan/bundles/20260829-214351-438141000/` | HF dataset repo TBD | 完整 bundle 为 `PENDING_HF_UPLOAD`；同一份 8,581-frame codes，A/B 各 686.48 秒；用户确认连续 decoder 的 B 明显更稳定；boundary 109 的同区间 60 秒诊断对已发布到 [GitHub Release](https://github.com/luojiaxuan/S2S_omni/releases/tag/talk110-codec-context-ab-20260829) 并附在 [#1812 comment](https://github.com/sgl-project/sglang-omni/issues/1812#issuecomment-5465326690) |
 
 诊断权重（v3、α=0.5/0.75）、训练 provenance 和远端运行路径见
 `docs/remote_artifacts.md`。v1 全量 target wavs（13G，已弃用不传）与 v2

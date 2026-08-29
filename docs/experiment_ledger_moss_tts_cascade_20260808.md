@@ -505,7 +505,13 @@ GPT、贴平 KIT，未及 Gemini。
   完整 A/B、12 组边界短片、codes 与 summary 暂存在 Mac
   `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`，状态
   `PENDING_HF_UPLOAD`。远端可恢复运行根为 hyper00
-  `/data04/jaxan/bundles/20260829-214351-438141000/`。
+  `/data04/jaxan/bundles/20260829-214351-438141000/`。用于上游复核的 boundary
+  109 同区间 60 秒 A/B 已发布到
+  <https://github.com/luojiaxuan/S2S_omni/releases/tag/talk110-codec-context-ab-20260829>，
+  并附在 issue comment
+  <https://github.com/sgl-project/sglang-omni/issues/1812#issuecomment-5465326690>；
+  两段都取 `[8,565,120, 10,005,120)` samples（24 kHz），只改变是否跨 turn
+  保留 decoder context。
 - **听感裁定**：用户确认 B 明显更稳定，speaker 跳变大幅减少。因此在 talk110
   上，codec decoder reset 是直接原因。修复应跨 turn 保留 decoder state；
   phrase boundary 仍可减少边界并改善韵律，但不再是修音色的必要条件。
