@@ -209,8 +209,8 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 
 代码与进展（Git）：
 
-- GitHub：<https://github.com/luojiaxuan/S2S_omni>；phrase-boundary 实验与
-  诊断基线为 `main@deddcec`。
+- GitHub：<https://github.com/luojiaxuan/S2S_omni>；唯一主线为 `main`，
+  Claude 交接及 phrase-boundary 脚本基线为 `main@ec60bfb`。
 - 当前交接：`docs/handoff_codex_20260830.md`；可审计实验台账：
   `docs/experiment_ledger_moss_tts_cascade_20260808.md`。
 - phrase-boundary 流水线：`scripts/infinisst_phrase/`；TTS 多 turn 推理与队列：
@@ -220,6 +220,8 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
   工作副本不再是该代码的唯一 source of truth。
 - 其余 pipeline 脚本在 `scripts/`；评测记录在
   `projects/infinisst_moss_tts_cascade/`。
+- 早期 MOSS-TTS delta streaming 实验仅作历史证据保留在
+  <https://github.com/luojiaxuan/moss-tts-realtime-delta-eval>，不再作为主线 SoT。
 
 模型（HF；v7-traj 已转 public，其余 private）：
 
