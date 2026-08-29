@@ -14,13 +14,22 @@ The first milestone is text-side and transcript-side infrastructure:
 ## InfiniSST × MOSS-TTS-Realtime 级联
 
 本分支的当前主线：`InfiniSST(S2T) -> MOSS-TTS-Realtime(finetune)` 级联，
-在 ACL6060 canonical benchmark（SEGALE BLEU / XCOMET-XL，
-gpt-4o-mini-transcribe target-speech ASR）上的结果。
+在 ACL6060 benchmark 上同时报告 canonical（整轨 Qwen3-ASR）与 BC（逐 turn
+独立 ASR）口径的 SEGALE BLEU、XCOMET-XL 和漏译率；两种口径的偏差方向相反，
+跨配置比较必须并报。
 
-**当前操作点 = v6 + 恒定滑窗 w=11，与软 reset keep=3 并报**（用户裁定
-2026-08-11：部署默认取更简单稳健的恒定滑窗——soft reset 的 keep 值敏感、
-其高语速音频令打分链漏译数双峰；论文两者并报，soft3 承担机制论证，
-1× 上它的质量显著更高）。En-Zh 1x：
+**当前决策状态（2026-08-29）**：主线已切到 InfiniSST phrase-boundary。
+用户倾向训练侧方案 A（InfiniSST 自己学会在短语边界 write）；输出侧方案 B
+（`--phrase-merge --phrase-max-hold 4`）保留为已完整跨速档验证的部署对照与
+回滚点。1× 下 A 与 B 的 BC BLEU/XCOMET 基本相同（38.32/0.652 vs
+38.42/0.650），A 的静默 p90 更低（5.8s vs 7.7s）。A 在 1.5× 的级联
+BC BLEU 低至 31.27，但 LoRA 插值扫描证明它的 InfiniSST 文本质量随语速仅降
+约 1.9 BLEU，与现役模型相同，短语结构也仍然有效；损失已定位到 TTS 或
+对齐/打分环节。**单版本最终裁定等待 1.5× 的 `target_s` 与实际 TTS 时长
+核对**。最新交接见 `docs/handoff_codex_20260830.md`，完整证据链见实验台账
+4.-22 至 4.-32；其后的 LoRA 插值诊断记录在最新交接中。
+
+以下 En-Zh 1× 表是 2026-08-11 的历史操作点，保留作回归基线：
 
 | 系统 | BLEU | XCOMET-XL | null（漏译）率 |
 | --- | ---: | ---: | ---: |
@@ -104,7 +113,7 @@ zero-jitter FIFO；**不含 InfiniSST/TTS 计算与网络，是下界**）；基
 GPT-realtime 约 4 分。外部对比（如 Open-LiveTranslate，其上游把漏译句
 从分母剔除）应以本列为准。台账 4.-15。
 
-**🎧 音频浏览**：[v7_audio_browser.html](https://luojiaxuan.github.io/S2S_omni/v7_audio_browser.html)——v7 恒定滑窗与 soft3 修复版各两档（1×/1.5×）+ v6@1.5× 对照，共五个 run 的整场音频（公开 HF 托管）+ 逐 turn 输入文本与独立 ASR 对照、保真度着色、点击跳播；吞轮/回读样例可直接听（台账 4.-21b 的 ③）。
+**🎧 音频浏览**：[v7_audio_browser.html](https://luojiaxuan.github.io/S2S_omni/v7_audio_browser.html)——覆盖 v7 恒定滑窗、soft3 修复版、TTS 侧短语缓冲与 InfiniSST phrase-boundary 重训档（含 1×/1.5× 对照）；整场音频由公开 HF dataset 托管，并提供逐 turn 输入、独立 ASR、保真度着色与点击跳播。
 
 ### 新 canonical 口径（2026-08-11 起）：Qwen3-ASR + XCOMET-ref
 
@@ -198,20 +207,25 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 
 ### Source of Truth
 
-代码（Git，本分支）：pipeline 脚本在 `scripts/`（数据构建
-`build_moss_v2_row_requests.py`/`build_moss_v3_dataset.py`、生成
-`generate_moss_realtime_long_targets.py`、对齐切片
-`align_slice_moss_v2.py`、多 turn 推理 `moss_multiturn_infer.py`、
-InfiniSST 流式 client `run_infinisst_sglang_stream.py`、打分
-`score_acl_cascade.py`）；评测记录在
-`projects/infinisst_moss_tts_cascade/`（全部 run dirs：instances、
-SEGALE 对齐、BLEU/XCOMET summaries + InfiniSST runtime chunks）。
+代码与进展（Git）：
+
+- GitHub：<https://github.com/luojiaxuan/S2S_omni>；phrase-boundary 实验与
+  诊断基线为 `main@deddcec`。
+- 当前交接：`docs/handoff_codex_20260830.md`；可审计实验台账：
+  `docs/experiment_ledger_moss_tts_cascade_20260808.md`。
+- phrase-boundary 流水线：`scripts/infinisst_phrase/`；TTS 多 turn 推理与队列：
+  `scripts/moss_multiturn_infer.py`、`scripts/acl_cascade_eval/run_eval_queue.sh`。
+- 外部 `LeiLiLab/InfiniSST@54f3471` 的三文件改动已锁为可应用 patch：
+  `scripts/infinisst_phrase/infinisst_patches/phrase_boundary_sft.patch`。Aries
+  工作副本不再是该代码的唯一 source of truth。
+- 其余 pipeline 脚本在 `scripts/`；评测记录在
+  `projects/infinisst_moss_tts_cascade/`。
 
 模型（HF；v7-traj 已转 public，其余 private）：
 
 | checkpoint | repo | 状态 |
 | --- | --- | --- |
-| **v7 traj（当前操作点 checkpoint，public + model card）** | [gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj](https://huggingface.co/gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj) | uploaded（`1947001d`），2026-08-21 转 public |
+| **v7 traj（当前 TTS checkpoint，public + model card）** | [gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj](https://huggingface.co/gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj) | uploaded（`1947001d`），2026-08-21 转 public |
 | v6 midstart | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v6-midstart` | uploaded（`82b58902`） |
 | v3 longsess（历史操作点） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
 | v2 multi-turn | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v2-multiturn` | uploaded |
@@ -233,8 +247,15 @@ serving（sglang-omni fork `luojiaxuan/sglang-omni`）：
 | `luojiaxuan/moss-tts-realtime` | 上游 PR sgl-project/sglang-omni#1192（MOSS-TTS-Realtime serving + FA3 融合核） |
 | `moss-tts-realtime-history` | 上游 draft PR #1368（多 turn history，stacked on #1192） |
 
-本地暂存（未上传，可再生）：v1 全量 target wavs（13G，已弃用不传）、
-v2 整行合成 row wavs（可由 prepared + scripts 再生）、hyper00 run root
+本地暂存：
+
+| Artifact | Staging location | Intended destination | Status |
+| --- | --- | --- | --- |
+| **InfiniSST phrase v2 ep1 LoRA（方案 A 交付候选）** | Aries `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_v2ep1_fixed.bin` | HF model repo TBD | `PENDING_HF_UPLOAD`；380,489,319 B；SHA256 `1f2c795f8500d1d8c78e5d93e09d09bb43c6d7941cfc16cddb81a01af189a617` |
+
+诊断权重（v3、α=0.5/0.75）、训练 provenance 和远端运行路径见
+`docs/remote_artifacts.md`。v1 全量 target wavs（13G，已弃用不传）与 v2
+整行合成 row wavs 均可由已上传数据和 Git 脚本再生；hyper00 run root 为
 `/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804`。
 
 ## Problem

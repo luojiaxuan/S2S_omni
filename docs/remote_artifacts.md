@@ -1,7 +1,9 @@
 # Remote Artifacts
 
-This repo tracks code, configs, prompts, and docs. Large generated data, model
-outputs, and checkpoints stay outside git.
+This repo tracks code, configs, prompts, lightweight evaluation summaries, and
+progress records. Reusable datasets and model artifacts belong on Hugging Face;
+paths in this document are staging, cache, or active-run locations unless a
+canonical remote revision is explicitly recorded.
 
 ## Local Workspace
 
@@ -372,3 +374,29 @@ Default execution env:
 Use `scripts/run_wav2codec_pipeline_slurm.sh` with `PARTITION=aries` or
 `PARTITION=taurus`. The first version targets Omni self-domain reconstruction,
 not external TTS wav generalization.
+
+### InfiniSST phrase-boundary staging（2026-08-29 核验）
+
+InfiniSST 工作副本位于：
+
+```text
+/mnt/taurus/home/jiaxuanluo/InfiniSST
+```
+
+核验时上游 HEAD 为 `54f3471c556473dde7fb52ac85cff62bb6fc41ee`。本任务对
+`train/dataset.py`、`train/main.py`、`model/model.py` 的未提交改动已导出为
+本仓库的
+`scripts/infinisst_phrase/infinisst_patches/phrase_boundary_sft.patch`；该 patch
+是代码的 Git source of truth。Aries 上的 `phrase_pipeline/` 是运行副本，规范
+脚本以本仓库 `scripts/infinisst_phrase/` 为准。
+
+| Artifact | Aries persistent path | Size | Canonical destination / status |
+| --- | --- | ---: | --- |
+| **phrase v2 ep1 LoRA（交付候选）** | `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_v2ep1_fixed.bin` | 380,489,319 B | HF model repo TBD；`PENDING_HF_UPLOAD`；SHA256 `1f2c795f8500d1d8c78e5d93e09d09bb43c6d7941cfc16cddb81a01af189a617` |
+| phrase v3 LoRA | `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_v3_fixed.bin` | 380,489,298 B | `LOCAL_DIAGNOSTIC`；等待 1.5× 下游归因完成后决定保留或上传 |
+| LoRA interpolation α=0.5 | `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_a0.5.bin` | 380,631,117 B | `LOCAL_DIAGNOSTIC`；插值扫描已完成，不是交付候选 |
+| LoRA interpolation α=0.75 | `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_a0.75.bin` | 380,631,807 B | `LOCAL_DIAGNOSTIC`；插值扫描已完成，不是交付候选 |
+
+交付候选由 103 小时子集训练 1 epoch，`trajectory_max_multiplier=2`、
+`lr=1e-4`、LoRA rank 32。最终上传前需完成 1.5× 下游时间预算归因，并为 HF
+模型仓库补 model card、基座/训练配置、patch commit、评测表与不可变 revision。
