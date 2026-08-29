@@ -61,5 +61,7 @@ sglang-omni issue：<https://github.com/sgl-project/sglang-omni/issues/1812>
 
 PR review：<https://github.com/sgl-project/sglang-omni/pull/1410#pullrequestreview-5059392974>
 
+PR 普通 comment（issue 与修复前后 60 秒 WAV）：<https://github.com/sgl-project/sglang-omni/pull/1410#issuecomment-5465382854>
+
 - slot 应由 `session_id` 持有并跨 turn 复用：<https://github.com/sgl-project/sglang-omni/pull/1410#discussion_r3887899486>
 - 正常 turn final flush 后不能 release/reset：<https://github.com/sgl-project/sglang-omni/pull/1410#discussion_r3887899490>

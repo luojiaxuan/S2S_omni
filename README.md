@@ -249,7 +249,7 @@ MOSS-TTS-Realtime serving 上游状态：
 
 | 实现 | 状态 | 用途 |
 | --- | --- | --- |
-| sgl-project/sglang-omni#1410 | open draft，`c5455d9`，尚未合入 main | 当前 framework-native realtime 实现与上游修复目标；已有 warm session，但 turn 结束仍 reset codec slot，见 #1812；[inline review](https://github.com/sgl-project/sglang-omni/pull/1410#pullrequestreview-5059392974) 已指出 session-owned slot 与 turn-final release 两处修改点 |
+| sgl-project/sglang-omni#1410 | open draft，`c5455d9`，尚未合入 main | 当前 framework-native realtime 实现与上游修复目标；已有 warm session，但 turn 结束仍 reset codec slot，见 #1812；[inline review](https://github.com/sgl-project/sglang-omni/pull/1410#pullrequestreview-5059392974) 已指出两处修改点，[普通 comment](https://github.com/sgl-project/sglang-omni/pull/1410#issuecomment-5465382854) 提供修复前后 60 秒 WAV |
 | #1192 / #1368 | open 旧原型 | 仅作历史实验复现，不再作为当前上游实现依据 |
 
 本地暂存：

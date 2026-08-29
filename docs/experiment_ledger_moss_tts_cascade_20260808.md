@@ -527,6 +527,8 @@ GPT、贴平 KIT，未及 Gemini。
   （<https://github.com/sgl-project/sglang-omni/pull/1410#discussion_r3887899486>）；
   正常 turn 的 final flush 只能 drain pending PCM，不能 release/reset slot
   （<https://github.com/sgl-project/sglang-omni/pull/1410#discussion_r3887899490>）。
+  PR conversation 另有 issue 与同区间 60 秒修复前后 WAV 直链：
+  <https://github.com/sgl-project/sglang-omni/pull/1410#issuecomment-5465382854>。
 
 ### 4.-31 v3 证伪"内容密度"诊断；参数扫描显示规则档本可调（2026-08-29）
 
