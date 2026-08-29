@@ -32,6 +32,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--rows-jsonl", required=True, help="v2 rows format: {row_id, segments:[{id,text}...]}")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--summary-jsonl", required=True)
+    parser.add_argument(
+        "--codes-out-dir",
+        default="",
+        help="optional directory for one compressed NPZ of generated audio codes per row",
+    )
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--num-shards", type=int, default=1)
     parser.add_argument("--shard-id", type=int, default=0)
@@ -280,6 +285,9 @@ def main() -> None:
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    codes_out_dir = Path(args.codes_out_dir) if args.codes_out_dir else None
+    if codes_out_dir is not None:
+        codes_out_dir.mkdir(parents=True, exist_ok=True)
     summary_path = Path(args.summary_jsonl)
     done = set()
     if summary_path.exists():
@@ -358,6 +366,7 @@ def main() -> None:
                       "merged_turns": j}] + segments[j:]
                 )
         turn_results = []
+        row_codes: list[np.ndarray] = []
         last_turn: tuple[str, np.ndarray] | None = None
         row_pcm: list[np.ndarray] = []
         failure = None
@@ -519,6 +528,11 @@ def main() -> None:
                     )
                 if args.sliding_window > 0 and runaway_skipped:
                     # polluted codes stay out of the (already cleared) window
+                    row_codes.append(
+                        torch.cat(turn_codes, dim=0).numpy().astype(np.int16)
+                        if turn_codes
+                        else np.zeros((0, channels), dtype=np.int16)
+                    )
                     turn_results.append(
                         {
                             "segment_id": seg.get("id"),
@@ -610,6 +624,11 @@ def main() -> None:
                         window = window[-(args.sliding_window - 1) :]
                     if anchor_turn is None and window:
                         anchor_turn = window[0]
+                row_codes.append(
+                    torch.cat(turn_codes, dim=0).numpy().astype(np.int16)
+                    if turn_codes
+                    else np.zeros((0, channels), dtype=np.int16)
+                )
                 turn_results.append(
                     {
                         "segment_id": seg.get("id"),
@@ -643,6 +662,18 @@ def main() -> None:
             "turns": turn_results,
             "failure": failure,
         }
+        if codes_out_dir is not None:
+            if len(row_codes) != len(turn_results):
+                raise RuntimeError(
+                    f"{row_id}: code/turn count mismatch {len(row_codes)} != {len(turn_results)}"
+                )
+            codes_path = codes_out_dir / f"{row_id}.npz"
+            np.savez_compressed(
+                codes_path,
+                **{f"turn_{idx:05d}": codes for idx, codes in enumerate(row_codes)},
+            )
+            record["codes_npz"] = str(codes_path)
+            record["codes_turns"] = len(row_codes)
         if failure is None:
             ov = int(args.seam_crossfade_ms / 1000.0 * codec_sr)
             if ov > 0 and len(row_pcm) > 1:
