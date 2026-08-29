@@ -58,3 +58,8 @@ sglang-omni issue：<https://github.com/sgl-project/sglang-omni/issues/1812>
 60 秒 A/B comment：<https://github.com/sgl-project/sglang-omni/issues/1812#issuecomment-5465326690>
 
 当前实现：<https://github.com/sgl-project/sglang-omni/pull/1410>
+
+PR review：<https://github.com/sgl-project/sglang-omni/pull/1410#pullrequestreview-5059392974>
+
+- slot 应由 `session_id` 持有并跨 turn 复用：<https://github.com/sgl-project/sglang-omni/pull/1410#discussion_r3887899486>
+- 正常 turn final flush 后不能 release/reset：<https://github.com/sgl-project/sglang-omni/pull/1410#discussion_r3887899490>

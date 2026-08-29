@@ -522,6 +522,11 @@ GPT、贴平 KIT，未及 Gemini。
   PR 1410 已有跨 turn warm session 和一个长期 `codec.streaming()` context，但
   codec slot 仍按 turn 租用；final decode 后 `release()` 会 reset slot。核对 head 为
   `c5455d9934f0d7e44c16f0ba13ef7849c1f0e323`，截至 2026-08-29 尚未合入 main。
+- **上游 review**：已在 PR 1410 当前 head 对两处根因留下 inline review：
+  `create_stream_state()` 应按 `session_id` 复用 slot
+  （<https://github.com/sgl-project/sglang-omni/pull/1410#discussion_r3887899486>）；
+  正常 turn 的 final flush 只能 drain pending PCM，不能 release/reset slot
+  （<https://github.com/sgl-project/sglang-omni/pull/1410#discussion_r3887899490>）。
 
 ### 4.-31 v3 证伪"内容密度"诊断；参数扫描显示规则档本可调（2026-08-29）
 
