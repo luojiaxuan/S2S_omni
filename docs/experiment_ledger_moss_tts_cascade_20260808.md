@@ -511,6 +511,11 @@ GPT、贴平 KIT，未及 Gemini。
   phrase boundary 仍可减少边界并改善韵律，但不再是修音色的必要条件。
 - **上游跟踪**：sglang-omni issue
   <https://github.com/sgl-project/sglang-omni/issues/1812>。
+- **上游实现校正**：当前目标是 open draft PR
+  <https://github.com/sgl-project/sglang-omni/pull/1410>，不是旧的 PR 1192/1368。
+  PR 1410 已有跨 turn warm session 和一个长期 `codec.streaming()` context，但
+  codec slot 仍按 turn 租用；final decode 后 `release()` 会 reset slot。核对 head 为
+  `c5455d9934f0d7e44c16f0ba13ef7849c1f0e323`，截至 2026-08-29 尚未合入 main。
 
 ### 4.-31 v3 证伪"内容密度"诊断；参数扫描显示规则档本可调（2026-08-29）
 

@@ -245,12 +245,12 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 | 多 turn 训练数据 | `gavinlaw/infinisst-moss-tts-en-zh-multiturn` | prepared v2/v3（jsonl.zst）、固定音色 ref、row manifests、ACL talk 级级联音频（三速度）；`cdd04fde` |
 | 源 segment 包 | `gavinlaw/infinisst-moss-tts-en-zh-segments` | 原始 source wavs + manifests（`c54868f0`） |
 
-serving（sglang-omni fork `luojiaxuan/sglang-omni`）：
+MOSS-TTS-Realtime serving 上游状态：
 
-| branch | 用途 |
-| --- | --- |
-| `luojiaxuan/moss-tts-realtime` | 上游 PR sgl-project/sglang-omni#1192（MOSS-TTS-Realtime serving + FA3 融合核） |
-| `moss-tts-realtime-history` | 上游 draft PR #1368（多 turn history，stacked on #1192） |
+| 实现 | 状态 | 用途 |
+| --- | --- | --- |
+| sgl-project/sglang-omni#1410 | open draft，`c5455d9`，尚未合入 main | 当前 framework-native realtime 实现与上游修复目标；已有 warm session，但 turn 结束仍 reset codec slot，见 #1812 |
+| #1192 / #1368 | open 旧原型 | 仅作历史实验复现，不再作为当前上游实现依据 |
 
 本地暂存：
 

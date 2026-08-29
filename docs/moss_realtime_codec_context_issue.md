@@ -10,23 +10,25 @@ talk110 的固定 codes 对照已经确认这个问题。我们只生成一次 1
 
 ## sglang-omni 中的对应问题
 
-PR 1192 的 `MossTTSRealtimeVocoder` 会在每个 request 的 `create_stream_state` 中进入一次 `codec.streaming()`，并在 `release_stream_resources` 中退出。
+当前对应实现是 sglang-omni PR 1410，而不是旧的 PR 1192/1368。PR 1410 是 framework-native MOSS-TTS-Realtime 路径，包含增量 text 输入、跨 turn warm session 和 persistent streaming vocoder。截至 2026-08-29，它仍是 open draft，尚未合入 main；核对版本为 `c5455d9934f0d7e44c16f0ba13ef7849c1f0e323`。
 
-PR 1368 已经支持把历史 text 和 audio codes 放回 MOSS TTS generator prompt，但每个新 turn 仍然使用新的 request id。因此 generator 有多轮历史，vocoder 仍然没有上一轮的 decoder context。
+PR 1410 的 `_CodecStreamSession` 确实只进入一次 `codec.streaming()`，但 codec slot 仍按 turn/request 租用。`_RealtimeStreamState` 已记录 `session_id` 和 `turn_id`；turn 结束时，`decode_delta(is_final=True)` 先输出 pending frames，再调用 `_release_state_slot()`，最终由 `_CodecStreamSession.release()` reset 该 slot。所以下一个同 session turn 虽然复用了 generator history，codec 的因果状态仍从零开始。
 
 任何把同一 speaker session 拆成多个 speech request 的 serving 路径都可能遇到这个问题。
 
 ## 建议修复
 
-1. 用稳定的 session id 管理 vocoder state，不要只按 request id 管理。
+1. 用稳定的 session id 管理 codec slot，不要只按 request/turn 管理。
 
-2. 同一 session 的连续 turn 复用 codec streaming state。
+2. 同一 session 的成功连续 turn 复用同一个 slot 和 codec causal state。turn 完成只需输出 pending PCM，不应 reset slot。
 
-3. session 关闭、超时或 abort 时释放 state，不同 session 之间不能共享。
+3. session 关闭、TTL 到期、abort 或失败时释放并 reset slot，不同 session 之间不能共享。
 
 4. 如果服务结构不方便长期保留 state，可以在新 request 开始时 prefill 最近一段 audio codes，并丢弃 prefix waveform。codec 的有效上下文有界，不需要回放整场历史。
 
-5. 回归测试固定一份 codes，把它切成多个 turns。服务路径的拼接结果应与单次连续 decode 使用相同的 decoder context。
+5. 回归测试固定一份 codes，把它切成多个 turns。同一 session 的第二个 turn 必须延续 codec state；新 session 或已关闭 session 必须从零开始。服务路径仍应在每个 turn 及时输出 PCM。
+
+当前 A/B 的 B 只在全场末尾调用一次 `AudioStreamDecoder.flush()`。服务侧还应补一个 C 对照：保留同一个 codec state，但在每个 turn 输出所有 pending PCM。PR 1410 的 vocoder 已把“输出 pending frames”和“reset slot”写成相邻的两个动作，最直接的验证就是只延后后者。
 
 ## 证据
 
@@ -39,3 +41,5 @@ PR 1368 已经支持把历史 text 和 audio codes 放回 MOSS TTS generator pro
 ## 上游跟踪
 
 sglang-omni issue：<https://github.com/sgl-project/sglang-omni/issues/1812>
+
+当前实现：<https://github.com/sgl-project/sglang-omni/pull/1410>
