@@ -18,14 +18,15 @@ The first milestone is text-side and transcript-side infrastructure:
 独立 ASR）口径的 SEGALE BLEU、XCOMET-XL 和漏译率；两种口径的偏差方向相反，
 跨配置比较必须并报。
 
-**当前决策状态（2026-08-30）**：speaker 音色跳变的直接修复已改为跨 turn
-保留 codec decoder state；phrase boundary 不再是修音色的必要条件。连续
-decoder 的四格复评得到：baseline 30.16→33.97（1×→1.5×，+3.81 BLEU），
-phrase v2-ep1 36.80→31.34（−5.46）。phrase 在 1× 仍高 6.64，但在 1.5×
-反低 2.63，因此降为 1× 质量候选，不作为跨语速默认操作点。当前 TTS 仍是旧
-trajectory 分布训练的 v7，没有根据 phrase-policy 输出重做 SFT；phrase 1.5×
-的目标音频总时长还反增 9.11%，TTS 分布失配是下一项需要用重训对照验证的
-假设。完整证据见实验台账 4.-34，轻量结果见
+**当前决策状态（2026-08-30）**：固定 codes A/B 已确认跨 turn 保留 codec
+decoder state 能直接修复 speaker 音色跳变；这项修复与 phrase policy 的价值
+判断正交。连续 decoder 的四格复评得到 baseline 30.16→33.97、phrase v2-ep1
+36.80→31.34（1×→1.5×），但 **这组结果不能用于选择 InfiniSST policy**：
+phrase 输出的 text/turn 分布已经改变，TTS 却仍是旧 trajectory 分布训练的
+v7，没有用 phrase-policy 输出重新 SFT。phrase 1.5× 的目标音频总时长反增
+9.11%，首先证明的是旧 TTS 与新 policy 的失配，而不是 phrase policy 本身缺乏
+跨语速鲁棒性。在用实际 phrase 输出重训 TTS 并重跑相同合同前，phrase 保持
+未裁决，不能升降级。完整证据见实验台账 4.-34，轻量结果见
 `projects/infinisst_moss_tts_cascade/artifacts/codec_context_phrase_eval_20260830/summary.json`。
 
 以下 En-Zh 1× 表是 2026-08-11 的历史操作点，保留作回归基线：

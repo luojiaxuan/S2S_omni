@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "COMPLETE",
+  "status": "COMPLETE_WITH_TTS_DISTRIBUTION_CONFOUND",
   "title": "连续 codec context 下 baseline 与 phrase v2-ep1 的跨语速级联复评",
   "date": "2026-08-30",
   "contract": "projects/infinisst_moss_tts_cascade/configs/codec_context_phrase_eval_20260830.json",
@@ -23,6 +23,12 @@
     "scoring": "逐 TTS turn 独立 Qwen3-ASR，加固定句界后做 SEGALE 对齐与 SacreBLEU tokenize=zh"
   },
   "tts_retrained_for_phrase_policy": false,
+  "validity": {
+    "policy_comparison_valid": false,
+    "reason": "phrase policy changes text content, turn length, and boundary distribution, but both phrase cells use the old v7 TTS trained on the previous trajectory distribution",
+    "valid_use": "diagnose old-v7 behavior on phrase-policy output under continuous codec decoding",
+    "invalid_use": "promote, demote, or rank the InfiniSST phrase policy against baseline"
+  },
   "cells": {
     "baseline_speed100": {
       "bleu": 30.16004035091062,
@@ -74,9 +80,9 @@
     "phrase_target_duration_delta_percent": 9.11
   },
   "decision": {
-    "speaker_stability": "跨 turn 保留 codec decoder state 是直接修复；phrase boundary 不再是修 speaker 音色跳变的必要条件",
-    "phrase_policy": "保留为 1x 质量候选，不作为跨语速默认操作点；1.5x 退化仍存在",
-    "next_discriminating_test": "若继续推进 phrase policy，先用其输出分布重做 TTS SFT，再复跑同一冻结四格合同"
+    "speaker_stability": "固定 codes A/B 独立确认跨 turn 保留 codec decoder state 是 speaker 跳变的直接修复；该结论不裁决 phrase policy 的其他价值",
+    "phrase_policy": "INCONCLUSIVE；由于 TTS 训练分布不匹配，本实验不得用于 phrase policy 的升降级或跨语速排名",
+    "next_discriminating_test": "必须用实际 phrase-policy 输出重做 TTS SFT，让 baseline 与 phrase 各自使用匹配训练分布的 TTS，再复跑同一冻结四格合同"
   },
   "artifacts": {
     "primary_run": {
