@@ -3,12 +3,14 @@
 上游：<https://github.com/OpenMOSS/MOSS-TTS>，基线 commit
 `58b20a0d5fcc6766658d50967a90a9d890009a46`。
 
-`moss_tts_s2s_omni.patch` 是本项目对上游的两处必要改动，之前只存在于
+`moss_tts_s2s_omni.patch` 是本项目对上游的四处必要改动，之前只存在于
 hyper00 的本地工作区（`/data04/jaxan/MOSS-TTS`），现固化进 Git 作为
 source of truth，便于在 Tilde 等新机器上复现：
 
 1. `moss_tts_realtime/finetuning/dataset.py` —— `context_only` turn 只进
-   上下文、不进 loss。v2.1/v3 的重复污染增强和 v4 的自生成历史都依赖它。
+   上下文、不进 loss；允许纯标点 turn 使用空 `audio_codes`，让模型学习直接
+   预测 audio EOS。phrase policy 会真实产生这种 turn，不能把标点重新并回
+   前一 turn，否则训练分布与推理分布仍不一致。
 2. `moss_tts_realtime/finetuning/sft.py` —— 修正 LR scheduler 步进。
    `accelerator.prepare()` 会让 scheduler 每个 optimizer step 推进
    `num_processes` 次，而上游传给 `get_scheduler` 的步数没有乘回来，导致

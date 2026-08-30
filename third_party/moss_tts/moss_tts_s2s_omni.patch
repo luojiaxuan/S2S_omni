@@ -1,7 +1,15 @@
 diff --git a/moss_tts_realtime/finetuning/dataset.py b/moss_tts_realtime/finetuning/dataset.py
-index 2008032..d854ff2 100644
+index 2008032..6dfa969 100644
 --- a/moss_tts_realtime/finetuning/dataset.py
 +++ b/moss_tts_realtime/finetuning/dataset.py
+@@ -74,5 +74,7 @@ class MossTTSRealtimeSFTDataset(Dataset):
+     def _norm_token(self, codes):
+         codes = np.asarray(codes, dtype=np.int64)
++        if codes.size == 0:
++            return np.empty((0, self.channels), dtype=np.int64)
+         if codes.ndim != 2:
+             raise ValueError(f"audio_codes must be 2-D, got shape {codes.shape}.")
+         if codes.shape[0] == self.channels and codes.shape[1] != self.channels:
 @@ -192,7 +192,9 @@ class MossTTSRealtimeSFTDataset(Dataset):
              else:
                  prefill_temp = "<|im_end|>\n<|im_start|>" + role + "\n"
