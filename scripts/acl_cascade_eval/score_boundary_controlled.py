@@ -100,7 +100,12 @@ def main() -> None:
         if len(turns) != len(input_rows[0]["segments"]):
             raise RuntimeError(f"talk{talk}: turn count mismatch")
 
-        wav_path = Path(summary["wav"])
+        # note (luojiaxuan): Summary files can move between cluster hosts. The
+        # artifact name is stable, while the absolute path records the source
+        # container mount and is not portable.
+        wav_path = args.wav_dir / Path(summary["wav"]).name
+        if not wav_path.exists():
+            raise FileNotFoundError(wav_path)
         with wave.open(str(wav_path), "rb") as handle:
             sample_rate = handle.getframerate()
             pcm = handle.readframes(handle.getnframes())
