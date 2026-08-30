@@ -1,0 +1,53 @@
+{
+  "hypothesis": "With one continuous codec decoder context per talk, the phrase-policy InfiniSST checkpoint no longer has a large cascade BLEU advantage over the baseline checkpoint.",
+  "frozen_inputs": {
+    "talks": [268, 367, 590, 110, 117],
+    "source_chunk_ms": 1920,
+    "source_speeds": [1.0, 1.5],
+    "infinisst_rows": "Reuse the previously generated one-row-per-talk JSONL files. Do not rerun InfiniSST.",
+    "tts_checkpoint": "gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj@1947001d",
+    "tts_sampling": {
+      "seed": 42,
+      "temperature": 0.8,
+      "top_p": 0.6,
+      "top_k": 30,
+      "repetition_penalty": 1.1,
+      "repetition_window": 50
+    },
+    "tts_history": {
+      "sliding_window": 11,
+      "soft_reset_keep": 3
+    },
+    "codec_context": "One AudioStreamDecoder and one codec.streaming context per talk. Generated per-turn codes are unchanged and re-decoded continuously.",
+    "asr": "Qwen/Qwen3-ASR-1.7B, independently per TTS turn with a forced punctuation boundary",
+    "alignment": "SEGALE d0041438abf097a1ec3055e7f09656ad6302f672",
+    "metric": "SacreBLEU with tokenize=zh over SEGALE-aligned segments"
+  },
+  "cells": [
+    {
+      "id": "baseline_speed100",
+      "infinisst": "current baseline",
+      "source_speed": 1.0,
+      "input_prefix": "chunk192"
+    },
+    {
+      "id": "baseline_speed150",
+      "infinisst": "current baseline",
+      "source_speed": 1.5,
+      "input_prefix": "speed150"
+    },
+    {
+      "id": "phrase_v2ep1_speed100",
+      "infinisst": "phrase v2-ep1",
+      "source_speed": 1.0,
+      "input_prefix": "phrv2e1"
+    },
+    {
+      "id": "phrase_v2ep1_speed150",
+      "infinisst": "phrase v2-ep1",
+      "source_speed": 1.5,
+      "input_prefix": "phrv2e1s150"
+    }
+  ],
+  "decision_rule": "Compare the four fixed cells against their prior reset-per-turn boundary-controlled BLEU values. Attribute changes only to codec decoder continuity."
+}

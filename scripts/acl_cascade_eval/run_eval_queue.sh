@@ -31,6 +31,9 @@ case "$mode" in
   # note (luojiaxuan): 句级缓冲档——必须排在 slidingsoft* 通配之前
   slidingsoft3sent) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep 3 --sentence-merge" ;;
   slidingsoft3phr) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep 3 --phrase-merge" ;;
+  # note (luojiaxuan): Keep the TTS history policy unchanged and only preserve the
+  # causal codec decoder state across all turns in one logical talk session.
+  slidingsoft3codecctx) rows_suffix="swrow"; extra="--sliding-window 11 --soft-reset-keep 3 --continuous-codec-context" ;;
   # note (luojiaxuan): phr4 = phrase 合并但 max_hold 由 8 收到 4。参数扫描的拐点：
   # 结尾标点仍有 79.6%（对 max_hold=8 的 97.2%），而最坏附加延迟 17.28s -> 9.60s、
   # 静默 p90 11.52s -> 7.68s。必须排在 slidingsoft* 通配之前。

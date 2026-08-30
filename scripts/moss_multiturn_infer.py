@@ -38,6 +38,11 @@ def parse_args() -> argparse.Namespace:
         help="optional directory for one compressed NPZ of generated audio codes per row",
     )
     parser.add_argument(
+        "--continuous-codec-context",
+        action="store_true",
+        help="re-decode the frozen per-turn codes with one codec streaming context per row",
+    )
+    parser.add_argument(
         "--output-stem",
         default="",
         help="artifact filename stem; allowed only when this invocation selects one row",
@@ -155,6 +160,7 @@ def main() -> None:
     codec = AutoModel.from_pretrained(args.codec_path, trust_remote_code=True).eval().to(device)
     codec_sr = int(getattr(codec.config, "sampling_rate", 24000))
     codebook_size = int(getattr(codec.config, "codebook_size", 1024))
+    samples_per_frame = int(getattr(codec.config, "downsample_rate", codec_sr / 12.5))
 
     with torch.inference_mode():
         # note (luojiaxuan): torchaudio 2.11 的 load() 走 torchcodec，需要计算节点
@@ -287,6 +293,28 @@ def main() -> None:
             inv = int(invalid.nonzero(as_tuple=False)[0].item())
             stop = inv if stop is None else min(stop, inv)
         return tokens[:stop] if stop is not None else tokens
+
+    def decode_continuous(codes_by_turn: list[np.ndarray]) -> np.ndarray:
+        decoder = AudioStreamDecoder(
+            codec,
+            chunk_frames=3,
+            overlap_frames=0,
+            decode_kwargs={"chunk_duration": -1},
+            device=device,
+        )
+        chunks: list[np.ndarray] = []
+        with codec.streaming(batch_size=1):
+            for codes in codes_by_turn:
+                if codes.shape[0] == 0:
+                    continue
+                decoder.push_tokens(torch.from_numpy(codes.astype(np.int64, copy=False)).to(device))
+                for chunk in decoder.audio_chunks():
+                    if chunk.numel():
+                        chunks.append(chunk.detach().float().cpu().numpy().reshape(-1))
+            final = decoder.flush()
+            if final is not None and final.numel():
+                chunks.append(final.detach().float().cpu().numpy().reshape(-1))
+        return np.concatenate(chunks) if chunks else np.zeros(0, dtype=np.float32)
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -663,12 +691,41 @@ def main() -> None:
                     n_ch = max(1, int(round(len(c_text) * frac)))
                     carry = (c_text[-n_ch:], c_codes[-keep:])
 
+        if args.continuous_codec_context and failure is None:
+            # note (luojiaxuan): Generation history already uses audio codes, so the reset
+            # per-turn PCM above can be discarded. Re-decode the frozen codes once for the
+            # full logical speaker session, then cut exact turn spans by codec frame count.
+            for idx, result in enumerate(turn_results):
+                if result.get("runaway_skipped"):
+                    keep_frames = len(row_pcm[idx]) // samples_per_frame
+                    row_codes[idx] = row_codes[idx][:keep_frames]
+            continuous_audio = decode_continuous(row_codes)
+            expected_lengths = [codes.shape[0] * samples_per_frame for codes in row_codes]
+            expected_total = sum(expected_lengths)
+            if len(continuous_audio) != expected_total:
+                raise RuntimeError(
+                    f"{row_id}: continuous codec samples {len(continuous_audio)} "
+                    f"!= expected {expected_total}"
+                )
+            row_pcm = []
+            offset = 0
+            for length in expected_lengths:
+                row_pcm.append(continuous_audio[offset : offset + length])
+                offset += length
+
+        for result, pcm in zip(turn_results, row_pcm, strict=True):
+            result["samples"] = len(pcm)
+            result["duration_s"] = round(len(pcm) / codec_sr, 3)
+
         record = {
             "row_id": row_id,
             "split": row.get("split"),
             "num_segments": len(segments),
             "turns": turn_results,
             "failure": failure,
+            "codec_context": (
+                "continuous_per_row" if args.continuous_codec_context else "reset_per_turn"
+            ),
         }
         if codes_out_dir is not None:
             if len(row_codes) != len(turn_results):
