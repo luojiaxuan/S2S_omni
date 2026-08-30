@@ -213,7 +213,8 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
   `luojiaxuan/codec-decoder-context-ab`，phrase 匹配 TTS 训练与复评的可复用状态
   为 `ee47d48`。Claude 交接及 phrase-boundary 脚本
   基线为 `main@ec60bfb`，后续连续 decoder、四格复评与结论均在该 SoT 分支。
-- 当前交接：`docs/handoff_codex_20260830.md`；可审计实验台账：
+- 当前交接：`docs/handoff_codex_to_claude_20260830.md`；Claude 上次传入的基线交接：
+  `docs/handoff_codex_20260830.md`；可审计实验台账：
   `docs/experiment_ledger_moss_tts_cascade_20260808.md`。
 - codec decoder 跨 turn context 的根因、复现与修复建议：
   `docs/moss_realtime_codec_context_issue.md`；上游跟踪
