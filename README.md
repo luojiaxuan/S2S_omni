@@ -18,16 +18,15 @@ The first milestone is text-side and transcript-side infrastructure:
 独立 ASR）口径的 SEGALE BLEU、XCOMET-XL 和漏译率；两种口径的偏差方向相反，
 跨配置比较必须并报。
 
-**当前决策状态（2026-08-29）**：主线已切到 InfiniSST phrase-boundary。
-用户倾向训练侧方案 A（InfiniSST 自己学会在短语边界 write）；输出侧方案 B
-（`--phrase-merge --phrase-max-hold 4`）保留为已完整跨速档验证的部署对照与
-回滚点。1× 下 A 与 B 的 BC BLEU/XCOMET 基本相同（38.32/0.652 vs
-38.42/0.650），A 的静默 p90 更低（5.8s vs 7.7s）。A 在 1.5× 的级联
-BC BLEU 低至 31.27，但 LoRA 插值扫描证明它的 InfiniSST 文本质量随语速仅降
-约 1.9 BLEU，与现役模型相同，短语结构也仍然有效；损失已定位到 TTS 或
-对齐/打分环节。**单版本最终裁定等待 1.5× 的 `target_s` 与实际 TTS 时长
-核对**。最新交接见 `docs/handoff_codex_20260830.md`，完整证据链见实验台账
-4.-22 至 4.-32；其后的 LoRA 插值诊断记录在最新交接中。
+**当前决策状态（2026-08-30）**：speaker 音色跳变的直接修复已改为跨 turn
+保留 codec decoder state；phrase boundary 不再是修音色的必要条件。连续
+decoder 的四格复评得到：baseline 30.16→33.97（1×→1.5×，+3.81 BLEU），
+phrase v2-ep1 36.80→31.34（−5.46）。phrase 在 1× 仍高 6.64，但在 1.5×
+反低 2.63，因此降为 1× 质量候选，不作为跨语速默认操作点。当前 TTS 仍是旧
+trajectory 分布训练的 v7，没有根据 phrase-policy 输出重做 SFT；phrase 1.5×
+的目标音频总时长还反增 9.11%，TTS 分布失配是下一项需要用重训对照验证的
+假设。完整证据见实验台账 4.-34，轻量结果见
+`projects/infinisst_moss_tts_cascade/artifacts/codec_context_phrase_eval_20260830/summary.json`。
 
 以下 En-Zh 1× 表是 2026-08-11 的历史操作点，保留作回归基线：
 
@@ -209,8 +208,9 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 
 代码与进展（Git）：
 
-- GitHub：<https://github.com/luojiaxuan/S2S_omni>；唯一主线为 `main`，
-  Claude 交接及 phrase-boundary 脚本基线为 `main@ec60bfb`。
+- GitHub：<https://github.com/luojiaxuan/S2S_omni>；当前研究 SoT 分支为
+  `luojiaxuan/codec-decoder-context-ab`。Claude 交接及 phrase-boundary 脚本
+  基线为 `main@ec60bfb`，后续连续 decoder、四格复评与结论均在该 SoT 分支。
 - 当前交接：`docs/handoff_codex_20260830.md`；可审计实验台账：
   `docs/experiment_ledger_moss_tts_cascade_20260808.md`。
 - codec decoder 跨 turn context 的根因、复现与修复建议：
@@ -258,6 +258,7 @@ MOSS-TTS-Realtime serving 上游状态：
 | --- | --- | --- | --- |
 | **InfiniSST phrase v2 ep1 LoRA（方案 A 交付候选）** | Aries `/mnt/gemini/data2/jiaxuanluo/stage2_phrase_v2ep1_fixed.bin` | HF model repo TBD | `PENDING_HF_UPLOAD`；380,489,319 B；SHA256 `1f2c795f8500d1d8c78e5d93e09d09bb43c6d7941cfc16cddb81a01af189a617` |
 | talk110 codec decoder context A/B | Mac `/Users/luojiaxuan/Downloads/talk110_codec_context_ab_20260829/`；hyper00 `/data04/jaxan/bundles/20260829-214351-438141000/` | HF dataset repo TBD | 完整 bundle 为 `PENDING_HF_UPLOAD`；同一份 8,581-frame codes，A/B 各 686.48 秒；用户确认连续 decoder 的 B 明显更稳定；boundary 109 的同区间 60 秒诊断对已发布到 [GitHub Release](https://github.com/luojiaxuan/S2S_omni/releases/tag/talk110-codec-context-ab-20260829) 并附在 [#1812 comment](https://github.com/sgl-project/sglang-omni/issues/1812#issuecomment-5465326690) |
+| 连续 decoder 四格级联复评 | hyper01 `/data02/jaxan/S2S_omni/runs/20260830-044041-145584000` | `gavinlaw/infinisst-moss-tts-en-zh-multiturn/eval/codec-context-phrase-20260830/` | `PENDING_HF_UPLOAD`；1.6G；20/20 talk、四格 WAV/ASR/SEGALE/BLEU 完整，轻量 summary 已入 Git |
 
 诊断权重（v3、α=0.5/0.75）、训练 provenance 和远端运行路径见
 `docs/remote_artifacts.md`。v1 全量 target wavs（13G，已弃用不传）与 v2

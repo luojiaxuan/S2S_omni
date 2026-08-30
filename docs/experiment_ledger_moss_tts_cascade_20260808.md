@@ -530,6 +530,46 @@ GPT、贴平 KIT，未及 Gemini。
   PR conversation 另有 issue 与同区间 60 秒修复前后 WAV 直链：
   <https://github.com/sgl-project/sglang-omni/pull/1410#issuecomment-5465382854>。
 
+### 4.-34 连续 codec context 后复评 baseline / phrase（2026-08-30，完成）
+
+- **要回答的问题**：speaker 跳变由 codec reset 解释后，InfiniSST phrase-boundary
+  重训是否仍有必要；它在 1.5× 的 BLEU 下跌是否会随 decoder context 修复消失。
+- **TTS 训练状态**：**没有针对 phrase-policy 输出重新做 TTS SFT**。四格都继续用
+  `gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj@1947001d`；该 checkpoint
+  来自旧 trajectory 分布，不是 phrase v2-ep1 的长 turn 输出分布。
+- **冻结合同**：复用已生成的一行一 talk InfiniSST rows，不重跑 InfiniSST；talk
+  268/367/590/110/117，1× 与 1.5×；v7 TTS seed 42、滑窗 11、soft reset keep=3。
+  每个 talk 只创建一个 `AudioStreamDecoder` 和一个 `codec.streaming()` context，
+  再按每 turn 的 codec frame 数精确切回 PCM。逐 turn Qwen3-ASR，强制句界，
+  SEGALE `d0041438`，SacreBLEU `tokenize=zh`。
+- **结果**：
+
+  | InfiniSST | 1× BLEU | 1.5× BLEU | 加速变化 | 1× / 1.5× target_s |
+  | --- | ---: | ---: | ---: | ---: |
+  | baseline | 30.16 | **33.97** | **+3.81** | 3092.16 / 3123.04 |
+  | phrase v2-ep1 | **36.80** | 31.34 | **−5.46** | 3265.52 / 3562.96 |
+
+  phrase 在 1× 比 baseline 高 6.64 BLEU，但在 1.5× 反低 2.63。phrase
+  1.5× 的目标音频总时长较 1× **增加 297.44 秒（+9.11%）**；baseline 只增
+  30.88 秒（+1.00%）。加速源输入没有让 phrase 的 TTS 更紧凑，反而生成更长。
+- **与旧 reset-per-turn 口径对照**：旧 BLEU 为 baseline 34.11/36.50、phrase
+  38.32/31.27。连续 decoder 改善了听感，但四格 BLEU 变化分别为 −3.95、
+  −2.53、−1.52、+0.07；它没有解释或修复 phrase 的 1.5× 退化。
+- **判读**：speaker 音色跳变与 phrase 的快速源退化是两个问题。跨 turn codec
+  context 是前者的直接修复，phrase boundary 不再是修 speaker 的必要条件。
+  phrase v2-ep1 仍有显著 1× 内容优势，但不能作为跨语速默认操作点。结合未重训
+  TTS 和异常的 target duration，当前最强嫌疑是 TTS 对新 text/turn 分布失配；
+  这仍需 phrase-policy TTS SFT 对照才能直接确认。
+- **Keep/Drop**：keep 连续 codec context；phrase v2-ep1 降为 1× 质量候选。
+  若继续推进 phrase，先基于新 policy 输出重做 TTS SFT，再复跑同一冻结合同。
+- **产物与版本**：轻量结果在
+  `projects/infinisst_moss_tts_cascade/artifacts/codec_context_phrase_eval_20260830/summary.json`；
+  配置在 `projects/infinisst_moss_tts_cascade/configs/codec_context_phrase_eval_20260830.json`；
+  生成代码 `c1be51b`，最终评分代码 `f2d179f`。完整 run 为 hyper01
+  `/data02/jaxan/S2S_omni/runs/20260830-044041-145584000`（1.6G），计划上传
+  `gavinlaw/infinisst-moss-tts-en-zh-multiturn/eval/codec-context-phrase-20260830/`，
+  当前状态 `PENDING_HF_UPLOAD`。
+
 ### 4.-31 v3 证伪"内容密度"诊断；参数扫描显示规则档本可调（2026-08-29）
 
 - **v3（multiplier 1-4，1 epoch）结果**：
