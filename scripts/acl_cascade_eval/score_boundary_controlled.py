@@ -97,7 +97,7 @@ def main() -> None:
         if summary.get("codec_context") != "continuous_per_row":
             raise RuntimeError(f"talk{talk}: synthesis did not preserve codec context")
         turns = summary["turns"]
-        if len(turns) != len(input_rows[0]["segments"]):
+        if len(turns) != int(summary["num_segments"]):
             raise RuntimeError(f"talk{talk}: turn count mismatch")
 
         # note (luojiaxuan): Summary files can move between cluster hosts. The
