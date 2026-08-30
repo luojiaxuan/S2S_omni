@@ -229,7 +229,12 @@ def main() -> None:
     args = parse_args()
     task_root = args.task_root.resolve()
     config = json.loads((task_root / "config.json").read_text(encoding="utf-8"))
-    talks = [int(value) for value in config["talks"]]
+    talks = [
+        int(value)
+        for value in config.get("talks", config.get("frozen_inputs", {}).get("talks", []))
+    ]
+    if not talks:
+        raise ValueError("config does not define talks")
     cache_root = Path("/root/.cache/huggingface/hub")
     model_path = snapshot(
         cache_root,
