@@ -64,6 +64,13 @@ def install_dependencies(task_root: Path) -> Path:
     return site_packages
 
 
+def load_hf_token() -> str | None:
+    token_path = Path("/data/.secrets/hf_token")
+    if not token_path.is_file():
+        return None
+    return token_path.read_text().strip() or None
+
+
 def prepare_data(task_root: Path, config: dict, env: dict[str, str]) -> Path:
     from huggingface_hub import snapshot_download
     import zstandard
@@ -80,6 +87,7 @@ def prepare_data(task_root: Path, config: dict, env: dict[str, str]) -> Path:
             repo_type="dataset",
             revision=config["data"]["revision"],
             allow_patterns=config["data"]["allow_patterns"],
+            token=load_hf_token(),
         )
     )
     clean_path = data_dir / "clean.jsonl"
@@ -142,6 +150,7 @@ def prepare_model(task_root: Path, config: dict) -> Path:
         snapshot_download(
             repo_id=config["model"]["repo"],
             revision=config["model"]["revision"],
+            token=load_hf_token(),
         )
     )
     asset_dir = task_root / "assets"
