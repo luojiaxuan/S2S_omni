@@ -1,0 +1,133 @@
+{
+  "runaway_threshold_sec_per_char": 0.6,
+  "conditions": {
+    "1x": {
+      "bleu": {
+        "268": {
+          "segments": 106,
+          "null": 1,
+          "bleu": 32.84
+        },
+        "367": {
+          "segments": 80,
+          "null": 1,
+          "bleu": 36.7
+        },
+        "590": {
+          "segments": 69,
+          "null": 3,
+          "bleu": 34.75
+        },
+        "110": {
+          "segments": 108,
+          "null": 1,
+          "bleu": 36.53
+        },
+        "117": {
+          "segments": 104,
+          "null": 1,
+          "bleu": 30.79
+        },
+        "ALL": {
+          "segments": 467,
+          "null": 7,
+          "bleu": 34.09
+        }
+      },
+      "tts_asr": {
+        "turns": 879,
+        "cer_overall": 16.27,
+        "cer_by_length": {
+          "1-5": 37.43,
+          "16-30": 15.67,
+          "31+": 7.68,
+          "6-15": 18.04
+        },
+        "turns_by_length": {
+          "1-5": 49,
+          "16-30": 389,
+          "31+": 23,
+          "6-15": 418
+        },
+        "cer_p50": 0.0,
+        "cer_p90": 0.375,
+        "turns_cer_over_50pct": 75,
+        "sec_per_char_p50": 0.231,
+        "sec_per_char_p90": 0.314,
+        "sec_per_char_p99": 0.997,
+        "runaway_turns": 30,
+        "runaway_by_length": {
+          "16-30": 12,
+          "6-15": 17,
+          "1-5": 1
+        },
+        "runaway_audio_s": 381.9,
+        "total_audio_s": 3593.8
+      }
+    },
+    "1.5x": {
+      "bleu": {
+        "268": {
+          "segments": 101,
+          "null": 1,
+          "bleu": 27.46
+        },
+        "367": {
+          "segments": 77,
+          "null": 1,
+          "bleu": 31.48
+        },
+        "590": {
+          "segments": 68,
+          "null": 3,
+          "bleu": 30.38
+        },
+        "110": {
+          "segments": 101,
+          "null": 1,
+          "bleu": 34.54
+        },
+        "117": {
+          "segments": 129,
+          "null": 28,
+          "bleu": 25.45
+        },
+        "ALL": {
+          "segments": 476,
+          "null": 34,
+          "bleu": 29.61
+        }
+      },
+      "tts_asr": {
+        "turns": 709,
+        "cer_overall": 25.53,
+        "cer_by_length": {
+          "1-5": 64.0,
+          "16-30": 24.77,
+          "31+": 18.16,
+          "6-15": 32.23
+        },
+        "turns_by_length": {
+          "1-5": 16,
+          "16-30": 404,
+          "31+": 54,
+          "6-15": 235
+        },
+        "cer_p50": 0.0,
+        "cer_p90": 0.971,
+        "turns_cer_over_50pct": 99,
+        "sec_per_char_p50": 0.231,
+        "sec_per_char_p90": 0.425,
+        "sec_per_char_p99": 1.4,
+        "runaway_turns": 40,
+        "runaway_by_length": {
+          "16-30": 17,
+          "6-15": 21,
+          "1-5": 2
+        },
+        "runaway_audio_s": 512.7,
+        "total_audio_s": 3766.3
+      }
+    }
+  }
+}
