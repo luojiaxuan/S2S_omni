@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import os
 import subprocess
@@ -70,6 +71,7 @@ def main() -> None:
         marker.write_text(fingerprint + "\n")
 
     sys.path.insert(0, str(site_packages))
+    sys.path.insert(0, str(eval_root / "resources" / "r0" / "SEGALE"))
     from huggingface_hub import snapshot_download
 
     token_path = Path("/data/.secrets/hf_token")
@@ -103,7 +105,6 @@ def main() -> None:
         "sentence-transformers",
         "soundfile",
         "spacy",
-        "vecalign",
     ]
     versions = {}
     for name in distributions:
@@ -111,6 +112,9 @@ def main() -> None:
             versions[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
             versions[name] = None
+    versions["vecalign"] = (
+        "source" if importlib.util.find_spec("vecalign") is not None else None
+    )
     (eval_root / "runtime_versions.json").write_text(
         json.dumps(versions, indent=2) + "\n", encoding="utf-8"
     )
