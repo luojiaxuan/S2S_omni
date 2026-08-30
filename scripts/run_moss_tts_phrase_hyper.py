@@ -54,6 +54,7 @@ def install_dependencies(task_root: Path) -> Path:
                 "pip",
                 "install",
                 "--upgrade",
+                "--no-deps",
                 "--target",
                 str(site_packages),
                 *REQUIREMENTS,
