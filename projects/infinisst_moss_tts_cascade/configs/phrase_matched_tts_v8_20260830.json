@@ -46,6 +46,13 @@
   },
   "evaluation": {
     "decoder_mode": "continuous",
+    "resources": {
+      "dataset_repo": "gavinlaw/rasst-main-result-data",
+      "dataset_revision": "96b44797d8926d14ef7535e831b861b6af05a28e",
+      "codec_revision": "3cd226ba2947efa357ef453bcad111b6eafba782",
+      "asr_revision": "7278e1e70fe206f11671096ffdd38061171dd6e5",
+      "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672"
+    },
     "cells": [
       "baseline_v7_1.0x",
       "baseline_v7_1.5x",
