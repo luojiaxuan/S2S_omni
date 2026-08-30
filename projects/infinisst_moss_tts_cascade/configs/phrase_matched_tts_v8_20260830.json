@@ -42,7 +42,9 @@
     "attn_implementation": "sdpa",
     "transformers_version": "5.6.0",
     "seed": 42,
-    "run_root": "/data02/jaxan/runs/20260830-200824-401864000"
+    "host_run_root": "/data02/jaxan/tmp/runs/20260830-200824-401864000",
+    "container_run_root": "/data/tmp/runs/20260830-200824-401864000",
+    "container": "sglang-omni-jaxan-20260830-201134-498460000"
   },
   "evaluation": {
     "decoder_mode": "continuous",
