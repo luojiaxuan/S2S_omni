@@ -1,0 +1,33 @@
+{
+  "multiplier": 1,
+  "step_seconds": 0.96,
+  "max_hold_steps": 8,
+  "min_chars": 6,
+  "rows": 6385,
+  "rules": {
+    "A": {
+      "writes": 43943,
+      "char_latency_mean_s": 1.762,
+      "char_latency_p50_s": 0.96,
+      "char_latency_p90_s": 4.8,
+      "first_block_wait_p90_s": 6.72,
+      "first_block_wait_max_s": 6.72,
+      "median_chars": 17,
+      "pct_le5_chars": 1.24,
+      "pct_end_sentence_final": 56.84,
+      "pct_end_intra_sentence": 29.76
+    },
+    "B": {
+      "writes": 58572,
+      "char_latency_mean_s": 1.147,
+      "char_latency_p50_s": 0.96,
+      "char_latency_p90_s": 2.88,
+      "first_block_wait_p90_s": 4.8,
+      "first_block_wait_max_s": 6.72,
+      "median_chars": 13.0,
+      "pct_le5_chars": 1.12,
+      "pct_end_sentence_final": 49.01,
+      "pct_end_intra_sentence": 47.94
+    }
+  }
+}
