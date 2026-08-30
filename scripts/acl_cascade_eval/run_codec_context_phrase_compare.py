@@ -260,11 +260,15 @@ def main() -> None:
         "1947001d",
     )
     codec_path = snapshot(cache_root, "models--OpenMOSS-Team--MOSS-Audio-Tokenizer")
-    dataset_root = snapshot(cache_root, "datasets--gavinlaw--rasst-main-result-data")
+    dataset_root = (
+        None
+        if args.synthesis_only
+        else snapshot(cache_root, "datasets--gavinlaw--rasst-main-result-data")
+    )
     resolved = {
         "model_path": str(model_path),
         "codec_path": str(codec_path),
-        "dataset_root": str(dataset_root),
+        "dataset_root": str(dataset_root) if dataset_root is not None else None,
     }
     (task_root / "resolved_resources.json").write_text(
         json.dumps(resolved, indent=2) + "\n", encoding="utf-8"
@@ -299,6 +303,9 @@ def main() -> None:
         )
         print(json.dumps(result, ensure_ascii=False), flush=True)
         return
+
+    if dataset_root is None:
+        raise RuntimeError("dataset snapshot is required for scoring")
 
     asr_log = (task_root / "logs" / "asr-server.log").open("a", encoding="utf-8")
     asr_env = os.environ.copy()
