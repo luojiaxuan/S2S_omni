@@ -24,6 +24,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--moss-tts-root", type=Path, default=None)
     parser.add_argument("--segale-python", default="/data/venvs/segale_eval2/bin/python")
     parser.add_argument("--speech-latency-repo", type=Path, default=None)
+    parser.add_argument("--cells", default="c0,c1,c2,c3")
+    parser.add_argument("--synthesis-only", action="store_true")
     return parser.parse_args()
 
 
@@ -246,6 +248,9 @@ def main() -> None:
     ]
     if not talks:
         raise ValueError("config does not define talks")
+    selected_cells = tuple(value for value in args.cells.split(",") if value)
+    if not selected_cells or any(value not in {"c0", "c1", "c2", "c3"} for value in selected_cells):
+        raise ValueError(f"invalid cells: {args.cells}")
     moss_tts_root = args.moss_tts_root or (task_root / "resources" / "m0")
     speech_latency_repo = args.speech_latency_repo or (task_root / "resources" / "r0")
     cache_root = Path("/root/.cache/huggingface/hub")
@@ -265,8 +270,12 @@ def main() -> None:
         json.dumps(resolved, indent=2) + "\n", encoding="utf-8"
     )
 
-    cell_queues = CELL_QUEUES if args.gpu_count == 2 else (("c0", "c1", "c2", "c3"),)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.gpu_count) as pool:
+    base_queues = CELL_QUEUES if args.gpu_count == 2 else (("c0", "c1", "c2", "c3"),)
+    cell_queues = tuple(
+        tuple(cell for cell in queue if cell in selected_cells) for queue in base_queues
+    )
+    cell_queues = tuple(queue for queue in cell_queues if queue)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(cell_queues)) as pool:
         futures = [
             pool.submit(
                 synthesize_queue,
@@ -282,6 +291,14 @@ def main() -> None:
         ]
         for future in futures:
             future.result()
+
+    if args.synthesis_only:
+        result = {"cells": selected_cells, "resolved_resources": resolved, "synthesis_done": True}
+        (task_root / "result" / "synthesis_summary.json").write_text(
+            json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        print(json.dumps(result, ensure_ascii=False), flush=True)
+        return
 
     asr_log = (task_root / "logs" / "asr-server.log").open("a", encoding="utf-8")
     asr_env = os.environ.copy()
