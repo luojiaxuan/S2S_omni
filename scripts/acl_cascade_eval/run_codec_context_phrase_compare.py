@@ -20,6 +20,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--task-root", required=True, type=Path)
     parser.add_argument("--asr-port", type=int, default=48573)
+    parser.add_argument("--gpu-count", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--moss-tts-root", type=Path, default=None)
+    parser.add_argument("--segale-python", default="/data/venvs/segale_eval2/bin/python")
+    parser.add_argument("--speech-latency-repo", type=Path, default=None)
     return parser.parse_args()
 
 
@@ -76,6 +80,7 @@ def synthesize_queue(
     model_path: Path,
     codec_path: Path,
     talks: list[int],
+    moss_tts_root: Path,
 ) -> None:
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = str(logical_gpu)
@@ -95,7 +100,7 @@ def synthesize_queue(
                 "--codec-path",
                 str(codec_path),
                 "--moss-tts-root",
-                "/data/MOSS-TTS/moss_tts_realtime",
+                str(moss_tts_root),
                 "--fixed-ref",
                 str(task_root / "input" / "ref.wav"),
                 "--rows-jsonl",
@@ -171,11 +176,17 @@ def score_cell(
     done.write_text("done\n", encoding="utf-8")
 
 
-def align_cell(task_root: Path, cell: str, dataset_root: Path) -> dict:
+def align_cell(
+    task_root: Path,
+    cell: str,
+    dataset_root: Path,
+    segale_python: str,
+    speech_latency_repo: Path,
+    logical_gpu: int,
+) -> dict:
     run_dir = task_root / "result" / cell
-    segale_python = "/data/venvs/segale_eval2/bin/python"
     env = os.environ.copy()
-    env["CUDA_VISIBLE_DEVICES"] = "1"
+    env["CUDA_VISIBLE_DEVICES"] = str(logical_gpu)
     log_path = task_root / "logs" / f"{cell}.align.log"
     run(
         [
@@ -196,7 +207,7 @@ def align_cell(task_root: Path, cell: str, dataset_root: Path) -> dict:
             "--run-dir",
             str(run_dir),
             "--speech-latency-repo",
-            "/data/speech-to-speech-latency",
+            str(speech_latency_repo),
             "--target-lang",
             "zh",
             "--device",
@@ -235,6 +246,8 @@ def main() -> None:
     ]
     if not talks:
         raise ValueError("config does not define talks")
+    moss_tts_root = args.moss_tts_root or (task_root / "resources" / "m0")
+    speech_latency_repo = args.speech_latency_repo or (task_root / "resources" / "r0")
     cache_root = Path("/root/.cache/huggingface/hub")
     model_path = snapshot(
         cache_root,
@@ -252,7 +265,8 @@ def main() -> None:
         json.dumps(resolved, indent=2) + "\n", encoding="utf-8"
     )
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+    cell_queues = CELL_QUEUES if args.gpu_count == 2 else (("c0", "c1", "c2", "c3"),)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.gpu_count) as pool:
         futures = [
             pool.submit(
                 synthesize_queue,
@@ -262,8 +276,9 @@ def main() -> None:
                 model_path,
                 codec_path,
                 talks,
+                moss_tts_root,
             )
-            for logical_gpu, queue in enumerate(CELL_QUEUES)
+            for logical_gpu, queue in enumerate(cell_queues)
         ]
         for future in futures:
             future.result()
@@ -309,7 +324,14 @@ def main() -> None:
         asr_log.close()
 
     summaries = {
-        cell: align_cell(task_root, cell, dataset_root)
+        cell: align_cell(
+            task_root,
+            cell,
+            dataset_root,
+            args.segale_python,
+            speech_latency_repo,
+            args.gpu_count - 1,
+        )
         for cell in ("c0", "c1", "c2", "c3")
     }
     result = {
