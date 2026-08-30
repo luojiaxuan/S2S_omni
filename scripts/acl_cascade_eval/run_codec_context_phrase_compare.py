@@ -21,6 +21,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--task-root", required=True, type=Path)
     parser.add_argument("--asr-port", type=int, default=48573)
     parser.add_argument("--gpu-count", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--model-path", type=Path, default=None)
+    parser.add_argument("--codec-path", type=Path, default=None)
     parser.add_argument("--moss-tts-root", type=Path, default=None)
     parser.add_argument("--segale-python", default="/data/venvs/segale_eval2/bin/python")
     parser.add_argument("--speech-latency-repo", type=Path, default=None)
@@ -254,12 +256,14 @@ def main() -> None:
     moss_tts_root = args.moss_tts_root or (task_root / "resources" / "m0")
     speech_latency_repo = args.speech_latency_repo or (task_root / "resources" / "r0")
     cache_root = Path("/root/.cache/huggingface/hub")
-    model_path = snapshot(
+    model_path = args.model_path or snapshot(
         cache_root,
         "models--gavinlaw--moss-tts-realtime-infinisst-en-zh-v7-traj",
         "1947001d",
     )
-    codec_path = snapshot(cache_root, "models--OpenMOSS-Team--MOSS-Audio-Tokenizer")
+    codec_path = args.codec_path or snapshot(
+        cache_root, "models--OpenMOSS-Team--MOSS-Audio-Tokenizer"
+    )
     dataset_root = (
         None
         if args.synthesis_only
@@ -333,7 +337,7 @@ def main() -> None:
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
             futures = [
                 pool.submit(score_cell, task_root, cell, dataset_root, args.asr_port)
-                for cell in ("c0", "c1", "c2", "c3")
+                for cell in selected_cells
             ]
             for future in futures:
                 future.result()
@@ -356,7 +360,7 @@ def main() -> None:
             speech_latency_repo,
             args.gpu_count - 1,
         )
-        for cell in ("c0", "c1", "c2", "c3")
+        for cell in selected_cells
     }
     result = {
         "cells": config["cells"],
