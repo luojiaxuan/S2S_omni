@@ -23,6 +23,9 @@ source of truth，便于在 Tilde 等新机器上复现：
    —— 适配 transformers 5.6 的 `create_causal_mask` 签名
    （`input_embeds` → `inputs_embeds`，去掉 `cache_position`）。不打这个
    补丁，多 turn 滑窗推理会在 local transformer 处直接抛错。
+4. `moss_tts_realtime/finetuning/sft.py` —— 支持按 step 保存完整
+   model/optimizer/scheduler/RNG state、从最近 checkpoint 恢复，以及由共享文件
+   请求一次安全 checkpoint。Tilde 的可抢占训练用它响应 Slurm requeue。
 
 应用方式：
 

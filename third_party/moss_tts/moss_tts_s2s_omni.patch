@@ -22,9 +22,91 @@ index 2008032..6dfa969 100644
                  text, audio_codes, prefill_temp, is_assistant=is_assistant,
              )
 diff --git a/moss_tts_realtime/finetuning/sft.py b/moss_tts_realtime/finetuning/sft.py
-index 67800a7..ca9a9eb 100644
+index 67800a7..e53edc2 100644
 --- a/moss_tts_realtime/finetuning/sft.py
 +++ b/moss_tts_realtime/finetuning/sft.py
+@@ -105,6 +105,9 @@ def parse_args() -> argparse.Namespace:
+     parser.add_argument("--max-train-steps", type=int, default=None)
+     parser.add_argument("--max-grad-norm", type=float, default=1.0)
+     parser.add_argument("--logging-steps", type=int, default=1)
++    parser.add_argument("--checkpointing-steps", type=int, default=0)
++    parser.add_argument("--resume-from-checkpoint", type=str, default=None)
++    parser.add_argument("--checkpoint-request-file", type=str, default=None)
+     parser.add_argument(
+         "--wandb-project",
+         type=str,
+@@ -200,6 +203,8 @@ def validate_args(args: argparse.Namespace) -> None:
+         raise ValueError("`max_grad_norm` must be >= 0.")
+     if args.logging_steps <= 0:
+         raise ValueError("`logging_steps` must be > 0.")
++    if args.checkpointing_steps < 0:
++        raise ValueError("`checkpointing_steps` must be >= 0.")
+     if args.num_workers < 0:
+         raise ValueError("`num_workers` must be >= 0.")
+     if args.n_vq is not None and args.n_vq <= 0:
+@@ -340,7 +345,60 @@ def save_checkpoint(
+             json.dump(train_args, f, indent=2, ensure_ascii=False)
+     accelerator.wait_for_everyone()
+-
+-
++
++
++def save_training_checkpoint(
++    accelerator: Accelerator,
++    model: MossTTSRealtime,
++    args: argparse.Namespace,
++    output_root: Path,
++    train_args: Dict[str, Any],
++    global_step: int,
++    epoch: int,
++    batches_in_epoch: int,
++) -> Path:
++    checkpoint_dir = output_root / f"checkpoint-step-{global_step}"
++    save_checkpoint(
++        accelerator=accelerator,
++        model=model,
++        model_path=args.model_path,
++        codec_path=args.codec_path,
++        output_dir=checkpoint_dir,
++        train_args=train_args,
++    )
++    accelerator.save_state(checkpoint_dir / "accelerator_state")
++    if accelerator.is_main_process:
++        state_path = checkpoint_dir / "trainer_state.json"
++        temporary_path = state_path.with_suffix(".json.tmp")
++        temporary_path.write_text(
++            json.dumps(
++                {
++                    "global_step": global_step,
++                    "epoch": epoch,
++                    "batches_in_epoch": batches_in_epoch,
++                },
++                indent=2,
++            )
++            + "\n",
++            encoding="utf-8",
++        )
++        temporary_path.replace(state_path)
++    accelerator.wait_for_everyone()
++    return checkpoint_dir
++
++
++def resolve_resume_checkpoint(value: Optional[str], output_root: Path) -> Optional[Path]:
++    if value is None:
++        return None
++    if value != "latest":
++        return Path(value)
++    candidates = []
++    for path in output_root.glob("checkpoint-step-*"):
++        match = re.fullmatch(r"checkpoint-step-(\d+)", path.name)
++        if match and (path / "trainer_state.json").is_file():
++            candidates.append((int(match.group(1)), path))
++    return max(candidates, default=(0, None))[1]
++
++
+ def shard_paths_for_rank(paths: List[Path], world_size: int, rank: int) -> tuple[List[Path], bool]:
+     if world_size <= 1:
+         return paths, False
 @@ -487,11 +487,16 @@ def main() -> None:
          f"optimizer_steps_per_epoch={update_steps_per_epoch} "
          f"max_train_steps={max_train_steps}"
@@ -44,6 +126,104 @@ index 67800a7..ca9a9eb 100644
      )
  
      if using_pre_sharded_files:
+@@ -511,7 +574,20 @@ def main() -> None:
+     output_root = Path(args.output_dir)
+     if accelerator.is_main_process:
+         output_root.mkdir(parents=True, exist_ok=True)
+-
++    accelerator.wait_for_everyone()
++
++    resume_checkpoint = resolve_resume_checkpoint(args.resume_from_checkpoint, output_root)
++    resume_state = None
++    if resume_checkpoint is not None:
++        resume_state = json.loads(
++            (resume_checkpoint / "trainer_state.json").read_text(encoding="utf-8")
++        )
++        accelerator.load_state(resume_checkpoint / "accelerator_state")
++        accelerator.print(
++            f"[{format_timestamp()}] Resumed training from {resume_checkpoint} "
++            f"at step={resume_state['global_step']}"
++        )
++
+     train_args_to_save = vars(args).copy()
+     train_args_to_save["global_batch_size"] = global_batch_size
+     train_args_to_save["global_batch_size_formula"] = global_batch_formula
+@@ -553,6 +629,7 @@ def main() -> None:
+             output_root,
+             train_args_to_save,
+             wandb_module,
++            resume_state,
+         )
+     finally:
+         if wandb_module is not None:
+@@ -571,15 +648,25 @@ def _training_loop(
+     output_root: Path,
+     train_args_to_save: Dict[str, Any],
+     wandb_module: Optional[Any],
++    resume_state: Optional[Dict[str, Any]],
+ ) -> None:
+-    global_step = 0
+-    completed_epochs = 0
++    global_step = int(resume_state["global_step"]) if resume_state else 0
++    completed_epochs = int(resume_state["epoch"]) if resume_state else 0
++    start_epoch = int(resume_state["epoch"]) if resume_state else 0
++    resume_batches = int(resume_state["batches_in_epoch"]) if resume_state else 0
+     last_log_time = time.perf_counter()
+     last_logged_step = 0
+-
+-    for epoch in range(args.num_epochs):
++
++    for epoch in range(start_epoch, args.num_epochs):
+         model.train()
+-        for batch in train_dataloader:
++        epoch_dataloader = train_dataloader
++        batch_offset = 0
++        if epoch == start_epoch and resume_batches:
++            epoch_dataloader = accelerator.skip_first_batches(
++                train_dataloader, resume_batches
++            )
++            batch_offset = resume_batches
++        for batch_index, batch in enumerate(epoch_dataloader, start=batch_offset):
+             with accelerator.accumulate(model):
+                 # input_ids      : [B, T, 17]  (1 text + 16 audio channels)
+                 # attention_mask : [B, T]       (bool, False at right-padded positions)
+@@ -638,6 +725,35 @@ def _training_loop(
+                             },
+                             step=global_step,
+                         )
+-
++
++                checkpoint_requested = bool(
++                    args.checkpoint_request_file
++                    and Path(args.checkpoint_request_file).exists()
++                )
++                checkpoint_due = bool(
++                    args.checkpointing_steps
++                    and global_step % args.checkpointing_steps == 0
++                )
++                if checkpoint_due or checkpoint_requested:
++                    checkpoint_dir = save_training_checkpoint(
++                        accelerator=accelerator,
++                        model=model,
++                        args=args,
++                        output_root=output_root,
++                        train_args=train_args_to_save,
++                        global_step=global_step,
++                        epoch=epoch,
++                        batches_in_epoch=batch_index + 1,
++                    )
++                    accelerator.print(
++                        f"[{format_timestamp()}] Saved restartable checkpoint "
++                        f"at {checkpoint_dir}"
++                    )
++                if checkpoint_requested:
++                    accelerator.print(
++                        f"[{format_timestamp()}] Stopping after checkpoint request."
++                    )
++                    return
++
+                 if global_step >= max_train_steps:
+                     break
 diff --git a/moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py b/moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py
 index 6d204fe..5028918 100644
 --- a/moss_tts_realtime/mossttsrealtime/modeling_mossttsrealtime_local.py
