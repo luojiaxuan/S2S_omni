@@ -25,7 +25,7 @@ REQUIREMENTS = [
     "safetensors==0.6.2",
     "scipy==1.16.2",
     "tiktoken==0.12.0",
-    "transformers==5.0.0",
+    "transformers==5.6.0",
     "zstandard",
 ]
 

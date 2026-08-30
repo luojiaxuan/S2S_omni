@@ -40,6 +40,7 @@
     "num_workers": 2,
     "mixed_precision": "bf16",
     "attn_implementation": "sdpa",
+    "transformers_version": "5.6.0",
     "seed": 42,
     "run_root": "/data02/jaxan/runs/20260830-200824-401864000"
   },
