@@ -164,7 +164,7 @@ def main() -> None:
     site_packages = install_dependencies(task_root)
     env = os.environ.copy()
     env["PYTHONPATH"] = os.pathsep.join(
-        [str(site_packages), str(task_root / "code" / "moss"), env.get("PYTHONPATH", "")]
+        [str(site_packages), str(task_root / "code" / "src"), env.get("PYTHONPATH", "")]
     )
     sys.path.insert(0, str(site_packages))
 
@@ -178,7 +178,7 @@ def main() -> None:
             "torch.distributed.run",
             "--nproc_per_node",
             str(training["num_processes"]),
-            str(task_root / "code" / "moss" / "moss_tts_realtime" / "finetuning" / "sft.py"),
+            str(task_root / "code" / "src" / "moss_tts_realtime" / "finetuning" / "sft.py"),
             "--model-path",
             str(base_model),
             "--codec-path",
