@@ -20,14 +20,14 @@ The first milestone is text-side and transcript-side infrastructure:
 
 **当前决策状态（2026-08-30）**：固定 codes A/B 已确认跨 turn 保留 codec
 decoder state 能直接修复 speaker 音色跳变；这项修复与 phrase policy 的价值
-判断正交。连续 decoder 的四格复评得到 baseline 30.16→33.97、phrase v2-ep1
-36.80→31.34（1×→1.5×），但 **这组结果不能用于选择 InfiniSST policy**：
-phrase 输出的 text/turn 分布已经改变，TTS 却仍是旧 trajectory 分布训练的
-v7，没有用 phrase-policy 输出重新 SFT。phrase 1.5× 的目标音频总时长反增
-9.11%，首先证明的是旧 TTS 与新 policy 的失配，而不是 phrase policy 本身缺乏
-跨语速鲁棒性。在用实际 phrase 输出重训 TTS 并重跑相同合同前，phrase 保持
-未裁决，不能升降级。完整证据见实验台账 4.-34，轻量结果见
-`projects/infinisst_moss_tts_cascade/artifacts/codec_context_phrase_eval_20260830/summary.json`。
+判断正交。现在已用实际 phrase-policy trajectory 重训 MOSS-TTS v8，并在连续
+decoder 下复跑相同 5-talk 合同。BLEU 为 **34.09→29.61**（1×→1.5×，
+−4.48）；匹配训练只把旧 v7 + phrase 的 −5.46 缩小约 0.98，未消除退化。
+1.5× 虽多输出 3.06% 文字，生成音频却多 4.80%，null alignment 从 1.50%
+升至 7.14%。因此旧 TTS 分布偏移不是跨语速退化的充分解释；phrase policy
+暂不作为跨语速默认配置。级联 BLEU 仍不能把剩余问题单独归因到 InfiniSST
+或 TTS。完整证据见实验台账 4.-35，轻量结果见
+`projects/infinisst_moss_tts_cascade/artifacts/phrase_matched_tts_eval_20260830/summary.json`。
 
 以下 En-Zh 1× 表是 2026-08-11 的历史操作点，保留作回归基线：
 
@@ -231,6 +231,7 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 
 | checkpoint | repo | 状态 |
 | --- | --- | --- |
+| **v8 phrase-policy matched** | [gavinlaw/moss-tts-realtime-infinisst-en-zh-v8-phrase](https://huggingface.co/gavinlaw/moss-tts-realtime-infinisst-en-zh-v8-phrase/tree/521e09faa2c318801673d852e29e82a2476263b0) | uploaded（`521e09fa`）；46,753 行匹配训练，连续 decoder BLEU 34.09→29.61 |
 | **v7 traj（当前 TTS checkpoint，public + model card）** | [gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj](https://huggingface.co/gavinlaw/moss-tts-realtime-infinisst-en-zh-v7-traj) | uploaded（`1947001d`），2026-08-21 转 public |
 | v6 midstart | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v6-midstart` | uploaded（`82b58902`） |
 | v3 longsess（历史操作点） | `gavinlaw/moss-tts-realtime-infinisst-en-zh-v3-longsess` | uploaded |
@@ -243,7 +244,7 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 
 | dataset | repo | 内容 |
 | --- | --- | --- |
-| 多 turn 训练数据 | `gavinlaw/infinisst-moss-tts-en-zh-multiturn` | prepared v2/v3（jsonl.zst）、固定音色 ref、row manifests、ACL talk 级级联音频（三速度）；`cdd04fde` |
+| 多 turn 训练数据 | [gavinlaw/infinisst-moss-tts-en-zh-multiturn](https://huggingface.co/datasets/gavinlaw/infinisst-moss-tts-en-zh-multiturn/tree/edd953263d1959f8245c12f45156c7c3cc0fde3f) | prepared v2/v3、phrase v8 匹配训练集、固定音色 ref、row manifests、ACL talk 级级联音频与复评产物；`edd95326` |
 | 源 segment 包 | `gavinlaw/infinisst-moss-tts-en-zh-segments` | 原始 source wavs + manifests（`c54868f0`） |
 
 MOSS-TTS-Realtime serving 上游状态：

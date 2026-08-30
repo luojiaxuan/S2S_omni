@@ -26,7 +26,10 @@
     "repo": "OpenMOSS-Team/MOSS-TTS-Realtime",
     "revision": "75682787d8e2fcc73faca37ba2931453ca9c4022",
     "codec_repo": "OpenMOSS-Team/MOSS-Audio-Tokenizer",
-    "codec_revision": "3cd226ba2947efa357ef453bcad111b6eafba782"
+    "codec_revision": "3cd226ba2947efa357ef453bcad111b6eafba782",
+    "output_repo": "gavinlaw/moss-tts-realtime-infinisst-en-zh-v8-phrase",
+    "output_revision": "521e09faa2c318801673d852e29e82a2476263b0",
+    "model_safetensors_sha256": "074964929bce38b9069efc07789336dd231de6d5426554c2662169b610a5e4e9"
   },
   "training": {
     "host": "hyper00",
@@ -57,12 +60,25 @@
       "asr_revision": "7278e1e70fe206f11671096ffdd38061171dd6e5",
       "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672"
     },
-    "cells": [
-      "baseline_v7_1.0x",
-      "baseline_v7_1.5x",
+    "evaluated_cells": [
       "phrase_v8_1.0x",
       "phrase_v8_1.5x"
     ],
-    "primary_metric": "corpus BLEU from the same ASR and scorer"
+    "historical_reference_cells": [
+      "baseline_v7_1.0x",
+      "baseline_v7_1.5x",
+      "phrase_v2ep1_with_v7_tts_1.0x",
+      "phrase_v2ep1_with_v7_tts_1.5x"
+    ],
+    "primary_metric": "corpus BLEU from the same ASR and scorer",
+    "artifact_repo": "gavinlaw/infinisst-moss-tts-en-zh-multiturn",
+    "artifact_revision": "edd953263d1959f8245c12f45156c7c3cc0fde3f",
+    "artifact_path": "eval/phrase-matched-tts-v8-20260830/",
+    "result": {
+      "phrase_v8_1.0x_bleu": 34.085473321359046,
+      "phrase_v8_1.5x_bleu": 29.607478927990623,
+      "speed_delta_bleu": -4.477994393368423,
+      "artifact": "projects/infinisst_moss_tts_cascade/artifacts/phrase_matched_tts_eval_20260830/summary.json"
+    }
   }
 }

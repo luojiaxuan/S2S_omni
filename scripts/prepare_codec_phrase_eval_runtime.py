@@ -6,17 +6,23 @@ import importlib.metadata
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 
-REQUIREMENTS = [
-    "Cython>=3.0",
-    "sacrebleu[ja]>=2.5",
-    "sentence-transformers>=3.0",
-    "soundfile>=0.12",
-    "spacy>=3.7",
+RESOLVED_REQUIREMENTS = [
+    "numpy==1.26.4",
+    "sacrebleu==2.6.0",
+    "soundfile==0.14.0",
+    "spacy==3.8.16",
+    "spacy-pkuseg==0.0.33",
+    "https://github.com/explosion/spacy-models/releases/download/zh_core_web_sm-3.8.0/zh_core_web_sm-3.8.0-py3-none-any.whl",
+]
+NO_DEPS_REQUIREMENTS = [
+    "Cython==3.3.0",
+    "sentence-transformers==6.0.0",
 ]
 
 
@@ -38,10 +44,23 @@ def main() -> None:
     eval_root = task_root / "eval"
     config = json.loads((task_root / "code" / "config.json").read_text())
     resources = config["evaluation"]["resources"]
-    site_packages = task_root / "env" / "site"
-    fingerprint = hashlib.sha256("\n".join(REQUIREMENTS).encode()).hexdigest()
+    site_packages = task_root / "env" / "eval-site"
+    segale_source = eval_root / "resources" / "r0" / "SEGALE"
+    fingerprint_inputs = [
+        *RESOLVED_REQUIREMENTS,
+        *NO_DEPS_REQUIREMENTS,
+        resources["speech_latency_revision"],
+    ]
+    fingerprint = hashlib.sha256("\n".join(fingerprint_inputs).encode()).hexdigest()
     marker = task_root / "env" / "evaluation_requirements.sha256"
-    if not marker.is_file() or marker.read_text().strip() != fingerprint:
+    if (
+        not site_packages.is_dir()
+        or not marker.is_file()
+        or marker.read_text().strip() != fingerprint
+    ):
+        if site_packages.exists():
+            shutil.rmtree(site_packages)
+        site_packages.mkdir(parents=True)
         run(
             [
                 sys.executable,
@@ -49,10 +68,9 @@ def main() -> None:
                 "pip",
                 "install",
                 "--upgrade",
-                "--no-deps",
                 "--target",
                 str(site_packages),
-                *REQUIREMENTS,
+                *RESOLVED_REQUIREMENTS,
             ]
         )
         run(
@@ -65,13 +83,41 @@ def main() -> None:
                 "--no-deps",
                 "--target",
                 str(site_packages),
-                str(eval_root / "resources" / "r0" / "SEGALE"),
+                *NO_DEPS_REQUIREMENTS,
             ]
         )
-        marker.write_text(fingerprint + "\n")
+        run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "--no-deps",
+                "--target",
+                str(site_packages),
+                str(segale_source),
+            ]
+        )
+        dp_cores = list((segale_source / "vecalign").glob("dp_core*.so"))
+        if len(dp_cores) != 1:
+            raise RuntimeError(f"expected one compiled vecalign dp_core, got {dp_cores}")
+        shutil.copy2(dp_cores[0], site_packages / "vecalign" / dp_cores[0].name)
 
     sys.path.insert(0, str(site_packages))
-    sys.path.insert(0, str(eval_root / "resources" / "r0" / "SEGALE"))
+    sys.path.insert(0, str(segale_source))
+    os.environ["PATH"] = os.pathsep.join(
+        [str(site_packages / "bin"), os.environ.get("PATH", "")]
+    )
+    import numpy
+    import portalocker
+    import spacy
+    import spacy_pkuseg
+    import zh_core_web_sm
+    from vecalign.dp_core import dense_dp
+
+    del dense_dp, portalocker, spacy_pkuseg
+    zh_core_web_sm.load()
     from huggingface_hub import snapshot_download
 
     token_path = Path("/data/.secrets/hf_token")
@@ -108,8 +154,10 @@ def main() -> None:
         "sentence-transformers",
         "soundfile",
         "spacy",
+        "spacy-pkuseg",
+        "zh-core-web-sm",
     ]
-    versions = {}
+    versions = {"numpy": numpy.__version__}
     for name in distributions:
         try:
             versions[name] = importlib.metadata.version(name)
@@ -123,6 +171,7 @@ def main() -> None:
     )
     if any(value is None for value in versions.values()):
         raise RuntimeError(f"missing evaluation packages: {versions}")
+    marker.write_text(fingerprint + "\n")
     print(json.dumps(versions, indent=2), flush=True)
 
 

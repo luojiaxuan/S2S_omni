@@ -250,6 +250,9 @@ def main() -> None:
         os.environ["PYTHONPATH"] = os.pathsep.join(
             [str(args.site_packages), os.environ.get("PYTHONPATH", "")]
         )
+        os.environ["PATH"] = os.pathsep.join(
+            [str(args.site_packages / "bin"), os.environ.get("PATH", "")]
+        )
     task_root = args.task_root.resolve()
     config = json.loads((task_root / "config.json").read_text(encoding="utf-8"))
     talks = [

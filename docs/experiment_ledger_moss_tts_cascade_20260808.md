@@ -575,6 +575,44 @@ GPT、贴平 KIT，未及 Gemini。
   `gavinlaw/infinisst-moss-tts-en-zh-multiturn/eval/codec-context-phrase-20260830/`，
   当前状态 `PENDING_HF_UPLOAD`。
 
+### 4.-35 phrase-policy 匹配 TTS SFT 后跨语速退化仍存在（2026-08-30）
+
+- **假设**：4.-34 的 1.5× 退化主要来自旧 v7 TTS 没见过 phrase-policy 的
+  text/turn 分布；用实际 phrase trajectory 重训 TTS 后，BLEU 应随加速恢复。
+- **训练数据与模型**：以
+  `OpenMOSS-Team/MOSS-TTS-Realtime@75682787` 为底座，训练 46,753 行：
+  v6 base 36,529、phrase full 6,385、phrase mid-start 3,839。phrase policy 为
+  `multiplier=2`、`chunk=0.96s`、`max_hold=7.68s`、`min_chars=6`。3 张 H200，
+  global batch 15，learning rate `1e-5`，1 epoch，seed 42；3,117 steps，末步
+  loss 3.4778。checkpoint 为
+  `gavinlaw/moss-tts-realtime-infinisst-en-zh-v8-phrase`，`model.safetensors`
+  SHA256 `074964929bce38b9069efc07789336dd231de6d5426554c2662169b610a5e4e9`。
+- **冻结评测合同**：复用 4.-34 的 talk 268/367/590/110/117 和同一批
+  phrase v2-ep1 1×/1.5× text rows；只把 TTS 换成匹配训练的 v8。每个 talk
+  只创建一个 codec decoder context，TTS seed 42、滑窗 11、soft reset keep=3；
+  逐 turn Qwen3-ASR，强制句界，SEGALE `d0041438`，SacreBLEU `tokenize=zh`。
+- **结果**：
+
+  | 匹配 TTS | 1× BLEU | 1.5× BLEU | 加速变化 | null | turns | 字符 | 生成音频 |
+  | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+  | v8 phrase | **34.09** | 29.61 | **−4.48** | 1.50%→7.14% | 881→711 | 17,989→18,540 | 3593.84s→3766.40s |
+
+  匹配训练把旧 v7 + phrase 的跨速档差值从 −5.46 缩小到 −4.48，只改善
+  0.98 BLEU，没有改变方向。1.5× 多输出 551 字（+3.06%），目标音频仍增加
+  172.56 秒（+4.80%），并出现更多 null alignment。
+- **判读**：4.-34 的训练分布混杂已经控制。结果证伪“旧 TTS 分布偏移足以
+  解释 1.5× 退化”；当前 InfiniSST phrase + 匹配 TTS 的联合系统确有跨语速
+  退化。级联 BLEU 不能继续把剩余退化单独定位为 InfiniSST 或 TTS，因此不作
+  单层根因过度归因。speaker 稳定性结论不变：连续 codec decoder context 是
+  音色跳变的直接修复，与本次 BLEU 结论正交。
+- **Keep/Drop**：keep 连续 codec context；phrase policy 暂不作为跨语速默认
+  配置。drop“仅重训 TTS 即可恢复 phrase 跨语速 BLEU”的路线。
+- **产物**：合同在
+  `projects/infinisst_moss_tts_cascade/configs/phrase_matched_tts_v8_20260830.json`；
+  轻量结果在
+  `projects/infinisst_moss_tts_cascade/artifacts/phrase_matched_tts_eval_20260830/summary.json`；
+  checkpoint 和完整训练/评测产物的 HF revision 见 README Source of Truth。
+
 ### 4.-31 v3 证伪"内容密度"诊断；参数扫描显示规则档本可调（2026-08-29）
 
 - **v3（multiplier 1-4，1 epoch）结果**：
