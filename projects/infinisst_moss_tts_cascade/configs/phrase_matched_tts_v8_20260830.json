@@ -1,0 +1,56 @@
+{
+  "contract": "phrase-matched MOSS-TTS SFT and continuous-decoder cascade reevaluation",
+  "moss_patch_revision": "21243f93c27cd8f1c6a99351e7faf65c692f3b73",
+  "upstream_moss_tts_revision": "58b20a0d5fcc6766658d50967a90a9d890009a46",
+  "data": {
+    "repo": "gavinlaw/infinisst-moss-tts-en-zh-multiturn",
+    "revision": "cbac63598bdb2fcf7d0054aa21f88da51c5ee541",
+    "allow_patterns": [
+      "prepared/clean_traj.jsonl",
+      "prepared/train_v6.jsonl.zst",
+      "source_manifests/train_en_utt_robust_asr-filtered_zh_metricx-qe3.0_align.tsv"
+    ],
+    "trajectory_tsv": "source_manifests/train_en_utt_robust_asr-filtered_zh_metricx-qe3.0_align.tsv",
+    "prepared_jsonl": "prepared/clean_traj.jsonl",
+    "base_jsonl_zst": "prepared/train_v6.jsonl.zst",
+    "phrase_policy": {
+      "multiplier": 2,
+      "chunk_seconds": 0.96,
+      "phrase_max_hold_s": 7.68,
+      "phrase_min_chars": 6
+    },
+    "expected_clean_rows": 6385,
+    "expected_rows": 46753
+  },
+  "model": {
+    "repo": "OpenMOSS-Team/MOSS-TTS-Realtime",
+    "revision": "75682787d8e2fcc73faca37ba2931453ca9c4022",
+    "codec_repo": "OpenMOSS-Team/MOSS-Audio-Tokenizer",
+    "codec_revision": "3cd226ba2947efa357ef453bcad111b6eafba782"
+  },
+  "training": {
+    "host": "hyper00",
+    "gpu_ids": [5, 6, 7],
+    "num_processes": 3,
+    "per_device_batch_size": 1,
+    "gradient_accumulation_steps": 5,
+    "global_batch_size": 15,
+    "learning_rate": 1e-5,
+    "num_epochs": 1,
+    "num_workers": 2,
+    "mixed_precision": "bf16",
+    "attn_implementation": "sdpa",
+    "seed": 42,
+    "run_root": "/data02/jaxan/runs/20260830-200824-401864000"
+  },
+  "evaluation": {
+    "decoder_mode": "continuous",
+    "cells": [
+      "baseline_v7_1.0x",
+      "baseline_v7_1.5x",
+      "phrase_v8_1.0x",
+      "phrase_v8_1.5x"
+    ],
+    "primary_metric": "corpus BLEU from the same ASR and scorer"
+  }
+}
