@@ -210,7 +210,8 @@ SEGALE 句级、漏译保留为空假设；XCOMET-XL 改 reference-based、漏�
 代码与进展（Git）：
 
 - GitHub：<https://github.com/luojiaxuan/S2S_omni>；当前研究 SoT 分支为
-  `luojiaxuan/codec-decoder-context-ab`。Claude 交接及 phrase-boundary 脚本
+  `luojiaxuan/codec-decoder-context-ab`，phrase 匹配 TTS 训练与复评的可复用状态
+  为 `ee47d48`。Claude 交接及 phrase-boundary 脚本
   基线为 `main@ec60bfb`，后续连续 decoder、四格复评与结论均在该 SoT 分支。
 - 当前交接：`docs/handoff_codex_20260830.md`；可审计实验台账：
   `docs/experiment_ledger_moss_tts_cascade_20260808.md`。
