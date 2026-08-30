@@ -23,6 +23,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gpu-count", type=int, choices=(1, 2), default=2)
     parser.add_argument("--model-path", type=Path, default=None)
     parser.add_argument("--codec-path", type=Path, default=None)
+    parser.add_argument("--dataset-root", type=Path, default=None)
+    parser.add_argument("--asr-model-path", default="Qwen/Qwen3-ASR-1.7B")
+    parser.add_argument("--site-packages", type=Path, default=None)
     parser.add_argument("--moss-tts-root", type=Path, default=None)
     parser.add_argument("--segale-python", default="/data/venvs/segale_eval2/bin/python")
     parser.add_argument("--speech-latency-repo", type=Path, default=None)
@@ -242,6 +245,11 @@ def align_cell(
 
 def main() -> None:
     args = parse_args()
+    if args.site_packages is not None:
+        sys.path.insert(0, str(args.site_packages))
+        os.environ["PYTHONPATH"] = os.pathsep.join(
+            [str(args.site_packages), os.environ.get("PYTHONPATH", "")]
+        )
     task_root = args.task_root.resolve()
     config = json.loads((task_root / "config.json").read_text(encoding="utf-8"))
     talks = [
@@ -264,11 +272,9 @@ def main() -> None:
     codec_path = args.codec_path or snapshot(
         cache_root, "models--OpenMOSS-Team--MOSS-Audio-Tokenizer"
     )
-    dataset_root = (
-        None
-        if args.synthesis_only
-        else snapshot(cache_root, "datasets--gavinlaw--rasst-main-result-data")
-    )
+    dataset_root = args.dataset_root
+    if dataset_root is None and not args.synthesis_only:
+        dataset_root = snapshot(cache_root, "datasets--gavinlaw--rasst-main-result-data")
     resolved = {
         "model_path": str(model_path),
         "codec_path": str(codec_path),
@@ -320,7 +326,7 @@ def main() -> None:
             "-m",
             "sglang.launch_server",
             "--model-path",
-            "Qwen/Qwen3-ASR-1.7B",
+            args.asr_model_path,
             "--host",
             "127.0.0.1",
             "--port",
