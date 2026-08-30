@@ -84,15 +84,18 @@ def main() -> None:
             token=token,
         )
     )
-    cache_root = Path("/data/hf-cache/hub")
-    codec = next(
-        (cache_root / "models--OpenMOSS-Team--MOSS-Audio-Tokenizer" / "snapshots").glob(
-            resources["codec_revision"]
+    codec = Path(
+        snapshot_download(
+            repo_id=resources["codec_repo"],
+            revision=resources["codec_revision"],
+            token=token,
         )
     )
-    asr = next(
-        (cache_root / "models--Qwen--Qwen3-ASR-1.7B" / "snapshots").glob(
-            resources["asr_revision"]
+    asr = Path(
+        snapshot_download(
+            repo_id=resources["asr_repo"],
+            revision=resources["asr_revision"],
+            token=token,
         )
     )
     replace_symlink(eval_root / "resources" / "d0", dataset)
