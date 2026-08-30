@@ -173,6 +173,7 @@ def main() -> None:
     os.environ["TMPDIR"] = str(task_root / "tmp")
     site_packages = install_dependencies(task_root)
     env = os.environ.copy()
+    env["NCCL_NVLS_ENABLE"] = "0"
     env["PYTHONPATH"] = os.pathsep.join(
         [str(site_packages), str(task_root / "code" / "src"), env.get("PYTHONPATH", "")]
     )
