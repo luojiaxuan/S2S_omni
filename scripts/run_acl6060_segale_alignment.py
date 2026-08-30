@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
 
 def git_revision(repo: Path) -> str:
     result = subprocess.run(
-        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        ["git", "-c", f"safe.directory={repo}", "-C", str(repo), "rev-parse", "HEAD"],
         check=True,
         capture_output=True,
         text=True,
