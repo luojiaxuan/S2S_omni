@@ -1,0 +1,22 @@
+{
+  "rows": 6385,
+  "old_turns": 157887,
+  "new_turns": 93662,
+  "codec_frames": 2292071,
+  "min_words": 2,
+  "multipliers": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "per_multiplier_rows": {
+    "1": 1635,
+    "2": 1594,
+    "3": 1571,
+    "4": 1585
+  },
+  "median_spoken_chars": 7.0,
+  "turns_le_5_chars_ratio": 0.3809,
+  "phrase_boundary_ratio": 0.3069
+}
