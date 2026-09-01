@@ -36,7 +36,7 @@ for chunk in "${CHUNKS[@]}"; do
   openai_dir="${OUT_BASE}/openai_live_full_enzh_chunk${chunk}"
   for run_id in "${RUN_IDS[@]}"; do
     run_step "openai chunk=${chunk} run=${run_id}" \
-      "${PYTHON_BIN}" "${REPO}/scripts/run_floras_openai_realtime.py" \
+      "${PYTHON_BIN}" "${REPO}/eval/run_floras_openai_realtime.py" \
         --manifest "${MANIFEST}" \
         --output-dir "${openai_dir}" \
         --run-id "${run_id}" \
@@ -50,7 +50,7 @@ for chunk in "${CHUNKS[@]}"; do
   gemini_dir="${OUT_BASE}/gemini_live_full_enzh_chunk${chunk}_trim"
   for run_id in "${RUN_IDS[@]}"; do
     run_step "gemini chunk=${chunk} run=${run_id}" \
-      "${PYTHON_BIN}" "${REPO}/scripts/run_floras_gemini_live.py" \
+      "${PYTHON_BIN}" "${REPO}/eval/run_floras_gemini_live.py" \
         --manifest "${MANIFEST}" \
         --output-dir "${gemini_dir}" \
         --run-id "${run_id}" \

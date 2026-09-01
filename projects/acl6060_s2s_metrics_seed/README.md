@@ -90,7 +90,7 @@ https://huggingface.co/datasets/gavinlaw/rasst-main-result-data
 Download only the ACL6060 EN->ZH subset and run a short protocol smoke:
 
 ```bash
-python projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py \
+python eval/run_acl6060_live_stream_eval.py \
   --dataset-root /tmp/rasst_main_result_data \
   --output-dir /tmp/acl6060_stream_openai_smoke \
   --provider openai \

@@ -211,7 +211,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
       key_file="${OPENAI_KEY_FILE}"
       receive_timeout="${OPENAI_RECEIVE_TIMEOUT_S}"
       runner_cmd=(
-        "${PYTHON_BIN}" "${REPO}/projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py"
+        "${PYTHON_BIN}" "${REPO}/eval/run_acl6060_live_stream_eval.py"
         --dataset-root "${DATASET_ROOT}"
         --output-dir "${local_dir}"
         --provider "${provider}"
@@ -233,7 +233,7 @@ for provider in $(csv_to_array "${PROVIDERS}"); do
         key_file="${GEMINI_KEY_FILE}"
         receive_timeout="${GEMINI_RECEIVE_TIMEOUT_S}"
         runner_cmd=(
-          "${PYTHON_BIN}" "${REPO}/projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py"
+          "${PYTHON_BIN}" "${REPO}/eval/run_acl6060_live_stream_eval.py"
           --dataset-root "${DATASET_ROOT}"
           --output-dir "${local_dir}"
           --provider "${provider}"
