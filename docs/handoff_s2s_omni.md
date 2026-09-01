@@ -605,7 +605,7 @@ https://huggingface.co/datasets/gavinlaw/rasst-main-result-data
 Use the new full-wav streaming runner:
 
 ```text
-projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py
+eval/run_acl6060_live_stream_eval.py
 ```
 
 It downloads/reads:
@@ -934,7 +934,7 @@ New/updated scripts:
 ```text
 scripts/run_acl6060_full_table.sh          # orchestrates missing live rows + metrics
 scripts/run_acl6060_live_compare.sh        # now supports zh/de/ja and copies artifacts with --no-score
-projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py
+eval/run_acl6060_live_stream_eval.py
 scripts/run_acl6060_kit_live_eval.py       # KIT full-wav target-speech-ASR runner
 scripts/refresh_kit_auth.py                # interactive Dex login -> mode-0600 cookie header
 scripts/repair_acl6060_word_emissions.py   # rebuild De word timestamps from raw events
@@ -1270,8 +1270,8 @@ FLORAS live benchmark:
 
 ```text
 scripts/prepare_floras_live_manifest.py
-scripts/run_floras_openai_realtime.py
-scripts/run_floras_gemini_live.py
+eval/run_floras_openai_realtime.py
+eval/run_floras_gemini_live.py
 scripts/run_floras_seed_ast.py
 scripts/openai_transcribe_live_outputs.py
 scripts/openai_transcribe_eval_windows.py

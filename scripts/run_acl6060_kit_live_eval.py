@@ -62,7 +62,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_acl_live_module() -> Any:
-    path = ROOT / "projects/acl6060_s2s_metrics_seed/run_acl6060_live_stream_eval.py"
+    path = ROOT / "eval/run_acl6060_live_stream_eval.py"
     spec = importlib.util.spec_from_file_location("acl6060_live_stream_eval", path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"could not import {path}")

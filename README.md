@@ -809,7 +809,7 @@ always uses an LLM-generated Chinese reference because FLORAS is X-to-English.
 Run a 10-second dry-run smoke without calling the live API:
 
 ```bash
-python scripts/run_floras_openai_realtime.py \
+python eval/run_floras_openai_realtime.py \
   --manifest outputs/floras_live_pilot/live_runs.jsonl \
   --output-dir outputs/floras_live_pilot/live_smoke \
   --max-runs 1 \
@@ -827,7 +827,7 @@ Run the real OpenAI Realtime Translation pass with 960 ms paced input chunks:
 
 ```bash
 export OPENAI_API_KEY=...
-python scripts/run_floras_openai_realtime.py \
+python eval/run_floras_openai_realtime.py \
   --manifest outputs/floras_live_pilot/live_runs.jsonl \
   --output-dir outputs/floras_live_pilot/live_runs \
   --chunk-ms 960
@@ -844,7 +844,7 @@ than Gemini's silent tail frames.
 
 ```bash
 export GEMINI_API_KEY=...
-python scripts/run_floras_gemini_live.py \
+python eval/run_floras_gemini_live.py \
   --manifest outputs/floras_live_pilot/live_runs.jsonl \
   --output-dir outputs/floras_live_pilot/gemini_live_runs \
   --chunk-ms 960
