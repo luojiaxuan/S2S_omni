@@ -1,0 +1,13 @@
+{
+ "anchor": "B_prime_v8_c2_subset",
+ "talks": [
+  "2022.acl-long.110.wav",
+  "2022.acl-long.117.wav",
+  "2022.acl-long.268.wav"
+ ],
+ "segments": 318,
+ "null_hypotheses": 0,
+ "bleu": 33.2782,
+ "source_jsonl": "/tmp/v8eval/eval/phrase-matched-tts-v8-20260830/result/c2/xcomet_input.jsonl (hyper00 run 20260830-200824 result/c2)",
+ "tokenizer": "zh"
+}

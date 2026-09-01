@@ -1,0 +1,21 @@
+{
+  "alignment_backend": "SEGALE",
+  "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672",
+  "embedding_model": "sentence-transformers/LaBSE",
+  "segmenter": "spacy",
+  "max_size": 8,
+  "segments": 401,
+  "valid_segments": 316,
+  "null_alignments": 85,
+  "over_translation_alignments": 85,
+  "under_translation_alignments": 0,
+  "null_alignment_ratio": 0.2119700748129676,
+  "source_segments": 320,
+  "under_translation_source_segments": 0,
+  "under_translation_source_ratio": 0.0,
+  "null_alignment_score": 0.0,
+  "bleu": 19.53590200659303,
+  "bleu_tokenizer": "zh",
+  "aligned_jsonl": "/data/tmp/runs/20260830-200824-401864000/eval/result/ap0/segale_alignment/hyp/aligned_spacy_hyp.jsonl",
+  "xcomet_input_jsonl": "/data/tmp/runs/20260830-200824-401864000/eval/result/ap0/xcomet_input.jsonl"
+}

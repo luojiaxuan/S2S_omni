@@ -1,0 +1,12 @@
+{
+ "arm": "A_prime_baseline_paired_subset",
+ "segments": 401,
+ "null_hypotheses": 0,
+ "bleu": 19.5359,
+ "docs": [
+  "2022.acl-long.110.wav",
+  "2022.acl-long.117.wav",
+  "2022.acl-long.268.wav"
+ ],
+ "tokenizer": "zh"
+}
