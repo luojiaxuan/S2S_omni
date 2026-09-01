@@ -51,3 +51,11 @@
 - **去留**：keep phrase InfiniSST（v8 组合为现役最优）；drop"退回原版 InfiniSST"的疑虑。剩余主问题回到 v8 自身的 1.5× 失控率。
 - **打分链修复记录**：w3 优先读 run_config.json 绝对路径而非 `--dataset-root`（改 ap0 的 config 指向 3-talk 子集 d0_3t 解决）；w4 缺 soxr（pip --target 补装时误带入 numpy 2.5.2 覆盖 1.26.4，致 accelerate 循环导入假象，回装 numpy==1.26.4 解决）；w4 还需 `env/site/bin` 进 PATH（vecalign 可执行）。
 - **证据**：`artifacts/paired_finetune_final_ab_20260901/`（README、两臂 BLEU 复算 json、A′ 逐段对齐 jsonl）；hyper00 run `20260830-200824-401864000` `result/ap0/`。
+
+## 2026-09-01 收尾与删除记录
+
+- hyper00 打分容器 `sglang-omni-jaxan-score` 已删、map 记录已清；打分产物已拉回本仓 `artifacts/paired_finetune_final_ab_20260901/`，原始件仍在 `/data02/jaxan/`。
+- tilde `~/sglang-omni-tts/outputs` 从 ~510G 精简到 14G。已删：`model/`（v9 TTS 全部输出，正本 HF `gavinlaw/moss-tts-realtime-infinisst-en-zh-v9-minwords@b4a42b8e`，删前 `repo_info` 验证 15 files 可达）；`model_phraseonly/`、`model_baselineonly/`（纯配对全参，已判废，塌缩证据与复现配方见上一条与 `data/train_{phraseonly,baselineonly}.jsonl`+sft.py）；`model_v10base/checkpoint-step-*`（16×17G 优化器中间态，训练已完成）。保留：`model_v10base/checkpoint-epoch-0`（A′ 证物，仅本地未上 HF）、两个 `*_lora8`（塌缩双证证物）。
+- aries 容器 `infinisst-phrase-jaxan-1` KEEP：phrase 线胜出，推理环境与 v9m* 推理产物待下一步方向裁决后再清。
+- taurus 占位作业 48285 状态未知：taurus 直连超时且 aries 侧 no route to host，疑似主机下线，待恢复后确认。
+- hyper00 上另见 `sglang-omni-jaxan-20260901-011036-265057286` Exited(1) 12h——非本 session 创建，疑属并行任务，未动，仅在此报告。
