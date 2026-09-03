@@ -59,3 +59,15 @@
 - aries 容器 `infinisst-phrase-jaxan-1` KEEP：phrase 线胜出，推理环境与 v9m* 推理产物待下一步方向裁决后再清。
 - taurus 占位作业 48285 状态未知：taurus 直连超时且 aries 侧 no route to host，疑似主机下线，待恢复后确认。
 - hyper00 上另见 `sglang-omni-jaxan-20260901-011036-265057286` Exited(1) 12h——非本 session 创建，疑属并行任务，未动，仅在此报告。
+
+## 2026-09-03 外部对照:SimulS2ST-Omni(EMNLP 2026)在同一 3-talk 子集上实跑
+
+- **假设**:同类开源系统(Qwen2.5-Omni-3B thinker + 0.4B talker + VoiceBox,约 2k 小时配对数据,只放推理)在我们的 ACL 60/60 子集上,文本与语音质量、实时性各处在什么位置。
+- **现象**(hyper01 单卡 H200 实跑其 README 推荐配置;打分走 A′/B′ 同一链,详见 `artifacts/simuls2st_omni_comparison_20260903/`):
+  - S2TT(SimulEval 整场 corpus BLEU):m2 54.98、m3 56.37;我方原版 InfiniSST 54.02、phrase v2ep1 51.78。
+  - S2ST ASR-BLEU:逐 piece 协议 31.58 vs 我方 v8 33.28;**≥12 s 窗口协议 41.73 vs 35.64**。逐 piece 协议对 piece 粒度(他们 1.9 s / 我们 4 s)敏感,窗口协议为主结论。
+  - 音频时间线(FIFO 仿真):他们译文音频占源时长 81–86%,收尾偏移 −0.7/+1.9/+0.7 s,积压 mean ≤1.2 s;我方 v8 1× 三个 talk 音频 105/111/127%,收尾 +46/+89/+204 s,积压 mean 29/42/108 s。
+  - 其解码残留:`<|endoftext|>Human`、system prompt 句漏进译文(m3 talk 268);论文附录自认 chunk 边界拼接咔哒。
+- **判断**(已证实):文本层同档;语音层在合理协议下落后约 6 分;**实时性差距是量级差**——我方 v8 在 1× 下译文总时长超过源音频,物理上放不完,这是 TTS 语速/压缩控制的问题,不是 InfiniSST 延迟,是级联当前最大的短板。
+- **去留**:窗口协议(`--merge-window-s 12`)作为跨系统 ASR-BLEU 的常设口径并入台账;下一步优先解决级联音频超长(目标译文时长 ≤ 源时长),再谈质量。
+- **收尾**:hyper01 `sglang-omni-jaxan-2` 已删、map 已清(`/data04/jaxan/ext_s2st` 24 G 留至 2026-09-10,含可重建的模型/venv 与三条 run 输出);hyper00 `sglang-omni-jaxan-2` 打分完即删。对听样本在本机 `~/Downloads/simuls2st_samples/`。
