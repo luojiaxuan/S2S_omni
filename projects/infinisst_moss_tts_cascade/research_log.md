@@ -71,3 +71,20 @@
 - **判断**(已证实):文本层同档;语音层落后约 7–8 分(两种 ASR 一致);**实时性差距是量级差**——我方 v8 在 1× 下译文总时长超过源音频,物理上放不完,这是 TTS 语速/压缩控制的问题,不是 InfiniSST 延迟,是级联当前最大的短板。
 - **去留**:跨系统 ASR-BLEU 一律用整段一次 ASR 口径,ASR 换为 ElevenLabs Scribe v2(Qwen 30 s 窗为对照),逐 turn 口径退役;A′/B′ 的 19.54/33.28 是逐 turn 口径,与本条不可直接并排;下一步优先解决级联音频超长(目标译文时长 ≤ 源时长),再谈质量。
 - **收尾**:hyper01 `sglang-omni-jaxan-2` 已删、map 已清(`/data04/jaxan/ext_s2st` 24 G 留至 2026-09-10,含可重建的模型/venv 与三条 run 输出);hyper00 `sglang-omni-jaxan-2` 打分完即删。对听样本在本机 `~/Downloads/simuls2st_samples/`。
+
+## 2026-09-03 用 Open-LiveTranslate 官方打分栈复测两套系统(PR #40)
+
+- **背景与假设**:上一条的 SimulS2ST-Omni 对照走的是本仓自建打分链(整段 ASR → SEGALE d0041438 → 句级 SacreBLEU)。同事的问题是"是用现在 openlivetranslate repo 测的吗",而实验室主仓 `LeiLiLab/Open-LiveTranslate` 有一套已固化的官方打分栈(ElevenLabs Scribe v2 ASR → SEGALE + penalize-v1 skip policy → LongYAAL/Ending-Offset/BLEU → XCOMET-XL,配不可变 `generation_config.json` 指纹)。假设:两套链会给出同向结论;差距的量级由官方口径说了算。
+- **做法**:在 OLT 仓开分支 `feat/simuls2st-omni-comparison`,新增 **timeline 打分入口**——不复现外部系统,只要求它交出"贴到源时钟上的渲染音频 + 每段的播放起止 + 它自己的文本",就能进官方栈。`build_run_from_timeline.py` 写出与商用 baseline 相同的 arrival-only 时序记录(`delays == elapsed ==` 播放起点,CU 定义等于 CA),`score_timeline.sh` 生成不可变 identity 指纹后交给未改动的 `run_s2s_score.sbatch`。两个 backend:`simuls2st-omni`、`infinisst-moss-cascade`。
+- **现象**(hyper00 容器 `sglang-omni-jaxan-3`,同 3 talk {110,117,268} dev 1×、en→zh、ElevenLabs Scribe v2、XCOMET-XL 开、CU=CA、两 run 的 `document_fingerprint` 相同 `8437ac49…`):
+
+  | 系统 | chunk | BLEU | XCOMET-XL | LongYAAL | Ending Offset | 段数 | skip(欠/超译) |
+  |---|---|---:|---:|---:|---:|---:|---:|
+  | SimulS2ST-Omni(latency multiplier 2) | 2.0 s | 40.65 | 0.658 | 3,658 ms | 3,233 ms | 253 | 0 / 0 |
+  | InfiniSST phrase v2ep1 + MOSS-TTS v8 | 1.92 s | 34.08 | 0.646 | 53,186 ms | 63,525 ms | 267 | 0 / 2 |
+
+- **判断**(已证实):(1)质量上我们落后 6.6 BLEU,XCOMET 同向(−0.012),与自建链(45.09 vs 37.66)结论一致、绝对值不同(两条链的重分段与 skip 惩罚不同,不可并排);(2)**实时性差距被官方指标钉死为量级差**:我们的 Ending Offset 63.5 秒——最后一个词比演讲结束晚一分多钟落地;LongYAAL 53.2 秒。原因不是策略而是渲染:合成语音比源音频更长,播放队列永不排空,每段都被前面的积压罚一次。skip 惩罚只占 0.23 BLEU / 0.37 s,不构成解释。
+- **去留**:级联的下一步优先级确定为"译文音频时长 ≤ 源时长",不是继续调质量;跨系统对照今后一律走 OLT 官方栈(本仓自建链退为内部快速迭代用)。
+- **口径变更记录**:自建链的 45.09/37.66 与本条的 40.65/34.08 **口径不同不可并排**——前者句级 SEGALE 无 skip 惩罚,后者 penalize-v1 且重分段段数不同(253/267)。
+- **证据**:PR https://github.com/LeiLiLab/Open-LiveTranslate/pull/40;run 目录 `s2st_{simuls2st-omni_dev_2000ms,infinisst-moss-cascade_dev_1920ms}_local-final`,generation 指纹 `b1fb07e5…` / `b2d3e7c3…`;文档见该仓 `eval/README.md` §7 与 §7a。
+- **过程中的错误**:(1)灌进容器的 `dev.yaml` 保留了 ACL 发布包的路径前缀,官方链按裸文件名严格匹配,导致 `hyp.jsonl` 写出 0 行、连跑 9 次 dry run 才定位——已在该仓 `SETUP.md` §4 记录;(2)两次用 `pkill -f <模式>` 时模式串出现在自己的 shell 命令行里,把自己杀掉;(3)首轮正式跑时容器仓库还是 main + 未跟踪改动,`generation_repo_tree_dirty=true`,重做为干净的分支提交后再跑。
