@@ -1,0 +1,47 @@
+{
+  "output_dir": "/data/olt_build/results/s2st_infinisst-moss-cascade_dev_1920ms_local-final/simuleval",
+  "documents": {
+    "2022.acl-long.268": {
+      "index": 0,
+      "ttfa_cu_ms": 9600.0,
+      "ttfa_ca_ms": 9600.0,
+      "cu_duration_ms": 783440.0,
+      "ca_duration_ms": 783440.0,
+      "cu_silence_ms": 9600.0,
+      "ca_silence_ms": 9600.0,
+      "ca_minus_cu_ms": 0.0,
+      "agent_compute_ms": 0.0,
+      "max_compute_lag_ms": 0.0,
+      "source_length_ms": 737440.0,
+      "chunks": 191
+    },
+    "2022.acl-long.110": {
+      "index": 1,
+      "ttfa_cu_ms": 3840.0,
+      "ttfa_ca_ms": 3840.0,
+      "cu_duration_ms": 792000.0,
+      "ca_duration_ms": 792000.0,
+      "cu_silence_ms": 9760.0,
+      "ca_silence_ms": 9760.0,
+      "ca_minus_cu_ms": 0.0,
+      "agent_compute_ms": 0.0,
+      "max_compute_lag_ms": 0.0,
+      "source_length_ms": 703007.38,
+      "chunks": 194
+    },
+    "2022.acl-long.117": {
+      "index": 2,
+      "ttfa_cu_ms": 7680.0,
+      "ttfa_ca_ms": 7680.0,
+      "cu_duration_ms": 932640.0,
+      "ca_duration_ms": 932640.0,
+      "cu_silence_ms": 7680.0,
+      "ca_silence_ms": 7680.0,
+      "ca_minus_cu_ms": 0.0,
+      "agent_compute_ms": 0.0,
+      "max_compute_lag_ms": 0.0,
+      "source_length_ms": 729013.69,
+      "chunks": 191
+    }
+  }
+}
