@@ -45,12 +45,15 @@ S2T/S2S 表现如何、听起来自然不"。
 
 ### S2ST(ASR-BLEU,同一打分链,3 talk)
 
-主口径(整段一次 ASR,30 s 内部窗):
+主口径:每 talk 整段译文音频**一次请求**送 ASR → SEGALE d0041438 → 句级 SacreBLEU zh。
+ASR 两种:**ElevenLabs Scribe v2**(2026-09-04 起为主,与 Open-LiveTranslate PR #39
+一致;整段 12 分钟一次请求、逐词时间戳、无截断;`w1_eleven.py`)与
+Qwen3-ASR-1.7B(helper 内部 30 s 固定窗,因该服务对长音频截断;`w1_ext.py`)。
 
-| 系统 | ASR-BLEU | 逐 talk 268/110/117 | 段数 / null | 转写字数 268/110/117(参考 3532/3197/3579) |
-| --- | ---: | --- | --- | --- |
-| SimulS2ST-Omni m2 | **44.15** | 41.9 / 44.4 / 45.9 | 262 / 0 | 3118 / 3034 / 3360 |
-| ours B′ = phrase InfiniSST + v8 TTS,1× | **35.92** | 36.0 / 39.0 / 33.2 | 276 / 3 | 3766 / 3672 / 4234 |
+| 系统 | ElevenLabs Scribe v2 | Qwen3-ASR(30 s 内部窗) | 转写字数(ElevenLabs)268/110/117,参考 3532/3197/3579 |
+| --- | ---: | ---: | --- |
+| SimulS2ST-Omni m2 | **45.09**(250 段,null 0;逐 talk 44.6/44.9/45.7) | 44.15(262 段,null 0;41.9/44.4/45.9) | 3093 / 3009 / 3217 |
+| ours B′ = phrase InfiniSST + v8 TTS,1× | **37.66**(274 段,null 2;38.7/40.3/34.5) | 35.92(276 段,null 3;36.0/39.0/33.2) | 3704 / 3650 / 4161 |
 
 注记口径(同一批音频,仅 ASR 切法不同):
 
@@ -75,7 +78,7 @@ S2T/S2S 表现如何、听起来自然不"。
 
 1. **文本质量同档**:他们 m2/m3 的 S2TT 与我们原版 InfiniSST 持平或略高
    (54.98/56.37 vs 54.02),高于 phrase 版(51.78)。
-2. **语音译文质量:他们领先约 8 分**(44.15 vs 35.92,整段一次 ASR 主口径)。
+2. **语音译文质量:他们领先约 7–8 分**(ElevenLabs 45.09 vs 37.66;Qwen 44.15 vs 35.92),两种 ASR 结论一致。
    逐 turn 口径下曾出现的"我们略高"是假象——他们 1.9 s 的 piece 被 ASR 在
    短语中间切碎;任何按 turn 切 ASR 的口径都对 piece 粒度敏感,不再用于
    跨系统比较。我方转写字数超参考 7–18%,与下面的音频超长一致。
@@ -95,5 +98,6 @@ S2T/S2S 表现如何、听起来自然不"。
   他们三条 SimulEval run 的逐 talk 记录(音频不入库;hyper01
   `/data04/jaxan/ext_s2st/out/`,hyper00 `/data02/jaxan/ext_score/`)。
 - `ours_v8_timeline.instances.log`:我方 v8 按发射时刻渲染的 intervals。
-- `asr_bleu_*.json`:各口径的 SEGALE/BLEU summary(`*_whole30` 为主口径)。
+- `asr_bleu_*.json`:各口径的 SEGALE/BLEU summary(`*_elevenlabs` 为主口径,`*_whole30` 为 Qwen 主口径)。
+- `w1_eleven.py`:ElevenLabs 整段转写适配(key 从 `~/.keys/elevenlabs_sst_data` 读,不入库不打印)。
 - `simuls2st_run_all.sh`、`w1_ext.py`、`render_cascade.py`、`make_stereo.py`。

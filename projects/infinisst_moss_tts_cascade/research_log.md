@@ -65,9 +65,9 @@
 - **假设**:同类开源系统(Qwen2.5-Omni-3B thinker + 0.4B talker + VoiceBox,约 2k 小时配对数据,只放推理)在我们的 ACL 60/60 子集上,文本与语音质量、实时性各处在什么位置。
 - **现象**(hyper01 单卡 H200 实跑其 README 推荐配置;打分走 A′/B′ 同一链,详见 `artifacts/simuls2st_omni_comparison_20260903/`):
   - S2TT(SimulEval 整场 corpus BLEU):m2 54.98、m3 56.37;我方原版 InfiniSST 54.02、phrase v2ep1 51.78。
-  - S2ST ASR-BLEU(主口径=整段译文音频一次送 Qwen3-ASR、30 s 内部窗、SEGALE 句级,用户裁定不按 turn 切):**44.15 vs 我方 v8 35.92**。逐 turn 口径(A′/B′ 当时用法)给出 31.58 vs 33.28 的假象,原因是他们 1.9 s 的 piece 被切碎;helper 默认 120 s 窗的整段 ASR 丢 25–30% 字,作废。
+  - S2ST ASR-BLEU(主口径=整段译文音频一次送 ASR、SEGALE 句级,用户裁定不按 turn 切):**ElevenLabs Scribe v2 45.09 vs 我方 v8 37.66**;Qwen3-ASR(30 s 内部窗)44.15 vs 35.92,两种 ASR 结论一致。ElevenLabs 自 2026-09-04 起为主 ASR(与 Open-LiveTranslate PR #39 一致:12 分钟整段一次请求无截断、CER 更低、带逐词时间戳)。逐 turn 口径(A′/B′ 当时用法)给出 31.58 vs 33.28 的假象,原因是他们 1.9 s 的 piece 被切碎;helper 默认 120 s 窗的整段 ASR 丢 25–30% 字,作废。
   - 音频时间线(FIFO 仿真):他们译文音频占源时长 81–86%,收尾偏移 −0.7/+1.9/+0.7 s,积压 mean ≤1.2 s;我方 v8 1× 三个 talk 音频 105/111/127%,收尾 +46/+89/+204 s,积压 mean 29/42/108 s。
   - 其解码残留:`<|endoftext|>Human`、system prompt 句漏进译文(m3 talk 268);论文附录自认 chunk 边界拼接咔哒。
-- **判断**(已证实):文本层同档;语音层落后约 8 分;**实时性差距是量级差**——我方 v8 在 1× 下译文总时长超过源音频,物理上放不完,这是 TTS 语速/压缩控制的问题,不是 InfiniSST 延迟,是级联当前最大的短板。
-- **去留**:跨系统 ASR-BLEU 一律用整段一次 ASR(30 s 内部窗)口径,逐 turn 口径退役;A′/B′ 的 19.54/33.28 是逐 turn 口径,与本条不可直接并排;下一步优先解决级联音频超长(目标译文时长 ≤ 源时长),再谈质量。
+- **判断**(已证实):文本层同档;语音层落后约 7–8 分(两种 ASR 一致);**实时性差距是量级差**——我方 v8 在 1× 下译文总时长超过源音频,物理上放不完,这是 TTS 语速/压缩控制的问题,不是 InfiniSST 延迟,是级联当前最大的短板。
+- **去留**:跨系统 ASR-BLEU 一律用整段一次 ASR 口径,ASR 换为 ElevenLabs Scribe v2(Qwen 30 s 窗为对照),逐 turn 口径退役;A′/B′ 的 19.54/33.28 是逐 turn 口径,与本条不可直接并排;下一步优先解决级联音频超长(目标译文时长 ≤ 源时长),再谈质量。
 - **收尾**:hyper01 `sglang-omni-jaxan-2` 已删、map 已清(`/data04/jaxan/ext_s2st` 24 G 留至 2026-09-10,含可重建的模型/venv 与三条 run 输出);hyper00 `sglang-omni-jaxan-2` 打分完即删。对听样本在本机 `~/Downloads/simuls2st_samples/`。

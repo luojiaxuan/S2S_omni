@@ -1,0 +1,21 @@
+{
+  "alignment_backend": "SEGALE",
+  "speech_latency_revision": "d0041438abf097a1ec3055e7f09656ad6302f672",
+  "embedding_model": "sentence-transformers/LaBSE",
+  "segmenter": "spacy",
+  "max_size": 8,
+  "segments": 250,
+  "valid_segments": 250,
+  "null_alignments": 0,
+  "over_translation_alignments": 0,
+  "under_translation_alignments": 0,
+  "null_alignment_ratio": 0.0,
+  "source_segments": 320,
+  "under_translation_source_segments": 0,
+  "under_translation_source_ratio": 0.0,
+  "null_alignment_score": 0.0,
+  "bleu": 45.092070251619056,
+  "bleu_tokenizer": "zh",
+  "aligned_jsonl": "/data/ext_score/eleven/eleven_theirs/segale_alignment/hyp/aligned_spacy_hyp.jsonl",
+  "xcomet_input_jsonl": "/data/ext_score/eleven/eleven_theirs/xcomet_input.jsonl"
+}
