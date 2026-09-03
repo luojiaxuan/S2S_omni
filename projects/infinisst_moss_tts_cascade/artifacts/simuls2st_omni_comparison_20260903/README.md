@@ -14,9 +14,12 @@ S2T/S2S 表现如何、听起来自然不"。
   `runs/infer_phrase/{baseline,phrv2ep1}` 的 instances.log 同法计算。
 - **S2ST ASR-BLEU(主口径)**:每个 talk 的整段译文音频(SimulEval 零抖动
   FIFO 渲染出的 `wavs/<i>_pred.wav`;我方按 InfiniSST 发射时刻同法渲染)
-  **一次性送 Qwen3-ASR-1.7B**(helper 内部按固定 30 s 窗切给模型,与 turn
-  无关)→ SEGALE d0041438 对齐 → 句级 SacreBLEU zh。用户裁定:不按 turn
-  切 ASR。`w1_ext.py --merge-window-s 1e6 --asr-window-s 30`。
+  **一次性送 Qwen3-ASR-1.7B** → SEGALE d0041438 对齐 → 句级 SacreBLEU zh。
+  用户裁定:不按 turn 切 ASR。`w1_ext.py --merge-window-s 1e6 --asr-window-s 30`。
+  helper 内部把音频按固定 30 s 切给模型,这不是评测设计而是这台 ASR 服务的
+  长度限制——实测(`asr_long_audio_single_request_test.json`):同一段 733 s
+  音频整段一次请求只回 436 字(前约 90 s 即截断),30 s 窗回 3120 字
+  (参考 3532);我方 783 s 音频同样 414 vs 3750。
   历史/无效口径留作注记:(a) A′/B′ 当时用的"逐 turn ASR + 句号拼接";
   (b) 我临时加的"相邻 piece 合并到 ≥12 s"折中;(c) helper 默认 120 s 窗的
   整段 ASR——Qwen3-ASR 在 120 s 窗下丢 25–30% 字(转写 2591 字 vs 参考
