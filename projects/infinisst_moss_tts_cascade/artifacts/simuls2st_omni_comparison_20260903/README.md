@@ -12,12 +12,15 @@ S2T/S2S 表现如何、听起来自然不"。
 - **S2TT**:他们的 SimulEval agent 直接出文本,SimulEval corpus BLEU
   (整场一 instance,tokenize=zh)。我方对照取 aries
   `runs/infer_phrase/{baseline,phrv2ep1}` 的 instances.log 同法计算。
-- **S2ST ASR-BLEU**:他们的 SimulEval speech 输出(`wavs/<i>_pred.wav`,
-  零抖动 FIFO 渲染)按 `intervals` 切成 turn → 与 A′/B′ 完全相同的链
-  (逐 turn Qwen3-ASR-1.7B → "。"拼接 → SEGALE d0041438 → SacreBLEU zh),
-  在 hyper00 上打分(`w1_ext.py` 是 w1_ap 的外部输入适配)。因他们的
-  piece 平均 1.9 s、常在短语中间切开,另加 `--merge-window-s 12`(相邻
-  piece 合并到 ≥12 s 再 ASR)协议,两套系统各跑两种协议。
+- **S2ST ASR-BLEU(主口径)**:每个 talk 的整段译文音频(SimulEval 零抖动
+  FIFO 渲染出的 `wavs/<i>_pred.wav`;我方按 InfiniSST 发射时刻同法渲染)
+  **一次性送 Qwen3-ASR-1.7B**(helper 内部按固定 30 s 窗切给模型,与 turn
+  无关)→ SEGALE d0041438 对齐 → 句级 SacreBLEU zh。用户裁定:不按 turn
+  切 ASR。`w1_ext.py --merge-window-s 1e6 --asr-window-s 30`。
+  历史/无效口径留作注记:(a) A′/B′ 当时用的"逐 turn ASR + 句号拼接";
+  (b) 我临时加的"相邻 piece 合并到 ≥12 s"折中;(c) helper 默认 120 s 窗的
+  整段 ASR——Qwen3-ASR 在 120 s 窗下丢 25–30% 字(转写 2591 字 vs 参考
+  3532),两边都失真,作废。
 - **时间线**:两者都是 SimulEval 式 FIFO 放置(turn 在发射时刻到达,
   前一段没播完就排队),我方按 swrow 的 InfiniSST 发射时刻渲染
   (`render_cascade.py`)。均为仿真下界(不含计算)。
@@ -39,11 +42,20 @@ S2T/S2S 表现如何、听起来自然不"。
 
 ### S2ST(ASR-BLEU,同一打分链,3 talk)
 
-| 系统 | 逐 piece/turn 协议 | 12 s 窗口协议 |
-| --- | ---: | ---: |
-| SimulS2ST-Omni m2 | 31.58(327 段,null 11;逐 talk 31.0/30.3/33.2) | **41.73**(256 段,null 5) |
-| ours B′ = phrase InfiniSST + v8 TTS,1× | 33.28(318 段,null 3;逐 talk 32.8/36.5/30.8;经时间线渲染重打 33.17) | **35.64**(283 段,null 3) |
-| ours A′ = 原版 InfiniSST + baseline 配对 TTS,1× | 19.54 | — |
+主口径(整段一次 ASR,30 s 内部窗):
+
+| 系统 | ASR-BLEU | 逐 talk 268/110/117 | 段数 / null | 转写字数 268/110/117(参考 3532/3197/3579) |
+| --- | ---: | --- | --- | --- |
+| SimulS2ST-Omni m2 | **44.15** | 41.9 / 44.4 / 45.9 | 262 / 0 | 3118 / 3034 / 3360 |
+| ours B′ = phrase InfiniSST + v8 TTS,1× | **35.92** | 36.0 / 39.0 / 33.2 | 276 / 3 | 3766 / 3672 / 4234 |
+
+注记口径(同一批音频,仅 ASR 切法不同):
+
+| 系统 | 逐 turn/piece + 句号拼接 | 合并 ≥12 s | 整段 120 s 窗(作废,ASR 丢字) |
+| --- | ---: | ---: | ---: |
+| SimulS2ST-Omni m2 | 31.58(piece 均 1.9 s,被切碎) | 41.73 | 34.57 |
+| ours B′ v8 | 33.28(原 A′/B′ 口径;时间线重打 33.17) | 35.64 | 31.86 |
+| ours A′ | 19.54 | — | — |
 
 ### 音频时间线(FIFO 仿真,单位秒)
 
@@ -60,11 +72,10 @@ S2T/S2S 表现如何、听起来自然不"。
 
 1. **文本质量同档**:他们 m2/m3 的 S2TT 与我们原版 InfiniSST 持平或略高
    (54.98/56.37 vs 54.02),高于 phrase 版(51.78)。
-2. **语音译文质量(ASR-BLEU)取决于协议**:逐 piece 协议下他们 31.6 < 我们
-   33.2,但那是他们 1.9 s 的 piece 被 ASR 在短语中间切碎的惩罚(我们 turn
-   平均 4 s);合并到 ≥12 s 窗口后他们 41.7 > 我们 35.6,**领先约 6 分**。
-   窗口协议更接近"听众听到的内容",应视为主结论;逐 piece 协议对 piece
-   粒度敏感,不宜跨系统比。
+2. **语音译文质量:他们领先约 8 分**(44.15 vs 35.92,整段一次 ASR 主口径)。
+   逐 turn 口径下曾出现的"我们略高"是假象——他们 1.9 s 的 piece 被 ASR 在
+   短语中间切碎;任何按 turn 切 ASR 的口径都对 piece 粒度敏感,不再用于
+   跨系统比较。我方转写字数超参考 7–18%,与下面的音频超长一致。
 3. **实时性是他们的决定性优势**:译文音频只占源时长 81–86%,收尾偏移
    ≈0,FIFO 积压秒级;我们 v8 在 1× 下三个 talk 的音频总量都超过源时长
    (105–127%),积压几十到两百秒——**译文物理上放不完**。这不是 InfiniSST
@@ -81,5 +92,5 @@ S2T/S2S 表现如何、听起来自然不"。
   他们三条 SimulEval run 的逐 talk 记录(音频不入库;hyper01
   `/data04/jaxan/ext_s2st/out/`,hyper00 `/data02/jaxan/ext_score/`)。
 - `ours_v8_timeline.instances.log`:我方 v8 按发射时刻渲染的 intervals。
-- `asr_bleu_{simuls2st_m2_piece,simuls2st_omni_m2_w12,ours_v8_piece,ours_v8_w12}.json`:四格的 SEGALE/BLEU summary。
+- `asr_bleu_*.json`:各口径的 SEGALE/BLEU summary(`*_whole30` 为主口径)。
 - `simuls2st_run_all.sh`、`w1_ext.py`、`render_cascade.py`、`make_stereo.py`。
