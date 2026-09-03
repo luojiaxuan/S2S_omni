@@ -11,13 +11,21 @@ source of truth。路径都是**容器内/集群内**的绝对路径，换机器
 | --- | --- |
 | `run_eval_queue.sh <gpu> <tag> <ckpt> <mode> <talk...>` | 通用 TTS 队列。`mode` 取 `reset`（每 11 turn 一个会话，输入 `rows`）、`sliding`（w=11）或 `slidingN`（任意窗口，输入 `swrow` 整场一行）。带 `.done` 标记，可断点重跑 |
 | `run_base_queue.sh <gpu> <talk...>` | 原生未微调 MOSS 的 baseline 队列 |
-| `score_generic.py <tag> <mode>` | 拼接整场 wav + 自建 Qwen3-ASR 转写，产出 run dir 的 `instances.log` |
+| `score_generic.py <tag> <mode> [elevenlabs\|qwen3\|gpt]` | 拼接整场 wav + 整段 ASR，产出 run dir 的 `instances.log`。默认 `elevenlabs`（Scribe v2，一次请求整段音频，逐词时间戳存 `elevenlabs_raw/`），rundir 后缀 `_elevenlabs`；`qwen3`/`gpt` 为 120 s 内部窗的旧口径 |
 | `score_base.py` | baseline 专用版（额外记录崩溃 session 数到 `session_qa.json`） |
 | `score_chain_generic.sh <tag> <mode>` | 完整链：ASR → SEGALE inputs → SEGALE 对齐 → BLEU → XCOMET-XL |
 
-打分链依赖容器内的 `/data/venvs/segale_eval2` 与
-`/data/speech-to-speech-latency`（pinned `d0041438`），以及 47500 端口上的
-自建 Qwen3-ASR：
+**ASR 默认 ElevenLabs Scribe v2（2026-09-04 起，用户裁定）**：整段音频一次请求
+（官方上限 10 小时/3 GB，超 8 分钟服务端并行），key 放 `~/.keys/elevenlabs_sst_data`
+（`ELEVENLABS_KEY_FILE` 可改），按小时音频计费（$0.22/h）。依据：Open-LiveTranslate
+PR #39 的三语向对比中它在长音频上整句丢失远少于 Qwen3-ASR，且我们实测自托管
+Qwen3-ASR 对整段 12 分钟请求会截断（只回前约 90 s）。三种后端各自成口径，
+rundir 后缀不同（`_elevenlabs` / 无 / `_gptasr`），不可混比；已发布的
+Qwen/GPT 口径数字保持原样。
+
+打分链还依赖容器内的 `/data/venvs/segale_eval2` 与
+`/data/speech-to-speech-latency`（pinned `d0041438`）；`ASR_BACKEND=qwen3` 时
+另需 47500 端口上的自建 Qwen3-ASR：
 
 ```bash
 CUDA_VISIBLE_DEVICES=5 python3 -m sglang.launch_server \

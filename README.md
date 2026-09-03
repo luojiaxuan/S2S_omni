@@ -115,6 +115,22 @@ GPT-realtime 约 4 分。外部对比（如 Open-LiveTranslate，其上游把漏
 
 **🎧 音频浏览**：[v7_audio_browser.html](https://luojiaxuan.github.io/S2S_omni/v7_audio_browser.html)——覆盖 v7 恒定滑窗、soft3 修复版、TTS 侧短语缓冲与 InfiniSST phrase-boundary 重训档（含 1×/1.5× 对照）；整场音频由公开 HF dataset 托管，并提供逐 turn 输入、独立 ASR、保真度着色与点击跳播。
 
+### 新 canonical 口径（2026-09-04 起）：ASR 换 ElevenLabs Scribe v2，整段一次请求
+
+用户裁定：ASR-BLEU 的 ASR 默认改为 **ElevenLabs Scribe v2**——每个 talk 的整段
+译文音频一次请求（官方上限 10 小时/3 GB，超 8 分钟服务端并行；逐词时间戳），
+再走不变的 SEGALE d0041438 → 句级 SacreBLEU zh。依据两点：Open-LiveTranslate
+PR #39 的三语向实测中它在长音频上整句丢失远少于 Qwen3-ASR（zh 2 句 vs 9 句，
+ja 1 vs 27），而丢句会被 SEGALE 的 skip 规则漏计、让分数虚高；我们实测自托管
+Qwen3-ASR 对整段 12 分钟请求会截断（只回前约 90 s），只能靠固定窗切分。三种
+ASR 后端各自成口径、rundir 后缀不同（`_elevenlabs` / 无后缀 = Qwen / `_gptasr`），
+**不可混比**；本节之前发布的所有数字维持其原口径不动。入口
+`scripts/acl_cascade_eval/score_chain_refbased.sh`（`ASR_BACKEND` 默认
+`elevenlabs`，key 读 `~/.keys/elevenlabs_sst_data`）。首批同口径数字（3-talk
+子集、1.92 s chunk）：SimulS2ST-Omni m2 45.09 vs ours phrase InfiniSST + v8 TTS
+37.66（Qwen 30 s 窗口径 44.15 vs 35.92），见
+`projects/infinisst_moss_tts_cascade/artifacts/simuls2st_omni_comparison_20260903/`。
+
 ### 新 canonical 口径（2026-08-11 起）：Qwen3-ASR + XCOMET-ref
 
 用户裁定的新打分口径：ASR 换自托管 Qwen3-ASR-1.7B（成本），BLEU 维持

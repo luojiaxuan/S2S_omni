@@ -1,9 +1,8 @@
-"""Concatenate + Qwen3-ASR a cascade run, parameterized by (tag, mode).
+"""Concatenate + ASR a cascade run, parameterized by (tag, mode).
 
-# note (luojiaxuan): 与 score_base.py 同一口径（自建 Qwen3-ASR、120s 窗、
-# uniform proxy delays），只是把 wav 目录参数化，用于 v4 / v3ctl x sliding /
-# reset 的四个 run。缺失或失败的 session 一律跳过不补救，保持真实表现。
-usage: score_generic.py <tag> <mode>
+# note (luojiaxuan): 整场拼接 wav、整段送 ASR、uniform proxy delays；wav 目录按
+# (tag, mode) 参数化。缺失或失败的 session 一律跳过不补救，保持真实表现。
+usage: score_generic.py <tag> <mode> [elevenlabs|qwen3|gpt]
 """
 import glob
 import os
@@ -13,22 +12,30 @@ import wave
 from pathlib import Path
 
 sys.path.insert(0, "/data/S2S_omni/scripts")
-from score_acl_cascade import transcribe_openai_windows
+from score_acl_cascade import transcribe_elevenlabs, transcribe_openai_windows
 
 tag, mode = sys.argv[1], sys.argv[2]
-# note (luojiaxuan): 第三个参数选 ASR 后端。qwen3 = 自建（免费，日常回归）；
-# gpt = canonical gpt-4o-mini-transcribe（付费，正式对比口径）。两者不可混比。
-asr_backend = sys.argv[3] if len(sys.argv) > 3 else "qwen3"
-if asr_backend == "gpt":
+# note (luojiaxuan): 第三个参数选 ASR 后端，默认 elevenlabs（用户裁定 2026-09-04）：
+# ElevenLabs Scribe v2 整段一次请求（12 分钟音频无截断、带逐词时间戳，长音频
+# CER 优于 Qwen3-ASR，见 Open-LiveTranslate PR #39）。qwen3 = 自建 Qwen3-ASR，
+# 120 s 内部窗；gpt = gpt-4o-mini-transcribe，120 s 内部窗。三者各自成口径，
+# rundir 后缀不同，不可混比。
+asr_backend = sys.argv[3] if len(sys.argv) > 3 else "elevenlabs"
+if asr_backend == "elevenlabs":
+    _asr_name = "elevenlabs-scribe_v2-whole"
+    _suffix = "_elevenlabs"
+elif asr_backend == "gpt":
     _key = Path("/data/openai_key.txt").read_text().strip()
     _asr_kwargs = dict(key=_key)
     _asr_name = "gpt-4o-mini-transcribe-120swin"
     _suffix = "_gptasr"
-else:
+elif asr_backend == "qwen3":
     _asr_kwargs = dict(key=None, base_url="http://127.0.0.1:47500",
                        model="Qwen/Qwen3-ASR-1.7B")
     _asr_name = "Qwen3-ASR-1.7B-selfhosted-120swin"
     _suffix = ""
+else:
+    raise SystemExit(f"unknown ASR backend {asr_backend!r} (elevenlabs|qwen3|gpt)")
 bench = Path("/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench")
 snap = Path(glob.glob("/root/.cache/huggingface/hub/datasets--gavinlaw--rasst-main-result-data/snapshots/*/")[0])
 inputs = snap / "main_result/inputs/acl_zh"
@@ -95,7 +102,12 @@ for index, talk in enumerate([268, 367, 590, 110, 117]):
     source_wav = snap / f"main_result/audio/acl6060/2022.acl-long.{talk}.wav"
     with wave.open(str(source_wav), "rb") as w:
         source_ms = w.getnframes() / w.getframerate() * 1000.0
-    prediction = transcribe_openai_windows(wav_path, **_asr_kwargs)
+    if asr_backend == "elevenlabs":
+        prediction = transcribe_elevenlabs(
+            wav_path, key_file=os.environ.get("ELEVENLABS_KEY_FILE", "~/.keys/elevenlabs_sst_data"),
+            raw_out=run_dir / "elevenlabs_raw" / f"talk{talk}.json")
+    else:
+        prediction = transcribe_openai_windows(wav_path, **_asr_kwargs)
     units = [ch for ch in prediction if not ch.isspace()]
     n = max(1, len(units))
     delays = [round((i + 1) / n * source_ms, 3) for i in range(len(units))]

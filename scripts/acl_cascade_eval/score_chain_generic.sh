@@ -9,8 +9,8 @@ RUN=acl6060_live_enzh_cascade_moss${tag}_${mode}_chunk192_speed1
 RD=$BENCH/rundirs/$RUN
 SEG_PY=/data/venvs/segale_eval2/bin/python
 
-echo "[1/5] ASR"
-python3 "$BENCH/score_generic.py" "$tag" "$mode" || exit 2
+echo "[1/5] ASR (${ASR_BACKEND:-elevenlabs})"
+python3 "$BENCH/score_generic.py" "$tag" "$mode" "${ASR_BACKEND:-elevenlabs}" || exit 2
 echo "[2/5] SEGALE inputs"
 "$SEG_PY" /data/S2S_omni/scripts/build_acl6060_segale_inputs.py --run-dir "$RD" || exit 3
 echo "[3/5] SEGALE alignment"

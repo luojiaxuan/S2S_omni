@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # note (luojiaxuan): 新 canonical 打分链（用户裁定 2026-08-11，台账 4.-16）：
-#   - ASR：自托管 Qwen3-ASR-1.7B（127.0.0.1:47500，plain sglang）；
+#   - ASR：默认 ElevenLabs Scribe v2 整段一次请求（ASR_BACKEND=elevenlabs，用户裁定
+#     2026-09-04；key 读 ~/.keys/elevenlabs_sst_data）；ASR_BACKEND=qwen3 为自托管
+#     Qwen3-ASR-1.7B（127.0.0.1:47500，120 s 内部窗）。两者 rundir 后缀不同，不混比。
 #   - BLEU：SEGALE 句级，null（under/over-translation）保留为空假设，不剔除；
 #   - XCOMET-XL：reference-based（对齐 Open-LiveTranslate 的模式），但 null
 #     主动置零（fixed_xcomet_xl_score=0.0，input 构建器既有行为）。
@@ -9,15 +11,22 @@
 set -u
 g="$1"; tag="$2"; mode="$3"
 BENCH=/data/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench
-RUN=acl6060_live_enzh_cascade_moss${tag}_${mode}_chunk192_speed1
+ASR_BACKEND="${ASR_BACKEND:-elevenlabs}"
+case "$ASR_BACKEND" in
+  elevenlabs) ASR_SUFFIX="_elevenlabs" ;;
+  qwen3) ASR_SUFFIX="" ;;
+  gpt) ASR_SUFFIX="_gptasr" ;;
+  *) echo "ASR_BACKEND must be elevenlabs, qwen3 or gpt"; exit 2 ;;
+esac
+RUN=acl6060_live_enzh_cascade_moss${tag}_${mode}_chunk192_speed1${ASR_SUFFIX}
 RD=$BENCH/rundirs/$RUN
 # note (luojiaxuan): hyper01 上的 SEGALE venv 叫 acl6060-segale，路径不同，
 # 用 SEG_PY 环境变量覆盖；缺省仍指 hyper00 的 segale_eval2。
 SEG_PY="${SEG_PY:-/data/venvs/segale_eval2/bin/python}"
 cd /data/S2S_omni
 
-echo "[1/5] Qwen3-ASR"
-python3 "$BENCH/score_generic.py" "$tag" "$mode" qwen3 || exit 2
+echo "[1/5] ASR ($ASR_BACKEND)"
+python3 "$BENCH/score_generic.py" "$tag" "$mode" "$ASR_BACKEND" || exit 2
 echo "[2/5] SEGALE inputs"
 "$SEG_PY" scripts/build_acl6060_segale_inputs.py --run-dir "$RD" || exit 3
 echo "[3/5] SEGALE alignment (GPU $g)"

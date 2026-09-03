@@ -60,6 +60,64 @@ def concat_run(bench: Path, talk: int, chunk: str) -> tuple[Path, float]:
     return out_path, duration
 
 
+def transcribe_elevenlabs(
+    wav_path: Path,
+    key_file: str = "~/.keys/elevenlabs_sst_data",
+    model_id: str = "scribe_v2",
+    language_code: str = "zh",
+    endpoint: str = "https://api.elevenlabs.io/v1/speech-to-text",
+    raw_out: Path | None = None,
+    timeout_s: float = 900.0,
+) -> str:
+    """One request over the WHOLE wav to ElevenLabs Scribe (files up to 10 h; no
+    windowing, no turn boundaries in the transcript). Request shape follows
+    Open-LiveTranslate's scorer: multipart file + model_id + word timestamps, key in
+    the xi-api-key header, six retries on 429/5xx. The raw answer (text + word
+    timestamps) is written to raw_out when given."""
+    import os
+    import time
+    import urllib.error
+    import urllib.request
+    import uuid
+
+    key = next(tok.split()[0] for tok in Path(os.path.expanduser(key_file))
+               .read_text(encoding="utf-8").splitlines()
+               if tok.strip() and not tok.strip().startswith("#"))
+    boundary = "----s2s" + uuid.uuid4().hex
+    fields = [("model_id", model_id), ("timestamps_granularity", "word"),
+              ("diarize", "false"), ("tag_audio_events", "false"),
+              ("language_code", language_code)]
+    parts = [f"--{boundary}\r\nContent-Disposition: form-data; name=\"{n}\"\r\n\r\n{v}\r\n"
+             .encode("utf-8") for n, v in fields]
+    parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; "
+                 f"filename=\"{wav_path.name}\"\r\nContent-Type: audio/wav\r\n\r\n".encode("utf-8")
+                 + wav_path.read_bytes() + b"\r\n")
+    parts.append(f"--{boundary}--\r\n".encode("utf-8"))
+    body = b"".join(parts)
+    for attempt, sleep_s in enumerate((2, 4, 8, 16, 32, 64, None)):
+        req = urllib.request.Request(endpoint, data=body, method="POST")
+        req.add_header("xi-api-key", key)
+        req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
+        started = time.monotonic()
+        try:
+            with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+                answer = json.loads(resp.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:500]
+            if sleep_s is None or not (exc.code == 429 or exc.code >= 500):
+                raise SystemExit(f"ElevenLabs HTTP {exc.code} for {wav_path.name}: {detail}") from None
+        except (urllib.error.URLError, TimeoutError) as exc:
+            if sleep_s is None:
+                raise SystemExit(f"ElevenLabs transport error for {wav_path.name}: {exc}") from None
+        time.sleep(sleep_s)
+    answer["_request_elapsed_s"] = round(time.monotonic() - started, 3)
+    if raw_out is not None:
+        raw_out.parent.mkdir(parents=True, exist_ok=True)
+        raw_out.write_text(json.dumps(answer, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    return str(answer.get("text") or "").strip()
+
+
 def transcribe_openai_windows(
     wav_path: Path,
     key: str | None,
