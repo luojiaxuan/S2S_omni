@@ -180,3 +180,20 @@
 - **两个已知的接法不匹配(结论的限制)**:(1)**粒度**——它按 delta 训练(每 1.92 s chunk 一个 turn、2–6 字碎片),我们 phrase 每 3.84 s 吐约 16 字完整小句,是其训练分布的三倍长;(2)**harness**——其官方评测走 OLT `moss_tts_delta_server.py` 配 `--codec-context conversation`,我走的是我们的滑窗多轮脚本。因此本条只能证否"换权重即可",不能证否该模型。
 - **在跑**:粒度对照——同 checkpoint 喂 `chunk192` swrow(每 1.92 s 约 9 字,三篇约 1080 段),区分"模型对我们无用"与"我喂错了"。
 - **证据**:run 目录 hyper00 `/data04/jaxan/olt_build/results3/s2st_infinisst-moss-cascade_dev_1920ms_delta-final`;合成产物 `/data02/jaxan/delta_tts/`;脚本 `scripts/latency_probe/{synth_delta.sh,build_timeline.py,score_delta.sh,delta_quicklook.sh}`;容器 `sglang-omni-jaxan-2`。
+
+## 2026-09-04 粒度对照:按它的训练粒度喂,反而更差
+
+- **假设**:上一条"换权重分数不动"可能是因为喂错粒度——它按 delta 训练(每 1.92 s chunk 一个 turn、2–6 字),我们 phrase 每 3.84 s 约 16 字。若粒度是主因,按 `chunk192` 喂应当变好。
+- **现象**(同 checkpoint、同 harness、同参数,输入换成 chunk192 swrow):
+
+  | talk | turn 数 | 中位 turn 字数 | 音频/源 | 坏 turn | 收尾偏移 | 中位字/秒 |
+  |---|---:|---:|---:|---:|---:|---:|
+  | 110 | 358 | 8 | 1.11 | 11 | 79 s | 4.08 |
+  | 117 | 367 | 9 | 1.30 | 17 | 220 s | 3.80 |
+  | 268 | 371 | 9 | 1.28 | 29 | 214 s | 4.17 |
+
+  对照同 checkpoint 的 phrase 粒度:1.11/1.26/1.08、86/196/70 s、4.41–4.79 字/秒。
+- **判断**:**粒度不是解释,方向还相反**。turn 越短越碎,单位字数的音频越长(中位语速从 4.41–4.79 掉到 3.80–4.17),总时长与积压都变差。机制上讲得通:每个 turn 都有起音与韵律重启的固定开销,turn 数从约 190 涨到约 365 就把开销翻倍。这也与项目早先"phrase 优于 baseline"的结论同向。
+- **限制**:chunk192 的文本来自原版 InfiniSST 策略而非 phrase,所以这一臂同时改了粒度与文本,只能作方向性诊断,不能作严格的粒度单因素实验;也因为文本不同,没有送打分(BLEU 与 phrase 两臂不可比,且要额外 ASR 费用)。
+- **剩下的唯一未验因素**:serving 路径。它的官方评测走 OLT `moss_tts_delta_server.py` 配 `--codec-context conversation`,我们全程走自家滑窗多轮脚本。要判断该模型对我们是否真有价值,决定性实验是用它的 server + 它的 thinker 端到端复现其公布行(BLEU 40.64 / 收尾 4.0–5.9 s),再把 thinker 换成我们的。**未做。**
+- **证据**:`/data02/jaxan/delta_tts/gran*`;脚本 `scripts/latency_probe/{synth_gran.sh,gran_look.sh}`。
