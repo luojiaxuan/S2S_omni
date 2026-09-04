@@ -130,3 +130,17 @@
 - **对质量的连带影响**(未量化):12–24% 的音频是与文本对不上的声音,ASR 转出来必然是垃圾,官方栈的 BLEU 34.08 里有一部分是被这个吃掉的,不全是翻译质量。
 - **修正后的下一步**:(1)先定位失控的触发条件——查是否与 codec 上下文长度、上一 turn 是否失控、文本长度或标点相关;(2)最小修复候选:每 turn 重置 codec 上下文 / 加长度守卫(字数×最慢合理秒数为上限,超时截断重合成);(3)之后再看 117 的正常 turn 是否仍需小幅提速。原先排在第一位的"后处理时域压缩 1.2×"降级为兜底。
 - **证据**:探针 `scripts/latency_probe/{per_turn_rate,slow_turn_shape,counterfactual}.py`;听力样本 `~/Downloads/cascade_samples/`(窗口 D=连续三个坏 turn,E=同篇正常段落,同模型同音色);逐 turn 原文 hyper00 `/data04/jaxan/S2S_omni_runs/moss_tts_infinisst_v2_20260804/acl_bench/tts_rows/talk*.phrv2e1.swrow.jsonl`(与打分 timeline 逐段对齐,194/191/191 段、delay 完全一致)。
+
+## 2026-09-03 失控 turn 的根因:守卫预算过松 + 漏检的坏 turn 污染滑动窗口
+
+- **假设**:上一条定位到 4–10% 的 turn 失控空转,但没说清为什么已有的 `runaway` 守卫没拦住,以及为什么失控成串出现。
+- **已确认的机制**:
+  1. **守卫预算过松**。`scripts/moss_multiturn_infer.py:425` 的 `budget_frames = max(floor_s, 字数 × max_seconds_per_char) × 12.5`;该次合成实跑 `--min-runaway-floor-s 15`、`--max-seconds-per-char` 取默认 `0.6`。即"每字 0.6 秒(1.67 字/秒)且任何 turn 无条件给 15 秒",而健康 turn 实测约 5 字/秒、中位 16–17 字(健康时长 3.3 秒)。**576 个 turn 里 40 个坏,守卫只触发 7 次**(110: 4/14,117: 1/19,268: 2/7),触发的都是撞到 188 帧上限的极端个案。
+  2. **漏检即污染**。守卫触发时会截断并清空滑动窗口(detox),被污染的 codes 不进窗口;漏检的坏 turn 其 codes 照常进入 11 帧滑窗。条件概率:**P(下一个坏 | 上一个坏且漏检)=12/33=36%,P(下一个坏 | 上一个坏且已触发)=0/7=0%,P(下一个坏 | 上一个正常)=27/533=5%**。detox 有效,只是几乎从不运行。
+- **被排除的解释**:文本特征不预测失控——坏/正常 turn 字数中位 18 vs 17,以标点结尾 72% vs 85%,篇内位置各档 2.6%–10.4% 无梯度。
+- **该次合成的其他守卫状态**:`--min-frames-per-char` 默认 0(过短 turn 重生成守卫**未开**),`--loop-detect` 默认 `none`(循环检测**未开**)。当时只有过松的预算守卫在工作。
+- **收紧预算的预期收益**(FIFO 重放,收尾偏移秒):截断口径 110: 89→33,117: 204→130,268: 46→24;再计入"不再被污染"为 14/106/24;若改为重合成(坏 turn 按 5 字/秒)为 8/52/24。
+- **口径警告**:候选预算 `max(5 s, 字数/2.5)` 与"坏 turn"的标注判据(<2.5 字/秒)是同一统计量,"覆盖 40/40"属循环,不作为独立验证。有信息的是**误伤 0**:576 个 turn 中没有任何健康 turn 同时"超过 5 秒"且"慢于 2.5 字/秒",两分布可分。样本 3 篇 talk。
+- **模型身份核对**:合成用的本地 checkpoint `.../20260830-200824-401864000/outputs/model/checkpoint-epoch-0/model.safetensors` sha256 = `074964929bce38b9…`,与 HF `gavinlaw/moss-tts-realtime-infinisst-en-zh-v8-phrase@521e09fa` 的同名文件 LFS sha256 一致。PR #40 的 identity 无误。
+- **待确认(实验在跑)**:同 checkpoint、同 seed、同滑窗,只把预算从 `floor 15 / 0.6` 改成 `floor 5 / 0.4`,重跑 talk110 与 117,直接量坏 turn 数、总时长与收尾偏移。hyper00 容器 `sglang-omni-jaxan-2`(GPU 6,2 条件 × 2 分片)。该任务 GPU 利用率约 2%(12 秒采样,峰值 18%),瓶颈在 CPU 侧 codec 解码,卡数已是最低的 1 张。
+- **证据**:`scripts/latency_probe/{poison_test,features,replay_fix,diag_turns}.py`;逐 turn 合成元数据 hyper00 `/data02/jaxan/tmp/runs/20260830-200824-401864000/eval/output/c2/talk*.summary.jsonl`(带 `frames` 与 `runaway_skipped`)。
