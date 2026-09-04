@@ -14,7 +14,7 @@ for talk in "$@"; do
     --rows-jsonl "$RUN/acl_bench/tts_rows/talk$talk.chunk192.rows.jsonl" \
     --out-dir "$RUN/acl_bench/tts_wavs_base/talk$talk.chunk192" \
     --summary-jsonl "$RUN/acl_bench/tts_wavs_base/talk$talk.chunk192.summary.jsonl" \
-    --device cuda --min-runaway-floor-s 15 --log-every 20 \
+    --device cuda --min-runaway-floor-s 5 --log-every 20 \
     >> "$RUN/acl_bench/logs/tts_base_gpu$g.log" 2>&1
 done
 echo "BASE_QUEUE_DONE gpu=$g talks=$*"

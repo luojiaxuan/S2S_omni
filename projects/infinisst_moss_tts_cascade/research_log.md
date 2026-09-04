@@ -144,3 +144,22 @@
 - **模型身份核对**:合成用的本地 checkpoint `.../20260830-200824-401864000/outputs/model/checkpoint-epoch-0/model.safetensors` sha256 = `074964929bce38b9…`,与 HF `gavinlaw/moss-tts-realtime-infinisst-en-zh-v8-phrase@521e09fa` 的同名文件 LFS sha256 一致。PR #40 的 identity 无误。
 - **待确认(实验在跑)**:同 checkpoint、同 seed、同滑窗,只把预算从 `floor 15 / 0.6` 改成 `floor 5 / 0.4`,重跑 talk110 与 117,直接量坏 turn 数、总时长与收尾偏移。hyper00 容器 `sglang-omni-jaxan-2`(GPU 6,2 条件 × 2 分片)。该任务 GPU 利用率约 2%(12 秒采样,峰值 18%),瓶颈在 CPU 侧 codec 解码,卡数已是最低的 1 张。
 - **证据**:`scripts/latency_probe/{poison_test,features,replay_fix,diag_turns}.py`;逐 turn 合成元数据 hyper00 `/data02/jaxan/tmp/runs/20260830-200824-401864000/eval/output/c2/talk*.summary.jsonl`(带 `frames` 与 `runaway_skipped`)。
+
+## 2026-09-03 消融确认:收紧失控预算,收尾偏移 talk110 53→10 s、talk117 176→77 s
+
+- **设计**:同 checkpoint(v8@521e09fa 的本地副本)、同 seed 42、同滑窗(11/soft-reset-keep 3/continuous codec context),**只改失控预算**:base = `floor 15 s / 0.6 s每字`(原设置),tight = `floor 5 s / 0.4 s每字`。talk110 与 117 各跑两臂,2 条件 × 2 分片并行。hyper00 容器 `sglang-omni-jaxan-2`,GPU 6。
+- **结果**(坏 turn 判据仍为 <2.5 字/秒;收尾偏移按 FIFO 重放同一 InfiniSST 产出时刻):
+
+  | 臂 | talk | 音频总长 | 坏 turn | 守卫报警 | 坏 turn 音频 | 收尾偏移 | 中位字/秒 |
+  |---|---|---:|---:|---:|---:|---:|---:|
+  | base | 110 | 746.4 s | 4 | 1 | 55 s | 53 s | 4.53 |
+  | tight | 110 | 699.5 s | 2 | 6 | 10 s | **10 s** | 4.81 |
+  | base | 117 | 897.0 s | 16 | 2 | 181 s | 176 s | 4.66 |
+  | tight | 117 | 797.8 s | 4 | 15 | 18 s | **77 s** | 4.73 |
+
+- **判断**(已证实):收紧预算使守卫报警从 1/2 次升到 6/15 次,坏 turn 音频从 55/181 s 降到 10/18 s,收尾偏移降 81%/56%。方向与机制判断一致。
+- **必须记的方差发现**:**base 臂没有复现原始 run**。原始 talk110 是 14 个坏 turn / 782 s / 收尾 89 s,base 复现是 4 / 746 / 53;talk117 原始 19 / 925 / 204,base 16 / 897 / 176。同 seed 同参数,差异来自容器镜像不同(本次 `hongccc/sglang-omni:dev`,torch 2.13)。**因此失控计数不可跨环境比较,只能同环境内 base vs tight 配对比**;本次每格 n=1。
+- **未测的代价**:tight 触发 6/15 次截断,被截的 turn 有文本没念完,BLEU 代价未量化。**这是下一个必须做的实验**(走 OLT 官方栈打分 tight 臂)。更优的修法是把截断改为"先重合成一次再截断"(仿照已有的 `short_regen` 分支),这样不丢文本;该改动尚未实现。
+- **改动**(已提交):`scripts/moss_multiturn_infer.py` 的默认 `--max-seconds-per-char` 0.6→0.4、`--min-runaway-floor-s` 8.0→5.0;四处硬编码 15 的启动器(`configs/codec_decoder_context_ab_talk110.json`、`run_base_queue.sh`、`run_eval_queue.sh`、`run_codec_context_phrase_compare.py`)一并改为 5。语料合成侧的 `synth_moss_rows_{inprocess,batched}.py`、`generate_moss_realtime_long_targets.py`、`gen_moss_self_history.py` **不动**——那是训练数据生成的护栏,收紧会改变语料构成,属另一条决策。
+- **决策日志**(替用户做的默认决定):问题=要不要在没量化 BLEU 代价前就把预算收紧为默认;默认答案=收紧;理由=守卫的存在目的就是拦这个,当前值比健康语速松 3 倍且 15 秒地板让它对中位 turn(16–17 字)形同虚设,实测收尾偏移降 81%/56%;回滚=把 5.0/0.4 改回 15/0.6,单 commit 可 revert。**外审未做**(用户在线交互中,直接汇报由其否决更快)。
+- **证据**:`scripts/latency_probe/ablate.sh` 与 `ablate_compare.py`;产物 hyper00 `/data02/jaxan/tts_guard_ablation/`(容器删除后仍在宿主盘)。

@@ -14,7 +14,7 @@
     "--max-rows", "1",
     "--sliding-window", "11",
     "--soft-reset-keep", "3",
-    "--min-runaway-floor-s", "15",
+    "--min-runaway-floor-s", "5",
     "--log-every", "20"
   ],
   "evaluate_script": "evaluate.py",

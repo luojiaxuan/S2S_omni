@@ -119,7 +119,7 @@ def synthesize_queue(
                 "--device",
                 "cuda",
                 "--min-runaway-floor-s",
-                "15",
+                "5",
                 "--sliding-window",
                 "11",
                 "--soft-reset-keep",

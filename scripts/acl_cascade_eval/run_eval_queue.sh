@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # note (luojiaxuan): 通用评测队列——按 (checkpoint, 模式) 参数化，配置逐字
 # 沿用 v3 的两个 run，保证 v4 / v3ctl / 已有 v3 三者可比：
-#   sliding: --sliding-window 11 --min-runaway-floor-s 15，输入 swrow（整场一行）
+#   sliding: --sliding-window 11 --min-runaway-floor-s 5，输入 swrow（整场一行）
 #   reset  : 无 sliding 标志，输入 rows（每 11 turn 一个会话）
 # usage: run_eval_queue.sh <gpu> <tag> <ckpt_path> <mode> <talk...>
 set -u
@@ -59,7 +59,7 @@ for talk in "$@"; do
     --rows-jsonl "$RUN/acl_bench/tts_rows/talk$talk.$PREFIX.$rows_suffix.jsonl" \
     --out-dir "$out" \
     --summary-jsonl "$out.summary.jsonl" \
-    --device cuda --min-runaway-floor-s 15 --log-every 50 $extra \
+    --device cuda --min-runaway-floor-s 5 --log-every 50 $extra \
     >> "$RUN/acl_bench/logs/eval_${tag}_${mode}_${PREFIX}_gpu$g.log" 2>&1 \
     && touch "$RUN/acl_bench/tts_wavs_${tag}_${mode}_${PREFIX}/talk$talk.$PREFIX.done"
 done

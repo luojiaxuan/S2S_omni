@@ -57,8 +57,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repetition-penalty", type=float, default=1.1)
     parser.add_argument("--repetition-window", type=int, default=50)
     parser.add_argument("--max-length", type=int, default=8000)
-    parser.add_argument("--max-seconds-per-char", type=float, default=0.6)
-    parser.add_argument("--min-runaway-floor-s", type=float, default=8.0)
+    parser.add_argument("--max-seconds-per-char", type=float, default=0.4)
+    parser.add_argument("--min-runaway-floor-s", type=float, default=5.0)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--loop-detect", choices=["none", "reset", "regen", "ratio"], default="none",
                         help="on audio-loop detection: clear the sliding window (reset) or also "
