@@ -197,3 +197,22 @@
 - **限制**:chunk192 的文本来自原版 InfiniSST 策略而非 phrase,所以这一臂同时改了粒度与文本,只能作方向性诊断,不能作严格的粒度单因素实验;也因为文本不同,没有送打分(BLEU 与 phrase 两臂不可比,且要额外 ASR 费用)。
 - **剩下的唯一未验因素**:serving 路径。它的官方评测走 OLT `moss_tts_delta_server.py` 配 `--codec-context conversation`,我们全程走自家滑窗多轮脚本。要判断该模型对我们是否真有价值,决定性实验是用它的 server + 它的 thinker 端到端复现其公布行(BLEU 40.64 / 收尾 4.0–5.9 s),再把 thinker 换成我们的。**未做。**
 - **证据**:`/data02/jaxan/delta_tts/gran*`;脚本 `scripts/latency_probe/{synth_gran.sh,gran_look.sh}`。
+
+## 2026-09-04 serving 路径复现成功:同一 TTS 权重,收尾偏移 62 s → 5 s
+
+- **纠正一处认知错误**:我先前按仓库 2026-08-28 交接文档认定我们的 InfiniSST 是 `w2v2_qwen25`(wav2vec2 + Qwen2.5 + 380 MB stage-2 LoRA)。**该线已废弃**。实际 InfiniSST 就是 Qwen3-Omni-30B:三个 `gavinlaw/infinisst-*` HF 仓库均为 `Qwen3OmniMoeForConditionalGeneration`、70.5 GB。不带 retriever 的 baseline 是 **`gavinlaw/infinisst-no-tmsft-origin-bsz4-zh`**(Qwen3-Omni-30B-A3B-Instruct + LoRA r32/a32,数据 `manifests_rag/train_s_zh_origin.jsonl`),本仓 README 第 259 行早已写明"InfiniSST baseline(S2T 侧)"指向它,是我没查到。带 retriever 的是 `rasst-speech-llm-zh-cap16-denoise-ttag`。**PR #40 里那条级联行(BLEU 34.08 / 收尾 63.5 s)用的是废弃线的文本产物,数字本身无误但描述的是已不用的系统,待本轮出数后重写。**
+- **假设**:同事的 delta TTS 直接换进我们管线分数不动(见前条),剩余未验因素是 serving 路径——他们走 OLT `moss_tts_delta_server.py`(每个 delta 一个 turn,drain 到 audio-EOS 即确认返回,`--codec-context conversation`,`--max-context-positions 600`),我们走自家 `moss_multiturn_infer.py` 滑窗多轮。
+- **做法**:hyper01 容器 `sglang-omni-jaxan-3`(GPU 2/3/4/7),完整搭起 OLT cascade:agent/thinker/moss 三个 venv、MOSS-TTS 子模块按 pin commit 克隆并打补丁、vLLM 0.15.1、打过 computation-aware 补丁的 SimulEval。走 OLT 自己的 `run_s2st_eval.sbatch 1.92 1.0 dev moss-delta`,`MAX_DOCS=3` 正好命中 110/117/268,speaker prompt 用 OLT 自带 `assets/spk_prompt/zh_1.wav`。复现臂 = 他们的 thinker + 他们的 TTS。
+- **结果**(复现臂,直接从 run 的 instances.log 与渲染 wav 算):
+
+  | 文档 | 源时长 | CU 收尾偏移 | CA 收尾偏移 | 字/秒 |
+  |---|---:|---:|---:|---:|
+  | 268 | 737.4 s | +4.4 s | +6.8 s | 4.64 |
+  | 110 | 703.0 s | −0.8 s | +1.1 s | 4.59 |
+  | 117 | 729.0 s | +3.5 s | +6.9 s | 4.98 |
+
+  均值 CU +2.4 s / CA +4.9 s,对照其 README 公布的 CU 4018 ms / CA 5942 ms(5 篇全集)——**同量级同档,复现住**。
+- **判断**(已证实):**瓶颈是 serving 路径,不是 TTS 权重**。同一份权重,走它的 delta server 收尾偏移是秒级,走我们的滑窗脚本是 62 秒,差一个量级。语速几乎相同(它 4.59–4.98 vs 我方 v8 4.53–4.75 字/秒),所以差别不在"说得快",而在每个 delta 独立成 turn、立即 drain 并确认,不让上下文无限滚动、也就没有我们那条路上 4–10% 的失控空转。
+- **在跑**:换我们的 thinker(`infinisst-no-tmsft-origin-bsz4-zh`)+ 同一 TTS,其余全同,指纹 `12f35ac4`(复现臂 `dc692783`)。两臂生成完统一打分(打分与生成不并行,避免污染 computation-aware 墙钟)。
+- **过程中的环境坑**:(1)TTS server 分到的卡被别的租户占满 128 GB 导致 OOM,改为显式 `TTS_GPU` 指向确认空闲的卡;(2)我写的进程标题 shim 替换后又调用自己,无限递归把 thinker 启动打挂——应先捕获原函数;(3)打包时排除 `.git` 导致指纹快照失败,需补传 `.git` 并清掉 macOS 的 `._*` 元数据(否则 untracked 计数被污染);(4)`SLURM_JOB_ID` 被用于取模算端口,必须是数字。
+- **共享账号提醒**:hyper01 容器挂载的共享 HF cache 里默认 token 属于同事 **jiapingW**,前几次下载不知情用了它;XCOMET 是 gated 因而静默失败(只下来 72K)才暴露。已按 side-by-side 规矩把 gavinlaw token 放在 `/data04/jaxan/.keys/hf_token_gavinlaw`(0600),此后显式 `HF_TOKEN`,不覆盖他人默认。
