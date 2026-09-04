@@ -1,0 +1,15 @@
+{
+ "thinker_model": "InfiniSST phrase v2ep1 (wav2vec2 + Qwen2.5-7B LoRA; S2S_omni luojiaxuan/codec-decoder-context-ab)",
+ "thinker_policy": "phrase-v2ep1",
+ "thinker_chunk_ms": 1920,
+ "tts_model": "owaski/moss-tts-realtime-delta-zh-125k",
+ "tts_model_revision": "fc2d094d854664b825fe125671c7053ec1af2ca6",
+ "tts_codec_context": "continuous_per_row",
+ "playout_rule": "zero-jitter-fifo-at-thinker-emission-v1",
+ "tts_sliding_window": 11,
+ "tts_soft_reset_keep": 3,
+ "tts_runaway_floor_s": 15.0,
+ "tts_max_seconds_per_char": 0.6,
+ "tts_speaker_prompt": "fixed ref.wav of run 20260830-200824-401864000",
+ "tts_seed": 42
+}

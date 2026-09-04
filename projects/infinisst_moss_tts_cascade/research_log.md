@@ -163,3 +163,20 @@
 - **改动**(已提交):`scripts/moss_multiturn_infer.py` 的默认 `--max-seconds-per-char` 0.6→0.4、`--min-runaway-floor-s` 8.0→5.0;四处硬编码 15 的启动器(`configs/codec_decoder_context_ab_talk110.json`、`run_base_queue.sh`、`run_eval_queue.sh`、`run_codec_context_phrase_compare.py`)一并改为 5。语料合成侧的 `synth_moss_rows_{inprocess,batched}.py`、`generate_moss_realtime_long_targets.py`、`gen_moss_self_history.py` **不动**——那是训练数据生成的护栏,收紧会改变语料构成,属另一条决策。
 - **决策日志**(替用户做的默认决定):问题=要不要在没量化 BLEU 代价前就把预算收紧为默认;默认答案=收紧;理由=守卫的存在目的就是拦这个,当前值比健康语速松 3 倍且 15 秒地板让它对中位 turn(16–17 字)形同虚设,实测收尾偏移降 81%/56%;回滚=把 5.0/0.4 改回 15/0.6,单 commit 可 revert。**外审未做**(用户在线交互中,直接汇报由其否决更快)。
 - **证据**:`scripts/latency_probe/ablate.sh` 与 `ablate_compare.py`;产物 hyper00 `/data02/jaxan/tts_guard_ablation/`(容器删除后仍在宿主盘)。
+
+## 2026-09-04 换 TTS 权重实测:owaski/moss-tts-realtime-delta-zh-125k 接我们的 phrase 输出,分数不动
+
+- **背景**:同事的 delta-finetune checkpoint(`owaski/moss-tts-realtime-delta-zh-125k@fc2d094d`,基座同为 `OpenMOSS-Team/MOSS-TTS-Realtime`,与我们 v8 同架构、safetensors 同大小 4,663,931,664 B,可直接换权重)。其 README 报告配**它自己的** phrase thinker(`owaski/infinisst-thinker-phrase-zh`)在 ACL 60/60 dev、1920 ms chunk 下:BLEU 40.64、XCOMET-XL 0.723、收尾偏移 CU 4018 / CA 5942 ms。用户要求接我们的 InfiniSST phrase 输出实测。
+- **做法**:唯一变量是 TTS 权重。同 InfiniSST phrase 行(phrv2e1 swrow)、同固定音色 ref、同滑窗(11 / soft-reset-keep 3 / continuous codec context)、同 seed 42、同失控预算(15 s / 0.6 s每字)、同 harness(`w0.py` 即 `moss_multiturn_infer.py` 快照)。渲染沿用零抖动 FIFO;**时间线构建脚本先用原始 v8 产物验证过,重建出的 intervals 与已打分的 `ours_ext` 逐字节一致**。打分走 OLT 官方栈(在 hyper00 重建:三 venv + 补丁 + SEGALE/vecalign + XCOMET-XL),ElevenLabs Scribe v2,与 PR #40 同配方。
+- **结果**(同三篇 talk,`document_fingerprint` 同为 `8437ac49…`,CA 列,CU=CA):
+
+  | TTS | BLEU | XCOMET-XL | LongYAAL | 收尾偏移 | 段数 | 超译罚 |
+  |---|---:|---:|---:|---:|---:|---:|
+  | 我们 v8 | 34.08 | 0.646 | 53,186 ms | 63,525 ms | 267 | 2 |
+  | owaski delta-zh-125k | 34.58 | 0.652 | 53,401 ms | 61,959 ms | 269 | 2 |
+
+  时间线层(音频/源时长、坏 turn、收尾):delta 1.11/1.26/1.08、5/17/7 个坏 turn、86/196/70 s;我们 v8 原始 1.11/1.27/1.05、14/19/7、89/204/46 s。中位语速 delta 4.41–4.79 vs v8 4.53–4.75 字/秒。
+- **判断**:**直接换权重进我们现有管线,分数不动**。BLEU +0.50、XCOMET +0.006、LongYAAL 慢 0.2 s、收尾偏移快 1.6 s——而我们 v8 自己在 talk117 上三次采样的收尾偏移是 176/204/264 s,1.6 s 远在噪声内。它也**没有说得更快**,所以音频超长这个根本问题换它并不自动解决。
+- **两个已知的接法不匹配(结论的限制)**:(1)**粒度**——它按 delta 训练(每 1.92 s chunk 一个 turn、2–6 字碎片),我们 phrase 每 3.84 s 吐约 16 字完整小句,是其训练分布的三倍长;(2)**harness**——其官方评测走 OLT `moss_tts_delta_server.py` 配 `--codec-context conversation`,我走的是我们的滑窗多轮脚本。因此本条只能证否"换权重即可",不能证否该模型。
+- **在跑**:粒度对照——同 checkpoint 喂 `chunk192` swrow(每 1.92 s 约 9 字,三篇约 1080 段),区分"模型对我们无用"与"我喂错了"。
+- **证据**:run 目录 hyper00 `/data04/jaxan/olt_build/results3/s2st_infinisst-moss-cascade_dev_1920ms_delta-final`;合成产物 `/data02/jaxan/delta_tts/`;脚本 `scripts/latency_probe/{synth_delta.sh,build_timeline.py,score_delta.sh,delta_quicklook.sh}`;容器 `sglang-omni-jaxan-2`。
