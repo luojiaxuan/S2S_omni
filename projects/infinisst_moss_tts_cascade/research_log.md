@@ -216,3 +216,21 @@
 - **在跑**:换我们的 thinker(`infinisst-no-tmsft-origin-bsz4-zh`)+ 同一 TTS,其余全同,指纹 `12f35ac4`(复现臂 `dc692783`)。两臂生成完统一打分(打分与生成不并行,避免污染 computation-aware 墙钟)。
 - **过程中的环境坑**:(1)TTS server 分到的卡被别的租户占满 128 GB 导致 OOM,改为显式 `TTS_GPU` 指向确认空闲的卡;(2)我写的进程标题 shim 替换后又调用自己,无限递归把 thinker 启动打挂——应先捕获原函数;(3)打包时排除 `.git` 导致指纹快照失败,需补传 `.git` 并清掉 macOS 的 `._*` 元数据(否则 untracked 计数被污染);(4)`SLURM_JOB_ID` 被用于取模算端口,必须是数字。
 - **共享账号提醒**:hyper01 容器挂载的共享 HF cache 里默认 token 属于同事 **jiapingW**,前几次下载不知情用了它;XCOMET 是 gated 因而静默失败(只下来 72K)才暴露。已按 side-by-side 规矩把 gavinlaw token 放在 `/data04/jaxan/.keys/hf_token_gavinlaw`(0600),此后显式 `HF_TOKEN`,不覆盖他人默认。
+
+## 2026-09-04 phrase gating 上 Omni 线:数据齐了,但标点规则只是他们的 fallback
+
+- **前提问题已解决(推翻我上一条的"需要向 siqiouya 要语料")**:训练轨迹与音频**都在我们自己的盘上**——`/mnt/gemini/data/jiaxuanluo/manifests_rag/train_s_zh_origin.jsonl`(12,500 行,17.8 MB,正是 `infinisst-no-tmsft-origin-bsz4-zh` 的训练集)与 `/mnt/gemini/data/jiaxuanluo/audio_clips_siqi_zh_v2/`(7.3 GB,路径逐个对得上)。taurus/aries 经 NFS 都可读写。我先前只查了 Babel 路径与 jiaxingxu 的目录,漏了本仓 `docs/remote_artifacts.md` 早已写明的"本地明文副本"。
+- **数据格式**:ms-swift `messages`,user `<audio>` 与 assistant 交替,每个 assistant 就是该 chunk 的释放文本(不释放为空串);`audios` 是逐 chunk wav。轨迹改写只动 assistant 内容。
+- **已实现并验证**:`scripts/phrase_gating/phrase_gate_traj.py`。规则=累积释放,直到缓冲区以短语标点结尾且实字数 ≥ `min_chars`,或攒够 `max_hold` 步。**每行做恒等校验:改写前后 assistant 内容拼接必须逐字相同,不等即拒写**;音频路径重写后抽查存在性。12,500 行 0.78 秒跑完,抽查 200 个音频 0 缺失。
+- **超参扫描**(前 3000 行;基线=词对齐,14,811 次释放、中位 11 字、其中 2,079 次不足 4 字):
+
+  | min_chars | max_hold | 释放数 | 占基线 | 中位字数 | <4 字 |
+  |---:|---:|---:|---:|---:|---:|
+  | 2 | 2 | 9,398 | 0.63 | 18 | 458 |
+  | 3 | 3 | 7,589 | 0.51 | 22 | 174 |
+  | 4 | 4 | 6,823 | 0.46 | 24 | 81 |
+  | 6 | 8 | 5,965 | 0.40 | 29 | 54 |
+
+- **判断**:**纯标点规则在这份语料上是粗代理,达不到目标粒度**。即使最松的 `max_hold=2` 也到中位 18 字,而我们 w2v2 phrase 线实测中位 16、他们 TTS 语料的 turn 中位 13。原因是这份轨迹里标点稀疏,真正起作用的是 `max_hold` 而不是短语边界——换言之我们是在按步数切,不是按短语切。
+- **正解**:OLT `data/scripts/s2t/phrase_segment.py`(stage 8)用 LLM(Qwen3.8-27B-FP8 经 vLLM)标短语边界,**删掉标记必须逐字节还原原文**才接受,再把每步累积释放向下取整到最近边界;三条不变量(长度、拼接、顺序)由构造保证。**我们那条标点规则恰好是它的 fallback 路径**(`n_fallback` 计数的那条)。
+- **下一步**:写 manifest 适配器(我们的 `messages` 格式 ↔ stage 8 的 trajectory 列格式),在 OLT 上跑 stage 8(只需文本,不需音频,LLM 起在 hyper01),再转回来做 LoRA SFT。按新的分工,适配器写在 OLT 仓库。
