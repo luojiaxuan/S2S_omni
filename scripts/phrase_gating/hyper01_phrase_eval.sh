@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # note (luojiaxuan): hyper01-side steps for evaluating the phrase-gated thinker with the OLT cascade recipe.
-# note (luojiaxuan): Runs on the hyper01 host; the eval itself runs inside a task-scoped container that sees
+# note (luojiaxuan): Runs on the hyper01 host; the eval itself runs inside a task-scoped container (named with the
+# note (luojiaxuan): smallest sglang-omni-jaxan-<n> free in both docker ps -a and the map at `up` time) that sees
 # note (luojiaxuan): GPUs 2,3,4 (thinker TP=2 on 0,1 and the TTS on 2 in container numbering). The env below is
 # note (luojiaxuan): the one the earlier "ours" arm (job 90002) was generated and scored with, so the two runs
 # note (luojiaxuan): differ only in the thinker checkpoint and its revision.
@@ -13,7 +14,14 @@
 set -uo pipefail
 CMD="${1:?up|cascade|compare|score|down}"
 SAB=/data04/jaxan/serving_ab
-CNAME=sglang-omni-jaxan-2
+CNAME_FILE=$SAB/thinker_phrase_gated.cname
+if [ "$CMD" = up ]; then
+  taken=$( { docker ps -a --filter name=sglang-omni-jaxan --format '{{.Names}}'; grep -aoE '^sglang-omni-jaxan-[0-9]+' "$HOME/jiaxuanluo-map.txt"; } | grep -oE '[0-9]+$' | sort -un)
+  n=1; while echo "$taken" | grep -qx "$n"; do n=$((n+1)); done
+  CNAME=sglang-omni-jaxan-$n
+else
+  CNAME=$(cat "$CNAME_FILE")
+fi
 GPUS=2,3,4
 JOB=90003
 SJOB=95003
@@ -34,6 +42,7 @@ up)
   printf '%s\tgpus=idx%s\thost=hyper01\thost_data=/data04/jaxan(:/data)\tdesc=phrase-gated thinker OLT cascade eval (3 dev docs, job %s) + scoring; thinker rev %s\tcreated=%s\t收尾:打分完成即删\n' \
     "$CNAME" "$GPUS" "$JOB" "$SHA8" "$(date -u +%FT%TZ)" >> "$HOME/jiaxuanluo-map.txt"
   echo "$SHA8" > "$SAB/thinker_phrase_gated.sha8"
+  echo "$CNAME" > "$CNAME_FILE"
   docker ps --filter "name=^$CNAME\$" --format '{{.Names}} {{.Status}}'
   ;;
 cascade)

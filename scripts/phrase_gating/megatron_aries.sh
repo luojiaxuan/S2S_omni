@@ -28,7 +28,11 @@ PORT=$(( 20000 + ($$ % 20000) ))
 NAME="sglang-omni-jaxan-1"
 
 mkdir -p "$LOCAL"
-docker rm -f "$NAME" >/dev/null 2>&1 || true
+if [ -n "$(docker ps -q --filter "name=^$NAME\$")" ]; then
+  echo "container $NAME is running (see docker ps and \$HOME/jiaxuanluo-map.txt); refusing to replace it" >&2
+  exit 5
+fi
+docker rm "$NAME" >/dev/null 2>&1 || true
 docker run --rm --init --name "$NAME" --gpus "\"device=$DEVICES\"" --ipc=host --shm-size=64g \
   -v /mnt/gemini/home:/mnt/gemini/home -v /mnt/gemini/data:/mnt/gemini/data -v /mnt/gemini/data2:/mnt/gemini/data2 \
   -v "$LOCAL":"$LOCAL" \
