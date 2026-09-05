@@ -257,3 +257,13 @@
 - **aries 环境八连坑**(全部实测,已写进脚本):根分区 100% 满 → 缓存与临时目录全指 gemini;系统 python 缺 `ensurepip` → 用 conda;conda 被重定位,shebang 与 shell 集成失效 → 用其自带解释器直接驱动;conda OpenSSL legacy provider 报错 → `CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1`;`qwen_omni_utils` 隐式依赖 torchvision;modelscope 走自己的 `MODELSCOPE_CACHE` 绕过 `XDG_CACHE_HOME` 写满盘;pip 默认装 cu130 而驱动是 550.107/CUDA 12.4 → torch 2.6.0+cu124,并把 DeepSpeed 从 0.19.6 降到 0.16.4(算子注册不兼容);**NCCL 在 A6000 间的 PCIe P2P 上死锁**——四卡 all-reduce 无限挂起、GPU 100% 而显存不涨,我第一次误判为"加载慢"白等 67 分钟,用 30 秒最小 all-reduce 探针定位,加 `NCCL_P2P_DISABLE=1` 即通。
 - **状态**:冒烟运行中,ZeRO-3 `zero.Init` 生效(38.28B 参数分片,每 rank 约 23 GB / 48 GB),正在加载 15 个权重分片。
 - **证据**:`scripts/phrase_gating/`(改写、两次 sweep、数据冒烟、NCCL 探针、环境与训练脚本)。
+
+## 2026-09-04 自训 phrase-gated thinker(二):aries → hyper01,吞吐差 23 倍,全量已发射
+
+- **效率审查触发的换机**(项目规矩:预计超 1 小时的任务发射前必须估墙钟)。aries 冒烟实测 **180–208 秒/步**,全量 3,125 步 = **约 165 小时(近 7 天)**,不可接受。三条原因叠加,都指向"aries 是错的机器":(1)为绕开 NCCL 死锁而设的 `NCCL_P2P_DISABLE=1`,使 ZeRO-3 每步的参数 all-gather 退化为经主机内存拷贝;(2)A6000 间无 NVLink,只有 PCIe;(3)48 GB 显存逼迫全分片。
+- **换到 hyper01(4×H200)后实测 7.89 秒/步**,即 **快 23 倍**,全量约 **7 小时**。同一份数据、同一套超参、同样 ZeRO-3;唯一去掉的是 `NCCL_P2P_DISABLE`(H200 有 NVLink,禁 P2P 反而慢)。显存每卡仅约 24 GB / 143 GB,分片压力极小。
+- **搬运成本**(实测,供以后决策):taurus → hyper01 直连 **29 MB/s**(音频 7.4 GB 约 4 分钟);基座模型改从 HF 直下 hyper01,**66 GB 约 90 秒**,远快于跨机中转——**结论:hyper01 需要公开权重时一律直接从 HF 拉,不要从别的主机推**。
+- **发射参数**:容器 `sglang-omni-jaxan-5`(hyper01,GPU 0-3,已登记 map);LoRA r32/α32/dropout 0.05、`all-linear`、冻结 vit+aligner、global batch 4、max_length 2048、1 epoch、lr 1e-4 cosine→1e-5、warmup 5%、wd 0.01、clip 1.0、Adam β(0.9,0.95)、bf16、seed 42、ZeRO-3;每 200 步存档、`save_total_limit 3`,可 `--resume_from_checkpoint` 续训。
+- **监控判据的教训**:先以"日志 mtime 是否更新"判活,在静默的预处理阶段**误报卡死**;改为"rank CPU 时间是否累加",全量则用"步数是否推进"。**另一个真实损失**:清理旧 run 时用 `pkill -f torchru[n]`,匹配不到 `python -m torch.distributed.run`,导致上一轮 NCCL 死锁的 run 变成孤儿、四个 rank 空转近两小时并抢占同一批卡,把新 run 拖慢。**今后清理一律按工作目录路径匹配(如 `phrase_sft_20260904`),不按框架名。**
+- **我在本轮的两次误判(均已当场更正)**:一是拿旧 PID 的 CPU 时间断言"训练挂了",实际当前 run 在正常推进;二是称"只剩一个 rank",实为 `ps -p` 只查了手上三个 PID。判据教训:进程存活要按**工作目录路径**列全,不要按零散 PID 抽样。
+- **状态**:全量训练 06:31Z 发射,预计 7 小时。之后导出合并权重 → 走已复现过的 OLT cascade 复测,与我们词对齐 36.81 / 他们 phrase-gated 38.32(CU BLEU)三方并排。
