@@ -234,3 +234,26 @@
 - **判断**:**纯标点规则在这份语料上是粗代理,达不到目标粒度**。即使最松的 `max_hold=2` 也到中位 18 字,而我们 w2v2 phrase 线实测中位 16、他们 TTS 语料的 turn 中位 13。原因是这份轨迹里标点稀疏,真正起作用的是 `max_hold` 而不是短语边界——换言之我们是在按步数切,不是按短语切。
 - **正解**:OLT `data/scripts/s2t/phrase_segment.py`(stage 8)用 LLM(Qwen3.8-27B-FP8 经 vLLM)标短语边界,**删掉标记必须逐字节还原原文**才接受,再把每步累积释放向下取整到最近边界;三条不变量(长度、拼接、顺序)由构造保证。**我们那条标点规则恰好是它的 fallback 路径**(`n_fallback` 计数的那条)。
 - **下一步**:写 manifest 适配器(我们的 `messages` 格式 ↔ stage 8 的 trajectory 列格式),在 OLT 上跑 stage 8(只需文本,不需音频,LLM 起在 hyper01),再转回来做 LoRA SFT。按新的分工,适配器写在 OLT 仓库。
+
+## 2026-09-04 自训 phrase-gated thinker(一):数据改写完成,规则与超参定档
+
+- **目标**:今天量出我们的 thinker 比他们的 phrase-gated 版低 1.5 BLEU(CU 36.81 vs 38.32),差距就是 phrase gating。用户裁定**必须自己训**,不用他们的 checkpoint;架构就是现役的 Qwen3-Omni-30B(w2v2 线已废弃)。
+- **前提落实**(我一度误判为"缺语料需向 siqiouya 索取",错误,收回):训练轨迹与音频都在我们自己的 gemini NFS 上——`/mnt/gemini/data/jiaxuanluo/manifests_rag/train_s_zh_origin.jsonl`(12,500 行,即原 checkpoint 训练所用)与 `audio_clips_siqi_zh_v2/`(7.3 GB),基座 `/mnt/gemini/data2/jiaxuanluo/Qwen3-Omni-30B-A3B-Instruct` 也在。`docs/remote_artifacts.md` 早写明"本地明文副本",是我没查到。
+- **规则**(用户裁定:不用 LLM 判别,就用他们的 fallback 思路,按字数为主):一步释放的条件是 **实字数达到 `release_chars`,或以短语标点结尾且已有 `punct_min` 字**。取消了原先的 `max_hold`——字数封顶本身就限制了持有时长,少一个旋钮。
+- **超参 sweep**(3000 行子集;项目规矩:指定超参须报 sweep 而非试一个就定):
+
+  | punct_min | release_chars | 释放数 | 中位 | 均值 | p90 | <4字占比 |
+  |---:|---:|---:|---:|---:|---:|---:|
+  | 基线(词对齐) | — | 14,811 | 11 | 15.2 | 33 | 14% |
+  | 0 | 8 | 11,871 | 16 | 19.0 | 36 | 3.2% |
+  | **4** | **8** | 11,711 | **16** | 19.2 | 36 | **1.6%** |
+  | 4 | 12 | 10,676 | 18 | 21.1 | 37 | 1.5% |
+  | 6 | 16 | 9,698 | 21 | 23.2 | 39 | 1.4% |
+
+  取 `punct_min=4, release_chars=8`:中位 16 字与我们 w2v2 phrase 线实测一致;`punct_min` 从 0 加到 4 使碎片率减半而中位/均值/p90 全不变,是无代价的改进。**注意**:字数上限对中位影响小(8→16 只把中位 16 推到 21),因为多数释放由标点触发,字数上限主要管长尾。
+- **产物**:`/mnt/gemini/data/jiaxuanluo/phrase_gating_20260904/train_s_zh_phrase_ours.jsonl`,12,500 行。全量统计:释放 61,194 → 48,572(0.79×),中位 12 → 16 字,<4 字碎片 8,689(14%) → 754(1.6%)。**正确性**:脚本对每行断言 `"".join(改写后) == "".join(改写前)`,不等即拒写,12,500 行全过——文本一字未变,只有释放时刻后移。音频路径已重指本地,抽查 200 条全在。
+- **训练配置**(逐项抄原 checkpoint 的 `args.json`,只换数据):LoRA r32/α32/dropout 0.05、`target_modules=all-linear`、`freeze_vit/aligner=True`、LLM 可训、micro 1 × global 4、max_length 2048、1 epoch、lr 1e-4 cosine→1e-5、warmup 5%、weight decay 0.01、clip 1.0、Adam β(0.9,0.95)、bf16、seed 42。
+- **决策日志**:问题=原训练走 Megatron(`micro_batch_size`/`lr_warmup_fraction`/`save_interval` 等是 Megatron 参数名),复刻是否也用 Megatron?默认=改用 ms-swift 的 HF 后端 + DeepSpeed ZeRO-3;理由=Megatron 路线依赖 aries 上没有的 Apptainer 镜像,而超参可一一对齐、差异仅在并行实现,且我们比较的是数据改动、两臂同后端即可控;回滚=若显存或吞吐不达标改回 Megatron。外审未做(用户在线,直接汇报更快)。
+- **aries 环境八连坑**(全部实测,已写进脚本):根分区 100% 满 → 缓存与临时目录全指 gemini;系统 python 缺 `ensurepip` → 用 conda;conda 被重定位,shebang 与 shell 集成失效 → 用其自带解释器直接驱动;conda OpenSSL legacy provider 报错 → `CRYPTOGRAPHY_OPENSSL_NO_LEGACY=1`;`qwen_omni_utils` 隐式依赖 torchvision;modelscope 走自己的 `MODELSCOPE_CACHE` 绕过 `XDG_CACHE_HOME` 写满盘;pip 默认装 cu130 而驱动是 550.107/CUDA 12.4 → torch 2.6.0+cu124,并把 DeepSpeed 从 0.19.6 降到 0.16.4(算子注册不兼容);**NCCL 在 A6000 间的 PCIe P2P 上死锁**——四卡 all-reduce 无限挂起、GPU 100% 而显存不涨,我第一次误判为"加载慢"白等 67 分钟,用 30 秒最小 all-reduce 探针定位,加 `NCCL_P2P_DISABLE=1` 即通。
+- **状态**:冒烟运行中,ZeRO-3 `zero.Init` 生效(38.28B 参数分片,每 rank 约 23 GB / 48 GB),正在加载 15 个权重分片。
+- **证据**:`scripts/phrase_gating/`(改写、两次 sweep、数据冒烟、NCCL 探针、环境与训练脚本)。
