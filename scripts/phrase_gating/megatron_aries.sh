@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# The three stages of OLT's finetune/recipes/omni_sft_recipe.sh, run under Docker on aries
-# with the recipe's own image and arguments. The recipe refuses to run outside Apptainer
-# (it verifies the .sif's labels), so its commands are reproduced verbatim here.
+# note (luojiaxuan): The three stages of OLT's finetune/recipes/omni_sft_recipe.sh, run under Docker on aries
+# note (luojiaxuan): with the recipe's own image and arguments. The recipe refuses to run outside Apptainer
+# note (luojiaxuan): (it verifies the .sif's labels), so its commands are reproduced verbatim here.
 #
-#   megatron_aries.sh convert   HF base -> Megatron (mcore) checkpoint, once
-#   megatron_aries.sh train     megatron sft, LoRA r32 all-linear, EP=4, global batch 4, 1 epoch
-#   megatron_aries.sh export    merged bf16 HF checkpoint the OLT cascade serves
+# note (luojiaxuan): megatron_aries.sh convert   HF base -> Megatron (mcore) checkpoint, once
+# note (luojiaxuan): megatron_aries.sh train     megatron sft, LoRA r32 all-linear, EP=4, global batch 4, 1 epoch
+# note (luojiaxuan): megatron_aries.sh export    merged bf16 HF checkpoint the OLT cascade serves
 #
-# Checkpoints and outputs live on the gemini NFS; the dataset cache and temporaries live on
-# a LOCAL disk (/mnt/data4/jiaxuanluo/phrase_cache): the 8-process dataset Map deletes its
-# scratch files while siblings still hold them open, which on NFS fails with
-# "Device or resource busy: .nfs0000..." (measured 2026-09-05). Flags stay on the
-# continuation lines with no comments among them.
+# note (luojiaxuan): Checkpoints and outputs live on the gemini NFS; the dataset cache and temporaries live on
+# note (luojiaxuan): a LOCAL disk (/mnt/data4/jiaxuanluo/phrase_cache): the 8-process dataset Map deletes its
+# note (luojiaxuan): scratch files while siblings still hold them open, which on NFS fails with
+# note (luojiaxuan): "Device or resource busy: .nfs0000..." (measured 2026-09-05). Flags stay on the
+# note (luojiaxuan): continuation lines with no comments among them.
 set -euo pipefail
 STAGE="${1:?convert|train|export}"
 IMG=modelscope-registry.us-west-1.cr.aliyuncs.com/modelscope-repo/modelscope:ubuntu22.04-cuda12.8.1-py311-torch2.8.0-vllm0.11.0-modelscope1.31.0-swift3.9.1
