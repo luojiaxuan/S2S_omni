@@ -14,6 +14,7 @@ set -uo pipefail
 STATUS="${STATUS:?path of the status file this driver appends to}"
 FROM="${FROM:-wait_train}"
 HERE=$(cd "$(dirname "$0")" && pwd)
+STATE=$(dirname "$STATUS")
 W=/mnt/gemini/home/jiaxuanluo/phrase_sft_20260904
 DATA=/mnt/gemini/data/jiaxuanluo/phrase_gating_20260904/train_s_zh_phrase_ours.jsonl
 HY=sglang-omni@47.74.115.221
@@ -62,7 +63,7 @@ fi
 if want upload; then
   facts=$($SSH hyper01 "sha256sum $SAB/phrase_gated_data/train_s_zh_phrase_ours.jsonl | cut -c1-16; wc -l < $SAB/phrase_gated_data/train_s_zh_phrase_ours.jsonl; grep -a 'elapsed time per iteration' $SAB/phrase_gated_data/train.log | head -1 | grep -aoE 'lm loss: [0-9.E+-]+' ; grep -a 'elapsed time per iteration' $SAB/phrase_gated_data/train.log | tail -1 | grep -aoE 'iteration +[0-9]+/ +[0-9]+|lm loss: [0-9.E+-]+' | tr '\n' ' '" | tr '\n' '|')
   IFS='|' read -r dsha rows loss0 lossN <<<"$facts"
-  cat >"$HERE/.model_card.md" <<EOF
+  cat >"$STATE/.model_card.md" <<EOF
 ---
 license: other
 base_model: Qwen/Qwen3-Omni-30B-A3B-Instruct
@@ -88,7 +89,7 @@ MOSS-TTS 级联逐 delta 合成。
 - 评估口径与结果记录在 \`luojiaxuan/S2S_omni\` 的 \`projects/infinisst_moss_tts_cascade/research_log.md\`;
   在 OLT 级联里以 \`CKPT=<本地目录> THINKER_MODEL_REVISION=local:gavinlaw-infinisst-thinker-phrase-gated-zh:<commit8>\` 引用。
 EOF
-  cat >"$HERE/.data_card.md" <<EOF
+  cat >"$STATE/.data_card.md" <<EOF
 ---
 license: other
 language: [en, zh]
@@ -104,17 +105,17 @@ InfiniSST en→zh 的 SFT 轨迹,由词对齐轨迹经短语 gating 改写而来
   训练主机上的本地路径;**音频不随本仓库分发**(InfiniSST 的 siqi zh v2 切片,约 7.4 GB)。
 - 训练出的模型:\`$REPO\`。
 EOF
-  scp -q "$HERE/hf_upload_phrase.py" "$HERE/.model_card.md" "$HERE/.data_card.md" hyper01:$SAB/phrase_gated_data/ || fail upload "scp of upload script/cards"
-  $SSH hyper01 "cd $SAB && HF_TOKEN=\$(cat /data04/jaxan/.keys/hf_token_gavinlaw) venvs/olt-thinker/bin/python phrase_gated_data/hf_upload_phrase.py --repo $REPO --hf thinker_phrase_gated --mcore thinker_phrase_gated_mcore --card phrase_gated_data/.model_card.md --data-repo $DREPO --data phrase_gated_data/train_s_zh_phrase_ours.jsonl --data-card phrase_gated_data/.data_card.md --out phrase_gated_data/upload.json > phrase_gated_data/upload.log 2>&1; echo UPLOAD_EXIT=\$?; cat phrase_gated_data/upload.json 2>/dev/null | tr -d '\n '" > "$HERE/.upload.out" 2>&1
-  grep -q "UPLOAD_EXIT=0" "$HERE/.upload.out" || fail upload "$(tail -c 400 "$HERE/.upload.out")"
-  u=$(sed -n 's/.*\({.*}\).*/\1/p' "$HERE/.upload.out" | tail -1)
-  python3 -c "import json,sys; d=json.loads(sys.argv[1]); assert not d['missing'], d['missing']; assert d['data_ok']; print(d['sha'][:8])" "$u" >"$HERE/.sha8" 2>"$HERE/.upload.err" \
-    || fail upload "reconciliation: $(cat "$HERE/.upload.err")"
-  ok upload "$REPO@$(cat "$HERE/.sha8") $(python3 -c "import json,sys; d=json.loads(sys.argv[1]); print('files', d['n_local'], '/', d['n_remote'], '| data', d['data_repo']+'@'+d['data_sha'][:8])" "$u")"
+  scp -q "$HERE/hf_upload_phrase.py" "$STATE/.model_card.md" "$STATE/.data_card.md" hyper01:$SAB/phrase_gated_data/ || fail upload "scp of upload script/cards"
+  $SSH hyper01 "cd $SAB && HF_TOKEN=\$(cat /data04/jaxan/.keys/hf_token_gavinlaw) venvs/olt-thinker/bin/python phrase_gated_data/hf_upload_phrase.py --repo $REPO --hf thinker_phrase_gated --mcore thinker_phrase_gated_mcore --card phrase_gated_data/.model_card.md --data-repo $DREPO --data phrase_gated_data/train_s_zh_phrase_ours.jsonl --data-card phrase_gated_data/.data_card.md --out phrase_gated_data/upload.json > phrase_gated_data/upload.log 2>&1; echo UPLOAD_EXIT=\$?; cat phrase_gated_data/upload.json 2>/dev/null | tr -d '\n '" > "$STATE/.upload.out" 2>&1
+  grep -q "UPLOAD_EXIT=0" "$STATE/.upload.out" || fail upload "$(tail -c 400 "$STATE/.upload.out")"
+  u=$(sed -n 's/.*\({.*}\).*/\1/p' "$STATE/.upload.out" | tail -1)
+  python3 -c "import json,sys; d=json.loads(sys.argv[1]); assert not d['missing'], d['missing']; assert d['data_ok']; print(d['sha'][:8])" "$u" >"$STATE/.sha8" 2>"$STATE/.upload.err" \
+    || fail upload "reconciliation: $(cat "$STATE/.upload.err")"
+  ok upload "$REPO@$(cat "$STATE/.sha8") $(python3 -c "import json,sys; d=json.loads(sys.argv[1]); print('files', d['n_local'], '/', d['n_remote'], '| data', d['data_repo']+'@'+d['data_sha'][:8])" "$u")"
 fi
 
 if want cascade; then
-  SHA8=$(cat "$HERE/.sha8" 2>/dev/null) || fail cascade "no .sha8 from the upload stage"
+  SHA8=$(cat "$STATE/.sha8" 2>/dev/null) || fail cascade "no .sha8 from the upload stage"
   scp -q "$HERE/hyper01_phrase_eval.sh" hyper01:$SAB/ || fail cascade "scp of hyper01_phrase_eval.sh"
   up=$($SSH hyper01 "bash $SAB/hyper01_phrase_eval.sh up $SHA8" 2>&1) || fail cascade "up: $up"
   say "cascade container: $(echo $up)"
