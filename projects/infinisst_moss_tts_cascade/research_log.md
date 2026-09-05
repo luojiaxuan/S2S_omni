@@ -310,3 +310,13 @@
   1. **关闭 `--gradient_checkpointing`**——语义完全免费:同 batch、同 lr、同步数,只是不再为省显存重算前向。当前每卡 118 GB / 143 GB,剩余 25 GB 是否够放激活值需实测。**这是首选。**
   2. 提高 micro-batch(如 global batch 32)——**不是纯提速**:一个 epoch 的优化器更新次数会从 3,125 降到 391,而 lr 1e-4 是配 batch 4 定的,更新次数少 8 倍而 lr 不变很可能欠拟合;要用就得同时调 lr,引入新变量。**次选,且需连带调 lr 并说明。**
 - **本轮处置**:不中断。当前 927/3125(30%),24.2 s/step,loss 0.774,存档 3 个,ETA 14.8 小时。理由=为未验证的提速中断一个已跑三成、参数刚逐项核对过的任务不划算;改 batch 有质量风险,不在用户未拍板时替其决定。
+
+## 2026-09-05 训练路径纠错:HF Trainer → OLT 的 Megatron recipe,回到 aries
+
+- **触发**:用户指出其先前在 4×A6000 上一小时训完同规模任务(≈1.15 s/step),而我在 4×H200 上是 24 s/step——**慢 20 倍**,这不是"慢一点",是实现选错。
+- **根因**(判断,证据充分):Qwen3-Omni-30B-A3B 是 128 专家的 MoE。我用 ms-swift 的 **HF Trainer 后端**,transformers 的 MoE 前向是逐专家 Python 循环,48 层 × 128 专家 × 每专家挂 LoRA,每步几万次小矩阵乘的 Python 开销;而原 checkpoint 与 OLT `finetune/recipes/omni_sft_recipe.sh` 用的是 **ms-swift Megatron 后端**:`--expert_model_parallel_size 4`、`--moe_grouped_gemm`、`--moe_permute_fusion`、`--packing true`、`--attention_backend flash`。OLT finetune/README 的参考:**4 卡 EP=4 时 2.37 s/step,每 rank 9.6B 参数、28 GiB**——3,125 步约 2 小时(L40S)。
+- **我早先绕开 Megatron 的决定是错的**:当时以"需要 Apptainer 镜像、aries 上没有"为由改走 HF 后端。事实上 (a) 镜像是普通 Docker tag,aries 有 Docker;(b) **该镜像早已在 aries 上**(31 GB,同 tag);(c) recipe 本就按 48 GB 卡设计且默认 `NCCL_P2P_DISABLE=1`,aries 的 P2P 死锁它天生规避。
+- **回到 aries 的理由**(用户建议,核实成立):GPU 3/4/5/6 被 AlphaFold3 容器(`af3_charlesnovak_*_gpu3/4/6`)各占 9.3 GB、利用率 0%,可混用;EP=4 每 rank 28 GiB + 9.3 GB < 49 GB;数据(gemini 路径的原始 manifest)、音频、基座全在 NFS 上,零搬运。
+- **做法**:recipe 硬校验 Apptainer 镜像标签,Docker 下无法原样运行;写 `megatron_aries.sh` 用同一镜像、**逐字复刻**其 convert/train/export 三阶段命令与环境变量(`MEGATRON_LM_PATH` 指向 pin 在 73a28a1 的克隆、`MODELSCOPE_CACHE`/`HF_HOME`/`TMPDIR` 全落 gemini home、`PYTHONPATH=` 清空、`ENABLE_AUDIO_OUTPUT=False`)。manifest 用 recipe 自带 `check_chat_manifest.py` 校验通过(12,500 行、68,705 音频路径全在,sha256 846dbe7ea079)。探针:swift 3.9.1 / torch 2.8.0+cu128 / megatron.core 0.13.2 导入正常。
+- **状态**:stage 1(HF→mcore 转换)已在 aries GPU 3 上运行,输出到 gemini home。hyper01 的 HF Trainer run(1130/3125,3 存档)暂留作备胎,Megatron 步速确认后删除。hyper01 上的镜像拉取已取消。
+- **容器**:aries `sglang-omni-jaxan-1`(各阶段 `--rm` 短命容器复用此名),已登记 map。
