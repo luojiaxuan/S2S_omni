@@ -7,7 +7,10 @@
 #   megatron_aries.sh train     megatron sft, LoRA r32 all-linear, EP=4, global batch 4, 1 epoch
 #   megatron_aries.sh export    merged bf16 HF checkpoint the OLT cascade serves
 #
-# Everything lives on the gemini NFS (aries' local disks are full). Flags stay on the
+# Checkpoints and outputs live on the gemini NFS; the dataset cache and temporaries live on
+# a LOCAL disk (/mnt/data4/jiaxuanluo/phrase_cache): the 8-process dataset Map deletes its
+# scratch files while siblings still hold them open, which on NFS fails with
+# "Device or resource busy: .nfs0000..." (measured 2026-09-05). Flags stay on the
 # continuation lines with no comments among them.
 set -euo pipefail
 STAGE="${1:?convert|train|export}"
@@ -18,22 +21,25 @@ MCORE=$W/Qwen3-Omni-30B-A3B-Instruct-mcore
 DATA=/mnt/gemini/data/jiaxuanluo/phrase_gating_20260904/train_s_zh_phrase_ours.jsonl
 CKPT=$W/megatron_run
 MEGATRON=$W/third_party/Megatron-LM
+LOCAL=/mnt/data4/jiaxuanluo/phrase_cache
 GPUS="${GPUS:-4}"
 DEVICES="${DEVICES:-3,4,5,6}"
 PORT=$(( 20000 + ($$ % 20000) ))
 NAME="sglang-omni-jaxan-1"
 
+mkdir -p "$LOCAL"
 docker rm -f "$NAME" >/dev/null 2>&1 || true
 docker run --rm --init --name "$NAME" --gpus "\"device=$DEVICES\"" --ipc=host --shm-size=64g \
   -v /mnt/gemini/home:/mnt/gemini/home -v /mnt/gemini/data:/mnt/gemini/data -v /mnt/gemini/data2:/mnt/gemini/data2 \
-  -e MEGATRON_LM_PATH="$MEGATRON" -e MODELSCOPE_CACHE="$W/cache/modelscope" \
+  -v "$LOCAL":"$LOCAL" \
+  -e MEGATRON_LM_PATH="$MEGATRON" -e MODELSCOPE_CACHE="$LOCAL/modelscope" \
   -e PYTHONPATH= -e NCCL_P2P_DISABLE=1 -e NCCL_IB_DISABLE=1 -e NCCL_DEBUG=WARN \
   -e PYTHONUNBUFFERED=1 -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
   -e ENABLE_AUDIO_OUTPUT=False -e MASTER_PORT="$PORT" -e NPROC_PER_NODE="$GPUS" \
-  -e HF_HOME="$W/cache/huggingface" -e TMPDIR="$W/tmp" \
+  -e HF_HOME="$LOCAL/huggingface" -e TMPDIR="$LOCAL/tmp" \
   "$IMG" bash -c "$(cat <<EOF
 set -x
-mkdir -p "$W/cache/modelscope" "$W/tmp"
+mkdir -p "$LOCAL/modelscope" "$LOCAL/huggingface" "$LOCAL/tmp"
 case "$STAGE" in
   convert)
     swift export --model "$BASE" --to_mcore true --torch_dtype bfloat16 --output_dir "$MCORE"

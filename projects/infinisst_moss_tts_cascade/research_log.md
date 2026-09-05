@@ -348,3 +348,21 @@
 
   可搬去 gemini home(753G 空闲)的合理候选:`train_outputs`(149G)+ 两个 `sglang-omni-rl-archive`(160G),共约 310G;`wiki_synth_tts_*`(1.6T)放不下,只能删或上 HF。
 - **状态**:Megatron mcore 转换在 aries GPU 3-6 上进行中(已过 OOM 点,正写 76 GB 到 gemini home)。
+
+## 2026-09-05 自训 phrase-gated thinker(五):Megatron 在 aries 跑起来了;`.nfs` 报错是虚惊;步速 14.6→22 s/步,决定不重启
+
+- **一句话现状**:OLT Megatron recipe 的 train 阶段于 2026-09-05 21:31 PT 在 aries GPU 3/4/5/6 发射,已稳定推进(it 20/597,loss 1.38→1.00),预计 2026-09-06 01:00 PT 前后跑完。hyper01 上的 HF Trainer 备胎已停并清理。
+- **`.nfs` 报错(虚惊)**:
+  - 现象:监控在 train.log 抓到 `Traceback` + `OSError: [Errno 16] Device or resource busy: '.nfs000000000aab5a59...'`,出现三次(train.log 第 138/176/205 行),分别对应三次数据集 `Map (num_proc=8)`。
+  - 判断(已证实,读栈):栈顶是 `multiprocess/util.py::_run_finalizers → _remove_temp_dir → shutil.rmtree`,即子进程池退出时清理自己的临时目录;NFS 下被删文件若仍被兄弟进程打开会变成 `.nfsXXXX` silly-rename 文件,`unlink` 返回 EBUSY。三次 Map 都跑到 100%(12500/12375/125 条),train/val 数据集正常产出,主进程继续走到 NCCL 初始化、模型构建、加载 mcore 检查点、开始迭代。**报错来自清理阶段,不影响数据**。
+  - 改动:`megatron_aries.sh` 把 `MODELSCOPE_CACHE`/`HF_HOME`/`TMPDIR` 从 gemini NFS 改到 aries 本地盘 `/mnt/data4/jiaxuanluo/phrase_cache`(data4 清理后有 138 G 空闲),下次运行生效;本次运行不因此重启。
+  - 监控教训:原监控把任何 `Traceback` 当致命并退出,导致训练其实在跑而无人盯。新监控(task `bt30zx39c`)只统计第 230 行之后的新报错,并以"迭代号是否推进"为判活主信号,10 分钟一报,连续 20 分钟不推进才报停滞;容器消失、`after training is done` 为终止信号。
+- **步速与参考值差 6 倍,分项归因**:
+  - 实测:it 1 74.5 s(含预热),it 10 14.6 s/步,it 20 22.0 s/步;每 rank 显存 28.2 GiB(与 OLT 参考的 28 GiB 一致,说明 EP=4 切分同参考)。总 597 步(12,375 条 packing 到 2048 token 后 / global batch 4),按 22 s/步剩余约 3.5 小时。
+  - 参考:OLT `omni_sft_recipe.sh` 在 Babel 4×L40S 上 2.37 s/步;**该 recipe 默认就带 `NCCL_P2P_DISABLE=1 NCCL_IB_DISABLE=1`**(注释写明沿自参考脚本),所以参考值也是 P2P 关闭下测的,P2P 不是主要差距来源。
+  - 差距落在三处(判断,每项有实测但未做单因素消融):(1) A6000 的 bf16 稠密算力约为 L40S 的 1/2.3;(2) `nvidia-smi topo -m`:GPU 3 与 4/5/6 之间是 `SYS`(跨 NUMA/跨 socket),4-5 之间 NV4,6 与 4/5 之间 NODE——EP=4 的每层 all-to-all 有一路必须跨 socket 走 SHM;dmon 采样 rank 3/4 的 PCIe rx 2–4.5 GB/s、tx 0.5–2 GB/s,通信确实在走主机内存;(3) GPU 5 上有共租户两个 6.4 GB 进程持续 100% 利用率、内存控制器 61–66%,同步训练被最慢 rank 拖住。it 10→20 变慢(14.6→22.0)与共租户负荷波动相符。
+  - 为什么不换卡:同 NUMA 的 {4,5,6,7} 更优,但 GPU 7 被别人占 30.6 GB,剩 18.5 GB 放不下 28 GiB 的 rank;GPU 0/1/2 被 sglang 服务各占 43 GB。
+- **决策日志(不重启)**:问题=是否重启以打开 P2P 或换卡;默认=不重启,让它跑完;理由=P2P 在参考配置里同样关闭、开启后收益不确定且此前在 aries 上遇到过 NCCL 挂死(见「(一)」),换卡无可用集合,重启要重付约 8 分钟模型加载并丢掉已跑的进度;回滚=若监控显示步速持续 >30 s 或报错,则以 `NCCL_P2P_DISABLE=0` 重启(脚本里改一处 env),最坏损失一次 8 分钟加载;外审=未发(保守的不动作选项,随时可推翻)。
+- **hyper01 备胎收尾**:HF Trainer 全量 run 停在 1242/3125(24.7 s/it,已跑 8.5 小时,剩 12.9 小时,比 Megatron 慢 5 倍以上,无继续价值)。容器 `sglang-omni-jaxan-5` 已删、map 行已删,不变量核对 containers=1 == map_lines=1(余下 `sglang-omni-jaxan-6` 是 OLT 打分栈,保留供复测)。GPU 0/2 已空;GPU 1/3 上的 120 GB 是其他租户(`render_full_episode.py`、`python3.12`)。存储:删除存档 800/1000(约 38 G,见下条核对),暂留 checkpoint-1200(19 G)、基座 66 G、音频 7.4 G、venv 8.5 G,待 Megatron 导出验证通过后整目录删除。
+- **我犯的错**:`pkill -f /data04/jaxan/phrase_sft` 在容器里匹配到承载它自己的 `bash -c` 进程,`set -e` 让脚本在 `docker rm` 之前中止——这是本项目第三次踩同一坑。规则:**任何 `pkill -f`/`grep` 的进程模式一律用方括号写法(如 `phrase_sf[t]`),不管上下文看起来多安全**。第一次 `docker rm -f` 报 "did not receive an exit event",等 3 秒重试即成功,属 dockerd 竞态,不必升级处理。
+- **下一步**:训练完 → `megatron_aries.sh export`(mcore adapter → 合并 bf16 HF 权重)→ 接 OLT cascade 复测 → 与我们词对齐 36.81 / 他们 phrase-gated 38.32(CU BLEU)三方并排;导出成功后清理 hyper01 `phrase_sft/` 与 aries 容器、map 行。
