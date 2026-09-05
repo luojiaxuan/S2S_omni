@@ -320,3 +320,31 @@
 - **做法**:recipe 硬校验 Apptainer 镜像标签,Docker 下无法原样运行;写 `megatron_aries.sh` 用同一镜像、**逐字复刻**其 convert/train/export 三阶段命令与环境变量(`MEGATRON_LM_PATH` 指向 pin 在 73a28a1 的克隆、`MODELSCOPE_CACHE`/`HF_HOME`/`TMPDIR` 全落 gemini home、`PYTHONPATH=` 清空、`ENABLE_AUDIO_OUTPUT=False`)。manifest 用 recipe 自带 `check_chat_manifest.py` 校验通过(12,500 行、68,705 音频路径全在,sha256 846dbe7ea079)。探针:swift 3.9.1 / torch 2.8.0+cu128 / megatron.core 0.13.2 导入正常。
 - **状态**:stage 1(HF→mcore 转换)已在 aries GPU 3 上运行,输出到 gemini home。hyper01 的 HF Trainer run(1130/3125,3 存档)暂留作备胎,Megatron 步速确认后删除。hyper01 上的镜像拉取已取消。
 - **容器**:aries `sglang-omni-jaxan-1`(各阶段 `--rm` 短命容器复用此名),已登记 map。
+
+## 2026-09-05 aries 存储清理(一):已删缓存约 52 GB,2.5 TB 产物待用户裁定
+
+- **触发**:用户要求清理 aries 上的垃圾或搬到 `/mnt/gemini/home/jiaxuanluo`。aries 根分区 100% 满(0 可用),是这台机器上一切环境问题的根源。
+- **盘点**(我在 aries 本地盘约 3.7 TB):`/mnt/data6/jiaxuanluo` 2.2T、`/mnt/data4/jiaxuanluo` 769G、`/mnt/data3/jiaxuanluo` 395G、`/mnt/data2/jiaxuanluo` 158G、`/mnt/data/jiaxuanluo` 154G、`~` 21G。gemini home 仅 753G 空闲,搬不完,必须分类。
+- **已删(纯缓存/临时,非产物,删前逐个看过内容并核对无运行中容器依赖)**:
+  - `~/.cache/{pip,uv,huggingface,flashinfer}` ≈ 14 GB → 根分区 100% → 97%(13 GB 可用)
+  - `/mnt/data4/jiaxuanluo/cache`(hf/huggingface/torch/wandb)31 GB;`/mnt/data4/jiaxuanluo/ctmp`(2026-08-24 的 17 个容器临时目录)7.9 GB → data4 空闲 100G → 138G
+  - `/mnt/data3/jiaxuanluo/tmp` 0.8 GB
+  - `ctmp` 为容器内 root 属主,宿主删不动,按规矩起 `--rm` 容器从内删除。
+- **明确不删的缓存**:`/mnt/data6/jiaxuanluo/hf_cache`(72G)——另一 session 的容器 `infinisst-phrase-jaxan-1`(运行 5 天)挂载了整个 `/mnt/data6/jiaxuanluo`,可能在用。
+- **待用户裁定的产物**(HF `gavinlaw` 下 73 个数据集中**均无正本**,按删除纪律不能自行删):
+
+  | 目录 | 大小 | 日期 | 内容 |
+  |---|---:|---|---|
+  | `data6/wiki_synth_tts_3variant` | 1012 G | 2026-03-30 | clean/noisy,RASST 合成 TTS 语料 |
+  | `data6/wiki_synth_tts_1third` | 594 G | 2026-03-29 | 同上,1/3 子集 |
+  | `data4/speech_llm_density_ablation` | 407 G | 2026-04-18 | d1/d3/d5/d8/d10 密度消融 run |
+  | `data6/MFA` | 217 G | 2026-04-01 | 上述语料的 MFA 对齐 |
+  | `data3/local_cache` | 200 G | 2026-07-09 | audio/models/roots/term_memory(RASST 工作副本) |
+  | `data6/sglang-omni-rl-archive` + `archive2` | 160 G | 2026-08-23 | artifacts/env/experiments/logs/repo |
+  | `data4/train_outputs` | 149 G | 2026-04-19 | 32 个 `q3rag_scale_lora-*.pt` checkpoint |
+  | `data4/speech_llm_maxsim_enriched` | 69 G | — | 数据集变体 |
+  | `data3/runs` | 86 G | 2026-08-25 | 两个 run 目录 |
+  | `data6/upstreams`、`Qwen2.5-7B-Instruct` | 43 G + 29 G | — | 上游环境快照;公开模型(可重下) |
+
+  可搬去 gemini home(753G 空闲)的合理候选:`train_outputs`(149G)+ 两个 `sglang-omni-rl-archive`(160G),共约 310G;`wiki_synth_tts_*`(1.6T)放不下,只能删或上 HF。
+- **状态**:Megatron mcore 转换在 aries GPU 3-6 上进行中(已过 OOM 点,正写 76 GB 到 gemini home)。
