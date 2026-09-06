@@ -32,16 +32,16 @@ active=0; want() { [ "$1" = "$FROM" ] && active=1; [ $active = 1 ]; }
 # note (luojiaxuan): container GPU ordinals 0,1 = thinker (TP=2), 2 = TTS -- fixed by the --gpus device order at `up`.
 declare -a ARMS=(
   "theirs_det   92001 92501 /data/serving_ab/thinkers/theirs owaski-infinisst-thinker-phrase-zh          0 0"
-  "theirs_s1    92002 92502 /data/serving_ab/thinkers/theirs owaski-infinisst-thinker-phrase-zh          0.6 1"
-  "theirs_s2    92003 92503 /data/serving_ab/thinkers/theirs owaski-infinisst-thinker-phrase-zh          0.6 1"
-  "theirs_s3    92004 92504 /data/serving_ab/thinkers/theirs owaski-infinisst-thinker-phrase-zh          0.6 1"
   "word_det     92011 92511 /data/thinkers_extra/ours_word   gavinlaw-infinisst-no-tmsft-origin-bsz4-zh  0 0"
-  "word_s1      92012 92512 /data/thinkers_extra/ours_word   gavinlaw-infinisst-no-tmsft-origin-bsz4-zh  0.6 1"
-  "word_s2      92013 92513 /data/thinkers_extra/ours_word   gavinlaw-infinisst-no-tmsft-origin-bsz4-zh  0.6 1"
-  "word_s3      92014 92514 /data/thinkers_extra/ours_word   gavinlaw-infinisst-no-tmsft-origin-bsz4-zh  0.6 1"
   "phrase_det   92021 92521 /data/serving_ab/thinkers/phrase gavinlaw-infinisst-thinker-phrase-gated-zh  0 0"
+  "theirs_s1    92002 92502 /data/serving_ab/thinkers/theirs owaski-infinisst-thinker-phrase-zh          0.6 1"
+  "word_s1      92012 92512 /data/thinkers_extra/ours_word   gavinlaw-infinisst-no-tmsft-origin-bsz4-zh  0.6 1"
   "phrase_s1    92022 92522 /data/serving_ab/thinkers/phrase gavinlaw-infinisst-thinker-phrase-gated-zh  0.6 1"
+  "theirs_s2    92003 92503 /data/serving_ab/thinkers/theirs owaski-infinisst-thinker-phrase-zh          0.6 1"
+  "word_s2      92013 92513 /data/thinkers_extra/ours_word   gavinlaw-infinisst-no-tmsft-origin-bsz4-zh  0.6 1"
   "phrase_s2    92023 92523 /data/serving_ab/thinkers/phrase gavinlaw-infinisst-thinker-phrase-gated-zh  0.6 1"
+  "theirs_s3    92004 92504 /data/serving_ab/thinkers/theirs owaski-infinisst-thinker-phrase-zh          0.6 1"
+  "word_s3      92014 92514 /data/thinkers_extra/ours_word   gavinlaw-infinisst-no-tmsft-origin-bsz4-zh  0.6 1"
   "phrase_s3    92024 92524 /data/serving_ab/thinkers/phrase gavinlaw-infinisst-thinker-phrase-gated-zh  0.6 1"
 )
 THEIRS_SHA8=7d29be87; WORD_SHA8=fd0a5c8f; PHRASE_SHA8=83a95f5b
@@ -54,10 +54,10 @@ if want wait; then
     sleep 120
   done
   sizes=$($SSH $A "du -sh $D3/thinkers/theirs $D3/thinkers/phrase $D4/ours_word 2>/dev/null | cut -f1 | tr '\n' ' '")
-  for p in "$D3/olt" "$D3/venvs/olt-thinker/bin/vllm" "$D3/venvs/olt-tts/bin/python" "$D3/tts/model.safetensors" "$D3/checkpoints/XCOMET-XL/checkpoints/model.ckpt" "$D3/thinkers/theirs/config.json" "$D3/thinkers/phrase/config.json" "$D4/ours_word/config.json"; do
+  for p in "$D3/olt" "$D3/venvs/olt-thinker/bin/vllm" "$D3/venvs/olt-moss/bin/python" "$D3/tts/model.safetensors" "$D3/checkpoints/XCOMET-XL/checkpoints/model.ckpt" "$D3/thinkers/theirs/config.json" "$D3/thinkers/phrase/config.json" "$D4/ours_word/config.json"; do
     $SSH $A "test -e $p" || fail wait "missing after transfer: $p"
   done
-  $SSH $A "docker images --format '{{.Repository}}:{{.Tag}}' | grep -qx vllm-omni:dev" || fail wait "image vllm-omni:dev not on aries"
+  $SSH $A "docker images --format '{{.Repository}}:{{.Tag}}' | grep -qx jaxanluo/sglang-omni:dev" || fail wait "image jaxanluo/sglang-omni:dev not on aries"
   ok wait "thinkers $sizes; image + support + xcomet present"
 fi
 
@@ -75,7 +75,7 @@ if want up; then
   $SSH $A "docker run -d --init --name $CNAME --gpus '\"device=$DEV\"' --ipc=host --shm-size=64g \
     -v $D3:/data/serving_ab -v $D4:/data/thinkers_extra -v \$HOME/.keys:/root/.keys:ro \
     -e PYTHONPATH=/data/serving_ab/pyshim -e NCCL_P2P_DISABLE=1 -e NCCL_IB_DISABLE=1 \
-    vllm-omni:dev bash -c 'sleep infinity' >/dev/null" || fail up "docker run"
+    jaxanluo/sglang-omni:dev bash -c 'sleep infinity' >/dev/null" || fail up "docker run"
   $SSH $A "printf '%s\tgpus=idx%s\thost=aries\thost_data=%s(:/data/serving_ab)+%s\tdesc=protocol-A cascade sweep: 3 thinkers x (1 deterministic + 3 sampled) on ACL dev 5 talks; jobs 920xx\tcreated=%s\t收尾:12 run 出齐即删\n' '$CNAME' '$DEV' '$D3' '$D4' '$(date -u +%FT%TZ)' >> \$HOME/jiaxuanluo-map.txt"
   scp -q "$HERE/aries_run.sh" $A:$D3/phrase_gated_data/aries_run.sh || fail up "scp aries_run.sh"
   ok up "$CNAME on GPUs $DEV"

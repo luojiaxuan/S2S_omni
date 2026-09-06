@@ -449,3 +449,21 @@
 - **决策日志(协议规模)**:问题=A 的"多次采样"跑几次、几篇;默认=**(a) 确定性 A/B**:三 thinker 各一次,thinker temperature=0 + `TTS_SAMPLE=0`,5 篇 dev 全量(`MAX_DOCS=5`)——去掉模型内采样,残留仅 ElevenLabs ASR 的轻微不确定性,直接隔离 thinker 差异,作为**头条对照**;**(b) 采样带**:三 thinker 各 3 次,发布采样设置(thinker 0.6、TTS 采样),5 篇,报均值±跨度,回答部署口径的方差。共 12 个 run,单容器串行(切 thinker 才重载),约 10–12 h,aries 3 卡过夜。理由=(a) 用最少算力给出可判定的模型对照,(b) 给出部署口径下的噪声带以免 reviewer 质疑;5 篇而非 3 篇提升样本量。回滚=driver 每 run 落 metrics.json + 断点续跑,随时可停;先跑 1 篇确定性 smoke 验证 aries 环境移植无误再放全量。外审=Claude-in-Chrome 未接入,本轮未发,按判断推进,可用时补审"确定性 A/B 是否足以支撑 phrase-gating 结论"。
 - **CA 口径的硬件警告(必记)**:CA(计算感知)含真实解码耗时,A6000 的 thinker 解码比 H200 慢数倍,故 **aries 的 CA 只能 aries 内部三臂互比,不能与 hyper01 的 CA 数并排**;CU 与文本质量(BLEU/XCOMET)不受硬件影响,可跨机比较。aries 结果表须显式标注这一点。
 - **搬迁**:镜像 `vllm-omni:dev`(9 GB,docker save|load)、eval 栈(olt/venvs/checkpoints/tts/pyshim/acl/asr_responses)、三个 thinker(共 186 GB)、HF cache(codec 6.7 G + LaBSE)从 hyper01 rsync 到 aries gemini home `serving_ab/`(容器内挂 `/data/serving_ab` 以匹配 venv 绝对路径);5 篇 ACL 60-60 dev 从 aries 的 taurus 挂载 `/mnt/taurus/data/siqiouyang/datasets/acl6060` 就地取(1.1 G,已 copy 进 `serving_ab/acl6060_full/`,dev/full_wavs 5 篇齐)。ElevenLabs key 与 gavinlaw token 已落 aries `~/.keys`。
+
+## 2026-09-06 重复轮定论:同一系统两次运行 BLEU 漂 +2.6~+4.7,单次三臂对照不可用于排序
+
+- **两轮同口径重复(hyper01,3 篇 dev,jobs 90001-90003 / 90011-90013,`compare` 全部 0 处非预期差异)**:
+
+  | thinker | 口径 | BLEU 轮1/轮2 | ΔBLEU | XCOMET 轮1/轮2 | 空预测 轮1/轮2 |
+  |---|---|---|---|---|---|
+  | 他们 owaski | CU | 38.32/40.95 | +2.64 | 0.719/0.751 | 3/0 |
+  | | CA | 36.20/40.78 | +4.58 | 0.689/0.755 | 10/0 |
+  | 我们词对齐 | CU | 36.81/40.33 | +3.51 | 0.703/0.730 | 0/0 |
+  | | CA | 35.43/40.11 | +4.68 | 0.674/0.730 | 11/0 |
+  | 我们 phrase-gated | CU | 38.87/(打分失败) | — | 0.730/— | 0/— |
+  | | CA | 39.07/(打分失败) | — | 0.737/— | 0/— |
+
+- **结论**:两个已双跑的系统,run 间 CU BLEU 漂 2.6–3.5、CA BLEU 漂 4.6–4.7,XCOMET 漂 0.03–0.06,CA 空预测 10–11→0。**这个波动比(八)表里任何两臂之间的差都大**,故单次运行的三臂对照(含"我们 phrase-gated 最高 / CU 领先 0.55 / CA 领先 2.87")不能用于给三个 thinker 排序——已在(九)预警,此处以第二个独立样本坐实。
+- **phrase-gated 第二样本(90013)打分失败**:CA 转写阶段 `ValueError: transcript index is missing or duplicated: 0`,清 ASR 缓存重打仍复现,是该次渲染/ASR 索引的确定性 artifact(渲染 wav 已生成),非采样噪声。因 aries A 协议将取代全部 hyper01 结果,不再追修此点。
+- **收尾**:hyper01 重复轮容器 `sglang-omni-jaxan-1` 已删、map 已核对(containers==map,仅剩兄弟 session 的 GRPO jaxan-2 与冻结 reward 服务 jaxan-6),GPU 2/3/4 释放。
+- **下一步**:aries 上跑 A 协议(确定性 A/B 优先出,再采样带),用已解决的搬迁路径(见下条),取代这些单次数字。
