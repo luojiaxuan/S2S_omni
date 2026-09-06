@@ -7,7 +7,9 @@
 # note (luojiaxuan): the one the earlier "ours" arm (job 90002) was generated and scored with, so the two runs
 # note (luojiaxuan): differ only in the thinker checkpoint and its revision.
 #
-# note (luojiaxuan): hyper01_phrase_eval.sh up <sha8>   create the container and register it in the map
+# note (luojiaxuan): hyper01_phrase_eval.sh up <sha8>   create the container and register it in the map (reuses the one
+# note (luojiaxuan):                                   recorded in phrase_gated_data/ if it is still running); git safe.directory
+# note (luojiaxuan):                                   is set inside because the OLT checkout is owned by the host user, not root
 # note (luojiaxuan): hyper01_phrase_eval.sh cascade     generate 3 dev talks (SKIP_SCORING=1)
 # note (luojiaxuan): hyper01_phrase_eval.sh compare     diff the new generation identity against job 90002
 # note (luojiaxuan): hyper01_phrase_eval.sh score       ElevenLabs ASR + SEGALE/LongYAAL/BLEU/XCOMET, CU then CA
@@ -17,12 +19,14 @@ CMD="${1:?up|cascade|compare|score|down}"
 SAB=/data04/jaxan/serving_ab
 PGD=$SAB/phrase_gated_data
 CNAME_FILE=$PGD/thinker_phrase_gated.cname
-if [ "$CMD" = up ]; then
+if [ "$CMD" = up ] && ! { [ -f "$CNAME_FILE" ] && docker ps -q --filter "name=^$(cat "$CNAME_FILE")\$" | grep -q .; }; then
   taken=$( { docker ps -a --filter name=sglang-omni-jaxan --format '{{.Names}}'; grep -aoE '^sglang-omni-jaxan-[0-9]+' "$HOME/jiaxuanluo-map.txt"; } | grep -oE '[0-9]+$' | sort -un)
   n=1; while echo "$taken" | grep -qx "$n"; do n=$((n+1)); done
   CNAME=sglang-omni-jaxan-$n
+  CREATE=1
 else
   CNAME=$(cat "$CNAME_FILE")
+  CREATE=0
 fi
 GPUS=2,3,4
 JOB=90003
@@ -34,21 +38,25 @@ COMMON="OLT_RESULTS_ROOT=/data/serving_ab/results OLT_VENV_ROOT=/data/serving_ab
 case "$CMD" in
 up)
   SHA8="${2:?need the HF commit (8 hex) of the exported thinker}"
-  busy=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i $GPUS | awk '$1>2000' | wc -l)
-  [ "$busy" = 0 ] || { echo "GPUs $GPUS are not free:"; nvidia-smi --query-gpu=index,memory.used --format=csv,noheader -i $GPUS; exit 3; }
-  [ "$(docker ps -a -q --filter "name=^$CNAME\$" | wc -l)" = 0 ] || { echo "$CNAME already exists"; exit 4; }
-  docker run -d --init --name "$CNAME" --gpus "\"device=$GPUS\"" --ipc=host --shm-size=64g \
-    -v /data04/jaxan:/data -v /data04/cache/huggingface:/root/.cache/huggingface -v /data04/jaxan/.keys:/root/.keys:ro \
-    -e PYTHONPATH=/data/serving_ab/pyshim -e HF_HOME=/root/.cache/huggingface \
-    vllm-omni:dev bash -c 'sleep infinity' >/dev/null
-  printf '%s\tgpus=idx%s\thost=hyper01\thost_data=/data04/jaxan(:/data)\tdesc=phrase-gated thinker OLT cascade eval (3 dev docs, job %s) + scoring; thinker rev %s\tcreated=%s\t收尾:打分完成即删\n' \
-    "$CNAME" "$GPUS" "$JOB" "$SHA8" "$(date -u +%FT%TZ)" >> "$HOME/jiaxuanluo-map.txt"
+  if [ "$CREATE" = 1 ]; then
+    busy=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i $GPUS | awk '$1>2000' | wc -l)
+    [ "$busy" = 0 ] || { echo "GPUs $GPUS are not free:"; nvidia-smi --query-gpu=index,memory.used --format=csv,noheader -i $GPUS; exit 3; }
+    [ "$(docker ps -a -q --filter "name=^$CNAME\$" | wc -l)" = 0 ] || { echo "$CNAME already exists"; exit 4; }
+    docker run -d --init --name "$CNAME" --gpus "\"device=$GPUS\"" --ipc=host --shm-size=64g \
+      -v /data04/jaxan:/data -v /data04/cache/huggingface:/root/.cache/huggingface -v /data04/jaxan/.keys:/root/.keys:ro \
+      -e PYTHONPATH=/data/serving_ab/pyshim -e HF_HOME=/root/.cache/huggingface \
+      vllm-omni:dev bash -c 'sleep infinity' >/dev/null
+    printf '%s\tgpus=idx%s\thost=hyper01\thost_data=/data04/jaxan(:/data)\tdesc=phrase-gated thinker OLT cascade eval (3 dev docs, job %s) + scoring; thinker rev %s\tcreated=%s\t收尾:打分完成即删\n' \
+      "$CNAME" "$GPUS" "$JOB" "$SHA8" "$(date -u +%FT%TZ)" >> "$HOME/jiaxuanluo-map.txt"
+  fi
+  docker exec "$CNAME" git config --global --add safe.directory '*'
   echo "$SHA8" > "$PGD/thinker_phrase_gated.sha8"
   echo "$CNAME" > "$CNAME_FILE"
   docker ps --filter "name=^$CNAME\$" --format '{{.Names}} {{.Status}}'
   ;;
 cascade)
   SHA8=$(cat "$PGD/thinker_phrase_gated.sha8")
+  docker exec "$CNAME" bash -c "[ ! -d $RUN ] || [ -f $RUN/generation_config.json ] || { echo 'removing run dir left by an aborted launch (manifests only)'; rm -rf $RUN; }"
   docker exec "$CNAME" bash -c "cd /data/serving_ab/olt && export HF_TOKEN=\$(cat /root/.keys/hf_token_gavinlaw) && \
     SLURM_JOB_ID=$JOB CKPT=/data/serving_ab/thinker_phrase_gated \
     THINKER_MODEL_REVISION=local:gavinlaw-infinisst-thinker-phrase-gated-zh:$SHA8 \
