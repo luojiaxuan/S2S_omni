@@ -393,6 +393,7 @@
   | 删了什么 | 大小 | 正本在哪 | 验证方式 |
   |---|---|---|---|
   | aries `phrase_sft_20260904/megatron_run/hf/`(合并权重) | 60 G | HF `gavinlaw/infinisst-thinker-phrase-gated-zh@83a95f5b`;工作副本 hyper01 `serving_ab/thinker_phrase_gated/` | 逐文件字节对账 0 不符 |
-  | hyper01 `/data04/jaxan/phrase_sft/`(HF Trainer 路线全部残留:基座副本 66 G、checkpoint-1200 19 G、venv 8.5 G、音频 7.4 G、uvcache 3.1 G、日志) | 85 G | 基座 = 共享 HF cache `models--Qwen--Qwen3-Omni-30B-A3B-Instruct` 与 HF Hub;checkpoint-1200 为被取代的半程产物,无正本、不保留;音频正本在 gemini `/mnt/gemini/data/jiaxuanluo/`(aries 训练所用) | 目录清单已核对(见(五)) |
+  | hyper01 `/data04/jaxan/phrase_sft/`(HF Trainer 路线全部残留:基座副本 66 G、checkpoint-1200 19 G、venv 8.5 G、音频 7.4 G、uvcache 3.1 G、日志、root 属主的 tmp) | 104 G(早先 du 因无权限少算了 root 属主 tmp) | 基座 = 共享 HF cache `models--Qwen--Qwen3-Omni-30B-A3B-Instruct` 与 HF Hub;checkpoint-1200 为被取代的半程产物,无正本、不保留;音频正本在 gemini `/mnt/gemini/data/jiaxuanluo/`(aries 训练所用) | 目录清单已核对(见(五)) |
+  两处均为 root 属主(容器内写入),宿主 `rm` 报 Permission denied,改由 `--rm` 一次性容器删除。
   保留:aries `Qwen3-Omni-30B-A3B-Instruct-mcore/`(60 G,重建 30 分钟/4 卡)与 `megatron_run/mcore/`(7.5 G,亦在 HF `mcore_lora/`),留到 phrase-gating 这条线收口——若评估后要改 gating 参数重训,可直接复用。
 - **级联评估**:hyper01 容器 `sglang-omni-jaxan-1`(创建时最小空缺编号;GPU 2/3/4;map 已登记)18:44 PT 起,thinker TP=2 加载中;之后 `compare` 校验生成配置、`score` 打分、`down` 删容器。
