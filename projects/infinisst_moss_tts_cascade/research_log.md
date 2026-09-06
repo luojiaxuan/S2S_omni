@@ -507,7 +507,15 @@
   |---|---|---|---|
   | 他们 owaski (theirs_det, 92001) | 42.62 | 0.742 | 3722 ms |
   | 我们词对齐 (word_det, 92011) | 40.59 | 0.723 | 4807 ms |
-  | 我们 phrase-gated (phrase_det, 92021) | 运行中 | | |
+  | 我们 phrase-gated (phrase_det, 92021) | 39.80 | 0.741 | 4211 ms |
+
+  **差值**:phrase-gated vs 我们词对齐 CU BLEU **−0.79**、XCOMET **+0.018**;phrase-gated vs 他们 CU BLEU **−2.83**、XCOMET −0.002;他们 vs 我们词对齐 CU BLEU **+2.03**。
+
+  **读法(去掉采样噪声的干净对照,这是本项目第一次可信的三臂排序)**:
+  - **BLEU**:他们(42.62)明显领先我们两个(40.59 / 39.80)约 2–3 分;我们的 phrase-gating **没有**在 BLEU 上超过我们自己的词对齐基线(反而低 0.79),更没追上他们。
+  - **XCOMET**:phrase-gated(0.741)≈ 他们(0.742)> 我们词对齐(0.723);按这个学习式质量指标,phrase-gating **有效**、追平了他们。
+  - **两指标不一致**:BLEU 说 phrase-gating 没用、他们领先;XCOMET 说 phrase-gating 有效、追平他们。这是本轮的核心 nuance,不能只报一个。
+  - 局限:每臂**一次**确定性(greedy)run,去掉了采样噪声但仍有 ElevenLabs ASR 的小噪声;0.79 这种小差在 5 篇上未必稳,2.0/2.8 的差更稳。greedy 是干净的模型质量对照,但与发布的采样工作点不同。
 
   注:5 篇口径,与 hyper01 的 3 篇单次数不可直接并列;三臂彼此同口径可比。这是**去掉采样噪声后**的干净模型对照(smoke 已验证确定性)。
 - **驱动器脆弱性修复**:sweep 的成功判据从"runarm stdout 含 RUN_DONE"改为"metrics.json 存在"——多小时的 ssh docker exec 会丢尾部输出,导致 word_det 明明成功却被误判 FAIL(其 metrics 实为 complete)。
