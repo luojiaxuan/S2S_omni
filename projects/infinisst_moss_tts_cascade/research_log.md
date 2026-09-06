@@ -467,3 +467,27 @@
 - **phrase-gated 第二样本(90013)打分失败**:CA 转写阶段 `ValueError: transcript index is missing or duplicated: 0`,清 ASR 缓存重打仍复现,是该次渲染/ASR 索引的确定性 artifact(渲染 wav 已生成),非采样噪声。因 aries A 协议将取代全部 hyper01 结果,不再追修此点。
 - **收尾**:hyper01 重复轮容器 `sglang-omni-jaxan-1` 已删、map 已核对(containers==map,仅剩兄弟 session 的 GRPO jaxan-2 与冻结 reward 服务 jaxan-6),GPU 2/3/4 释放。
 - **下一步**:aries 上跑 A 协议(确定性 A/B 优先出,再采样带),用已解决的搬迁路径(见下条),取代这些单次数字。
+
+## 2026-09-06 aries 存储清理(二):按用户"remove"指令删除 2.97 TB 旧产物
+
+- **触发**:用户对(一)列出的删/搬清单答复"remove"(选择删除,不搬 gemini)。
+- **删除前安全核对(只读)**:aries 上 running 容器中,`emnlp_train_rasst_hold`(2026-05-17 起,3.7 月,zombie hold)与 `5p25_train_rasst_hold` 只挂 `/mnt/taurus/home/jiaxuanluo/InfiniSST`,不碰本地盘;`infinisst-phrase-jaxan-1`(我的 TTS 停等容器)挂 `/mnt/data6/jiaxuanluo` 但只读 gemini 的 tts_out;`sglang-omni-jaxan-20260901` 与 `hibiki-zero` 挂 data4/data3 的**其他子目录**且 `ps` 无活进程(空转)。故删除目标子目录不破坏任何在跑作业;`serving_ab`/`serving_ab_thinkers`(A 协议在用)显式保留。
+- **删除台账(均为我 jiaxuanluo 属主的历史产物,分属 RASST / speech_llm / sglang-omni-rl 等已收尾阶段;经在线核对**无** HF/Git 正本可达,按用户指令永久删除)**:
+
+  | 路径 | 大小 | 项目/内容 |
+  |---|---|---|
+  | data6/wiki_synth_tts_3variant | 1012 G | RASST 合成 TTS 语料(clean/noisy) |
+  | data6/wiki_synth_tts_1third | 594 G | 同上 1/3 子集 |
+  | data4/speech_llm_density_ablation | 407 G | 密度消融 run |
+  | data6/MFA | 217 G | 上述语料 MFA 对齐 |
+  | data3/local_cache | 200 G | RASST 工作副本 |
+  | data4/train_outputs | 149 G | 32 个 q3rag_scale_lora-*.pt |
+  | data6/sglang-omni-rl-archive(+archive2) | 160 G | artifacts/env/logs/repo |
+  | data3/runs | 86 G | 两个 run |
+  | data4/speech_llm_maxsim_enriched | 69 G | 数据集变体 |
+  | data6/upstreams | 43 G | 环境快照(可重建) |
+  | data6/Qwen2.5-7B-Instruct | 29 G | 公开模型(可重下) |
+
+  合计约 2.97 TB。
+- **执行**:root 容器 rm。第一次前台 ssh 在 600 s 超时被移入后台,ssh 断开使远端 `docker run` 收 SIGHUP 中止,只删完 data6/wiki_synth_tts_3variant(约 1.3 TB);第二次改用 **detached `docker run -d`**(不随 ssh 断开而死)删剩余项,以 `.rm_done` sentinel + 容器存活为完成判据,监控在跑。data6 已从 741 G → 2.0 T 空闲;data4/data3 待第二次删完统计。
+- **教训**:aries 上删 TB 级(百万小文件)必须 detached 跑,前台 ssh 会超时断连打断 `docker run`。删除与 A 协议 rsync 写同一批 data 盘,I/O 争用使 rsync 降速(52 GB tar 传了近 2 h),删完自恢复。
