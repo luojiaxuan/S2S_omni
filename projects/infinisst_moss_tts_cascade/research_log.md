@@ -489,5 +489,5 @@
   | data6/Qwen2.5-7B-Instruct | 29 G | 公开模型(可重下) |
 
   合计约 2.97 TB。
-- **执行**:root 容器 rm。第一次前台 ssh 在 600 s 超时被移入后台,ssh 断开使远端 `docker run` 收 SIGHUP 中止,只删完 data6/wiki_synth_tts_3variant(约 1.3 TB);第二次改用 **detached `docker run -d`**(不随 ssh 断开而死)删剩余项,以 `.rm_done` sentinel + 容器存活为完成判据,监控在跑。data6 已从 741 G → 2.0 T 空闲;data4/data3 待第二次删完统计。
+- **执行**:root 容器 rm。第一次前台 ssh 在 600 s 超时被移入后台,ssh 断开使远端 `docker run` 收 SIGHUP 中止,只删完 data6/wiki_synth_tts_3variant(约 1.3 TB);第二次改用 **detached `docker run -d`**(不随 ssh 断开而死)删剩余项,以 `.rm_done` sentinel + 容器存活为完成判据,监控在跑。**完成**:12 个目录全部删除(第二次 detached 清掉第一次残留的空壳)。最终空闲:data6 741 G→2.8 T(96%→61%)、data4 127 G→751 G(99%→90%)、data3 128 G→393 G(97%→90%),共约 3 TB。`serving_ab`/`serving_ab_thinkers`(A 协议在用)完好。
 - **教训**:aries 上删 TB 级(百万小文件)必须 detached 跑,前台 ssh 会超时断连打断 `docker run`。删除与 A 协议 rsync 写同一批 data 盘,I/O 争用使 rsync 降速(52 GB tar 传了近 2 h),删完自恢复。
