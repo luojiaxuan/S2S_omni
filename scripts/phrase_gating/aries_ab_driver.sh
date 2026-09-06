@@ -72,7 +72,7 @@ if want up; then
   taken=$( { $SSH $A "docker ps -a --filter name=sglang-omni-jaxan --format '{{.Names}}'; grep -aoE '^sglang-omni-jaxan-[0-9]+' \$HOME/jiaxuanluo-map.txt" 2>/dev/null; } | grep -oE '[0-9]+$' | sort -un)
   n=1; while echo "$taken" | grep -qx "$n"; do n=$((n+1)); done
   CNAME=sglang-omni-jaxan-$n; echo "$CNAME" > "$CNAME_FILE"; echo "$DEV" > "$HERE/.aries_dev"
-  $SSH $A "docker run -d --init --name $CNAME --gpus '\"device=$DEV\"' --ipc=host --shm-size=64g \
+  $SSH $A "docker run -d --init --name $CNAME --gpus '\"device=$DEV\"' --shm-size=32g \
     -v $D3:/data/serving_ab -v $D4:/data/thinkers_extra -v \$HOME/.keys:/root/.keys:ro \
     -e PYTHONPATH=/data/serving_ab/pyshim -e NCCL_P2P_DISABLE=1 -e NCCL_IB_DISABLE=1 \
     jaxanluo/sglang-omni:dev bash -c 'sleep infinity' >/dev/null" || fail up "docker run"
