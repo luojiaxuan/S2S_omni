@@ -380,3 +380,19 @@
 - **事件**:兄弟 session(critic-hack Stage 3 GRPO)报告其 hyper01 训练容器 `sglang-omni-jaxan-1` 于 23:04Z(16:04 PT)被 `docker rm -f` 并被同名 judge 容器顶替。hyper01 `docker events` 证实:1788649686 同一秒内 destroy + create `sglang-omni-jaxan-1`(vllm-omni:dev),新容器 map 行为「GUI-Owl 对 qwen38_27b judge 帧对补解,GPU 7」——是第三个 session 所为。本 session 自 21:50Z 起在 hyper01 只做只读检查;唯一会起容器的 `hyper01_phrase_eval.sh` 不含 `rm -f` 且尚未运行。已如实回复对方。
 - **改动(`93d8719`)**:(1) `hyper01_phrase_eval.sh` 不再写死 `sglang-omni-jaxan-2`(对方现已用此名),改为 `up` 时取 `docker ps -a` 与 map 两边都空缺的最小编号,写入 `thinker_phrase_gated.cname` 供后续步骤读取,并在 `docker run` 后立刻登记 map;(2) `megatron_aries.sh` 原以 `docker rm -f "$NAME"` 清自己的旧同名容器,改为同名容器在运行则拒绝并退出(exit 5),只清 exited 的;aries 上的副本以 scp 到临时名 + `mv` 原子替换(正在运行的 train 阶段 bash 持有旧 inode,不受影响)。
 - **规则沉淀**:任何"先 rm -f 再 run"的发射写法都违反 Task-Scoped Container Rules——名字不是所有权凭证,map 才是;创建前查 `docker ps -a` + map,冲突就换号,永不 `rm -f` 一个在跑的同名容器。
+
+## 2026-09-06 自训 phrase-gated thinker(七):训练完成、导出上 HF(SoT),级联评估进行中;删除台账
+
+- **训练结果**(aries GPU 3/4/5/6,2026-09-05 14:31–17:07 PT,墙钟 2 h 35 min):597 步(1 epoch,packing 后 12,375 条),train lm loss 1.38 → 0.62;验证 loss it 200 = 0.643、it 400 = 0.615、it 597 = **0.605**(PPL 1.83),单调下降,无过拟合迹象。收尾时 64 条 `Traceback` 全部是 `multiprocessing` finalizer 在 NFS 上清临时目录的 `.nfs` 噪音,出现在 "after training is done" 与 "successfully saved checkpoint from iteration 597" 之后,`STAGE_train_EXIT=0`。
+- **导出**:`swift export --mcore_adapters … --to_hf true --torch_dtype bfloat16`,4 卡 40 分钟(18:22–18:02 PT 之间,含 13 个 safetensors 分片写 gemini),60 GB,`config.json` 与 `model.safetensors.index.json` 齐全。
+- **SoT(已按字节对账)**:
+  - 模型 `gavinlaw/infinisst-thinker-phrase-gated-zh` @ **`83a95f5b`**(private):合并 bf16 权重(根目录)+ `mcore_lora/`(Megatron LoRA 迭代 200/400/597、`args.json`、训练日志)+ 模型卡;84 个文件、71,410,044,018 字节,远端 `list_repo_tree` 逐文件大小与本地一致,0 处不符。
+  - 数据 `gavinlaw/infinisst-sft-phrase-gated-zh` @ **`38f4ed22`**(private):`train_s_zh_phrase_ours.jsonl`(16,639,593 字节,12,500 行)+ 数据卡;音频不随仓库分发(说明写在卡里)。
+  - 上传自 hyper01(先 aries→hyper01 rsync 36 MB/s 约 37 分钟,再 hyper01→HF 不到 3 分钟)。
+- **删除台账(正本已验证可达后执行)**:
+  | 删了什么 | 大小 | 正本在哪 | 验证方式 |
+  |---|---|---|---|
+  | aries `phrase_sft_20260904/megatron_run/hf/`(合并权重) | 60 G | HF `gavinlaw/infinisst-thinker-phrase-gated-zh@83a95f5b`;工作副本 hyper01 `serving_ab/thinker_phrase_gated/` | 逐文件字节对账 0 不符 |
+  | hyper01 `/data04/jaxan/phrase_sft/`(HF Trainer 路线全部残留:基座副本 66 G、checkpoint-1200 19 G、venv 8.5 G、音频 7.4 G、uvcache 3.1 G、日志) | 85 G | 基座 = 共享 HF cache `models--Qwen--Qwen3-Omni-30B-A3B-Instruct` 与 HF Hub;checkpoint-1200 为被取代的半程产物,无正本、不保留;音频正本在 gemini `/mnt/gemini/data/jiaxuanluo/`(aries 训练所用) | 目录清单已核对(见(五)) |
+  保留:aries `Qwen3-Omni-30B-A3B-Instruct-mcore/`(60 G,重建 30 分钟/4 卡)与 `megatron_run/mcore/`(7.5 G,亦在 HF `mcore_lora/`),留到 phrase-gating 这条线收口——若评估后要改 gating 参数重训,可直接复用。
+- **级联评估**:hyper01 容器 `sglang-omni-jaxan-1`(创建时最小空缺编号;GPU 2/3/4;map 已登记)18:44 PT 起,thinker TP=2 加载中;之后 `compare` 校验生成配置、`score` 打分、`down` 删容器。
