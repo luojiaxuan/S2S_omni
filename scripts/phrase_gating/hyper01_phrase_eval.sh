@@ -50,8 +50,8 @@ up)
       -v /data04/jaxan:/data -v /data04/cache/huggingface:/root/.cache/huggingface -v /data04/jaxan/.keys:/root/.keys:ro \
       -e PYTHONPATH=/data/serving_ab/pyshim -e HF_HOME=/root/.cache/huggingface \
       vllm-omni:dev bash -c 'sleep infinity' >/dev/null
-    printf '%s\tgpus=idx%s\thost=hyper01\thost_data=/data04/jaxan(:/data)\tdesc=phrase-gated thinker OLT cascade eval (3 dev docs, job %s) + scoring; thinker rev %s\tcreated=%s\t收尾:打分完成即删\n' \
-      "$CNAME" "$GPUS" "$JOB" "$SHA8" "$(date -u +%FT%TZ)" >> "$HOME/jiaxuanluo-map.txt"
+    printf '%s\tgpus=idx%s\thost=hyper01\thost_data=/data04/jaxan(:/data)\tdesc=%s\tcreated=%s\t收尾:打分完成即删\n' \
+      "$CNAME" "$GPUS" "${MAP_DESC:-phrase-gated thinker OLT cascade eval (3 dev docs, job $JOB) + scoring; thinker rev $SHA8}" "$(date -u +%FT%TZ)" >> "$HOME/jiaxuanluo-map.txt"
   fi
   docker exec "$CNAME" git config --global --add safe.directory '*'
   echo "$SHA8" > "$PGD/thinker_phrase_gated.sha8"
