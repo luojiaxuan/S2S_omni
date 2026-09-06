@@ -397,3 +397,26 @@
   两处均为 root 属主(容器内写入),宿主 `rm` 报 Permission denied,改由 `--rm` 一次性容器删除。
   保留:aries `Qwen3-Omni-30B-A3B-Instruct-mcore/`(60 G,重建 30 分钟/4 卡)与 `megatron_run/mcore/`(7.5 G,亦在 HF `mcore_lora/`),留到 phrase-gating 这条线收口——若评估后要改 gating 参数重训,可直接复用。
 - **级联评估**:hyper01 容器 `sglang-omni-jaxan-1`(创建时最小空缺编号;GPU 2/3/4;map 已登记)18:44 PT 起,thinker TP=2 加载中;之后 `compare` 校验生成配置、`score` 打分、`down` 删容器。
+
+## 2026-09-06 自训 phrase-gated thinker(八):三方对照出数——我们的 phrase-gated thinker 在同口径下 CU BLEU 38.87、CA BLEU 39.07,均为三臂最高
+
+- **口径**(三臂完全一致,`compare` 已核:除 thinker 路径/版本/指纹外 0 处差异):OLT `run_s2st_eval.sbatch 1.92 1.0 dev moss-delta`,ACL 60-60 dev 前 3 篇(110/117/268),源速 1.0×、chunk 1.92 s,TTS = `owaski/moss-tts-realtime-delta-zh-125k`(`fc2d094d`)逐 delta 一 turn,thinker vLLM TP=2、temperature 0.6;打分 = ElevenLabs Scribe v2 ASR + SEGALE 重切 + LongYAAL / Ending Offset / 句级 BLEU / XCOMET-XL。CU = 忽略计算时间的渲染,CA = 含真实计算时间的渲染(部署口径)。三臂各**一次**采样运行,run 间方差未测(见下)。
+- **结果**(hyper01 `serving_ab/results/s2st_moss-delta_dev_1920ms_{90001,90002,90003}/metrics.json`;延迟 ms,小好;BLEU/XCOMET 大好):
+
+  | 臂 | thinker | 口径 | LongYAAL | Ending Offset | BLEU | XCOMET-XL | 段数 | 空预测 |
+  |---|---|---|---|---|---|---|---|---|
+  | 他们 phrase-gated | `owaski/infinisst-thinker-phrase-zh` | CU | 5039 | 4730 | 38.32 | 0.7186 | 246 | 3 |
+  | | | CA | 7685 | 7541 | 36.20 | 0.6894 | 245 | 10 |
+  | 我们词对齐(旧) | `gavinlaw/infinisst-no-tmsft-origin-bsz4-zh@fd0a5c8f` | CU | 4864 | 4490 | 36.81 | 0.7032 | 240 | 0 |
+  | | | CA | 7537 | 7323 | 35.43 | 0.6743 | 247 | 11 |
+  | **我们 phrase-gated(新)** | `gavinlaw/infinisst-thinker-phrase-gated-zh@83a95f5b` | CU | 5527 | 5234 | **38.87** | **0.7297** | 258 | 0 |
+  | | | CA | 7989 | 7716 | **39.07** | **0.7374** | 258 | 0 |
+
+  生成侧时序(`metrics.json.timing`,3 篇均值):ca−cu 尾巴 1933 ms(他们 2531、我们旧 2684);agent 计算总时长 537.8 s(515.7 / 509.0);首音 ttfa CU 2560 ms(2560 / 1920)。
+- **读法**:
+  1. **质量**:phrase gating 训练相对我们自己的词对齐 thinker,CU BLEU +2.06、CA BLEU +3.64,XCOMET +0.027/+0.063;相对他们的 phrase-gated thinker,CU +0.55、CA +2.87。CA 上差距拉大的原因可见"空预测"列:他们与我们旧臂在 CA 渲染下各有 10–11 个空预测段(音频被挤出段窗),我们新臂为 0——与 ca−cu 尾巴最短(1933 ms)一致,说明新 thinker 的 delta 让 TTS 几乎不再拖尾。
+  2. **延迟**:代价是 LongYAAL / Ending Offset 比他们多约 0.5 s(CU 5527 vs 5039;CA 7989 vs 7685),比我们旧臂多约 0.65–0.75 s。这是 gating 规则"累计 ≥8 字才释放"的直接后果——释放更晚。首音 ttfa 2560 ms 与他们相同(都比词对齐的 1920 ms 晚一个 chunk)。
+  3. **粒度证据**(render_report / instances.log):385 个源 chunk 中非空音频块数 356/349/359(旧臂 376/357/368),每块音频均值 1922 ms、中位 1840 ms(旧臂 1805 / 1680 ms)。粒度确有变粗但幅度有限——1.92 s 的 chunk 节拍决定了每块最多一个 delta,gating 的作用主要是把过短的 delta 合并,而不是产生更长的整句。launcher 不落盘每个 delta 的文本,字数级粒度无法直接统计(要看需改 launcher 记录)。
+- **该怎么信**:3 篇 talk、单次采样(temperature 0.6,thinker seed 未固定),三臂的 BLEU 差在 0.5–3 之间,run 间方差未知;CU 上 +0.55 的领先在单次运行下不能当作定论,CA 上 +2.87 且空预测 11→0 的差别更可能是真实效应。**决策日志**:问题=是否补跑重复实验估方差;默认=补跑一轮三臂重复(同口径、同 3 篇,只换采样),hyper01 GPU 2/3/4 现在空闲,约 2.5 小时,不阻塞任何人;理由=0.55 的差距若无方差估计,reviewer 一句"单次采样"就能否掉;回滚=不采纳则忽略第二轮结果,原始三次运行的 metrics.json 不动;外审=未发(补做重复实验是常规诊断,不是方向选择)。
+- **产物与收尾**:hyper01 容器 `sglang-omni-jaxan-1` 已删、map 行已删(containers=2 == map_lines=2);`serving_ab/results/…_90003/` 保留(含 wavs_cu/ca、simuleval 记录、metrics.json);thinker 工作副本 `serving_ab/thinker_phrase_gated/`(60 G)保留至这条线收口。流水线全程:训练 2 h 35 min、导出 40 min、传输 37 min、上传 3 min、级联 30 min(+一次 8 min 的失败重跑)、打分 5 min。
+- **本轮两处踩坑(均已修并推送)**:(1) `serving_ab/` 为 root 属主,宿主用户不能在其下新建目录/文件 → 所有宿主侧写入改到 `phrase_gated_data/`(预建并 chown);(2) 容器内 git 对宿主用户属主的 OLT 检出报 "dubious ownership",launcher 在快照生成配置时中止 → 容器建好后统一 `git config --global --add safe.directory '*'`,`up` 改为幂等、`cascade` 前清理只含 manifests 的残留 run 目录。
