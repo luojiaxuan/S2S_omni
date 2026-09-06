@@ -440,3 +440,12 @@
   2. 之后的比较必须换协议:要么每臂多次运行报均值±跨度,要么把采样关掉(thinker temperature 0、TTS `tts_sample=False`)做确定性 A/B——后者能把"模型差异"从"采样噪声"里剥出来,但评估的是与他们发布设置不同的工作点;两者都做最稳妥。5 篇 dev 全量(而非 `MAX_DOCS=3`)也应纳入。这是评估协议层面的抉择,涉及数小时 GPU,**记为待用户裁决项**,重复轮跑完前先不发射。
   3. PR #40 README §7a 里那一行的解读要改:把第二次运行并排写进去,明确"三臂差距在 run 间噪声之内"。等本轮三臂齐了一次改到位。
 - **我在(八)里的错误**:把单次运行的 0.55 BLEU 领先写进了"结论"一节的第一句(虽然随后标注了"不能当定论")。正确写法是先报方差、再报差距;已在本条更正,PR 文案随本轮结果一并更正。
+
+## 2026-09-06 评估协议改版(方案 A,用户拍板):确定性 A/B + 采样带,移到 aries;新增 TTS_SAMPLE 开关
+
+- **触发**:(九)证明这条流水线在 3 篇上的 run 间波动 ≥2.6(CU)/4.6(CA)BLEU,比任何臂间差都大。重复轮已确认两个系统都漂:他们 CU 38.32→40.95、我们词对齐 CU 36.81→40.33、CA 也各跳约 4.6。单次运行无法排序。用户指示:用方案 A(确定性 A/B + 多次采样),不在 hyper01 跑,去 aries;moss 因单卡 24 GB 放不下 30B TP=2、且容器出口极慢,排除。
+- **噪声根因定位到 TTS 采样**:CA 差距远大于 CU,且第一次有 10–11 个 CA 空预测、第二次 0 个——空预测来自 TTS 失控 turn 把后续段挤出窗口,而失控由采样(temperature 0.8、top_p 0.6、`tts_sample=true`)draw 出。故**关掉 TTS 采样能消除主要噪声源**。
+- **代码改动(OLT,已本地改 + 780 测试跑过,仅 1 个与本改动无关的 TTS 收尾计时 flaky,已在打补丁前后各复现一次证明是既有 flaky;57 个 recipe/fingerprint 测试全过)**:给 `run_s2st_eval.sbatch` 加 `TTS_SAMPLE={0,1}`(默认 1=发布设置)。为 0 时给 `moss_tts_realtime_server.py` 传 `--no-sample`(codec 词表上贪心),并把指纹 `tts_sample` 写成 false,使采样/贪心两种 run 永不 pool。README 与文档同步。**暂不推 PR #40**,待 aries 上确定性 run 实测证明 TTS_SAMPLE=0 真的可复现后再推。
+- **决策日志(协议规模)**:问题=A 的"多次采样"跑几次、几篇;默认=**(a) 确定性 A/B**:三 thinker 各一次,thinker temperature=0 + `TTS_SAMPLE=0`,5 篇 dev 全量(`MAX_DOCS=5`)——去掉模型内采样,残留仅 ElevenLabs ASR 的轻微不确定性,直接隔离 thinker 差异,作为**头条对照**;**(b) 采样带**:三 thinker 各 3 次,发布采样设置(thinker 0.6、TTS 采样),5 篇,报均值±跨度,回答部署口径的方差。共 12 个 run,单容器串行(切 thinker 才重载),约 10–12 h,aries 3 卡过夜。理由=(a) 用最少算力给出可判定的模型对照,(b) 给出部署口径下的噪声带以免 reviewer 质疑;5 篇而非 3 篇提升样本量。回滚=driver 每 run 落 metrics.json + 断点续跑,随时可停;先跑 1 篇确定性 smoke 验证 aries 环境移植无误再放全量。外审=Claude-in-Chrome 未接入,本轮未发,按判断推进,可用时补审"确定性 A/B 是否足以支撑 phrase-gating 结论"。
+- **CA 口径的硬件警告(必记)**:CA(计算感知)含真实解码耗时,A6000 的 thinker 解码比 H200 慢数倍,故 **aries 的 CA 只能 aries 内部三臂互比,不能与 hyper01 的 CA 数并排**;CU 与文本质量(BLEU/XCOMET)不受硬件影响,可跨机比较。aries 结果表须显式标注这一点。
+- **搬迁**:镜像 `vllm-omni:dev`(9 GB,docker save|load)、eval 栈(olt/venvs/checkpoints/tts/pyshim/acl/asr_responses)、三个 thinker(共 186 GB)、HF cache(codec 6.7 G + LaBSE)从 hyper01 rsync 到 aries gemini home `serving_ab/`(容器内挂 `/data/serving_ab` 以匹配 venv 绝对路径);5 篇 ACL 60-60 dev 从 aries 的 taurus 挂载 `/mnt/taurus/data/siqiouyang/datasets/acl6060` 就地取(1.1 G,已 copy 进 `serving_ab/acl6060_full/`,dev/full_wavs 5 篇齐)。ElevenLabs key 与 gavinlaw token 已落 aries `~/.keys`。
