@@ -102,8 +102,13 @@ if want sweep; then
     read -r tag job sjob ckpt rev temp ts <<<"$arm"
     out=$(runarm "$tag" "$job" "$sjob" "$ckpt" "$rev" "$temp" "$ts" 5)
     line=$(echo "$out" | grep -aE "RUN_.*_DONE|SKIP|FAIL|CU:|CA:" | tr '\n' ' ' | cut -c1-220)
-    echo "$out" | grep -qE "RUN_${tag}_DONE|SKIP $tag" || fail "sweep/$tag" "$line"
-    ok "sweep/$tag" "$line"
+    # note (luojiaxuan): the real success criterion is metrics.json on disk, not the runarm stdout -- a multi-hour
+    # note (luojiaxuan): ssh docker exec can lose its trailing lines (RUN_DONE) even when the work finished.
+    if $SSH $A "test -f /mnt/data3/jiaxuanluo/serving_ab/results/s2st_moss-delta_dev_1920ms_$job/metrics.json"; then
+      ok "sweep/$tag" "$line"
+    else
+      fail "sweep/$tag" "no metrics.json; $line"
+    fi
   done
 fi
 
