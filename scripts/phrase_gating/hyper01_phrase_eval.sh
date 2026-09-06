@@ -5,7 +5,8 @@
 # note (luojiaxuan): smallest sglang-omni-jaxan-<n> free in both docker ps -a and the map at `up` time) that sees
 # note (luojiaxuan): GPUs 2,3,4 (thinker TP=2 on 0,1 and the TTS on 2 in container numbering). The env below is
 # note (luojiaxuan): the one the earlier "ours" arm (job 90002) was generated and scored with, so the two runs
-# note (luojiaxuan): differ only in the thinker checkpoint and its revision.
+# note (luojiaxuan): differ only in the thinker checkpoint and its revision. JOB/SJOB/TAG/CKPT_DIR/REV_NAME/SHA8 can be
+# note (luojiaxuan): overridden in the environment to run another arm (repeat rounds) with the same env.
 #
 # note (luojiaxuan): hyper01_phrase_eval.sh up <sha8>   create the container and register it in the map (reuses the one
 # note (luojiaxuan):                                   recorded in phrase_gated_data/ if it is still running); git safe.directory
@@ -28,10 +29,13 @@ else
   CNAME=$(cat "$CNAME_FILE")
   CREATE=0
 fi
-GPUS=2,3,4
-JOB=90003
-SJOB=95003
-REF_JOB=90002
+GPUS="${GPUS:-2,3,4}"
+JOB="${JOB:-90003}"
+SJOB="${SJOB:-95003}"
+REF_JOB="${REF_JOB:-90002}"
+TAG="${TAG:-phrase}"
+CKPT_DIR="${CKPT_DIR:-/data/serving_ab/thinker_phrase_gated}"
+REV_NAME="${REV_NAME:-gavinlaw-infinisst-thinker-phrase-gated-zh}"
 RUN=/data/serving_ab/results/s2st_moss-delta_dev_1920ms_$JOB
 COMMON="OLT_RESULTS_ROOT=/data/serving_ab/results OLT_VENV_ROOT=/data/serving_ab/venvs ACL_ROOT=/data/serving_ab/acl_root HF_HOME=/root/.cache/huggingface"
 
@@ -55,15 +59,15 @@ up)
   docker ps --filter "name=^$CNAME\$" --format '{{.Names}} {{.Status}}'
   ;;
 cascade)
-  SHA8=$(cat "$PGD/thinker_phrase_gated.sha8")
+  SHA8="${SHA8:-$(cat "$PGD/thinker_phrase_gated.sha8")}"
   docker exec "$CNAME" bash -c "[ ! -d $RUN ] || [ -f $RUN/generation_config.json ] || { echo 'removing run dir left by an aborted launch (manifests only)'; rm -rf $RUN; }"
   docker exec "$CNAME" bash -c "cd /data/serving_ab/olt && export HF_TOKEN=\$(cat /root/.keys/hf_token_gavinlaw) && \
-    SLURM_JOB_ID=$JOB CKPT=/data/serving_ab/thinker_phrase_gated \
-    THINKER_MODEL_REVISION=local:gavinlaw-infinisst-thinker-phrase-gated-zh:$SHA8 \
+    SLURM_JOB_ID=$JOB CKPT=$CKPT_DIR \
+    THINKER_MODEL_REVISION=local:$REV_NAME:$SHA8 \
     THINKER_BACKEND=uv THINKER_GPUS=0,1 TTS_GPU=2 MAX_DOCS=3 SKIP_SCORING=1 $COMMON \
     MOSS_MODEL=/data/serving_ab/tts MOSS_MODEL_REVISION=local:owaski-moss-tts-realtime-delta-zh-125k:fc2d094d \
-    bash eval/recipes/run_s2st_eval.sbatch 1.92 1.0 dev moss-delta" > "$PGD/cascade_phrase.log" 2>&1
-  echo "CASCADE_phrase_EXIT=$?" | tee -a "$PGD/cascade_phrase.log"
+    bash eval/recipes/run_s2st_eval.sbatch 1.92 1.0 dev moss-delta" > "$PGD/cascade_$TAG.log" 2>&1
+  echo "CASCADE_${TAG}_EXIT=$?" | tee -a "$PGD/cascade_$TAG.log"
   ls "$SAB/results/s2st_moss-delta_dev_1920ms_$JOB/generation_config.json" 2>&1
   ls "$SAB/results/s2st_moss-delta_dev_1920ms_$JOB/wavs_cu" 2>/dev/null | wc -l
   ;;
@@ -86,9 +90,9 @@ score)
     SLURM_JOB_ID=$SJOB CUDA_VISIBLE_DEVICES=2 S2S_SCORE_REGIMES=sequential $COMMON \
     XCOMET_CKPT=/data/serving_ab/checkpoints/XCOMET-XL/checkpoints/model.ckpt \
     ELEVENLABS_KEY_FILE=/root/.keys/elevenlabs_sst_data S2S_ASR_RESPONSES_ROOT=/data/serving_ab/asr_responses \
-    bash eval/recipes/run_s2s_score.sbatch $RUN moss-delta dev 1.0 1.92" > "$PGD/score_phrase.log" 2>&1
-  echo "SCORE_phrase_EXIT=$?" | tee -a "$PGD/score_phrase.log"
-  grep -aE "^  (CU|CA): " "$PGD/score_phrase.log" | cut -c1-220
+    bash eval/recipes/run_s2s_score.sbatch $RUN moss-delta dev 1.0 1.92" > "$PGD/score_$TAG.log" 2>&1
+  echo "SCORE_${TAG}_EXIT=$?" | tee -a "$PGD/score_$TAG.log"
+  grep -aE "^  (CU|CA): " "$PGD/score_$TAG.log" | cut -c1-220
   ls "$SAB/results/s2st_moss-delta_dev_1920ms_$JOB/metrics.json" 2>&1
   ;;
 down)
