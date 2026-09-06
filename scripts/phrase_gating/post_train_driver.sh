@@ -116,26 +116,26 @@ fi
 
 if want cascade; then
   SHA8=$(cat "$STATE/.sha8" 2>/dev/null) || fail cascade "no .sha8 from the upload stage"
-  scp -q "$HERE/hyper01_phrase_eval.sh" hyper01:$SAB/ || fail cascade "scp of hyper01_phrase_eval.sh"
-  up=$($SSH hyper01 "bash $SAB/hyper01_phrase_eval.sh up $SHA8" 2>&1) || fail cascade "up: $up"
+  scp -q "$HERE/hyper01_phrase_eval.sh" hyper01:$SAB/phrase_gated_data/ || fail cascade "scp of hyper01_phrase_eval.sh"
+  up=$($SSH hyper01 "bash $SAB/phrase_gated_data/hyper01_phrase_eval.sh up $SHA8" 2>&1) || fail cascade "up: $up"
   say "cascade container: $(echo $up)"
-  c=$($SSH hyper01 "bash $SAB/hyper01_phrase_eval.sh cascade" 2>&1 | tr '\n' ' ')
-  case "$c" in *CASCADE_phrase_EXIT=0*) ;; *) fail cascade "$c (hyper01 $SAB/cascade_phrase.log)" ;; esac
-  cmp=$($SSH hyper01 "bash $SAB/hyper01_phrase_eval.sh compare" 2>&1)
+  c=$($SSH hyper01 "bash $SAB/phrase_gated_data/hyper01_phrase_eval.sh cascade" 2>&1 | tr '\n' ' ')
+  case "$c" in *CASCADE_phrase_EXIT=0*) ;; *) fail cascade "$c (hyper01 $SAB/phrase_gated_data/cascade_phrase.log)" ;; esac
+  cmp=$($SSH hyper01 "bash $SAB/phrase_gated_data/hyper01_phrase_eval.sh compare" 2>&1)
   say "generation identity vs job 90002:"; say "$cmp"
   echo "$cmp" | grep -q "unexpected_diffs=0" || fail cascade "generation identity differs beyond the thinker"
   ok cascade "$c"
 fi
 
 if want score; then
-  sc=$($SSH hyper01 "bash $SAB/hyper01_phrase_eval.sh score" 2>&1)
+  sc=$($SSH hyper01 "bash $SAB/phrase_gated_data/hyper01_phrase_eval.sh score" 2>&1)
   say "$sc"
-  echo "$sc" | grep -q "SCORE_phrase_EXIT=0" || fail score "see hyper01 $SAB/score_phrase.log"
+  echo "$sc" | grep -q "SCORE_phrase_EXIT=0" || fail score "see hyper01 $SAB/phrase_gated_data/score_phrase.log"
   ok score "metrics.json written"
 fi
 
 if want down; then
-  d=$($SSH hyper01 "bash $SAB/hyper01_phrase_eval.sh down" 2>&1)
+  d=$($SSH hyper01 "bash $SAB/phrase_gated_data/hyper01_phrase_eval.sh down" 2>&1)
   ok down "$d"
 fi
 say "DRIVER DONE"
