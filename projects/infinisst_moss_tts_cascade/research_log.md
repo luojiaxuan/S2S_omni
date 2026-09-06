@@ -491,3 +491,24 @@
   合计约 2.97 TB。
 - **执行**:root 容器 rm。第一次前台 ssh 在 600 s 超时被移入后台,ssh 断开使远端 `docker run` 收 SIGHUP 中止,只删完 data6/wiki_synth_tts_3variant(约 1.3 TB);第二次改用 **detached `docker run -d`**(不随 ssh 断开而死)删剩余项,以 `.rm_done` sentinel + 容器存活为完成判据,监控在跑。**完成**:12 个目录全部删除(第二次 detached 清掉第一次残留的空壳)。最终空闲:data6 741 G→2.8 T(96%→61%)、data4 127 G→751 G(99%→90%)、data3 128 G→393 G(97%→90%),共约 3 TB。`serving_ab`/`serving_ab_thinkers`(A 协议在用)完好。
 - **教训**:aries 上删 TB 级(百万小文件)必须 detached 跑,前台 ssh 会超时断连打断 `docker run`。删除与 A 协议 rsync 写同一批 data 盘,I/O 争用使 rsync 降速(52 GB tar 传了近 2 h),删完自恢复。
+
+## 2026-09-06 aries A 协议:环境跑通(4 个适配坑),确定性 A/B 出前两臂;暂停采样带
+
+- **把 30B 多模态 thinker 塞进共享 A6000 的四个坑(逐一修复,均已 commit)**:
+  1. aries docker `/` 盘满(31 G,镜像要 30 G)→ **不传镜像**,复用 aries 已有的 `jaxanluo/sglang-omni:dev`(py3.12.3,实测 venv 的 cu12 wheel 能跑);
+  2. eval 栈是容器内 root 属主、宿主用户 rsync 不了 → **root 容器打 tar(chmod 644)再传**;thinker 是宿主属主,rsync 卡死后**改 aries 本地直连 HF 下载**(20 MB/s,完整校验);
+  3. 48 G 卡装 30B、**TP=2 权重就吃 29.7 G/卡**,共租户一占就"free < util 目标"拒启 → 改 **TP=4**(权重 15 G/卡,util 0.70,容忍 9 G 邻居);5 卡(4 thinker+1 TTS);
+  4. A6000 上 **torch.compile 每 worker >60 s、超过 vLLM 60 s 共享内存广播超时**,engine core 中止 → 加 `--enforce-eager`(跳过编译,只影响速度不影响输出;作为 recipe 开关 `THINKER_ENFORCE_EAGER` 进 PR)。
+  另外两个虚惊:HF 下载脚本 `docker run -d > log` 只捕获容器 ID(真日志在 `docker logs`),误报下载 FAIL;主机侧 `[ -e venv/bin/python ]` 对指向容器内 `/usr/bin/python3.12` 的软链返回假缺失。
+- **CA 在 aries 无意义(实测坐实)**:word_det 的 CA Ending_Offset = 308 s、LongYAAL = 159 s——enforce-eager + TP=4 跨 NUMA 使计算感知延迟爆炸。**aries 只看 CU 与文本质量(BLEU/XCOMET),这些与硬件无关;CA 一律不用**。
+- **确定性 A/B 前两臂(thinker temperature=0 + TTS greedy,5 篇 dev,CU 口径)**:
+
+  | thinker | CU BLEU | CU XCOMET | CU Ending Offset |
+  |---|---|---|---|
+  | 他们 owaski (theirs_det, 92001) | 42.62 | 0.742 | 3722 ms |
+  | 我们词对齐 (word_det, 92011) | 40.59 | 0.723 | 4807 ms |
+  | 我们 phrase-gated (phrase_det, 92021) | 运行中 | | |
+
+  注:5 篇口径,与 hyper01 的 3 篇单次数不可直接并列;三臂彼此同口径可比。这是**去掉采样噪声后**的干净模型对照(smoke 已验证确定性)。
+- **驱动器脆弱性修复**:sweep 的成功判据从"runarm stdout 含 RUN_DONE"改为"metrics.json 存在"——多小时的 ssh docker exec 会丢尾部输出,导致 word_det 明明成功却被误判 FAIL(其 metrics 实为 complete)。
+- **决策日志(暂停采样带)**:问题=确定性 A/B 后是否接着跑 9 个采样 run(每个 2.5–3.3 h,共约 27 h);默认=**phrase_det 出完即暂停采样带**,先看确定性三臂再定;理由=A6000 比 H200 慢约一个量级、CA 在此无意义、采样噪声已由 hyper01 两样本粗估(CU ±2.5 BLEU),在慢速共享卡上烧 27 h 价值存疑;回滚=需要时 driver `FROM=sweep` 恢复(metrics-skip 幂等,自动跳过已完成臂);外审=未发(Chrome 未接入,低风险暂停)。
