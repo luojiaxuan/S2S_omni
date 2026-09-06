@@ -64,10 +64,10 @@ fi
 if want up; then
   # note (luojiaxuan): pick three GPUs with <2 GB resident. thinker wants two, TTS one; prefer an NVLink pair for the
   # note (luojiaxuan): thinker but SYS is acceptable (NCCL P2P is off anyway). Refuse if fewer than three are free.
-  free=$($SSH $A "nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits | awk '\$2<2000{print \$1}' | tr '\n' ' '")
-  say "free GPUs on aries: [$free]"
+  free=$($SSH $A "nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits | awk -F', ' '\$2<20000{print \$1, \$2}' | sort -k2 -n | head -3 | awk '{print \$1}' | tr '\n' ' '")
+  say "3 emptiest usable GPUs on aries (thinker=first two, TTS=third): [$free]"
   read -r g0 g1 g2 rest <<<"$free"
-  [ -n "${g2:-}" ] || fail up "need 3 free GPUs, have [$free]"
+  [ -n "${g2:-}" ] || fail up "need 3 usable GPUs (<20GB used), have [$free]"
   DEV="$g0,$g1,$g2"
   taken=$( { $SSH $A "docker ps -a --filter name=sglang-omni-jaxan --format '{{.Names}}'; grep -aoE '^sglang-omni-jaxan-[0-9]+' \$HOME/jiaxuanluo-map.txt" 2>/dev/null; } | grep -oE '[0-9]+$' | sort -un)
   n=1; while echo "$taken" | grep -qx "$n"; do n=$((n+1)); done
@@ -86,7 +86,7 @@ CNAME=$(cat "$CNAME_FILE" 2>/dev/null || echo "")
 runarm() { # tag job sjob ckpt rev temp tts_sample max_docs
   local tag=$1 job=$2 sjob=$3 ckpt=$4 rev=$5 temp=$6 ts=$7 md=$8 sha; sha=$(sha_of "$tag")
   $SSH $A "docker exec $CNAME env TAG=$tag JOB=$job SJOB=$sjob CKPT_DIR=$ckpt REV_NAME=$rev SHA8=$sha \
-    THINKER_TEMPERATURE=$temp TTS_SAMPLE=$ts MAX_DOCS=$md THINKER_GPUS=0,1 TTS_GPU=2 THINKER_GPU_UTIL=0.85 \
+    THINKER_TEMPERATURE=$temp TTS_SAMPLE=$ts MAX_DOCS=$md THINKER_GPUS=0,1 TTS_GPU=2 THINKER_GPU_UTIL=0.80 \
     bash /data/serving_ab/phrase_gated_data/aries_run.sh" 2>&1 | tail -6
 }
 
