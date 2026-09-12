@@ -591,3 +591,9 @@
 - **预注册的机制预测(在拿到重训结果之前写下)**:修正 `empty_turn_end_w0.5` 后,推理空调用占比应向训练分布回升——W 从 3.0% 升向 10.9%,P 从 7.5% 升向 29.3%,且 **phrase 臂的绝对升幅应更大**。外审的原话:若质量提升而静默行为没有变化,我的机制假说就被削弱。这条诊断与 BLEU/XCOMET 并列上报。
 - **旧结论转为对照组**:9/6 那两个"作废"的 run 现在是 2×2 的 old-loss 两格(W_old=40.59/0.7228,P_old=39.80/0.7405),其 `metrics.json` 与 `render_report.json` 已从 aries 存档到 `artifacts/ab_2x2_old_loss/`(aries 本地盘随时可能被清理)。收集脚本 `scripts/phrase_gating/ab_2x2_collect.py` 算 Δ_word、Δ_phrase、**I = Δ_phrase − Δ_word**,并输出 per-talk 与空调用占比,脚本里同时写死了预注册的判读规则与训练种子规则,防止事后解释。
 - **评估口径约束(必须遵守,否则四格不可比)**:W_old/P_old 是在 aries 上以 **TP=4 + enforce-eager、1.92 s chunk、greedy thinker + greedy TTS、5 篇 ACL dev、ElevenLabs Scribe v2** 跑出的 CU 数;W_fixed/P_fixed 若在 hyper01 评估,**必须复刻同样的 TP 与 enforce-eager 设置**。CU 与文本质量跨硬件可比,CA 不可比(已弃用)。
+
+## 2026-09-12 评估口径补齐与训练接力发射
+
+- **补齐两处会破坏 2×2 可比性的缺口(发现于部署前核查,非事后)**:hyper01 的评估栈原本只有 **3 篇** ACL,而 W_old/P_old 是在 **5 篇**上评的;且 hyper01 的 OLT checkout 是 9/3 旧版,**不含** `TTS_SAMPLE`(贪心 TTS)与 `THINKER_ENFORCE_EAGER` 两个开关,而这两项正是 W_old/P_old 的生成条件。已把 5 篇 ACL(547 M)从 aries 搬来,并把打过补丁的 recipe 部署进去(`TTS_SAMPLE` 6 处、`THINKER_ENFORCE_EAGER` 3 处,`bash -n` 通过)。外审要求"除 `empty_turn_end_w` 外全部冻结",这两处不补就等于偷偷改了两个变量。
+- **又一次 root 属主拦路**:`serving_ab/` 与其下 `olt/` 均为容器内创建的 root 属主,宿主用户既建不了 `acl6060_full` 也覆盖不了 recipe。解法同前:`--rm` root 容器建目录并 `chown` 给宿主 uid、再由 root 容器把文件拷进去。**这是本条线第三次撞上同一堵墙**(前两次:stack 无法 rsync、metrics.json 读不出),已形成固定手法。
+- **接力脚本**:`scripts/phrase_gating/retrain_relay.sh`,detached 运行,依次做 wait_phrase → export_phrase → train_word → export_word。每阶段成功判据一律是**产物**(`mcore/` 非空、`hf/config.json` 与 `model.safetensors.index.json` 俱在),不看退出码——今天已两次被"容器空跑仍退出 0"骗过。预计整条链约 2.5 小时。
