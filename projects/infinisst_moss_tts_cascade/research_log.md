@@ -597,3 +597,9 @@
 - **补齐两处会破坏 2×2 可比性的缺口(发现于部署前核查,非事后)**:hyper01 的评估栈原本只有 **3 篇** ACL,而 W_old/P_old 是在 **5 篇**上评的;且 hyper01 的 OLT checkout 是 9/3 旧版,**不含** `TTS_SAMPLE`(贪心 TTS)与 `THINKER_ENFORCE_EAGER` 两个开关,而这两项正是 W_old/P_old 的生成条件。已把 5 篇 ACL(547 M)从 aries 搬来,并把打过补丁的 recipe 部署进去(`TTS_SAMPLE` 6 处、`THINKER_ENFORCE_EAGER` 3 处,`bash -n` 通过)。外审要求"除 `empty_turn_end_w` 外全部冻结",这两处不补就等于偷偷改了两个变量。
 - **又一次 root 属主拦路**:`serving_ab/` 与其下 `olt/` 均为容器内创建的 root 属主,宿主用户既建不了 `acl6060_full` 也覆盖不了 recipe。解法同前:`--rm` root 容器建目录并 `chown` 给宿主 uid、再由 root 容器把文件拷进去。**这是本条线第三次撞上同一堵墙**(前两次:stack 无法 rsync、metrics.json 读不出),已形成固定手法。
 - **接力脚本**:`scripts/phrase_gating/retrain_relay.sh`,detached 运行,依次做 wait_phrase → export_phrase → train_word → export_word。每阶段成功判据一律是**产物**(`mcore/` 非空、`hf/config.json` 与 `model.safetensors.index.json` 俱在),不看退出码——今天已两次被"容器空跑仍退出 0"骗过。预计整条链约 2.5 小时。
+
+## 2026-09-12 phrase 臂重训完成(修复后的第一格)
+
+- **结果**:597 步 1 epoch,**墙钟 47 分钟**(15:35→16:22 PT),hyper01 4×H200,步速 3.98–7.07 s/step——比 aries 4×A6000 的 12–22 s/step **快约 3.3 倍**,落在发射前给出的 30–60 分钟预估内。train lm loss 1.26 → 0.59;iteration 597 检查点已保存,`mcore` 7.5 G(含 iter_200/400/597)。产物判据(目录非空)通过,非仅看退出码。
+- **口径警告(必须写下,否则下一个读者会误用)**:本次 `validation loss @597 = 0.6061`,与 9/5 那次带 bug 训练的 `0.6053` **不可比较**。修复后的 loss 对**更多位置**施加监督(每个空轮的结束符),分母不同;OLT README 对此有同样的明确说明("the fixed loss supervises more positions than the default")。**跨 loss policy 的唯一有效比较是打分后的 BLEU/XCOMET 与静默行为诊断**,不是 held-out loss。
+- **接力**:`retrain_relay.sh` 已自动检测到并进入 export_phrase,随后 train_word → export_word,全程 detached。
