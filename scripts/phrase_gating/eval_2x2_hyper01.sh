@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # note (luojiaxuan): score one corrected-loss cell (W_fixed or P_fixed) on hyper01 under EXACTLY the conditions
 # note (luojiaxuan): W_old/P_old were scored with on aries, so the four cells of the 2x2 interaction test are
-# note (luojiaxuan): comparable: thinker TP=4, --enforce-eager, greedy thinker (temperature 0), greedy TTS
+# note (luojiaxuan): comparable, down to the container image (the aries cells ran in jaxanluo/sglang-omni:dev;
+# note (luojiaxuan): the venvs carry their own torch/vllm, but the frozen-variable rule leaves no reason to differ):
+# note (luojiaxuan): thinker TP=4, --enforce-eager, greedy thinker (temperature 0), greedy TTS
 # note (luojiaxuan): (TTS_SAMPLE=0), 1.92 s chunks, source speed 1.0, the 5-talk ACL dev split, ElevenLabs Scribe v2.
 # note (luojiaxuan): Only empty_turn_end_w differs between the old and fixed cells -- that is the whole point.
 #
@@ -12,7 +14,7 @@
 set -uo pipefail
 ARM="${ARM:?phrase|word}"
 LOSS="${LOSS:-empty_turn_end_w0.5}"
-IMG="${IMG:-vllm-omni:dev}"
+IMG="${IMG:-jaxanluo/sglang-omni:dev}"
 W=/data/phrase_sft2
 SAB=/data/serving_ab
 case "$ARM" in
