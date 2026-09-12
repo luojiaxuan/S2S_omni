@@ -1,0 +1,75 @@
+{
+  "output_dir": "/data/serving_ab/results/s2st_moss-delta_dev_1920ms_92021/simuleval",
+  "documents": {
+    "2022.acl-long.268": {
+      "index": 0,
+      "ttfa_cu_ms": 3840.0,
+      "ttfa_ca_ms": 8668.79,
+      "cu_duration_ms": 748880.0,
+      "ca_duration_ms": 1424021.33,
+      "cu_silence_ms": 53200.0,
+      "ca_silence_ms": 728341.33,
+      "ca_minus_cu_ms": 675141.33,
+      "agent_compute_ms": 1419547.8,
+      "max_compute_lag_ms": 688828.25,
+      "source_length_ms": 737440.0,
+      "chunks": 360
+    },
+    "2022.acl-long.367": {
+      "index": 1,
+      "ttfa_cu_ms": 1920.0,
+      "ttfa_ca_ms": 5757.43,
+      "cu_duration_ms": 696240.0,
+      "ca_duration_ms": 986188.5,
+      "cu_silence_ms": 134720.0,
+      "ca_silence_ms": 424668.5,
+      "ca_minus_cu_ms": 289948.5,
+      "agent_compute_ms": 983153.55,
+      "max_compute_lag_ms": 290053.86,
+      "source_length_ms": 695019.69,
+      "chunks": 325
+    },
+    "2022.acl-long.590": {
+      "index": 2,
+      "ttfa_cu_ms": 1920.0,
+      "ttfa_ca_ms": 3897.89,
+      "cu_duration_ms": 578080.0,
+      "ca_duration_ms": 954840.08,
+      "cu_silence_ms": 123920.0,
+      "ca_silence_ms": 500680.08,
+      "ca_minus_cu_ms": 376760.08,
+      "agent_compute_ms": 951867.84,
+      "max_compute_lag_ms": 377564.68,
+      "source_length_ms": 577237.31,
+      "chunks": 268
+    },
+    "2022.acl-long.110": {
+      "index": 3,
+      "ttfa_cu_ms": 1920.0,
+      "ttfa_ca_ms": 4289.36,
+      "cu_duration_ms": 702880.0,
+      "ca_duration_ms": 1376306.79,
+      "cu_silence_ms": 62560.0,
+      "ca_silence_ms": 735986.79,
+      "ca_minus_cu_ms": 673426.79,
+      "agent_compute_ms": 1373684.81,
+      "max_compute_lag_ms": 674233.02,
+      "source_length_ms": 703007.38,
+      "chunks": 348
+    },
+    "2022.acl-long.117": {
+      "index": 4,
+      "ttfa_cu_ms": 1920.0,
+      "ttfa_ca_ms": 6080.99,
+      "cu_duration_ms": 736960.0,
+      "ca_duration_ms": 1451550.71,
+      "cu_silence_ms": 11200.0,
+      "ca_silence_ms": 725790.71,
+      "ca_minus_cu_ms": 714590.71,
+      "agent_compute_ms": 1448290.57,
+      "max_compute_lag_ms": 724277.26,
+      "source_length_ms": 729013.69,
+      "chunks": 360
+    }
+  }
+}
