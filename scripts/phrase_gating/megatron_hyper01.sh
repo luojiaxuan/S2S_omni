@@ -87,7 +87,7 @@ case "$STAGE" in
   probe)
     python -c "import torch, swift; import swift.megatron; print('swift', swift.__version__, '| torch', torch.__version__, '| gpus', torch.cuda.device_count())"
     python -c "import sys; sys.path.insert(0, '$W/plugins'); import weighted_turn_end as w; print('loss names:', sorted(n for n in dir(w) if 'w0' in n) or 'registered at import')"
-    ls "$MEGATRON_LM_PATH/megatron/core/__init__.py" "$BASE/config.json" "$DATA" "$PLUGIN"
+    ls "\$MEGATRON_LM_PATH/megatron/core/__init__.py" "$BASE/config.json" "$DATA" "$PLUGIN"
     ;;
 esac
 echo "STAGE_${STAGE}_EXIT=\$?"
