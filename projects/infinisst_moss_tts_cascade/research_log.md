@@ -603,3 +603,10 @@
 - **结果**:597 步 1 epoch,**墙钟 47 分钟**(15:35→16:22 PT),hyper01 4×H200,步速 3.98–7.07 s/step——比 aries 4×A6000 的 12–22 s/step **快约 3.3 倍**,落在发射前给出的 30–60 分钟预估内。train lm loss 1.26 → 0.59;iteration 597 检查点已保存,`mcore` 7.5 G(含 iter_200/400/597)。产物判据(目录非空)通过,非仅看退出码。
 - **口径警告(必须写下,否则下一个读者会误用)**:本次 `validation loss @597 = 0.6061`,与 9/5 那次带 bug 训练的 `0.6053` **不可比较**。修复后的 loss 对**更多位置**施加监督(每个空轮的结束符),分母不同;OLT README 对此有同样的明确说明("the fixed loss supervises more positions than the default")。**跨 loss policy 的唯一有效比较是打分后的 BLEU/XCOMET 与静默行为诊断**,不是 held-out loss。
 - **接力**:`retrain_relay.sh` 已自动检测到并进入 export_phrase,随后 train_word → export_word,全程 detached。
+
+## 2026-09-12 评估接力发射(2×2 的后半段,无人值守)
+
+- **为什么要它**:训练接力跑完只得到两个 checkpoint,离 I 值还差两格打分;逐步等人工驱动会把出数推迟数小时。`scripts/phrase_gating/eval_relay.sh` detached 运行,等 `RELAY DONE` 后自动建评估容器、依次打分 P_fixed(job 93001)与 W_fixed(job 93011)、再拆容器清 map。
+- **发射记录(按长任务规矩)**:host hyper01;容器为**长命**(逐格 `docker exec`,不同于训练用的 `--rm`),创建时即登记 map、两格出分即删;GPU 4,5,6,7;镜像 `jaxanluo/sglang-omni:dev`(与 aries 两格一致)。**成功判据是产物**——每格 `metrics.json` 的 CU 里必须有 `BLEU` 键(cascade 阶段会先写一个 `SKIP_SCORING=1` 的占位 metrics,只看文件存在会误判,今天已被这种假绿骗过两次)。告警路径:monitor 轮询 `eval_relay.status`,遇 `ABORT`/`FAIL`/进程消失即报。预估墙钟:两格各约 1–1.5 小时,合计 **2–3 小时**。
+- **GPU 上限的处理**:hyper01 每台限 4 卡,而 aries 那两格用了 5 卡(thinker TP=4 + 独占 TTS 卡)。这里让 TTS 与 thinker 的最后一张卡共卡(H200 143 G:thinker 约 15 G/卡、MOSS 约 5 G),**TP 仍为 4**——TP 才是影响数值路径的量,共卡不影响。
+- **收集在 Mac 本地做**:old 两格的 `metrics.json`/`render_report.json` 已存档在 `artifacts/ab_2x2_old_loss/`(aries 本地盘随时可能被清),届时只需拉 hyper01 的两格,跑 `ab_2x2_collect.py` 得到 Δ_word、Δ_phrase、**I**、per-talk 与空调用占比。
