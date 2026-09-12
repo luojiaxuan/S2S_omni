@@ -520,3 +520,27 @@
   注:5 篇口径,与 hyper01 的 3 篇单次数不可直接并列;三臂彼此同口径可比。这是**去掉采样噪声后**的干净模型对照(smoke 已验证确定性)。
 - **驱动器脆弱性修复**:sweep 的成功判据从"runarm stdout 含 RUN_DONE"改为"metrics.json 存在"——多小时的 ssh docker exec 会丢尾部输出,导致 word_det 明明成功却被误判 FAIL(其 metrics 实为 complete)。
 - **决策日志(暂停采样带)**:问题=确定性 A/B 后是否接着跑 9 个采样 run(每个 2.5–3.3 h,共约 27 h);默认=**phrase_det 出完即暂停采样带**,先看确定性三臂再定;理由=A6000 比 H200 慢约一个量级、CA 在此无意义、采样噪声已由 hyper01 两样本粗估(CU ±2.5 BLEU),在慢速共享卡上烧 27 h 价值存疑;回滚=需要时 driver `FROM=sweep` 恢复(metrics-skip 幂等,自动跳过已完成臂);外审=未发(Chrome 未接入,低风险暂停)。
+
+## 2026-09-12 训练侧 bug:空 assistant turn 零监督,9/6 的确定性 A/B 结论作废
+
+- **触发**:用户告知 thinker 有个 bug 已修复并合入 OLT main,让我找 `finetune/` 下的 plugin 补丁。
+- **补丁**:commit **a99c415(2026-09-09)** "Add turn-end loss policies and safer training and measurement",文件 `finetune/scripts/swift_plugins/assistant_turn_end.py`(每个 assistant turn 的 `<|im_end|>` 权重 1)与 `weighted_turn_end.py`(`empty_turn_end_w<w>` 只降空轮末 token 权重;`turn_end_w<w>` 降所有轮;w ∈ 0.1/0.2/0.25/0.5/0.75),外加 `dump_labels.py` 逐轮核对。开关 `OMNI_LOSS_SCALE`,经 `--external_plugins <plugin.py> --loss_scale <name>` 传给 `megatron sft`。**recipe 默认值至今仍是 `default`(带 bug 那支),必须显式设置。**
+- **bug 本身**:ms-swift 默认 loss scale 只标注"回复自身 token"与"最后一轮结束符";轮间 `chat_sep`(`<|im_end|>\n`)标为 scale 0,而**空回复 tokenize 不出内容**,故**中间的空 assistant turn 一个受监督 token 都没有**。"这一 chunk 不说话"的决策只能由那个结束符承载。
+- **为什么这恰好打中 phrase gating(实测)**:
+
+  | 语料 | assistant 轮 | 空轮 | 占比 | 每 delta 均字数 |
+  |---|---|---|---|---|
+  | 词对齐 `train_s_zh_origin` | 68,705 | 7,511 | **10.9%** | 16.9(中位 13) |
+  | 我的 `train_s_zh_phrase_ours` | 68,705 | 20,133 | **29.3%** | 21.3(中位 18) |
+
+  phrase gating 的机制就是"攒够 8 字才释放",天然产生 **2.7 倍**空轮,而这些空轮在 9/5 训练时**全部零监督**——被削掉的正是 phrase gating 的核心决策。**交叉验证**:我量出的词对齐 10.9% 与 OLT README 独立记载的 `train_s_zh_origin`「10.9% empty turns, 16.9-character deltas」完全一致,测法可信。
+- **我 9/5 的训练确实吃了这个 bug**:`megatron_aries.sh` 无任何 `--loss_scale`/`--external_plugins`,走 `default`。
+- **修复的效应量(OLT 自测)**:m=1 phrase、0.96 s,default 36.87 → `empty_turn_end_w0.5` **41.92**(**+5.05 BLEU**);weight 1 反而回落到 39.60(空调用占比 74%,矫枉过正)。**1.92 s(我们的 chunk,Follow-up 4)**:mixed phrase `empty_w0.5` = **44.03 / 0.7996**,mixed 词对齐 `empty_w0.5` = 41.37 / 0.7791 → **修复后 phrase 反超词对齐 2.66 BLEU**,与我 9/6 测出的方向相反。
+- **结论作废**:9/6 aries 确定性 A/B(他们 42.62 / 我们词对齐 40.59 / 我们 phrase-gated 39.80,CU BLEU)中,**我们两臂均为带 bug 训练,且 phrase 臂受损 2.7 倍**,故"phrase 不如 word""phrase 落后他们 2.83"均不成立。我们缺口 2.83 < 修复效应 5.05,量级上完全可能由 bug 解释。baseline(他们 owaski)那一行不受影响,仍有效。
+- **我的方法论缺陷(自曝)**:OLT 自己已有 phrase 语料 `train_s_zh_phrase`,由 `data/scripts/s2t/phrase_segment.py`(stage 8)用 **Qwen3-27B 标注语义完整短语**构造,带字节级重构校验、标点归属契约、fallback 计数;而我用的是 **8 字阈值 + 标点**的手写启发式,delta 更长(21.3 vs 16.9 字)。按本项目「拒绝启发式」的规矩,我的构造更弱,这点此前未意识到。
+- **决策日志(四件套)**:
+  1. **问题**=修复后如何重训与对照;**默认**=用 `empty_turn_end_w0.5`、在 hyper01(4×H200)上**两臂都重训**(phrase 与词对齐同一 loss),再重跑确定性 A/B;**理由**=w0.5 是 OLT 自测网格里 1.92 s 的最优(44.03,优于 weight 1 的 43.59 与 w0.2 的 43.58);两臂同 loss 才是公平对照(他们 Follow-up 3/4 也是两臂都重训);aries 8 卡被 zili 的 coevo 作业占满(已 3 天),hyper01 有 4 张空 H200 且基座 66 G 在共享 cache、swift 镜像 46.7 G 已在、Megatron-LM 73a28a107 已在,零镜像/零模型搬运;**回滚**=每臂 metrics.json 独立落盘,换权重或换语料只需重跑对应臂,旧 checkpoint 不覆盖。
+  2. **问题**=先用我的 8 字语料还是直接改用 OLT 的 LLM 切分语料;**默认**=**先用我的**;**理由**=最便宜地回答"bug 是不是元凶"、并让我们那张表恢复有效;改用他们语料等于复现他们已有结果(他们连全级联语音分都有:1.92 s 下 42.48 CU BLEU / 0.7576);**回滚**=改用他们语料只需换 manifest,训练脚本不变。
+  3. **外审**=按纪律应在发射前过一遍 ChatGPT;本轮先落台账再发审,结论补记本条。
+- **进度**:plugins 三件已上 hyper01 `phrase_sft2/plugins/`;`megatron_hyper01.sh`(带 `--external_plugins`/`--loss_scale`,`ARM=phrase|word`)已写并部署;base→mcore 转换在 hyper01 GPU 4-7 上跑(与搬运并行,因其只需基座+Megatron-LM+镜像);音频 7.3 G 与两份 manifest 从 gemini 经 aries 推 hyper01(首次因瞬时 `Connection timed out` 失败,已加 `ConnectionAttempts=5` 重试;实测 aries→hyper01 22 端口 OPEN,认证靠 Mac 的 `ssh -A` 转发)。
+- **顺带核实**:taurus 上 PENDING 11 天的作业 48285 是 `sglang-omni-hold.sbatch`,**用户 2026-08-31 指示的项目占位作业**("释放条件:用户指示或项目收尾"),非残留,未动。
