@@ -610,3 +610,10 @@
 - **发射记录(按长任务规矩)**:host hyper01;容器为**长命**(逐格 `docker exec`,不同于训练用的 `--rm`),创建时即登记 map、两格出分即删;GPU 4,5,6,7;镜像 `jaxanluo/sglang-omni:dev`(与 aries 两格一致)。**成功判据是产物**——每格 `metrics.json` 的 CU 里必须有 `BLEU` 键(cascade 阶段会先写一个 `SKIP_SCORING=1` 的占位 metrics,只看文件存在会误判,今天已被这种假绿骗过两次)。告警路径:monitor 轮询 `eval_relay.status`,遇 `ABORT`/`FAIL`/进程消失即报。预估墙钟:两格各约 1–1.5 小时,合计 **2–3 小时**。
 - **GPU 上限的处理**:hyper01 每台限 4 卡,而 aries 那两格用了 5 卡(thinker TP=4 + 独占 TTS 卡)。这里让 TTS 与 thinker 的最后一张卡共卡(H200 143 G:thinker 约 15 G/卡、MOSS 约 5 G),**TP 仍为 4**——TP 才是影响数值路径的量,共卡不影响。
 - **收集在 Mac 本地做**:old 两格的 `metrics.json`/`render_report.json` 已存档在 `artifacts/ab_2x2_old_loss/`(aries 本地盘随时可能被清),届时只需拉 hyper01 的两格,跑 `ab_2x2_collect.py` 得到 Δ_word、Δ_phrase、**I**、per-talk 与空调用占比。
+
+## 2026-09-12 我犯的错:monitor 把"字段解析失败"报成了"进程消失"
+
+- **现象**:eval relay 刚发射就收到 `ALERT eval relay process gone`,而它其实活得好好的——**告警自己打印的 `last status: <no status yet>|2` 里那个 `2` 就是进程数**。
+- **根因**:我在远端用 `tr '\n' '|'` 把「状态行 + 进程数」拼成一串,再用参数展开切分。末尾多出的 `|` 使 `${s##*|}` 取到空串,`${alive:-0}` 于是判成 0。同一个瑕疵也让 retrain relay 的 monitor 一直显示 `relay: 1`(把进程数当成了状态行)——那一个判活逻辑恰好仍正确,只是显示难看。
+- **修法与判据**:远端改为输出**带标签的字段**(`STATUS=...` / `RETRAIN=...` / `ALIVE=...`),本地用 `sed -n 's/^ALIVE=//p'` 提取,不再依赖位置切分。**教训**:监控脚本里"多字段拼接 + 位置切分"是脆弱写法,字段一空就错位;跨进程传结构化状态一律用带标签的行。这与本项目已有的两条判据教训同源——**成功要看产物、状态要看标签,都不要看位置或退出码**。
+- **代价**:两次误报,无实际损失(没有据此杀掉或重启任何东西,先核实了进程与日志)。**没有据误报采取破坏性动作**,是这次唯一做对的地方。
