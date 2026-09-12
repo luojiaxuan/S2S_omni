@@ -544,3 +544,10 @@
   3. **外审**=按纪律应在发射前过一遍 ChatGPT;本轮先落台账再发审,结论补记本条。
 - **进度**:plugins 三件已上 hyper01 `phrase_sft2/plugins/`;`megatron_hyper01.sh`(带 `--external_plugins`/`--loss_scale`,`ARM=phrase|word`)已写并部署;base→mcore 转换在 hyper01 GPU 4-7 上跑(与搬运并行,因其只需基座+Megatron-LM+镜像);音频 7.3 G 与两份 manifest 从 gemini 经 aries 推 hyper01(首次因瞬时 `Connection timed out` 失败,已加 `ConnectionAttempts=5` 重试;实测 aries→hyper01 22 端口 OPEN,认证靠 Mac 的 `ssh -A` 转发)。
 - **顺带核实**:taurus 上 PENDING 11 天的作业 48285 是 `sglang-omni-hold.sbatch`,**用户 2026-08-31 指示的项目占位作业**("释放条件:用户指示或项目收尾"),非残留,未动。
+
+## 2026-09-12 重训前置验证与一个 heredoc 展开坑
+
+- **loss plugin 在训练镜像里可用(已验证,非推断)**:在 hyper01 的 ms-swift 3.9.1 镜像里 import `weighted_turn_end` 与 `assistant_turn_end` 后,`swift.plugin.loss_scale.loss_scale.loss_scale_map` 新增 11 个名字(`assistant_turn_end` + `empty_turn_end_w{0.1,0.2,0.25,0.5,0.75}` + `turn_end_w{...}`);`empty_turn_end_w0.5` 解析到类 `empty_turn_end_w0_5`,属性 `weight=0.5, empty_only=True, is_binary=False`,与补丁 docstring 一致(`is_binary=False` 使 template 产出逐 token 的 `loss_scale` 张量,由 Megatron 的 loss_func 相乘)。环境其余部分同时验证:swift 3.9.1 / torch 2.8.0+cu128 / megatron.core 0.13.2,Megatron-LM checkout `73a28a107`(与 aries 那次训练同一 commit),基座 `config.json` 可达。
+- **我踩的坑:heredoc 在宿主展开,吞掉了整条容器命令**。`megatron_hyper01.sh` 用不带引号的 `<<EOF` 组装容器内脚本,其中 probe 分支引用了 `$MEGATRON_LM_PATH`——那是**容器内**才有的环境变量,宿主 `set -u` 下未绑定 → 命令替换失败返回**空串** → `docker run ... bash -c ""` 照常启动容器、打印 CUDA banner、空跑退出 **0**。于是第一次 convert **报了 exit 0 却什么都没产出**(`mcore_base` 不存在,日志只有 banner)。修法:该变量转义为 `\$MEGATRON_LM_PATH`。
+  - **判据教训**:`docker run` 的退出码是**容器**的退出码,不是"我要它做的事做成了"。凡是产物型阶段,成功判据必须是**产物存在且非空**(本次已把 `run_convert.sh` 的判据改成 `mcore_base` 目录非空),不能只看 exit code——这与之前"sweep 用 metrics.json 存在替代 stdout 判据"是同一条教训的第二次出现。
+- **状态**:plugins 三件 + `verify_loss.py` + `megatron_hyper01.sh`(已转义修复)均在 hyper01 `phrase_sft2/`;convert(base→mcore,GPU 4-7)重跑中;音频 7.3 G 与两份 manifest 由 gemini 经 aries 推送中。
