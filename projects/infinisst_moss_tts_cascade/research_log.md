@@ -551,3 +551,15 @@
 - **我踩的坑:heredoc 在宿主展开,吞掉了整条容器命令**。`megatron_hyper01.sh` 用不带引号的 `<<EOF` 组装容器内脚本,其中 probe 分支引用了 `$MEGATRON_LM_PATH`——那是**容器内**才有的环境变量,宿主 `set -u` 下未绑定 → 命令替换失败返回**空串** → `docker run ... bash -c ""` 照常启动容器、打印 CUDA banner、空跑退出 **0**。于是第一次 convert **报了 exit 0 却什么都没产出**(`mcore_base` 不存在,日志只有 banner)。修法:该变量转义为 `\$MEGATRON_LM_PATH`。
   - **判据教训**:`docker run` 的退出码是**容器**的退出码,不是"我要它做的事做成了"。凡是产物型阶段,成功判据必须是**产物存在且非空**(本次已把 `run_convert.sh` 的判据改成 `mcore_base` 目录非空),不能只看 exit code——这与之前"sweep 用 metrics.json 存在替代 stdout 判据"是同一条教训的第二次出现。
 - **状态**:plugins 三件 + `verify_loss.py` + `megatron_hyper01.sh`(已转义修复)均在 hyper01 `phrase_sft2/`;convert(base→mcore,GPU 4-7)重跑中;音频 7.3 G 与两份 manifest 由 gemini 经 aries 推送中。
+
+## 2026-09-12 重训备料完成与发射;一个"同源数据不同前缀"的坑
+
+- **备料全部就绪(hyper01,`/data04/jaxan/phrase_sft2/`)**:
+  - `mcore_base` **60 G**(base→mcore 转换成功,判据为目录非空 + `STAGE_convert_EXIT=0`,不再只看退出码);
+  - 音频 **7.4 G / 68,705 个 wav**(恰等于 assistant 轮数),由 gemini 经 aries 推送;
+  - 两份 manifest 均已重指且**逐条校验 missing 0**:`train_s_zh_phrase_ours_local.jsonl`、`train_s_zh_origin_local.jsonl`;
+  - Megatron-LM `73a28a107`(复用 `serving_ab/olt/third_party/`,与 aries 那次同一 commit),ms-swift 3.9.1 镜像,GPU 4-7 空闲。
+- **坑:同源数据的两个衍生版本带不同的音频前缀**。phrase 版是我当初由词对齐版改写时顺手重指到 gemini 副本(`/mnt/gemini/data/jiaxuanluo/audio_clips_siqi_zh_v2/...`),而词对齐原版仍保留 Babel 集群路径(`/data/group_data/li_lab/siqiouya/datasets/gigaspeech/audio_clips_zh/...`)。我用同一个 OLD 前缀去重指两份,phrase 一次过、**词对齐 68,705 条全部 missing**。两份的相对结构其实完全一致(`YOU0000014780/58/0.wav`),换成 Babel 前缀后全部命中。
+  - **教训**:重指前先打印每份 manifest 的首条音频路径核对前缀,不要假设同源数据共享前缀。幸而 `repoint_audio.py` 是**遍历整棵音频树逐条校验**(这正是它当初被写出来的理由——早先的抽样校验放过了 200/212k 的漏网,让训练在音频不可达的情况下静默跳行),否则这次会以"训练跑通但词对齐臂几乎没吃到数据"的形式静默毁掉对照。
+- **发射**:phrase 臂重训,`ARM=phrase LOSS=empty_turn_end_w0.5`,4×H200(GPU 4-7),容器 `sglang-omni-jaxan-3`(map 已登记,收尾条款"export 完成即删")。**效率审查**:aries 4×A6000 跑同样 597 步用 2 h 35 m,H200 预计快 3–5 倍,**预估墙钟 30–60 分钟**;liveness monitor 在容器外盯迭代号推进/报错/容器消失,5 分钟一轮。word 臂待 phrase 跑完接力(共用同一批卡)。
+- **外审**:已按纪律发出(临时聊天、最新旗舰次高档「极高」),问题聚焦四点——归因是否过强、两臂重训是否足以支撑结论、是否该直接改用 LLM 语义切分、单次确定性 run 是否够。回复取回后落盘并在汇报中区分"它同意的/我改判的/我坚持的"。
