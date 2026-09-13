@@ -23,7 +23,15 @@ for f in metrics.json render_report.json generation_config.json; do
   tmp=$(mktemp)
   ssh -o ConnectTimeout=30 "$HOST" \
     "docker run --rm --entrypoint /bin/cat -v /data04/jaxan:/data $IMG $RUN/$f" > "$tmp" 2>/dev/null || true
-  if [ -s "$tmp" ] && python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$tmp" 2>/dev/null; then
+  # note (luojiaxuan): parsing is not enough. The generation pass runs with SKIP_SCORING=1 and writes a valid
+  # note (luojiaxuan): metrics.json whose CU/CA are {"status":"skipped"}; pulling that mid-run puts a stub in the
+  # note (luojiaxuan): archive under the name of a result. A metrics.json counts only once CU carries BLEU.
+  if [ -s "$tmp" ] && python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+if sys.argv[2] == "metrics.json" and "BLEU" not in d["metrics"]["CU"]:
+    sys.exit(3)
+' "$tmp" "$f" 2>/dev/null; then
     mv "$tmp" "$DEST/$f"
     echo "OK   $CELL/$f ($(wc -c < "$DEST/$f") bytes)"
   else
