@@ -628,3 +628,12 @@
   - **这是本条线第三次同源教训**(前两次:成功要看产物不看退出码;状态要看标签不看位置)。**新增判据:凡脚本同时触及宿主与容器,两套路径必须用不同变量名(`HOSTW` / `W`)并在每处使用点自问"这行由谁执行"**。
 - **顺带处理一个共租户约束**:GPU 6 被他人占用 65 GB(143 G 卡剩 78 G),我原硬编码 `THINKER_GPU_UTIL=0.80`(=114 G/卡)放不下,改为 **0.5**(=71 G/卡)。权重仅 15 G/卡,71 G 的预留仍**大于** aries 两格的绝对预留(48 G 卡 × 0.70 = 33.6 G),且预留大小不改变 greedy 输出、**TP 仍为 4**,故不影响四格可比性。
 - **状态**:修复后已重发,容器 `sglang-omni-jaxan-4`(GPU 4,5,6,7,map 已登记,收尾条款"两格出分即删")在跑 phrase 格。
+
+## 2026-09-12 四格口径校验:唯一未冻结的变量是 thinker_gpu_util(已论证不影响结论)
+
+- **做法**:P_fixed 的生成配置一写出来就与 P_old 逐键对比(不等评估跑完,这样口径若漂可以当场发现而不是 2.5 小时后)。
+- **科学相关的键全部一致**:`tts_sample=False`(贪心 TTS 确实生效)、`thinker_temperature=0.0`(贪心 thinker)、`max_docs=5`、`chunk_s=1.92`、`speed=1.0`、`thinker_tp=4`、`tts_backend=moss-delta`、`tts_codec_context=conversation`、`tts_turn_policy=per-delta`、`tts_model_revision=local:owaski-...:fc2d094d`、`target_lang=Chinese`。预期内的差异只有 thinker checkpoint/revision 与由其派生的指纹、以及跨机必然不同的 env-lock/repo 摘要。
+- **唯一未冻结的变量:`thinker_gpu_util` 0.7(aries)→ 0.5(hyper01)**。原因是硬约束而非随意改动:hyper01 的 GPU 6 被他人占 65 GB,143 G 卡仅剩 78 G,`0.8`(114 G)与 `0.7`(100 G)都放不下。
+  - **为什么不影响结论**:该参数只决定 vLLM 为 KV cache 预留多少显存,不改变权重、不改变解码算法。aries 每卡 48×0.7−15 ≈ **18.6 G KV**;hyper01 每卡 143×0.5−15 ≈ **56 G KV**,冗余是前者的**三倍**,不可能出现 KV 不足导致的截断或行为变化。它出现在指纹里,只是因为 OLT 把全部 serving 参数都记进指纹以保证可复现。
+  - **仍如实标注**:外审要求"只改 `empty_turn_end_w`",此处被迫破例一项;报告结论时一并说明,不默不作声。若日后要消除这一项,需等 GPU 6 释放后以 `THINKER_GPU_UTIL=0.7` 重跑两格(脚本已支持该 env 覆盖)。
+- **存档补齐**:`artifacts/ab_2x2_old_loss/` 现含 old 两格的 `metrics.json`、`render_report.json` 与 `generation_config.json`,四格比较所需的旧侧证据不再依赖 aries 本地盘。
