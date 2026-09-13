@@ -675,3 +675,13 @@
   两个 fixed 格之间 `tts_sample=False`、`thinker_temperature=0.0`、`max_docs=5`、`chunk_s=1.92`、`speed=1.0`、`thinker_tp=4`、`thinker_gpu_util=0.5`、`tts_model_revision`、`tts_codec_context=conversation`、`target_lang` 全部相同,差异只有 thinker checkpoint、其 revision 及由二者派生的指纹。
 - **为什么这条重要**:I = Δ_phrase − Δ_word 中,两个 Δ 都是"同臂内 fixed 减 old",**各自跨越同一个 util 0.7→0.5 的变化**,相减即抵消(论证已于上一条在看到数字前写下)。加上此处证明的"old 两格彼此同口径、fixed 两格彼此同口径",**I 在口径上是干净的**:唯一系统性地只作用于一侧的变量,就是我们要研究的 `empty_turn_end_w` 本身。
 - **存档**:`artifacts/ab_2x2/{W_old,P_old,P_fixed}/` 三格的 metrics / render_report / generation_config 齐全,`W_fixed/` 已先收 generation_config,待评估完成补齐另两份。出表命令与 I 的定义写在 `artifacts/ab_2x2/README.md`,收集脚本已用现有三格做过纯路径 dry-run(Δ、I、空调用占比、预注册判读规则均能正常输出)。
+
+## 2026-09-13 取回产物的通道本身要验证:镜像 banner 污染 stdout(第四条同源教训)
+
+- **背景**:W_fixed 出分后要把 `metrics.json` / `render_report.json` 取回 Mac 归档,补齐 2×2 的第四格。
+- **约束(两条叠加)**:`serving_ab/results` 下的 `metrics.json` 是 **0600 root**,宿主用户读不了(`render_report.json` 是 644,可读);而 `eval_relay.sh` 在两格出分后**立刻** `docker rm -f` 评估容器,`docker exec` 通道随之消失。故取回必须走**一次性 `--rm` root 容器**,且不能依赖评估容器还活着。
+- **bug**:`docker run --rm -v ... $IMG cat <file>` 会把镜像 entrypoint 打印的 **CUDA banner 一并写进 stdout**——实测 **10796 字节 vs 真实 10049**,多出约 747 字节。我的 puller 对每个文件做 JSON 解析校验,于是会**永远报 MISS**,而不是把脏数据写进归档:校验挡住了坏数据,但通道本身是坏的。
+- **修法与验证**:`--entrypoint /bin/cat` 绕过 entrypoint。判据不是"命令退出 0",而是**与已知正确的 P_fixed 归档副本比 md5**:`metrics.json` 与 `generation_config.json` **逐字节一致**(`f3bd1747…`,10049 / 3720 字节)。
+- **顺带澄清一处 1 字节差异**:归档的 `render_report.json`(2150)比容器读出(2149)多一个**末尾换行**(`}\n` vs `}`),**解析后的 JSON 完全相同**(5 篇文档,chunks 216/204/160/233/238)。故此前报告的 P_fixed 空调用占比 **41.6% 不受影响**。这条是先查了再下结论,不是假定换行无害。
+- **教训(判据再收紧一格)**:前三条是"成功要看产物、状态要看标签、宿主与容器路径要分变量名";现在加第四条——**取回产物的通道要用"与已知正确副本比对"来验证,而不是"退出 0 且文件非空"**。本次正是靠 md5 才发现 banner 污染;只看 `-s` 非空的话,脏文件会直接进归档并污染四格比较。
+- **脚本**:`scripts/phrase_gating/pull_cell.sh`(用法 `pull_cell.sh W_fixed 93011`),临时文件先过 JSON 解析再 `mv`,失败则**保留原归档副本不动**。
