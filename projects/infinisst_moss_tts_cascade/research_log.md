@@ -798,7 +798,7 @@
   1. 原分支没把 eager 模式写进指纹,我当时称其"不改变输出",但从未实测。现改为只在开启时写入 `thinker_enforce_eager=true`,默认运行的指纹保持不变。
   2. 两个开关的拒绝检查原先都在创建输出目录之后,填错值会留下空的运行目录。`TTS_SAMPLE` 的检查挪到 backend 检查旁边,拒绝时什么都不留;eager 的检查留在 main 自身的 `THINKER_BACKEND` 校验旁边(main 的这个校验同样在输出目录创建之后),测试对它只断言退出码与报错信息。
   3. 测试里四个用例共用一个结果目录的 bug。
-- **核验**:两个新测试通过。三个测试模块共 84 个:82 过、1 跳过、1 失败,失败的那个在 main(`a50dee2`)上同样失败。用 macOS 自带的 BSD `realpath` 时,main 与分支都是同样的 17 个失败,名单逐个一致。
+- **核验**:两个新测试通过。三个测试模块共 84 个:82 过、1 跳过、1 失败,失败的那个在 main(`a50dee2`)上同样失败。~~用 macOS 自带的 BSD `realpath` 时,main 与分支都是同样的 17 个失败,名单逐个一致。~~(**此句有误**:分支当时是 19 个失败,多出的两个是我新加的 eager 拒绝用例撞上 `realpath -m`;见下方 2026-09-13 预审条目)
 - **为 PR 正文额外核实的两件事**:
   - 新旧 loss 的 checkpoint 的 `args.json`(443 个键)逐键比对,训练设置上只差 `loss_scale` 与 `external_plugins`,其余差异是文件路径、对象 repr 里的内存地址、`add_version` 与 W&B 名。
   - 四次评估都在同一 OLT 提交 `2337318` 上生成,该提交在 #40 的分支上,可以检出。
@@ -807,3 +807,22 @@
   - 四次评估的指纹都没有记录 eager,因为当时还没有这个键。
 - **未做,等用户决定**:结果尚未写入共享结果表("ACL 60/60 Dev scribe_v2" 标签页),往共享表写数据属于对外写操作,需用户同意;未指派 reviewer,因为默认的三位 reviewer 都不是该仓库的协作者,且近期合并的 PR 均未指派。
 - **链接**:https://github.com/LeiLiLab/Open-LiveTranslate/pull/63,head `5215cfb1`,分支 `feat/turn-end-loss-2x2`,worktree `/Users/luojiaxuan/olt_worktrees/turn-end-loss-2x2`。
+
+## 2026-09-13 PT PR #63:请 owaski review,对抗式预审后的修正
+
+- **指派**:用户同意,已请 `owaski` review(`requested=owaski` 已确认)。
+- **预审做法**:工作流共 75 个子代理。五个维度各一个审查者:recipe 的 bash 逻辑、指纹/打分/合并链路、测试有效性、PR 正文逐条事实、文档与仓库规范。每条发现由三个角度反驳(独立复现、对照仓库规范、判断实际影响),三者中至少两者驳不倒才保留;另有一个完备性审查找漏检。结果:提出 23 条,成立 20 条,驳回 3 条,补出 4 个缺口。
+- **我犯的错(均已改)**:
+  1. PR 正文与本台账上一条都写"BSD `realpath` 下 main 与分支同样 17 个失败",错。分支是 19 个,多出的是我新测试里的两个 eager 拒绝用例:它们越过了早期拒绝,撞上 recipe 的 `realpath -m` 检查。我上次只比了失败**个数**的来源名单,没注意新测试本身。
+  2. README 与注释写"两次运行只因 thinker checkpoint 而不同",把生成与打分混为一谈。实测:同一 checkpoint 同设置在 aries 上跑两次(92099 与 92021),talk 268 的 CU 波形逐字节相同(md5 `1bcfa954…`);但对这同一段波形、同一个 ASR 缓存键(`713d684537a63655`),ElevenLabs 返回了不同转写(3,473 vs 3,460 字符)。**生成可重复,打分不可重复。**
+  3. PR 正文把 #40 写成"phrase 臂输给父模型"。#40 记录的其实是 phrase 领先 +2.06 BLEU CU(三篇、各一次采样运行),是贪心五篇复跑才反转为 39.80 vs 40.59;phrase checkpoint 也不是从词对齐 checkpoint 训出来的,"父模型"一词会误导。
+  4. 延迟只引了 P_fixed 与 W_fixed 的 395 ms 差。按与质量同样的口径,结束偏移是 -326 / +666 / 交互 +992 ms,LongYAAL 是 -245 / +981 / +1,227 ms;原先"词对齐臂更安静却没涨质量"的反驳也不成立,因为该臂同时变快了。
+  5. "其余差异"一段漏列:评估主机与 TTS GPU 布局(aries 独占 GPU vs hyper01 与 thinker 共卡)、`xcomet_revision` 记录不同(`unresolved` vs `6a123c5e`;已核实两机 XCOMET-XL 的 `hparams.yaml` sha256 相同、`model.ckpt` 大小相同,不影响分数)、TP=4 偏离仓库不变量 7、29.3% 未写明语料与计法、checkpoint 标签与 HF 提交的对应关系未说明。
+- **代码与测试的修正**:
+  - `THINKER_BACKEND` 的默认值与校验(原样)上移到 backend 检查旁,eager 检查随之上移,**两个开关的拒绝都发生在创建输出目录之前**;四个拒绝用例在 BSD 下也通过。
+  - 测试加强:按位置检查每处改动;直接执行 recipe 的 case 块,断言 `TTS_SAMPLE` 0/1 映射为 `false`/`true`(此前把映射写反,测试仍全绿);新增 moss、moss-delta、uv 三个接受用例。
+  - 核实 MOSS-TTS `ad99ec5` 的 `sample_token`:`do_sample=False` 时在重复惩罚之后直接取 argmax,temperature/top_p/top_k 不生效。README 与注释据此改写。
+  - MOSS 服务启动 banner 加打印 `do_sample`、temperature、top_p、top_k 与重复惩罚参数,之后可从日志核查是否采样(此前只能看 recipe 写的 sidecar)。
+  - `CLAUDE.md` 测试计数 1013 → 1017(AST 计数核实)。
+- **验证**:GNU PATH 下三个模块 86 个,84 过、1 跳过、1 失败(main 上同样失败)。BSD PATH 下 20 个失败,与开关相关的只有三个接受用例,原因与已有的 legacy plain 接受用例相同(`realpath -m`)。
+- **刻意不做(已写进 PR)**:stub 模式下开关被接受但不记录(`TTS_STUB=1` 没有 MOSS 服务,`STUB=1` 没有 thinker,开关无从生效);结果表暂不写入,原因见 PR 正文;#40 的 SimulS2ST-Omni 对比不迁移。
