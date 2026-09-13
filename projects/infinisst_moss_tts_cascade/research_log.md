@@ -637,3 +637,9 @@
   - **为什么不影响结论**:该参数只决定 vLLM 为 KV cache 预留多少显存,不改变权重、不改变解码算法。aries 每卡 48×0.7−15 ≈ **18.6 G KV**;hyper01 每卡 143×0.5−15 ≈ **56 G KV**,冗余是前者的**三倍**,不可能出现 KV 不足导致的截断或行为变化。它出现在指纹里,只是因为 OLT 把全部 serving 参数都记进指纹以保证可复现。
   - **仍如实标注**:外审要求"只改 `empty_turn_end_w`",此处被迫破例一项;报告结论时一并说明,不默不作声。若日后要消除这一项,需等 GPU 6 释放后以 `THINKER_GPU_UTIL=0.7` 重跑两格(脚本已支持该 env 覆盖)。
 - **存档补齐**:`artifacts/ab_2x2_old_loss/` 现含 old 两格的 `metrics.json`、`render_report.json` 与 `generation_config.json`,四格比较所需的旧侧证据不再依赖 aries 本地盘。
+
+## 2026-09-12 补一条稳健性论证:util 的差异在 I 中被差分抵消(在看到结果之前写下)
+
+- **新事实**:W_old 与 P_old 的生成配置逐键对比,差异**只有** `generation_config_fingerprint`、`thinker_checkpoint`、`thinker_checkpoint_revision` 三个 thinker 相关键,两格的 `thinker_gpu_util` 同为 0.7。即**old 两格彼此完全可比**;fixed 两格由同一脚本、同一 `util=0.5` 产出,应同样彼此可比(待 W_fixed 的配置写出后按同法验证)。
+- **推论(稳健性)**:2×2 的目标量是 **I = Δ_phrase − Δ_word**,其中 Δ 取的是**同臂内** fixed 减 old。`thinker_gpu_util` 的 0.7→0.5 在 Δ_word 与 Δ_phrase 中**同向、同幅出现**,因此在两者相减时**抵消**。所以即便该参数对输出有某种未预料的影响,**它也不会污染 I**——它至多影响"P_fixed vs W_fixed"这个绝对比较,而 I 正是外审指定的关键量。这是先写下的论证,不是看到数字后的辩解。
+- **残留风险(照直说)**:抵消论证依赖"util 对两臂的影响相同"这一假设;若某臂恰好对 KV 预留更敏感(例如上下文更长),抵消就不完全。两臂 KV 冗余均为 aries 的三倍,这种敏感性在物理上极不可能,但它是假设而非证明。
