@@ -661,3 +661,17 @@
 - **必须克制的一句话**:P_fixed 的 42.53 BLEU 与参照实现(owaski)的 42.62 几乎持平、XCOMET(0.7626)还更高——**但不能据此说"我们追平/超过了他们"**。他们那一格是在**带 bug 的 default loss** 下训练的;若用同样的修复重训他们的 thinker,它大概率也会涨。公平的说法只能是"在同一修正后的监督下,我们的 phrase 臂相对自身提升了 2.74 BLEU",跨实现的比较需要对方也在修正后的配方下重训才成立。
 - **结论仍未成立**:关键量是 **I = Δ_phrase − Δ_word**。若词对齐臂也涨约 2.7,则 I≈0,说明"修好 loss 对谁都有用",而非"bug 不成比例地伤害了 phrase 臂"。W_fixed 正在评估(0/5 → 约 1 小时)。
 - **存档**:`artifacts/ab_2x2_fixed_loss/` 已收 P_fixed 的 metrics / render_report / generation_config。
+
+## 2026-09-12 四格口径校验闭环(在看到 I 之前钉死)
+
+- **三组逐键对比全部通过**:
+
+  | 对比 | 非预期差异 | thinker_gpu_util |
+  |---|---|---|
+  | W_old ↔ P_old | **0** | 0.7 / 0.7 |
+  | P_old ↔ P_fixed | **0**(除 util 本身) | 0.7 → 0.5 |
+  | P_fixed ↔ W_fixed | **0** | 0.5 / 0.5 |
+
+  两个 fixed 格之间 `tts_sample=False`、`thinker_temperature=0.0`、`max_docs=5`、`chunk_s=1.92`、`speed=1.0`、`thinker_tp=4`、`thinker_gpu_util=0.5`、`tts_model_revision`、`tts_codec_context=conversation`、`target_lang` 全部相同,差异只有 thinker checkpoint、其 revision 及由二者派生的指纹。
+- **为什么这条重要**:I = Δ_phrase − Δ_word 中,两个 Δ 都是"同臂内 fixed 减 old",**各自跨越同一个 util 0.7→0.5 的变化**,相减即抵消(论证已于上一条在看到数字前写下)。加上此处证明的"old 两格彼此同口径、fixed 两格彼此同口径",**I 在口径上是干净的**:唯一系统性地只作用于一侧的变量,就是我们要研究的 `empty_turn_end_w` 本身。
+- **存档**:`artifacts/ab_2x2/{W_old,P_old,P_fixed}/` 三格的 metrics / render_report / generation_config 齐全,`W_fixed/` 已先收 generation_config,待评估完成补齐另两份。出表命令与 I 的定义写在 `artifacts/ab_2x2/README.md`,收集脚本已用现有三格做过纯路径 dry-run(Δ、I、空调用占比、预注册判读规则均能正常输出)。
