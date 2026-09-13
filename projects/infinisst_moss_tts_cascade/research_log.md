@@ -768,3 +768,12 @@
 - **代价**:几分钟。重跑会重算 phrase 的本地哈希并再核验一次,数据不重传。
 - **重跑前本地演练(已通过)**:`py_compile` 通过;脚本里已无 `commit.oid` 引用;只执行常量定义(用 `ast` 取出,不触发上传)对 phrase 与 word 两个臂各格式化一次 card,均成功且评估数字正确写入。随后提交、推送并在 hyper01 重新发射。
 - **当前在跑的实例(取代上面发射记录里的 pid 与监控)**:重跑于 03:31:02Z(20:31 PT)发射,pid **2027314**,同一脚本与参数;Mac 侧监控 **`b4pi0gm6t`**,判据与告警同上,只处理 03:31:00Z 之后的状态行,避免把首跑残留的 `START phrase` 当成新事件。首跑的 pid 1611547 与监控 `b3rrkg8io` 均已结束。
+
+## 2026-09-12 20:40 PT 删除 hyper01 上 P_fixed 的本地导出(本条写于删除执行前;正本已在 HF,两端核验通过)
+
+- **删除对象**:`/data04/jaxan/phrase_sft2/run_phrase_empty_turn_end_w0.5/hf/`(60 G:13 个 safetensors 加 13 个配置与分词文件)。目录为 root 属主,通过一次性、已登记 map 的 root 容器删除。
+- **正本**:`gavinlaw/infinisst-thinker-phrase-gated-zh@empty-turn-end-w0.5`,权重提交 `0a317c92c3f3`,加上 model card 后分支 head 为 `2070c2d3d66c`。
+- **核验**:(1) hyper01 上的上传脚本对 26 个文件逐一比对内容(LFS 文件比 sha256,其余比 git blob sha1),并确认分支上没有导出之外的文件;(2) 从 Mac 独立再查一次:28 个文件 = 26 个导出文件 + `.gitattributes` + README,13 个 safetensors 共 59.1 GiB,card 内容正确,`main` head 仍是 `83a95f5bf730`,未被改动。
+- **保留**:同目录的 `mcore/`(7.5 G,LoRA adapter,尚未上 HF)与 `mcore_base`(60 G,`w0.2` 重训要用)。
+- **恢复方式**:`huggingface-cli download gavinlaw/infinisst-thinker-phrase-gated-zh --revision empty-turn-end-w0.5`。
+- **顺带修一处我自己的收尾遗漏**:map 里仍有 `sglang-omni-jaxan-3`(phrase 臂重训容器)一行,容器早已随 `--rm` 退出消失,但登记行没删。`retrain_relay` 的训练容器只在启动时登记、结束时没有注销。本次确认该容器不存在后删去这一行。
