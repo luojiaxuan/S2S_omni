@@ -1,0 +1,75 @@
+{
+  "output_dir": "/data/serving_ab/results/s2st_moss-delta_dev_1920ms_93001/simuleval",
+  "documents": {
+    "2022.acl-long.268": {
+      "index": 0,
+      "ttfa_cu_ms": 5760.0,
+      "ttfa_ca_ms": 9357.55,
+      "cu_duration_ms": 738160.0,
+      "ca_duration_ms": 743887.79,
+      "cu_silence_ms": 95280.0,
+      "ca_silence_ms": 101007.79,
+      "ca_minus_cu_ms": 5727.79,
+      "agent_compute_ms": 584505.15,
+      "max_compute_lag_ms": 12572.36,
+      "source_length_ms": 737440.0,
+      "chunks": 216
+    },
+    "2022.acl-long.367": {
+      "index": 1,
+      "ttfa_cu_ms": 3840.0,
+      "ttfa_ca_ms": 6162.78,
+      "cu_duration_ms": 698219.67,
+      "ca_duration_ms": 701050.0,
+      "cu_silence_ms": 185339.67,
+      "ca_silence_ms": 188170.0,
+      "ca_minus_cu_ms": 2830.33,
+      "agent_compute_ms": 471222.2,
+      "max_compute_lag_ms": 6503.75,
+      "source_length_ms": 695019.69,
+      "chunks": 204
+    },
+    "2022.acl-long.590": {
+      "index": 2,
+      "ttfa_cu_ms": 3840.0,
+      "ttfa_ca_ms": 6836.26,
+      "cu_duration_ms": 579280.0,
+      "ca_duration_ms": 582275.29,
+      "cu_silence_ms": 162880.0,
+      "ca_silence_ms": 165875.29,
+      "ca_minus_cu_ms": 2995.29,
+      "agent_compute_ms": 387641.15,
+      "max_compute_lag_ms": 7580.6,
+      "source_length_ms": 577237.31,
+      "chunks": 160
+    },
+    "2022.acl-long.110": {
+      "index": 3,
+      "ttfa_cu_ms": 3840.0,
+      "ttfa_ca_ms": 6387.38,
+      "cu_duration_ms": 707200.0,
+      "ca_duration_ms": 712604.58,
+      "cu_silence_ms": 97920.0,
+      "ca_silence_ms": 103324.58,
+      "ca_minus_cu_ms": 5404.58,
+      "agent_compute_ms": 554372.51,
+      "max_compute_lag_ms": 8395.62,
+      "source_length_ms": 703007.38,
+      "chunks": 233
+    },
+    "2022.acl-long.117": {
+      "index": 4,
+      "ttfa_cu_ms": 5760.0,
+      "ttfa_ca_ms": 7988.17,
+      "cu_duration_ms": 734080.0,
+      "ca_duration_ms": 738800.83,
+      "cu_silence_ms": 58800.0,
+      "ca_silence_ms": 63520.83,
+      "ca_minus_cu_ms": 4720.83,
+      "agent_compute_ms": 612389.76,
+      "max_compute_lag_ms": 6947.42,
+      "source_length_ms": 729013.69,
+      "chunks": 238
+    }
+  }
+}
