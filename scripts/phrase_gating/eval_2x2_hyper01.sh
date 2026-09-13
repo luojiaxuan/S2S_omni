@@ -16,6 +16,7 @@ ARM="${ARM:?phrase|word}"
 LOSS="${LOSS:-empty_turn_end_w0.5}"
 IMG="${IMG:-jaxanluo/sglang-omni:dev}"
 W=/data/phrase_sft2
+HOSTW=/data04/jaxan/phrase_sft2
 SAB=/data/serving_ab
 case "$ARM" in
   phrase) JOB=${JOB:-93001}; SJOB=${SJOB:-93501}; REV=gavinlaw-infinisst-phrase-gated-zh-$LOSS ;;
@@ -26,7 +27,14 @@ CKPT=$W/run_${ARM}_${LOSS}/hf
 RUN=$SAB/results/s2st_moss-delta_dev_1920ms_$JOB
 NAME="${NAME:?container name}"
 DEVICES="${DEVICES:-4,5,6,7}"
-LOG=$W/eval_${ARM}
+# note (luojiaxuan): fraction of EACH card vLLM may reserve; the smallest free card sets the ceiling.
+# note (luojiaxuan): A co-tenant holding 65 GB of one H200 leaves 78 of 143 GB, so 0.5 (71 GB) fits
+# note (luojiaxuan): while 0.8 (114 GB) does not. 71 GB still exceeds the 33.6 GB the aries cells had,
+# note (luojiaxuan): and the reservation size does not change greedy output -- TP stays 4.
+UTIL="${THINKER_GPU_UTIL:-0.5}"
+# note (luojiaxuan): logs are written by THIS script on the host, so they take the host path; $W is
+# note (luojiaxuan): the in-container path and is only valid inside docker exec.
+LOG=$HOSTW/eval_${ARM}
 
 COMMON="OLT_RESULTS_ROOT=$SAB/results OLT_VENV_ROOT=$SAB/venvs ACL_ROOT=$SAB/acl6060_full HF_HOME=/root/.cache/huggingface \
   MOSS_MODEL=$SAB/tts MOSS_MODEL_REVISION=local:owaski-moss-tts-realtime-delta-zh-125k:fc2d094d \
@@ -37,7 +45,7 @@ docker exec "$NAME" bash -c "cd $SAB/olt && export HF_TOKEN=\$(cat /root/.keys/h
   git config --global --add safe.directory '*' && \
   [ -f $RUN/generation_config.json ] || { rm -rf $RUN; env $COMMON \
     SLURM_JOB_ID=$JOB CKPT=$CKPT THINKER_MODEL_REVISION=local:$REV:fixedloss \
-    THINKER_BACKEND=uv THINKER_TP=4 THINKER_GPUS=0,1,2,3 TTS_GPU=3 THINKER_GPU_UTIL=0.80 \
+    THINKER_BACKEND=uv THINKER_TP=4 THINKER_GPUS=0,1,2,3 TTS_GPU=3 THINKER_GPU_UTIL=$UTIL \
     THINKER_ENFORCE_EAGER=1 THINKER_TEMPERATURE=0 TTS_SAMPLE=0 MAX_DOCS=5 SKIP_SCORING=1 \
     bash eval/recipes/run_s2st_eval.sbatch 1.92 1.0 dev moss-delta; }" > ${LOG}_cascade.log 2>&1
 echo "CASCADE_${ARM}_EXIT=$?" | tee -a ${LOG}_cascade.log
