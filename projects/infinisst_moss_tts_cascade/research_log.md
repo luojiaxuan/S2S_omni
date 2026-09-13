@@ -733,3 +733,13 @@
 - **机制侧与结果侧相互印证**:此前(在 BLEU 出来之前)记录的预测是"梯度总量 ∝ 空轮数量 → phrase 臂在同一 w 下过冲 → 需 w≈0.2"。结果侧显示,**过冲的那一臂正是获益的那一臂**,而校准良好的 W_fixed(9.5% vs 训练 10.9%,比值 0.87)质量未动。两侧一致,但也正因如此,**w0.2 的 ablation 现在既是校准实验也是延迟匹配实验**,优先级升为最高。
 - **产物**:`artifacts/ab_2x2/{W_old,P_old,W_fixed,P_fixed}/` 四格 metrics/render_report/generation_config 齐全,汇总表 `artifacts/ab_2x2/summary.json`。
 - **收尾**:评估容器 `sglang-omni-jaxan-4` 已由 relay 自动删除、map 行已清(grep 计数 0),`EVAL RELAY DONE rc=0`;GPU 4/6/7 归零,无我的残留进程。
+
+## 2026-09-12 20:16 PT 决策记录:两个修正 loss 的 checkpoint 上 HF(默认执行,可推翻)
+
+- **问题**:P_fixed / W_fixed 两个 60 GB 导出目前只有 hyper01 `/data04/jaxan/phrase_sft2/` 一份,而 2×2 结论(I = +3.32 BLEU)和已推送的 §7a 修正都依赖它们;是否上传、传到哪里、传一个还是两个。
+- **默认答案**:两个都传,各自作为**已有模型 repo 的新分支** `empty-turn-end-w0.5`:phrase → `gavinlaw/infinisst-thinker-phrase-gated-zh`,word → `gavinlaw/infinisst-no-tmsft-origin-bsz4-zh`;`main` 保持旧 loss 版本不动。顺序上传,不并行。分支上附 model card(配方、loss、评估数字、S2S_omni 提交)。
+- **理由**:SoT 规则要求模型参数以 HF 为正本,且"用 revision 区分版本,不建重复 repo";同一臂两种 loss 正是同一模型的两个版本。W_fixed 虽是对照臂,但 I 的复现需要四格全部可取,缺一格结论就不可复查。串行是因为 gavinlaw 的上传配额可能被别的 session 共用。上传并核验后才能按规定删除本地 120 GB,缓解 `/data04` 80% 的占用;`mcore_base`(60 GB)暂留,`w0.2` 重训要用。
+- **核验方式(防假绿)**:分支从 `main` 派生,而 `main` 是同架构同导出流程,**shard 文件名与字节数与新权重完全相同**,按大小核验会在分支仍是旧权重时照样通过。故逐文件比内容:LFS 文件比 sha256,其余比 git blob sha1(`scripts/phrase_gating/hf_push.py`)。
+- **如何推翻**:删除两个 repo 的 `empty-turn-end-w0.5` 分支即可(`HfApi().delete_branch`),`main` 不受影响;若要改成独立 repo,从分支复制即可。本地副本在核验通过并记录前不删。
+- **外审**:未发起。这一步的答案由 SoT 规则直接给定(HF 为正本、用 revision 不建重复 repo),不涉及方法或实验设计的判断。
+- **发射前预检的发现与修正**:hub 0.36.2,`lfs` 为 `BlobLfsInfo`(带 `.sha256`),两个导出目录均无子目录。phrase repo 的 `main` 有 86 个文件,本次导出的 26 个里 **25 个与之同名同字节数**,实测坐实"按大小核验会假绿"。word repo 的 `main` 有 30 个文件,shard 命名与本次导出不同(26 个里只有 13 个同名)。分支从 `main` 派生,不做删除的话分支会**同时带着新旧两套权重**,评估端 snapshot 下载会拉两份。故上传加 `delete_patterns="*"`,让该提交与导出目录完全一致;核验除逐文件比内容外,另查分支上没有导出之外的文件(`.gitattributes` 与 model card 除外)。
