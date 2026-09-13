@@ -1,0 +1,66 @@
+{
+ "W_old": {
+  "BLEU": 40.5918,
+  "XCOMET": 0.7228,
+  "Ending_Offset": 4807.5052,
+  "empty_call_share": 0.0295202070212911,
+  "per_talk": {
+   "2022.acl-long.268": 371,
+   "2022.acl-long.367": 345,
+   "2022.acl-long.590": 291,
+   "2022.acl-long.110": 359,
+   "2022.acl-long.117": 374
+  }
+ },
+ "P_old": {
+  "BLEU": 39.7986,
+  "XCOMET": 0.7405,
+  "Ending_Offset": 4210.5729,
+  "empty_call_share": 0.07498146247512591,
+  "per_talk": {
+   "2022.acl-long.268": 360,
+   "2022.acl-long.367": 325,
+   "2022.acl-long.590": 268,
+   "2022.acl-long.110": 348,
+   "2022.acl-long.117": 360
+  }
+ },
+ "W_fixed": {
+  "BLEU": 40.0055,
+  "XCOMET": 0.7189,
+  "Ending_Offset": 4481.3811,
+  "empty_call_share": 0.09520950603108817,
+  "per_talk": {
+   "2022.acl-long.268": 350,
+   "2022.acl-long.367": 322,
+   "2022.acl-long.590": 268,
+   "2022.acl-long.110": 338,
+   "2022.acl-long.117": 345
+  }
+ },
+ "P_fixed": {
+  "BLEU": 42.5345,
+  "XCOMET": 0.7626,
+  "Ending_Offset": 4876.0924,
+  "empty_call_share": 0.4157416489698808,
+  "per_talk": {
+   "2022.acl-long.268": 216,
+   "2022.acl-long.367": 204,
+   "2022.acl-long.590": 160,
+   "2022.acl-long.110": 233,
+   "2022.acl-long.117": 238
+  }
+ },
+ "interaction": {
+  "BLEU": {
+   "delta_word": -0.5863000000000014,
+   "delta_phrase": 2.735900000000001,
+   "I": 3.3222000000000023
+  },
+  "XCOMET": {
+   "delta_word": -0.0039000000000000146,
+   "delta_phrase": 0.022099999999999898,
+   "I": 0.025999999999999912
+  }
+ }
+}
