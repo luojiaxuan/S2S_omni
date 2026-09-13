@@ -743,3 +743,17 @@
 - **如何推翻**:删除两个 repo 的 `empty-turn-end-w0.5` 分支即可(`HfApi().delete_branch`),`main` 不受影响;若要改成独立 repo,从分支复制即可。本地副本在核验通过并记录前不删。
 - **外审**:未发起。这一步的答案由 SoT 规则直接给定(HF 为正本、用 revision 不建重复 repo),不涉及方法或实验设计的判断。
 - **发射前预检的发现与修正**:hub 0.36.2,`lfs` 为 `BlobLfsInfo`(带 `.sha256`),两个导出目录均无子目录。phrase repo 的 `main` 有 86 个文件,本次导出的 26 个里 **25 个与之同名同字节数**,实测坐实"按大小核验会假绿"。word repo 的 `main` 有 30 个文件,shard 命名与本次导出不同(26 个里只有 13 个同名)。分支从 `main` 派生,不做删除的话分支会**同时带着新旧两套权重**,评估端 snapshot 下载会拉两份。故上传加 `delete_patterns="*"`,让该提交与导出目录完全一致;核验除逐文件比内容外,另查分支上没有导出之外的文件(`.gitattributes` 与 model card 除外)。
+
+## 2026-09-12 20:21 PT 发射记录:HF 上传(两个修正 loss 的 checkpoint)
+
+- **主机与进程**:hyper01 宿主(不用容器,文件对宿主用户可读,已核验 26/26),`python3 /data04/jaxan/phrase_sft2/hf_push.py`,pid 1611547,03:21:20Z 启动;认证经 `HF_TOKEN_PATH` 指向 `token_gavinlaw`,命令行里没有 token 值。03:21:22Z 记下 `START phrase`,分支已建。
+- **首次发射被自己的守卫拦掉(无损失)**:守卫 `pgrep -f 'hf_pus[h]'` 跑在一条 ssh 远端命令里,而这条命令的启动行本身就含有字面量 `hf_push.py`,于是 pgrep 匹配到了执行它的 shell,报了"已在运行"并跳过发射。复查确认没有任何上传进程,状态文件也不存在。修法是锚定进程命令行的开头(`^python3 /data04/...`),ssh 或 `bash -c` 起的 shell 命令行以 `bash` 开头,不可能匹配。这是 `pkill` 自匹配的第四次,且前三次的括号写法这次不够用,已补进记忆。
+- **进度信号与告警**:Mac 侧 Monitor `b3rrkg8io`(持久,在容器与主机之外),每 5 分钟 ssh 轮询一次,状态以带标签字段回传:
+  - 状态文件的新行(START / OK / FAIL / DONE)逐条上报;
+  - 进程消失却没有 `HF PUSH DONE`:告警并退出;
+  - 日志里新出现的 Traceback / Error / HTTP 429:上报;
+  - 进程的 `/proc/<pid>/io` 中 `rchar`(累计读盘字节)**连续 20 分钟不变**即判为停滞(无论算哈希还是上传都要读 shard,所以各阶段它都在涨);
+  - 每 30 分钟一次心跳。
+- **重启策略(有意偏离"自动重启"默认)**:不设自动重启。FAIL 表示内容核验不通过,盲目重跑只会复现同一个错误状态;进程中途死亡由监控报出后手动重跑,代价只是本地重算哈希,服务端已有的数据不会重传。
+- **已知盲区**:监控只随本 session 存在;session 结束后上传照常继续但无人值守,下次接手时先读 `/data04/jaxan/phrase_sft2/hf_push.status`。
+- **完成判据**:两行 `OK ... content-verified, nothing extra` 加上 `HF PUSH DONE`。之后才按删除纪律处理本地两个 60 GB 导出(`mcore_base` 留给 `w0.2` 重训)。
