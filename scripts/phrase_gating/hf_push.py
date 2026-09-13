@@ -75,13 +75,16 @@ for arm, spec in ARMS.items():
     # note (luojiaxuan): (the word repo's main holds 30 files, 17 of them absent here). Without deletions
     # note (luojiaxuan): the branch would carry both weight sets and a snapshot download would pull both;
     # note (luojiaxuan): delete_patterns="*" makes the commit mirror the export.
-    commit = api.upload_folder(repo_id=repo, folder_path=local, revision=BRANCH, delete_patterns="*",
-                               commit_message=f"Retrain under empty_turn_end_w0.5 ({SOURCE})")
+    api.upload_folder(repo_id=repo, folder_path=local, revision=BRANCH, delete_patterns="*",
+                      commit_message=f"Retrain under empty_turn_end_w0.5 ({SOURCE})")
 
     # note (luojiaxuan): content, not size. main holds the same architecture exported the same way
     # note (luojiaxuan): (on the phrase repo 25 of 26 files match it by name and byte count), so a size
     # note (luojiaxuan): check passes while the branch still carries the default-loss weights.
-    remote = {s.rfilename: s for s in api.model_info(repo, revision=BRANCH, files_metadata=True).siblings}
+    # note (luojiaxuan): The sha reported below is the verified branch head, which exists whether or not
+    # note (luojiaxuan): this run's upload had anything new to commit.
+    info = api.model_info(repo, revision=BRANCH, files_metadata=True)
+    remote = {s.rfilename: s for s in info.siblings}
     local_names = os.listdir(local)
     bad = [f"{name}: not in the export"
            for name in sorted(set(remote) - set(local_names) - {".gitattributes", "README.md"})]
@@ -95,8 +98,8 @@ for arm, spec in ARMS.items():
         say(f"FAIL {arm}: {len(bad)} problems, first {bad[:4]}")
         sys.exit(1)
 
-    card = CARD.format(repo=repo, branch=BRANCH, arm=arm, source=SOURCE, **spec)
+    card = CARD.format(branch=BRANCH, arm=arm, source=SOURCE, **spec)
     api.upload_file(path_or_fileobj=card.encode(), path_in_repo="README.md", repo_id=repo,
                     revision=BRANCH, commit_message="Model card for the empty_turn_end_w0.5 revision")
-    say(f"OK {arm}: {len(local_names)} files content-verified, nothing extra, at {repo}@{BRANCH} ({commit.oid[:12]})")
+    say(f"OK {arm}: {len(local_names)} files content-verified, nothing extra, at {repo}@{BRANCH} ({info.sha[:12]})")
 say("HF PUSH DONE")

@@ -757,3 +757,13 @@
 - **重启策略(有意偏离"自动重启"默认)**:不设自动重启。FAIL 表示内容核验不通过,盲目重跑只会复现同一个错误状态;进程中途死亡由监控报出后手动重跑,代价只是本地重算哈希,服务端已有的数据不会重传。
 - **已知盲区**:监控只随本 session 存在;session 结束后上传照常继续但无人值守,下次接手时先读 `/data04/jaxan/phrase_sft2/hf_push.status`。
 - **完成判据**:两行 `OK ... content-verified, nothing extra` 加上 `HF PUSH DONE`。之后才按删除纪律处理本地两个 60 GB 导出(`mcore_base` 留给 `w0.2` 重训)。
+
+## 2026-09-12 20:30 PT 上传首跑在最后一步崩溃(我的 bug);phrase 权重已上 HF 并通过内容核验
+
+- **现象**:03:24:30Z 进程退出,监控报"进程消失且无 DONE",日志为 `TypeError: str.format() got multiple values for keyword argument 'repo'`,出在 model card 那一步(`hf_push.py` 第 98 行)。
+- **原因**:`CARD.format(repo=repo, ..., **spec)`,而 `spec` 自己就带 `repo` 键。`py_compile` 查不出这种运行期错误,而这一步排在 60 GB 上传和逐文件核验**之后**才第一次执行。
+- **已完成的部分(实测,不是推断)**:phrase 分支 head `0a317c92c3`("Retrain under empty_turn_end_w0.5"),父提交 `83a95f5bf7` 即 `main`(旧 loss 的 phrase checkpoint);分支上 27 个文件 = 导出的 26 个 + `.gitattributes`,没有多余文件;`main` 的旧 README 已被 `delete_patterns` 删除,新 card 未写入。崩溃行在 FAIL 判定之后,所以这一臂的内容核验已经通过。63 GB 只用了约 3 分钟(03:21:22 → 03:24:30),说明绝大部分数据服务端已有,没有重传。word 分支尚未创建。
+- **修正**:去掉显式的 `repo=`;OK 行不再读 `upload_folder` 的返回值,改用核验时 `model_info` 返回的分支 head `.sha`。重跑时 phrase 这一臂没有新内容,`upload_folder` 未必会产生新提交,依赖它的返回值可能在写完 card 后再崩一次。
+- **教训**:长任务末尾的步骤要先在本地演练。card 格式化本地一秒就能跑完,却被放在 60 GB 上传之后才第一次执行,一个参数写错就要整段重跑。重跑前先对两个臂在本地演练 card 格式化。
+- **代价**:几分钟。重跑会重算 phrase 的本地哈希并再核验一次,数据不重传。
+- **重跑前本地演练(已通过)**:`py_compile` 通过;脚本里已无 `commit.oid` 引用;只执行常量定义(用 `ast` 取出,不触发上传)对 phrase 与 word 两个臂各格式化一次 card,均成功且评估数字正确写入。随后提交、推送并在 hyper01 重新发射。
