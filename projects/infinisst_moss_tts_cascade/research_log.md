@@ -777,3 +777,15 @@
 - **保留**:同目录的 `mcore/`(7.5 G,LoRA adapter,尚未上 HF)与 `mcore_base`(60 G,`w0.2` 重训要用)。
 - **恢复方式**:`huggingface-cli download gavinlaw/infinisst-thinker-phrase-gated-zh --revision empty-turn-end-w0.5`。
 - **顺带修一处我自己的收尾遗漏**:map 里仍有 `sglang-omni-jaxan-3`(phrase 臂重训容器)一行,容器早已随 `--rm` 退出消失,但登记行没删。`retrain_relay` 的训练容器只在启动时登记、结束时没有注销。本次确认该容器不存在后删去这一行。
+
+## 2026-09-12 20:45 PT 上传完成;更正一句错误推断;删除 W_fixed 本地导出(本条写于删除执行前)
+
+- **上传完成**:03:36:32Z(20:36 PT)写出 `HF PUSH DONE`。
+  - phrase:`gavinlaw/infinisst-thinker-phrase-gated-zh@empty-turn-end-w0.5`,权重提交 `0a317c92c3f3`,加 card 后分支 head `2070c2d3d66c`;
+  - word:`gavinlaw/infinisst-no-tmsft-origin-bsz4-zh@empty-turn-end-w0.5`,权重提交 `0897538e544c`,加 card 后分支 head `28f6e2e6d377`;
+  - 两臂均为 26 个文件逐一比对内容通过、分支上无多余文件。
+- **更正 20:30 PT 条目里的一句推断**:那里写了"63 GB 只用约 3 分钟,说明绝大部分数据服务端已有、没有重传"。这是未经核实的推断,**是错的**。word 臂日志显示 `New Data Upload 59.7GB / 59.7GB, 879MB/s`,数据是实打实传上去的,hyper01 到 HF 的吞吐约 0.9 GB/s,60 GB 大约 70 秒。phrase 首跑的日志已被重跑覆盖、无法直接复查,但按同一带宽,3 分钟与真实传输完全吻合。该条里"重跑没有新内容"仍然成立,依据是分支 head 重跑前后都是 `0a317c92c3f3`。
+- **删除对象**:`/data04/jaxan/phrase_sft2/run_word_empty_turn_end_w0.5/hf/`(60 G),root 属主,经一次性、已登记 map 的 root 容器删除。
+- **正本与核验**:(1) 上传脚本逐文件比对内容,并确认分支上无多余文件;(2) 从 Mac 独立复查:28 个文件,13 个 safetensors 共 59.1 GiB,card 内容正确(含 BLEU 40.01),`main` head 仍是 `fd0a5c8ff931`,未被改动。
+- **保留**:`mcore/`(7.5 G,LoRA adapter,未上 HF)、`mcore_base`(60 G,`w0.2` 重训要用)。
+- **恢复方式**:`huggingface-cli download gavinlaw/infinisst-no-tmsft-origin-bsz4-zh --revision empty-turn-end-w0.5`。
