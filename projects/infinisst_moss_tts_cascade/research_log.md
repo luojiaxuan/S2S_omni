@@ -789,3 +789,21 @@
 - **正本与核验**:(1) 上传脚本逐文件比对内容,并确认分支上无多余文件;(2) 从 Mac 独立复查:28 个文件,13 个 safetensors 共 59.1 GiB,card 内容正确(含 BLEU 40.01),`main` head 仍是 `fd0a5c8ff931`,未被改动。
 - **保留**:`mcore/`(7.5 G,LoRA adapter,未上 HF)、`mcore_base`(60 G,`w0.2` 重训要用)。
 - **恢复方式**:`huggingface-cli download gavinlaw/infinisst-no-tmsft-origin-bsz4-zh --revision empty-turn-end-w0.5`。
+
+## 2026-09-13 PT 开新 PR #63,替代已关闭的 #40 上的 §7a 修正
+
+- **用户裁定**:开新 PR。
+- **按 OLT 自己的规则调整了 PR 形态**:OLT 的 `CLAUDE.md` 规定"实验结果不进仓库,写在 PR 里",`CONTRIBUTING.md` 规定 PR 正文用 Why / What / Achieved 结构,main 的 `eval/README.md` 也没有 §7。所以 2×2 结果与各项局限写在 **PR 正文**里,不再作为 README 小节;代码部分只移植 2×2 依赖、而 main 上没有的两个开关 `TTS_SAMPLE` 与 `THINKER_ENFORCE_EAGER`。
+- **移植时发现并修掉的三处问题**:
+  1. 原分支没把 eager 模式写进指纹,我当时称其"不改变输出",但从未实测。现改为只在开启时写入 `thinker_enforce_eager=true`,默认运行的指纹保持不变。
+  2. 两个开关的拒绝检查原先都在创建输出目录之后,填错值会留下空的运行目录。`TTS_SAMPLE` 的检查挪到 backend 检查旁边,拒绝时什么都不留;eager 的检查留在 main 自身的 `THINKER_BACKEND` 校验旁边(main 的这个校验同样在输出目录创建之后),测试对它只断言退出码与报错信息。
+  3. 测试里四个用例共用一个结果目录的 bug。
+- **核验**:两个新测试通过。三个测试模块共 84 个:82 过、1 跳过、1 失败,失败的那个在 main(`a50dee2`)上同样失败。用 macOS 自带的 BSD `realpath` 时,main 与分支都是同样的 17 个失败,名单逐个一致。
+- **为 PR 正文额外核实的两件事**:
+  - 新旧 loss 的 checkpoint 的 `args.json`(443 个键)逐键比对,训练设置上只差 `loss_scale` 与 `external_plugins`,其余差异是文件路径、对象 repr 里的内存地址、`add_version` 与 W&B 名。
+  - 四次评估都在同一 OLT 提交 `2337318` 上生成,该提交在 #40 的分支上,可以检出。
+- **新发现,已写进 PR 的局限**:
+  - 两个旧 loss 的 checkpoint 在两个不同集群上训练:词对齐那个是 siqiouya 训的(保存路径在 `/data/user_data/siqiouya/`,W&B 项目 `gigaspeech_zh`),phrase 那个是我在 gemini 挂载的集群上训的;两个新 loss 的在同一台 4×H200 上训。硬件差异在两个 Δ 里不相同,**所以不会在 I 中抵消**。之前台账里把它称作"我们的词对齐版",训练者并不是我们,以后统一改称"词对齐版"。
+  - 四次评估的指纹都没有记录 eager,因为当时还没有这个键。
+- **未做,等用户决定**:结果尚未写入共享结果表("ACL 60/60 Dev scribe_v2" 标签页),往共享表写数据属于对外写操作,需用户同意;未指派 reviewer,因为默认的三位 reviewer 都不是该仓库的协作者,且近期合并的 PR 均未指派。
+- **链接**:https://github.com/LeiLiLab/Open-LiveTranslate/pull/63,head `5215cfb1`,分支 `feat/turn-end-loss-2x2`,worktree `/Users/luojiaxuan/olt_worktrees/turn-end-loss-2x2`。
