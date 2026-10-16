@@ -1,4 +1,4 @@
-name: Publish ACL6060 SEGALE diagnostics
+name: Publish research pages
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/acl6060-segale-pages.yml"
       - "projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics/**"
+      - "pages/**"
   workflow_dispatch:
 
 permissions:
@@ -26,9 +27,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # note (luojiaxuan): the ACL6060 diagnostics stay at the site root; each page under pages/ gets its own subpath.
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -R projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics/. _site/
+          cp -R pages/. _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: projects/acl6060_s2s_metrics_seed/artifacts/acl6060_segale_diagnostics
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
